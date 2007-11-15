@@ -9,8 +9,8 @@ module Parser (a : DecSetoid) where
 open import Data.Bool
 open import Data.List
 open import Data.Product
-open import Data.Maybe
 open import Logic
+open import Monad
 private
   open module D = DecSetoid a
   open module S = Setoid setoid
@@ -74,35 +74,42 @@ Env Γ = Coll (P Γ) Γ
   P : Ctxt -> Index -> Set
   P Γ (e , d) = Parser Γ e d
 
+-- Parser monad.
+
+P : Set -> Set
+P = [_]
+
+private
+  open module LM = MonadZeroOps P ListMonadZero
+
 mutual
 
-  -- The run function.
+  -- For every successful parse the run function returns the remaining
+  -- string. (Since there can be several successful parses a list of
+  -- strings is returned.)
 
   -- Implemented using an ugly workaround since the termination
   -- checker does not take advantage of dotted patterns...
 
   ⟦_⟧ :  forall {Γ e d}
-      -> Parser Γ e d -> Env Γ -> [ carrier ] -> Maybe [ carrier ]
+      -> Parser Γ e d -> Env Γ -> [ carrier ] -> P [ carrier ]
   ⟦ p ⟧ = parse _ p ≡-refl
 
   private
 
     parse :  forall {Γ e} d {d'} -> Parser Γ e d' -> d ≡ d'
-          -> Env Γ -> [ carrier ] -> Maybe [ carrier ]
-    parse ._ fail    ≡-refl ρ s       = nothing
-    parse ._ empty   ≡-refl ρ s       = just s
+          -> Env Γ -> [ carrier ] -> P [ carrier ]
+    parse ._ fail    ≡-refl ρ s       = zero
+    parse ._ empty   ≡-refl ρ s       = return s
     parse ._ (sym p) ≡-refl ρ (c ∷ s) with p c
-    ... | true  = just s
-    ... | false = nothing
-    parse (node d₁ d₂) (_·_ {e₁ = true} p₁ p₂) ≡-refl ρ s
-      with ⟦ p₁ ⟧ ρ s
-    ... | nothing = nothing
-    ... | just s' = ⟦ p₂ ⟧ ρ s'
-    parse d₁ (_·_ {e₁ = false} p₁ p₂) ≡-refl ρ s
-      with ⟦ p₁ ⟧ ρ s
-    ... | nothing = nothing
-    -- ... | just s' = ⟦ p₂ ⟧ ρ s'  -- This call is fine, but Agda cannot see it.
+    ... | true  = return s
+    ... | false = zero
+    parse (node d₁ d₂) (_·_ {e₁ = true} p₁ p₂) ≡-refl ρ s =
+      ⟦ p₂ ⟧ ρ =<< ⟦ p₁ ⟧ ρ s
+    parse d₁ (_·_ {e₁ = false} p₁ p₂) ≡-refl ρ s =
+      ⟦ p₂ ⟧ ρ =<< ⟦ p₁ ⟧ ρ s  -- This call is fine, but Agda cannot
+                               -- see that it is.
     parse (node d₁ d₂) (p₁ ∣ p₂) ≡-refl ρ s =
-      lift₂ _++_ (⟦ p₁ ⟧ ρ s) (⟦ p₂ ⟧ ρ s)
+      liftM₂ _++_ (⟦ p₁ ⟧ ρ s) (⟦ p₂ ⟧ ρ s)
     parse (step d) (named x) ≡-refl ρ s = ⟦ lookup x ρ ⟧ ρ s
-    parse _        _         _      ρ s = nothing
+    parse _        _         _      ρ s = zero
