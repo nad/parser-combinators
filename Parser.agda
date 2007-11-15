@@ -15,6 +15,9 @@ private
   open module D = DecSetoid a
   open module S = Setoid setoid
 
+------------------------------------------------------------------------
+-- Indices to the parser type
+
 -- Does the parser accept empty strings?
 
 Empty : Set
@@ -42,6 +45,9 @@ private
   import HeterogeneousCollection as HC
   open module HC' = HC Index
 
+------------------------------------------------------------------------
+-- Parsers
+
 -- Parsers. The context lists all named parsers which can be used.
 
 data Parser (Γ : Ctxt) : Empty -> Depth -> Set where
@@ -57,7 +63,10 @@ data Parser (Γ : Ctxt) : Empty -> Depth -> Set where
   named :  forall {e d}
         -> Label Γ (e , d) -> Parser Γ e (step d)
 
--- Environments.
+------------------------------------------------------------------------
+-- Run function for the parsers
+
+-- Environments containing parsers.
 
 Env : Ctxt -> Set
 Env Γ = Coll (P Γ) Γ
@@ -67,7 +76,7 @@ Env Γ = Coll (P Γ) Γ
 
 mutual
 
-  -- The run function for the parsers.
+  -- The run function.
 
   -- Implemented using an ugly workaround since the termination
   -- checker does not take advantage of dotted patterns...
