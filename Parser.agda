@@ -1,3 +1,7 @@
+------------------------------------------------------------------------
+-- Terminating parsers
+------------------------------------------------------------------------
+
 open import Relation.Binary
 
 module Parser (a : DecSetoid) where
@@ -11,8 +15,14 @@ private
   open module D = DecSetoid a
   open module S = Setoid setoid
 
+-- Does the parser only accept non-empty strings?
+
 NonEmpty : Set
 NonEmpty = Bool
+
+-- The spine of the parser, except that the right argument of _·_ is
+-- omitted if the left one only accepts non-empty strings. (This is
+-- encoded using maybeNode.)
 
 data Depth : Set where
   leaf : Depth
@@ -22,12 +32,17 @@ data Depth : Set where
 maybeNode : NonEmpty -> Depth -> Depth -> Depth
 maybeNode n d₁ d₂ = if n then d₁ else node d₁ d₂
 
+-- The indices to the Parser type (used to instantiate the
+-- heterogeneous collection module).
+
 Index : Set
 Index = NonEmpty × Depth
 
 private
   import HeterogeneousCollection as HC
   open module HC' = HC Index
+
+-- Parsers. The context lists all named parsers which can be used.
 
 data Parser (Γ : Ctxt) : NonEmpty -> Depth -> Set where
   fail  :  Parser Γ true  leaf
@@ -42,16 +57,20 @@ data Parser (Γ : Ctxt) : NonEmpty -> Depth -> Set where
   named :  forall {n d}
         -> Label Γ (n , d) -> Parser Γ n (step d)
 
-T : Ctxt -> Index -> Set
-T Γ (n , d) = Parser Γ n d
+-- Environments.
 
 Env : Ctxt -> Set
-Env Γ = Coll (T Γ) Γ
+Env Γ = Coll (P Γ) Γ
+  where
+  P : Ctxt -> Index -> Set
+  P Γ (n , d) = Parser Γ n d
 
 mutual
 
-  -- Ugly workaround since the termination checker does not take
-  -- advantage of dotted patterns...
+  -- The run function for the parsers.
+
+  -- Implemented using an ugly workaround since the termination
+  -- checker does not take advantage of dotted patterns...
 
   ⟦_⟧ :  forall {Γ n d}
       -> Parser Γ n d -> Env Γ -> [ carrier ] -> Maybe [ carrier ]
@@ -73,11 +92,8 @@ mutual
     parse d₁ (_·_ {n₁ = true} p₁ p₂) ≡-refl ρ s
       with ⟦ p₁ ⟧ ρ s
     ... | nothing = nothing
-    -- ... | just s' = ⟦ p₂ ⟧ ρ s'
+    ... | just s' = ⟦ p₂ ⟧ ρ s'  -- This call is fine, but Agda cannot see it.
     parse (node d₁ d₂) (p₁ ∣ p₂) ≡-refl ρ s =
       lift₂ _++_ (⟦ p₁ ⟧ ρ s) (⟦ p₂ ⟧ ρ s)
     parse (step d) (named x) ≡-refl ρ s = ⟦ lookup x ρ ⟧ ρ s
-    parse _ _ _ ρ s = nothing
-
--- TODO: Keep track of the length of the list, needed for the "true"
--- case.
+    parse _        _         _      ρ s = nothing
