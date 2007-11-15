@@ -1,25 +1,19 @@
-module HeterogeneousCollection where
+module HeterogeneousCollection (Index : Set) where
 
-open import Logic
-open import Data.Maybe
-open import Relation.Binary.PropositionalEquality1
+data Ctxt : Set where
+  ε   : Ctxt
+  _▻_ : Ctxt -> Index -> Ctxt
 
-postulate
-  -- Label should be positivity-monotone in its argument.
-  Label     :  Set -> Set
-  dropLabel :  forall {a b} -> Label a ≡₁ Label b -> a ≡₁ b
-  _=?=_     :  forall {a₁ a₂}
-            -> (x : Label a₁) -> (y : Label a₂) -> Maybe (x ≅ y)
+data Label : Ctxt -> Index -> Set where
+  lz : forall {Γ i}    -> Label (Γ ▻ i) i
+  ls : forall {Γ i i'} -> Label Γ i -> Label (Γ ▻ i') i
 
-data Coll : Set1 where
-  ∅     : Coll
-  _,_≔_ : forall {a} -> Coll -> Label a -> a -> Coll
+data Coll (T : Index -> Set) : Ctxt -> Set where
+  ∅   : Coll T ε
+  _▷_ : forall {Γ i} -> Coll T Γ -> T i -> Coll T (Γ ▻ i)
 
-typesEqual : forall {a b} {x : a} {y : b} -> x ≅ y -> a ≡₁ b
-typesEqual ≅-refl = ≡₁-refl
-
-lookup : forall {a} -> Label a -> Coll -> Maybe a
-lookup x ∅           = nothing
-lookup x (ρ , y ≔ p) with x =?= y
-... | nothing = lookup x ρ
-... | just eq = just (≡₁-subst (≡₁-sym (dropLabel (typesEqual eq))) p)
+lookup :  forall {Γ i} {T : Index -> Set}
+       -> Label Γ i -> Coll T Γ -> T i
+lookup ()     ∅
+lookup lz     (ρ ▷ p) = p
+lookup (ls l) (ρ ▷ p) = lookup l ρ
