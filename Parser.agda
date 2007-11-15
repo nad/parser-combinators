@@ -69,10 +69,10 @@ data Parser (Γ : Ctxt) : Empty -> Depth -> Set where
 -- Environments containing parsers.
 
 Env : Ctxt -> Set
-Env Γ = Coll (P Γ) Γ
+Env Γ = Coll P Γ
   where
-  P : Ctxt -> Index -> Set
-  P Γ (e , d) = Parser Γ e d
+  P : Index -> Set
+  P (e , d) = Parser Γ e d
 
 -- Parser monad.
 
