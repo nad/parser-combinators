@@ -110,6 +110,6 @@ mutual
       ⟦ p₂ ⟧ γ =<< ⟦ p₁ ⟧ γ s  -- This call is fine, but Agda cannot
                                -- see that it is.
     parse (node d₁ d₂) (p₁ ∣ p₂) ≡-refl γ s =
-      ⟦ p₁ ⟧ γ s <* _++_ *> ⟦ p₂ ⟧ γ s
-    parse (step d) (named x) ≡-refl γ s = ⟦ lookup x γ ⟧ γ s
-    parse _        _         _      γ s = zero
+      ⟦ p₁ ⟧ γ s ++ ⟦ p₂ ⟧ γ s
+    parse (step d) (! x) ≡-refl γ s = ⟦ lookup x γ ⟧ γ s
+    parse _        _     _      γ s = zero
