@@ -2,15 +2,26 @@
 -- Terminating parsers
 ------------------------------------------------------------------------
 
+-- A DSEL for parsers which can be implemented using recursive
+-- descent. The types used ensure that these implementations will
+-- always terminate.
+
+-- However, the parse function below is not (currently) accepted by
+-- the termination checker, so the termination checker is turned
+-- off...
+
+{-# OPTIONS --dont-termination-check #-}
+
 open import Relation.Binary
 
 module Parser (a : DecSetoid) where
 
 open import Data.Bool
-open import Data.List
+open import Data.List hiding (_++_)
 open import Data.Product
 open import Logic
 open import Monad
+open import Relation.Nullary
 private
   open module D = DecSetoid a
   open module S = Setoid setoid
@@ -43,12 +54,16 @@ Index = Empty × Depth
 
 private
   import HeterogeneousCollection as HC
-  open module HC' = HC Index
+  open module HC' = HC Index public
 
 ------------------------------------------------------------------------
 -- Parsers
 
 -- Parsers. The context lists all named parsers which can be used.
+
+infix  60 !_
+infixr 50 _·_
+infixr 40 _∣_
 
 data Parser (Γ : Ctxt) : Empty -> Depth -> Set where
   fail  :  Parser Γ false leaf
@@ -60,8 +75,16 @@ data Parser (Γ : Ctxt) : Empty -> Depth -> Set where
   _∣_   :  forall {e₁ d₁ e₂ d₂}
         -> Parser Γ e₁ d₁ -> Parser Γ e₂ d₂
         -> Parser Γ (e₁ ∨ e₂) (node d₁ d₂)
-  named :  forall {e d}
+  !_    :  forall {e d}
         -> Label Γ (e , d) -> Parser Γ e (step d)
+
+token : forall {Γ} -> carrier -> Parser Γ false leaf
+token x = sym p
+  where
+  p : carrier -> Bool
+  p y with x ≟ y
+  ... | yes _ = true
+  ... | no  _ = false
 
 ------------------------------------------------------------------------
 -- Run function for the parsers
@@ -80,7 +103,7 @@ P : Set -> Set
 P = [_]
 
 private
-  open module LM = MonadZeroOps P ListMonadZero
+  open module LM = MonadPlusOps P ListMonadPlus
 
 mutual
 

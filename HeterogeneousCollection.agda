@@ -7,6 +7,8 @@ module HeterogeneousCollection (Index : Set) where
 -- Contexts, listing the indices of the types of all the elements in
 -- a collection.
 
+infixl 20 _▻_
+
 data Ctxt : Set where
   ε   : Ctxt
   _▻_ : Ctxt -> Index -> Ctxt
@@ -19,6 +21,8 @@ data Label : Ctxt -> Index -> Set where
   ls : forall {Γ i i'} -> Label Γ i -> Label (Γ ▻ i') i
 
 -- Collections. The T function maps indices to element types.
+
+infixl 20 _▷_
 
 data Coll (T : Index -> Set) : Ctxt -> Set where
   ∅   : Coll T ε
