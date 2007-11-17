@@ -51,7 +51,9 @@ Index = Empty × Depth
 
 private
   import HeterogeneousCollection as HC
-  open module HC' = HC Index public
+  module HC' = HC Index
+  open HC' public hiding (Coll)
+  open HC' using (Coll)
 
 ------------------------------------------------------------------------
 -- Parsers
