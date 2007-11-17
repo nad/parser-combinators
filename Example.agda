@@ -9,9 +9,9 @@ open import Logic
 import Data.Char as C
 import Data.String as S
 open C using (Char)
-import Parser
+open import Parser
 private
-  open module P = Parser C.decSetoid
+  open module T = Token C.decSetoid
 
 module Ex₁ where
 
@@ -23,7 +23,7 @@ module Ex₁ where
   zeros : Label Γ _
   zeros = lz
 
-  env : Env Γ
+  env : Env Char Γ
   env = ∅ ▷ token '0' · token '+' · ! zeros ∣ token '0'
 
   ex₁ : ⟦ ! zeros ⟧ env (S.toList "0+0") ≡ [] ∷ S.toList "+0" ∷ []
@@ -49,7 +49,7 @@ module Ex₂ where
           ∣ token '0' · token '*' · ! factor
           ∣ token '(' · ! expr · token ')'
 
-  env : Env Γ
+  env : Env Char Γ
   env = ∅ ▷ expr' ▷ factor'
 
   ex₁ : ⟦ ! expr ⟧ env (S.toList "(0*)") ≡ []
@@ -83,7 +83,7 @@ module Ex₃ where
           ∣ ! factor · token '*' · token '0'
           ∣ token '(' · ! expr · token ')'
 
-  env : Env Γ
+  env : Env Char Γ
   env = ∅ ▷ expr' ▷ factor'
 
 -}

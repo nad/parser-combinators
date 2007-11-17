@@ -14,7 +14,7 @@
 
 open import Relation.Binary
 
-module Parser (a : DecSetoid) where
+module Parser where
 
 open import Data.Bool
 open import Data.List hiding (_++_)
@@ -22,9 +22,6 @@ open import Data.Product
 open import Logic
 open import Monad
 open import Relation.Nullary
-private
-  open module D = DecSetoid a
-  open module S = Setoid setoid
 
 ------------------------------------------------------------------------
 -- Indices to the parser type
@@ -65,37 +62,43 @@ infix  60 !_
 infixr 50 _·_
 infixr 40 _∣_
 
-data Parser (Γ : Ctxt) : Empty -> Depth -> Set where
-  fail  :  Parser Γ false leaf
-  empty :  Parser Γ true  leaf
-  sym   :  (carrier -> Bool) -> Parser Γ false leaf
+data Parser (tok : Set) (Γ : Ctxt) : Empty -> Depth -> Set where
+  fail  :  Parser tok Γ false leaf
+  empty :  Parser tok Γ true  leaf
+  sym   :  (tok -> Bool) -> Parser tok Γ false leaf
   _·_   :  forall {e₁ d₁ e₂ d₂}
-        -> Parser Γ e₁ d₁ -> Parser Γ e₂ d₂
-        -> Parser Γ (e₁ ∧ e₂) (maybeNode e₁ d₁ d₂)
+        -> Parser tok Γ e₁ d₁ -> Parser tok Γ e₂ d₂
+        -> Parser tok Γ (e₁ ∧ e₂) (maybeNode e₁ d₁ d₂)
   _∣_   :  forall {e₁ d₁ e₂ d₂}
-        -> Parser Γ e₁ d₁ -> Parser Γ e₂ d₂
-        -> Parser Γ (e₁ ∨ e₂) (node d₁ d₂)
+        -> Parser tok Γ e₁ d₁ -> Parser tok Γ e₂ d₂
+        -> Parser tok Γ (e₁ ∨ e₂) (node d₁ d₂)
   !_    :  forall {e d}
-        -> Label Γ (e , d) -> Parser Γ e (step d)
+        -> Label Γ (e , d) -> Parser tok Γ e (step d)
 
-token : forall {Γ} -> carrier -> Parser Γ false leaf
-token x = sym p
-  where
-  p : carrier -> Bool
-  p y with x ≟ y
-  ... | yes _ = true
-  ... | no  _ = false
+module Token (a : DecSetoid) where
+
+  private
+    open module D = DecSetoid a
+    open module S = Setoid setoid
+
+  token : forall {Γ} -> carrier -> Parser carrier Γ false leaf
+  token x = sym p
+    where
+    p : carrier -> Bool
+    p y with x ≟ y
+    ... | yes _ = true
+    ... | no  _ = false
 
 ------------------------------------------------------------------------
 -- Run function for the parsers
 
 -- Environments containing parsers.
 
-Env : Ctxt -> Set
-Env Γ = Coll P Γ
+Env : Set -> Ctxt -> Set
+Env tok Γ = Coll P Γ
   where
   P : Index -> Set
-  P (e , d) = Parser Γ e d
+  P (e , d) = Parser tok Γ e d
 
 -- Parser monad.
 
@@ -114,14 +117,15 @@ mutual
   -- Implemented using an ugly workaround since the termination
   -- checker does not take advantage of dotted patterns...
 
-  ⟦_⟧ :  forall {Γ e d}
-      -> Parser Γ e d -> Env Γ -> [ carrier ] -> P [ carrier ]
+  ⟦_⟧ :  forall {tok Γ e d}
+      -> Parser tok Γ e d -> Env tok Γ -> [ tok ] -> P [ tok ]
   ⟦ p ⟧ = parse _ p ≡-refl
 
   private
 
-    parse :  forall {Γ e} d {d'} -> Parser Γ e d' -> d ≡ d'
-          -> Env Γ -> [ carrier ] -> P [ carrier ]
+    parse :  forall {tok Γ e} d {d'}
+          -> Parser tok Γ e d' -> d ≡ d'
+          -> Env tok Γ -> [ tok ] -> P [ tok ]
     parse ._ fail    ≡-refl γ s       = zero
     parse ._ empty   ≡-refl γ s       = return s
     parse ._ (sym p) ≡-refl γ (c ∷ s) with p c
