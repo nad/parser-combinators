@@ -56,6 +56,13 @@ private
 
 -- Parsers. The context lists all named parsers which can be used.
 
+-- Possible future extensions (if we can figure out how to support
+-- these features):
+--
+-- * Parameterised parsers.
+--
+-- * Left-recursive parsers.
+
 infix  60 !_
 infixr 50 _·_
 infixr 40 _∣_
