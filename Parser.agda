@@ -138,11 +138,13 @@ mutual
           -> Parser tok Γ e d' -> d ≡ d' -> Env tok Γ
           -> forall {n}
           -> BoundedVec tok (suc n) -> P (BoundedVec tok (maybeSuc e n))
-    parse fail    ≡-refl γ s       = mzero
-    parse empty   ≡-refl γ s       = return s
-    parse (sym p) ≡-refl γ (c ∷ s) with p c
-    ... | true  = return s
-    ... | false = mzero
+    parse fail    ≡-refl γ s = mzero
+    parse empty   ≡-refl γ s = return s
+    parse (sym p) ≡-refl γ s with view s
+    ... | []v     = mzero
+    ... | c ∷v s' with p c
+    ...   | true  = return s'
+    ...   | false = mzero
 
     parse {d = node d₁ d₂} (_·_ {e₁ = true}               p₁ p₂) ≡-refl γ             s =        ⟦ p₂ ⟧' γ =<< ⟦ p₁ ⟧' γ s
     parse {d = step d₁}    (_·_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ {n = suc n} s =        ⟦ p₂ ⟧' γ =<< ⟦ p₁ ⟧' γ s
