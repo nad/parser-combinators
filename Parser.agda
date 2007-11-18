@@ -6,16 +6,18 @@
 -- descent. The types used ensure that these implementations will
 -- always terminate.
 
-open import Relation.Binary
-
 module Parser where
 
 open import Data.Bool
 open import Data.Product
 open import Data.Function
+open import Data.BoundedVec
+import Data.List as L
+open import Data.Nat
 open import Logic
 open import Monad
 open import Relation.Nullary
+open import Relation.Binary
 
 ------------------------------------------------------------------------
 -- Indices to the parser type
@@ -98,15 +100,11 @@ Env tok Γ = Coll P Γ
 
 -- Parser monad.
 
-import Data.List as L
-
 P : Set -> Set
 P = L.[_]
 
 private
   open module LM = MonadPlusOps P L.ListMonadPlus
-open import Data.BoundedVec
-open import Data.Nat
 
 maybeSuc : Empty -> ℕ -> ℕ
 maybeSuc e = if e then suc else id
@@ -132,7 +130,7 @@ mutual
          -> Parser tok Γ e d -> Env tok Γ
          -> forall {n}
          -> BoundedVec tok (suc n) -> P (BoundedVec tok (maybeSuc e n))
-    ⟦ p ⟧' γ {n = n} = parse p ≡-refl γ {n = n}
+    ⟦ p ⟧' γ = parse p ≡-refl γ
 
     parse :  forall {tok Γ e d d'}
           -> Parser tok Γ e d' -> d ≡ d' -> Env tok Γ
