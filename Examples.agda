@@ -2,7 +2,7 @@
 -- Examples
 ------------------------------------------------------------------------
 
-module Example where
+module Examples where
 
 open import Data.List
 open import Logic
