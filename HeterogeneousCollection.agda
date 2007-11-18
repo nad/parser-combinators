@@ -10,7 +10,7 @@ module HeterogeneousCollection (Index : Set) where
 infixl 20 _▻_
 
 data Ctxt : Set where
-  ε   : Ctxt
+  nil : Ctxt
   _▻_ : Ctxt -> Index -> Ctxt
 
 -- Labels pointing into a collection. The labels are defined with
@@ -25,7 +25,7 @@ data Label : Ctxt -> Index -> Set where
 infixl 20 _▷_
 
 data Coll (T : Index -> Set) : Ctxt -> Set where
-  ∅   : Coll T ε
+  ∅   : Coll T nil
   _▷_ : forall {Γ i} -> Coll T Γ -> T i -> Coll T (Γ ▻ i)
 
 -- A safe lookup function for collections.

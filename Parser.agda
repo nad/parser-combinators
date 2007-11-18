@@ -69,7 +69,7 @@ infixr 40 _∣_
 
 data Parser (tok : Set) (Γ : Ctxt) : Empty -> Depth -> Set where
   fail  :  Parser tok Γ false leaf
-  empty :  Parser tok Γ true  leaf
+  ε     :  Parser tok Γ true  leaf
   sym   :  (tok -> Bool) -> Parser tok Γ false leaf
   _·_   :  forall {e₁ d₁ e₂ d₂}
         -> Parser tok Γ e₁ d₁ -> Parser tok Γ e₂ d₂
@@ -142,7 +142,7 @@ private
           -> forall {n} -> BoundedVec tok (suc n)
           -> P (BoundedVec tok (maybeSuc e n))
     parse ._ fail    ≡-refl γ s       = mzero
-    parse ._ empty   ≡-refl γ s       = return s
+    parse ._ ε       ≡-refl γ s       = return s
     parse ._ (sym p) ≡-refl γ []      = mzero
     parse ._ (sym p) ≡-refl γ (c ∷ s) with p c
     ... | true  = return s
