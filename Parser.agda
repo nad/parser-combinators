@@ -80,11 +80,16 @@ data Parser (tok : Set) (Γ : Ctxt) : Empty -> Depth -> Set where
   !_    :  forall {e d}
         -> Label Γ (e , d) -> Parser tok Γ e (step d)
 
+------------------------------------------------------------------------
+-- Some derived parsers
+
 module Token (a : DecSetoid) where
 
   private
     open module D = DecSetoid a
     open module S = Setoid setoid
+
+  -- Parses a given token.
 
   token : forall {Γ} -> carrier -> Parser carrier Γ false leaf
   token x = sym p
@@ -93,6 +98,19 @@ module Token (a : DecSetoid) where
     p y with x ≟ y
     ... | yes _ = true
     ... | no  _ = false
+
+-- Parses zero or more occurrences of the given parser (which may not
+-- accept the empty string).
+--
+-- Note that this parser may be quite inconvenient to use, since it
+-- needs to be included as the last parser in the context, and can
+-- only be used with a fixed parameter parser.
+
+many :  forall {tok Γ d}
+     -> let d' = node leaf (step d) in
+        Parser tok (Γ ▻ (true , d')) false d
+     -> Parser tok (Γ ▻ (true , d')) true  d'
+many p = ε ∣ p · ! lz
 
 ------------------------------------------------------------------------
 -- Run function for the parsers
