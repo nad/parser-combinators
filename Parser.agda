@@ -147,6 +147,16 @@ mutual
     parse {d = node d₁ d₂} (_·_ {e₁ = true}               p₁ p₂) ≡-refl γ             s =        ⟦ p₂ ⟧' γ =<< ⟦ p₁ ⟧' γ s
     parse {d = step d₁}    (_·_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ {n = suc n} s =        ⟦ p₂ ⟧' γ =<< ⟦ p₁ ⟧' γ s
     parse {d = step d₁}    (_·_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl γ {n = suc n} s = ↑ <*> (⟦ p₂ ⟧' γ =<< ⟦ p₁ ⟧' γ s)
+    parse {d = step d₁}    (_·_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ {n = zero}  s with view s
+    ... | []v     = mzero
+    ... | c ∷v s' with view s'
+    ...   | []v = ⟦ p₁ ⟧' γ {n = zero} (c ∷ [])
+                  -- This is an OK call, but the termination checker
+                  -- cannot see it because n (which is zero) is not an
+                  -- argument to the local with function, and hence
+                  -- this dependency is not considered by the
+                  -- termination checker.
+    parse {d = step d₁}    (_·_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl γ {n = zero}  s = mzero
 
     parse {d = node d₁ d₂} (_∣_ {e₁ = true}  {e₂ = true}  p₁ p₂) ≡-refl γ s =        ⟦ p₁ ⟧' γ s  ++        ⟦ p₂ ⟧' γ s
     parse {d = node d₁ d₂} (_∣_ {e₁ = true}  {e₂ = false} p₁ p₂) ≡-refl γ s =        ⟦ p₁ ⟧' γ s  ++ (↑ <*> ⟦ p₂ ⟧' γ s)
@@ -154,7 +164,14 @@ mutual
     parse {d = node d₁ d₂} (_∣_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl γ s =        ⟦ p₁ ⟧' γ s  ++        ⟦ p₂ ⟧' γ s
 
     parse {d = step d} (! x) ≡-refl γ s = ⟦ lookup x γ ⟧' γ s
-    parse _ _ γ s = mzero
+
+    -- Impossible cases.
+    parse {d = leaf}       (_·_ {e₁ = true}  p₁ p₂) () _ _
+    parse {d = step d}     (_·_ {e₁ = true}  p₁ p₂) () _ _
+    parse {d = leaf}       (_·_ {e₁ = false} p₁ p₂) () _ _
+    parse {d = node d₁ d₂} (_·_ {e₁ = false} p₁ p₂) () _ _
+    parse {d = leaf}       (! x)                    () _ _
+    parse {d = node d₁ d₂} (! x)                    () _ _
 
 open L
 
