@@ -11,7 +11,7 @@ module Parser where
 open import Data.Bool
 open import Data.Product
 open import Data.Function
-open import Data.BoundedVec
+open import Data.BoundedVec as BVec
 import Data.List as L
 open import Data.Nat
 open import Logic
@@ -106,33 +106,31 @@ P = L.[_]
 private
   open module LM = MonadPlusOps P L.ListMonadPlus
 
-maybeSuc : Empty -> ℕ -> ℕ
-maybeSuc e = if e then suc else id
+-- For every successful parse the run function returns the remaining
+-- string. (Since there can be several successful parses a list of
+-- strings is returned.)
 
-mutual
+-- Implemented using an ugly workaround since the termination
+-- checker does not take advantage of dotted patterns...
 
-  -- For every successful parse the run function returns the remaining
-  -- string. (Since there can be several successful parses a list of
-  -- strings is returned.)
+-- This function is structurally recursive with respect to the
+-- following lexicographic measure:
+--
+-- 1) The upper bound of the input string.
+-- 2) The depth of the parser.
 
-  -- Implemented using an ugly workaround since the termination
-  -- checker does not take advantage of dotted patterns...
+private
 
-  -- This function is structurally recursive with respect to the
-  -- following lexicographic measure:
-  --
-  -- 1) The upper bound of the input string.
-  -- 2) The depth of the parser.
+  maybeSuc : Empty -> ℕ -> ℕ
+  maybeSuc e = if e then suc else id
 
-  private
-
-    ⟦_⟧' :  forall {tok Γ e d}
-         -> Parser tok Γ e d -> Env tok Γ
-         -> forall {n}
-         -> BoundedVec tok (suc n) -> P (BoundedVec tok (maybeSuc e n))
-    ⟦ p ⟧' γ = parse p ≡-refl γ
-
-    parse :  forall {tok Γ e d d'}
+  ⟦_⟧' :  forall {tok Γ e d}
+       -> Parser tok Γ e d -> Env tok Γ
+       -> forall {n}
+       -> BoundedVec tok (suc n) -> P (BoundedVec tok (maybeSuc e n))
+  ⟦_⟧' {tok = tok} {Γ = Γ} p γ = parse p ≡-refl γ
+    where
+    parse :  forall {e d d'}
           -> Parser tok Γ e d' -> d ≡ d' -> Env tok Γ
           -> forall {n}
           -> BoundedVec tok (suc n) -> P (BoundedVec tok (maybeSuc e n))
@@ -145,18 +143,25 @@ mutual
     ...   | false = mzero
 
     parse {d = node d₁ d₂} (_·_ {e₁ = true}               p₁ p₂) ≡-refl γ             s =        ⟦ p₂ ⟧' γ =<< ⟦ p₁ ⟧' γ s
-    parse {d = step d₁}    (_·_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ {n = suc n} s =        ⟦ p₂ ⟧' γ =<< ⟦ p₁ ⟧' γ s
     parse {d = step d₁}    (_·_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl γ {n = suc n} s = ↑ <*> (⟦ p₂ ⟧' γ =<< ⟦ p₁ ⟧' γ s)
-    parse {d = step d₁}    (_·_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ {n = zero}  s with view s
-    ... | []v     = mzero
-    ... | c ∷v s' with view s'
-    ...   | []v = ⟦ p₁ ⟧' γ {n = zero} (c ∷ [])
-                  -- This is an OK call, but the termination checker
-                  -- cannot see it because n (which is zero) is not an
-                  -- argument to the local with function, and hence
-                  -- this dependency is not considered by the
-                  -- termination checker.
+    parse {d = step d₁}    (_·_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ {n = suc n} s =        ⟦ p₂ ⟧' γ =<< ⟦ p₁ ⟧' γ s
     parse {d = step d₁}    (_·_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl γ {n = zero}  s = mzero
+      -- None of p₁ and p₂ accept the empty string, and s has length at most 1.
+    parse {d = step d₁}    (_·_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ {n = zero}  s =
+      helper p₁ zero ≡-refl (view s)
+      where
+      -- The indices d and n need to be passed explicitly to this
+      -- function to ensure that the termination checker can accept
+      -- the code. Note that this helper function would be
+      -- unnecessary if we could pattern match directly on
+      -- BoundedVec.
+      helper :  forall {d} -> Parser tok Γ false d
+             -> forall n -> n ≡ zero -> BVec.View tok (suc n)
+             -> P (BoundedVec tok n)
+      helper _  _    _      []v       = mzero
+      helper p₁ zero ≡-refl (c ∷v s') = ⟦ p₁ ⟧' γ {n = zero} (c ∷ [])
+        -- Note that s' is empty, p₁ does not accept the empty
+        -- string, and p₂ does.
 
     parse {d = node d₁ d₂} (_∣_ {e₁ = true}  {e₂ = true}  p₁ p₂) ≡-refl γ s =        ⟦ p₁ ⟧' γ s  ++        ⟦ p₂ ⟧' γ s
     parse {d = node d₁ d₂} (_∣_ {e₁ = true}  {e₂ = false} p₁ p₂) ≡-refl γ s =        ⟦ p₁ ⟧' γ s  ++ (↑ <*> ⟦ p₂ ⟧' γ s)
