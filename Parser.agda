@@ -128,42 +128,42 @@ private
        -> Parser tok Γ e d -> Env tok Γ
        -> forall {n}
        -> BoundedVec tok (suc n) -> P (BoundedVec tok (maybeSuc e n))
-  ⟦_⟧' {tok = tok} {Γ = Γ} p γ = parse p ≡-refl γ
+  ⟦_⟧' {tok = tok} {Γ = Γ} p γ = parse _ p ≡-refl γ
     where
-    parse :  forall {e d d'}
+    parse :  forall {e} d {d'}
           -> Parser tok Γ e d' -> d ≡ d' -> Env tok Γ
-          -> forall {n}
-          -> BoundedVec tok (suc n) -> P (BoundedVec tok (maybeSuc e n))
-    parse fail    ≡-refl γ s       = mzero
-    parse empty   ≡-refl γ s       = return s
-    parse (sym p) ≡-refl γ []      = mzero
-    parse (sym p) ≡-refl γ (c ∷ s) with p c
+          -> forall {n} -> BoundedVec tok (suc n)
+          -> P (BoundedVec tok (maybeSuc e n))
+    parse ._ fail    ≡-refl γ s       = mzero
+    parse ._ empty   ≡-refl γ s       = return s
+    parse ._ (sym p) ≡-refl γ []      = mzero
+    parse ._ (sym p) ≡-refl γ (c ∷ s) with p c
     ... | true  = return s
     ... | false = mzero
 
-    parse {d = node d₁ d₂} (_·_ {e₁ = true}               p₁ p₂) ≡-refl γ             s =        ⟦ p₂ ⟧' γ =<< ⟦ p₁ ⟧' γ s
-    parse {d = step d₁}    (_·_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl γ {n = suc n} s = ↑ <*> (⟦ p₂ ⟧' γ =<< ⟦ p₁ ⟧' γ s)
-    parse {d = step d₁}    (_·_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ {n = suc n} s =        ⟦ p₂ ⟧' γ =<< ⟦ p₁ ⟧' γ s
-    parse {d = step d₁}    (_·_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl γ {n = zero}  s = mzero
+    parse (node d₁ d₂) (_·_ {e₁ = true}               p₁ p₂) ≡-refl γ             s =        ⟦ p₂ ⟧' γ =<< ⟦ p₁ ⟧' γ s
+    parse (step d₁)    (_·_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl γ {n = suc n} s = ↑ <*> (⟦ p₂ ⟧' γ =<< ⟦ p₁ ⟧' γ s)
+    parse (step d₁)    (_·_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ {n = suc n} s =        ⟦ p₂ ⟧' γ =<< ⟦ p₁ ⟧' γ s
+    parse (step d₁)    (_·_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl γ {n = zero}  s = mzero
       -- None of p₁ and p₂ accept the empty string, and s has length at most 1.
-    parse {d = step d₁}    (_·_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ {n = zero}  []       = mzero
-    parse {d = step d₁}    (_·_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ {n = zero}  (c ∷ []) = ⟦ p₁ ⟧' γ {n = zero} (c ∷ [])
+    parse (step d₁)    (_·_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ {n = zero}  []       = mzero
+    parse (step d₁)    (_·_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ {n = zero}  (c ∷ []) = ⟦ p₁ ⟧' γ {n = zero} (c ∷ [])
       -- Note that p₁ does not accept the empty string, whereas p₂ does.
 
-    parse {d = node d₁ d₂} (_∣_ {e₁ = true}  {e₂ = true}  p₁ p₂) ≡-refl γ s =        ⟦ p₁ ⟧' γ s  ++        ⟦ p₂ ⟧' γ s
-    parse {d = node d₁ d₂} (_∣_ {e₁ = true}  {e₂ = false} p₁ p₂) ≡-refl γ s =        ⟦ p₁ ⟧' γ s  ++ (↑ <*> ⟦ p₂ ⟧' γ s)
-    parse {d = node d₁ d₂} (_∣_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ s = (↑ <*> ⟦ p₁ ⟧' γ s) ++        ⟦ p₂ ⟧' γ s
-    parse {d = node d₁ d₂} (_∣_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl γ s =        ⟦ p₁ ⟧' γ s  ++        ⟦ p₂ ⟧' γ s
+    parse (node d₁ d₂) (_∣_ {e₁ = true}  {e₂ = true}  p₁ p₂) ≡-refl γ s =        ⟦ p₁ ⟧' γ s  ++        ⟦ p₂ ⟧' γ s
+    parse (node d₁ d₂) (_∣_ {e₁ = true}  {e₂ = false} p₁ p₂) ≡-refl γ s =        ⟦ p₁ ⟧' γ s  ++ (↑ <*> ⟦ p₂ ⟧' γ s)
+    parse (node d₁ d₂) (_∣_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ s = (↑ <*> ⟦ p₁ ⟧' γ s) ++        ⟦ p₂ ⟧' γ s
+    parse (node d₁ d₂) (_∣_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl γ s =        ⟦ p₁ ⟧' γ s  ++        ⟦ p₂ ⟧' γ s
 
-    parse {d = step d} (! x) ≡-refl γ s = ⟦ lookup x γ ⟧' γ s
+    parse (step d) (! x) ≡-refl γ s = ⟦ lookup x γ ⟧' γ s
 
     -- Impossible cases.
-    parse {d = leaf}       (_·_ {e₁ = true}  p₁ p₂) () _ _
-    parse {d = step d}     (_·_ {e₁ = true}  p₁ p₂) () _ _
-    parse {d = leaf}       (_·_ {e₁ = false} p₁ p₂) () _ _
-    parse {d = node d₁ d₂} (_·_ {e₁ = false} p₁ p₂) () _ _
-    parse {d = leaf}       (! x)                    () _ _
-    parse {d = node d₁ d₂} (! x)                    () _ _
+    parse leaf         (_·_ {e₁ = true}  p₁ p₂) () _ _
+    parse (step d)     (_·_ {e₁ = true}  p₁ p₂) () _ _
+    parse leaf         (_·_ {e₁ = false} p₁ p₂) () _ _
+    parse (node d₁ d₂) (_·_ {e₁ = false} p₁ p₂) () _ _
+    parse leaf         (! x)                    () _ _
+    parse (node d₁ d₂) (! x)                    () _ _
 
 open L
 
