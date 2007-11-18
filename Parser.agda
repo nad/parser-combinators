@@ -35,7 +35,7 @@ data Depth : Set where
   node : Depth -> Depth -> Depth
 
 maybeNode : Empty -> Depth -> Depth -> Depth
-maybeNode e d₁ d₂ = if e then node d₁ d₂ else d₁
+maybeNode e d₁ d₂ = if e then node d₁ d₂ else step d₁
 
 -- The indices to the Parser type (used to instantiate the
 -- heterogeneous collection module).
@@ -109,7 +109,7 @@ open import Data.BoundedVec
 open import Data.Nat
 
 maybeSuc : Empty -> ℕ -> ℕ
-maybeSuc e = if e then id else suc
+maybeSuc e = if e then suc else id
 
 mutual
 
@@ -120,50 +120,40 @@ mutual
   -- Implemented using an ugly workaround since the termination
   -- checker does not take advantage of dotted patterns...
 
-  -- This function is terminating by virtue of the following
-  -- lexicographic measure:
-
-  -- 1) The length of the input string.
-  -- 2) The depth index.
-  -- 3) The structure of the parsers.
+  -- This function is structurally recursive with respect to the
+  -- following lexicographic measure:
+  --
+  -- 1) The upper bound of the input string.
+  -- 2) The depth of the parser.
 
   private
 
     ⟦_⟧' :  forall {tok Γ e d}
          -> Parser tok Γ e d -> Env tok Γ
          -> forall {n}
-         -> BoundedVec tok (maybeSuc e n) -> P (BoundedVec tok n)
+         -> BoundedVec tok (suc n) -> P (BoundedVec tok (maybeSuc e n))
     ⟦ p ⟧' γ {n = n} = parse p ≡-refl γ {n = n}
 
     parse :  forall {tok Γ e d d'}
           -> Parser tok Γ e d' -> d ≡ d' -> Env tok Γ
           -> forall {n}
-          -> BoundedVec tok (maybeSuc e n) -> P (BoundedVec tok n)
-    parse fail    ≡-refl γ s        = mzero
-    parse empty   ≡-refl γ s        = return s
-    parse (sym p) ≡-refl γ (c ∷b s) with p c
+          -> BoundedVec tok (suc n) -> P (BoundedVec tok (maybeSuc e n))
+    parse fail    ≡-refl γ s       = mzero
+    parse empty   ≡-refl γ s       = return s
+    parse (sym p) ≡-refl γ (c ∷ s) with p c
     ... | true  = return s
     ... | false = mzero
 
-    parse {d = node d₁ d₂} (_·_ {e₁ = true}  {e₂ = true}  p₁ p₂) ≡-refl γ {n = n} s =
-      ⟦ p₂ ⟧' γ {n = n} =<< ⟦ p₁ ⟧' γ {n = n} s
-    parse {d = node d₁ d₂} (_·_ {e₁ = true}  {e₂ = false} p₁ p₂) ≡-refl γ {n = n} s =
-      ⟦ p₂ ⟧' γ {n = n} =<< ⟦ p₁ ⟧' γ {n = suc n} s
-    parse {d = d₁} (_·_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ {n = n} s =
-      ⟦ p₂ ⟧' γ {n = n} =<< ⟦ p₁ ⟧' γ {n = n} s
-    parse {d = d₁} (_·_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl γ {n = suc n} s =
-      ↑_ <*> (⟦ p₂ ⟧' γ {n = n} =<< ⟦ p₁ ⟧' γ {n = suc n} s)
+    parse {d = node d₁ d₂} (_·_ {e₁ = true}               p₁ p₂) ≡-refl γ             s =        ⟦ p₂ ⟧' γ =<< ⟦ p₁ ⟧' γ s
+    parse {d = step d₁}    (_·_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ {n = suc n} s =        ⟦ p₂ ⟧' γ =<< ⟦ p₁ ⟧' γ s
+    parse {d = step d₁}    (_·_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl γ {n = suc n} s = ↑ <*> (⟦ p₂ ⟧' γ =<< ⟦ p₁ ⟧' γ s)
 
-    parse {d = node d₁ d₂} (_∣_ {e₁ = true}  {e₂ = true}  p₁ p₂) ≡-refl γ {n = n} s =
-      ⟦ p₁ ⟧' γ {n = n} s ++ ⟦ p₂ ⟧' γ {n = n} s
-    parse {d = node d₁ d₂} (_∣_ {e₁ = true}  {e₂ = false} p₁ p₂) ≡-refl γ {n = n} s =
-      ⟦ p₁ ⟧' γ {n = n} s ++ ⟦ p₂ ⟧' γ {n = n} (↑ s)
-    parse {d = node d₁ d₂} (_∣_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ {n = n} s =
-      ⟦ p₁ ⟧' γ {n = n} (↑ s) ++ ⟦ p₂ ⟧' γ {n = n} s
-    parse {d = node d₁ d₂} (_∣_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl γ {n = n} s =
-      ⟦ p₁ ⟧' γ {n = n} s ++ ⟦ p₂ ⟧' γ {n = n} s
+    parse {d = node d₁ d₂} (_∣_ {e₁ = true}  {e₂ = true}  p₁ p₂) ≡-refl γ s =        ⟦ p₁ ⟧' γ s  ++        ⟦ p₂ ⟧' γ s
+    parse {d = node d₁ d₂} (_∣_ {e₁ = true}  {e₂ = false} p₁ p₂) ≡-refl γ s =        ⟦ p₁ ⟧' γ s  ++ (↑ <*> ⟦ p₂ ⟧' γ s)
+    parse {d = node d₁ d₂} (_∣_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ s = (↑ <*> ⟦ p₁ ⟧' γ s) ++        ⟦ p₂ ⟧' γ s
+    parse {d = node d₁ d₂} (_∣_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl γ s =        ⟦ p₁ ⟧' γ s  ++        ⟦ p₂ ⟧' γ s
 
-    parse {d = step d} (! x) ≡-refl γ {n = n} s = ⟦ lookup x γ ⟧' γ s
+    parse {d = step d} (! x) ≡-refl γ s = ⟦ lookup x γ ⟧' γ s
     parse _ _ γ s = mzero
 
 open L
@@ -171,6 +161,4 @@ open L
 ⟦_⟧ :  forall {tok Γ e d}
     -> Parser tok Γ e d -> Env tok Γ
     -> [ tok ] -> P [ tok ]
-⟦_⟧ {e = false} p γ []      = mzero
-⟦_⟧ {e = false} p γ (c ∷ s) = toList <*> ⟦ p ⟧' γ (fromList (c ∷ s))
-⟦_⟧ {e = true}  p γ s       = toList <*> ⟦ p ⟧' γ (fromList s)
+⟦ p ⟧ γ s = toList <*> ⟦ p ⟧' γ (↑ (fromList s))
