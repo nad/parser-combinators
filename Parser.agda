@@ -6,19 +6,13 @@
 -- descent. The types used ensure that these implementations will
 -- always terminate.
 
--- However, the parse function below is not (currently) accepted by
--- the termination checker, so the termination checker is turned
--- off...
-
-{-# OPTIONS --dont-termination-check #-}
-
 open import Relation.Binary
 
 module Parser where
 
 open import Data.Bool
-open import Data.List hiding (_++_)
 open import Data.Product
+open import Data.Function
 open import Logic
 open import Monad
 open import Relation.Nullary
@@ -104,11 +98,18 @@ Env tok Γ = Coll P Γ
 
 -- Parser monad.
 
+import Data.List as L
+
 P : Set -> Set
-P = [_]
+P = L.[_]
 
 private
-  open module LM = MonadPlusOps P ListMonadPlus
+  open module LM = MonadPlusOps P L.ListMonadPlus
+open import Data.BoundedVec
+open import Data.Nat
+
+maybeSuc : Empty -> ℕ -> ℕ
+maybeSuc e = if e then id else suc
 
 mutual
 
@@ -119,26 +120,57 @@ mutual
   -- Implemented using an ugly workaround since the termination
   -- checker does not take advantage of dotted patterns...
 
-  ⟦_⟧ :  forall {tok Γ e d}
-      -> Parser tok Γ e d -> Env tok Γ -> [ tok ] -> P [ tok ]
-  ⟦ p ⟧ = parse _ p ≡-refl
+  -- This function is terminating by virtue of the following
+  -- lexicographic measure:
+
+  -- 1) The length of the input string.
+  -- 2) The depth index.
+  -- 3) The structure of the parsers.
 
   private
 
-    parse :  forall {tok Γ e} d {d'}
-          -> Parser tok Γ e d' -> d ≡ d'
-          -> Env tok Γ -> [ tok ] -> P [ tok ]
-    parse ._ fail    ≡-refl γ s       = zero
-    parse ._ empty   ≡-refl γ s       = return s
-    parse ._ (sym p) ≡-refl γ (c ∷ s) with p c
+    ⟦_⟧' :  forall {tok Γ e d}
+         -> Parser tok Γ e d -> Env tok Γ
+         -> forall {n}
+         -> BoundedVec tok (maybeSuc e n) -> P (BoundedVec tok n)
+    ⟦ p ⟧' γ {n = n} = parse p ≡-refl γ {n = n}
+
+    parse :  forall {tok Γ e d d'}
+          -> Parser tok Γ e d' -> d ≡ d' -> Env tok Γ
+          -> forall {n}
+          -> BoundedVec tok (maybeSuc e n) -> P (BoundedVec tok n)
+    parse fail    ≡-refl γ s        = mzero
+    parse empty   ≡-refl γ s        = return s
+    parse (sym p) ≡-refl γ (c ∷b s) with p c
     ... | true  = return s
-    ... | false = zero
-    parse (node d₁ d₂) (_·_ {e₁ = true} p₁ p₂) ≡-refl γ s =
-      ⟦ p₂ ⟧ γ =<< ⟦ p₁ ⟧ γ s
-    parse d₁ (_·_ {e₁ = false} p₁ p₂) ≡-refl γ s =
-      ⟦ p₂ ⟧ γ =<< ⟦ p₁ ⟧ γ s  -- This call is fine, but Agda cannot
-                               -- see that it is.
-    parse (node d₁ d₂) (p₁ ∣ p₂) ≡-refl γ s =
-      ⟦ p₁ ⟧ γ s ++ ⟦ p₂ ⟧ γ s
-    parse (step d) (! x) ≡-refl γ s = ⟦ lookup x γ ⟧ γ s
-    parse _        _     _      γ s = zero
+    ... | false = mzero
+
+    parse {d = node d₁ d₂} (_·_ {e₁ = true}  {e₂ = true}  p₁ p₂) ≡-refl γ {n = n} s =
+      ⟦ p₂ ⟧' γ {n = n} =<< ⟦ p₁ ⟧' γ {n = n} s
+    parse {d = node d₁ d₂} (_·_ {e₁ = true}  {e₂ = false} p₁ p₂) ≡-refl γ {n = n} s =
+      ⟦ p₂ ⟧' γ {n = n} =<< ⟦ p₁ ⟧' γ {n = suc n} s
+    parse {d = d₁} (_·_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ {n = n} s =
+      ⟦ p₂ ⟧' γ {n = n} =<< ⟦ p₁ ⟧' γ {n = n} s
+    parse {d = d₁} (_·_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl γ {n = suc n} s =
+      ↑_ <*> (⟦ p₂ ⟧' γ {n = n} =<< ⟦ p₁ ⟧' γ {n = suc n} s)
+
+    parse {d = node d₁ d₂} (_∣_ {e₁ = true}  {e₂ = true}  p₁ p₂) ≡-refl γ {n = n} s =
+      ⟦ p₁ ⟧' γ {n = n} s ++ ⟦ p₂ ⟧' γ {n = n} s
+    parse {d = node d₁ d₂} (_∣_ {e₁ = true}  {e₂ = false} p₁ p₂) ≡-refl γ {n = n} s =
+      ⟦ p₁ ⟧' γ {n = n} s ++ ⟦ p₂ ⟧' γ {n = n} (↑ s)
+    parse {d = node d₁ d₂} (_∣_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ {n = n} s =
+      ⟦ p₁ ⟧' γ {n = n} (↑ s) ++ ⟦ p₂ ⟧' γ {n = n} s
+    parse {d = node d₁ d₂} (_∣_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl γ {n = n} s =
+      ⟦ p₁ ⟧' γ {n = n} s ++ ⟦ p₂ ⟧' γ {n = n} s
+
+    parse {d = step d} (! x) ≡-refl γ {n = n} s = ⟦ lookup x γ ⟧' γ s
+    parse _ _ γ s = mzero
+
+open L
+
+⟦_⟧ :  forall {tok Γ e d}
+    -> Parser tok Γ e d -> Env tok Γ
+    -> [ tok ] -> P [ tok ]
+⟦_⟧ {e = false} p γ []      = mzero
+⟦_⟧ {e = false} p γ (c ∷ s) = toList <*> ⟦ p ⟧' γ (fromList (c ∷ s))
+⟦_⟧ {e = true}  p γ s       = toList <*> ⟦ p ⟧' γ (fromList s)
