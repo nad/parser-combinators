@@ -110,31 +110,32 @@ module Ex₅ where
             -> Parser tok name false d
             -> Name name _ _
 
-    many :  forall {name}
-         -> (forall {e d} -> Name name e d -> name e d)
-         -> forall {d}
-         -> Parser tok name false d -> Parser tok name _ _
-    many lib p = ! lib (many' p)
+    module Combinators
+             {name : _}
+             (lib : forall {e d} -> Name name e d -> name e d)
+             where
 
-    grammar :  forall {name}
-            -> (forall {e d} -> Name name e d -> name e d)
-            -> forall {e d} -> Name name e d -> Parser tok name e d
-    grammar lib (many' p) = ε ∣ p · many lib p
+      many :  forall {d}
+           -> Parser tok name false d -> Parser tok name _ _
+      many p = ! lib (many' p)
 
-  private
-    module L = Lib Char
+      grammar : forall {e d} -> Name name e d -> Parser tok name e d
+      grammar (many' p) = ε ∣ p · many p
 
   -- A grammar making use of the parameterised parser.
 
   data Name : ParserType where
-    lib : forall {e d} -> L.Name Name e d -> Name e d
+    lib : forall {e d} -> Lib.Name Char Name e d -> Name _ _
     a   : Name _ _
     as  : Name _ _
 
+  private
+    module L = Lib.Combinators Char lib
+
   grammar : Grammar Char Name
-  grammar (lib p) = L.grammar lib p
+  grammar (lib p) = L.grammar p
   grammar a       = token 'a'
-  grammar as      = L.many lib (! a)
+  grammar as      = L.many (! a)
 
   ex₁ : ⟦ ! as ⟧ grammar (S.toList "aab") ≡
         S.toList "aab" ∷ S.toList "ab" ∷ S.toList "b" ∷ []
