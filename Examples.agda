@@ -103,12 +103,19 @@ module Ex₅ where
 
   module Lib (tok : Set) where
 
-    -- A parameterised parser.
+    -- Some parameterised parsers.
 
-    data Name (name : ParserType) : ParserType where
-      many' :  forall {d}
-            -> Parser tok name false d
-            -> Name name _ _
+    private
+      data Name' (name : ParserType) : ParserType where
+        many'  :  forall {d}
+               -> Parser tok name false d
+               -> Name' name _ _
+        many₁' :  forall {d}
+               -> Parser tok name false d
+               -> Name' name _ _
+
+    Name : ParserType -> ParserType
+    Name = Name'
 
     module Combinators
              {name : _}
@@ -119,8 +126,13 @@ module Ex₅ where
            -> Parser tok name false d -> Parser tok name _ _
       many p = ! lib (many' p)
 
+      many₁ :  forall {d}
+            -> Parser tok name false d -> Parser tok name _ _
+      many₁ p = ! lib (many₁' p)
+
       grammar : forall {e d} -> Name name e d -> Parser tok name e d
-      grammar (many' p) = ε ∣ p · many p
+      grammar (many'  p) = ε ∣ many₁ p
+      grammar (many₁' p) = p · many p
 
   -- A grammar making use of the parameterised parser.
 
