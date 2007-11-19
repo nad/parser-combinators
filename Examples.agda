@@ -6,13 +6,12 @@ module Examples where
 
 open import Data.List
 open import Data.Nat
-open import Data.Bool
-open import Data.Function
 open import Logic
 import Data.Char as C
 import Data.String as S
 open C using (Char)
 open import Parser
+import Parser.Lib as Lib
 private
   open module T = Token C.decSetoid
 
@@ -101,40 +100,7 @@ module Ex₄ where
 
 module Ex₅ where
 
-  module Lib (tok : Set) where
-
-    -- Some parameterised parsers.
-
-    private
-      data Name' (name : ParserType) : ParserType where
-        many  :  forall {d}
-              -> Parser tok name false d
-              -> Name' name _ _
-        many₁ :  forall {d}
-              -> Parser tok name false d
-              -> Name' name _ _
-
-    Name : ParserType -> ParserType
-    Name = Name'
-
-    module Combinators
-             {name : _}
-             (lib : forall {e d} -> Name name e d -> name e d)
-             where
-
-      infix 55 _⋆ _+
-
-      _⋆ : forall {d} -> Parser tok name false d -> Parser tok name _ _
-      _⋆ p = ! lib (many p)
-
-      _+ : forall {d} -> Parser tok name false d -> Parser tok name _ _
-      _+ p = ! lib (many₁ p)
-
-      grammar : forall {e d} -> Name name e d -> Parser tok name e d
-      grammar (many  p) = ε ∣ p +
-      grammar (many₁ p) = p · p ⋆
-
-  -- A grammar making use of the parameterised parser.
+  -- A grammar making use of a parameterised parser from the library.
 
   data Name : ParserType where
     lib : forall {e d} -> Lib.Name Char Name e d -> Name _ _
@@ -142,11 +108,10 @@ module Ex₅ where
     as  : Name _ _
 
   private
-    module L = Lib.Combinators Char lib
-    open L using (_⋆)
+    open module L = Lib.Combinators Char lib
 
   grammar : Grammar Char Name
-  grammar (lib p) = L.grammar p
+  grammar (lib p) = library p
   grammar a       = token 'a'
   grammar as      = ! a ⋆
 
