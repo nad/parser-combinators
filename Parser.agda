@@ -11,7 +11,7 @@ module Parser where
 open import Data.Bool
 open import Data.Product
 open import Data.Function
-open import Data.BoundedVec as BVec
+open import Data.BoundedVec
 import Data.List as L
 open import Data.Nat
 open import Logic
@@ -39,46 +39,30 @@ data Depth : Set where
 maybeNode : Empty -> Depth -> Depth -> Depth
 maybeNode e d₁ d₂ = if e then node d₁ d₂ else step d₁
 
--- The indices to the Parser type (used to instantiate the
--- heterogeneous collection module).
-
-Index : Set
-Index = Empty × Depth
-
-private
-  import HeterogeneousCollection as HC
-  module HC' = HC Index
-  open HC' public hiding (Coll)
-  open HC' using (Coll)
-
 ------------------------------------------------------------------------
 -- Parsers
 
--- Parsers. The context lists all named parsers which can be used.
-
--- Possible future extensions (if we can figure out how to support
--- these features):
---
--- * Parameterised parsers.
---
--- * Left-recursive parsers.
+-- Parsers, indexed on a type of names.
 
 infix  60 !_
 infixr 50 _·_
 infixr 40 _∣_
 
-data Parser (tok : Set) (Γ : Ctxt) : Empty -> Depth -> Set where
-  fail  :  Parser tok Γ false leaf
-  ε     :  Parser tok Γ true  leaf
-  sym   :  (tok -> Bool) -> Parser tok Γ false leaf
+ParserType : Set1
+ParserType = Empty -> Depth -> Set
+
+data Parser (tok : Set) (name : ParserType) : ParserType where
+  fail  :  Parser tok name false leaf
+  ε     :  Parser tok name true  leaf
+  sym   :  (tok -> Bool) -> Parser tok name false leaf
   _·_   :  forall {e₁ d₁ e₂ d₂}
-        -> Parser tok Γ e₁ d₁ -> Parser tok Γ e₂ d₂
-        -> Parser tok Γ (e₁ ∧ e₂) (maybeNode e₁ d₁ d₂)
+        -> Parser tok name e₁ d₁ -> Parser tok name e₂ d₂
+        -> Parser tok name (e₁ ∧ e₂) (maybeNode e₁ d₁ d₂)
   _∣_   :  forall {e₁ d₁ e₂ d₂}
-        -> Parser tok Γ e₁ d₁ -> Parser tok Γ e₂ d₂
-        -> Parser tok Γ (e₁ ∨ e₂) (node d₁ d₂)
+        -> Parser tok name e₁ d₁ -> Parser tok name e₂ d₂
+        -> Parser tok name (e₁ ∨ e₂) (node d₁ d₂)
   !_    :  forall {e d}
-        -> Label Γ (e , d) -> Parser tok Γ e (step d)
+        -> name e d -> Parser tok name e (step d)
 
 ------------------------------------------------------------------------
 -- Some derived parsers
@@ -87,41 +71,25 @@ module Token (a : DecSetoid) where
 
   private
     open module D = DecSetoid a
-    open module S = Setoid setoid
+    open module S = Setoid setoid renaming (carrier to tok)
 
   -- Parses a given token.
 
-  token : forall {Γ} -> carrier -> Parser carrier Γ false leaf
+  token : forall {name} -> tok -> Parser tok name false leaf
   token x = sym p
     where
-    p : carrier -> Bool
+    p : tok -> Bool
     p y with x ≟ y
     ... | yes _ = true
     ... | no  _ = false
 
--- Parses zero or more occurrences of the given parser (which may not
--- accept the empty string).
---
--- Note that this parser may be quite inconvenient to use, since it
--- needs to be included as the last parser in the context, and can
--- only be used with a fixed parameter parser.
-
-many :  forall {tok Γ d}
-     -> let d' = node leaf (step d) in
-        Parser tok (Γ ▻ (true , d')) false d
-     -> Parser tok (Γ ▻ (true , d')) true  d'
-many p = ε ∣ p · ! lz
-
 ------------------------------------------------------------------------
 -- Run function for the parsers
 
--- Environments containing parsers.
+-- Grammars.
 
-Env : Set -> Ctxt -> Set
-Env tok Γ = Coll P Γ
-  where
-  P : Index -> Set
-  P (e , d) = Parser tok Γ e d
+Grammar : Set -> ParserType -> Set
+Grammar tok name = forall {e d} -> name e d -> Parser tok name e d
 
 -- Parser monad.
 
@@ -149,38 +117,38 @@ private
   maybeSuc : Empty -> ℕ -> ℕ
   maybeSuc e = if e then suc else id
 
-  ⟦_⟧' :  forall {tok Γ e d}
-       -> Parser tok Γ e d -> Env tok Γ
+  ⟦_⟧' :  forall {tok name e d}
+       -> Parser tok name e d -> Grammar tok name
        -> forall {n}
        -> BoundedVec tok (suc n) -> P (BoundedVec tok (maybeSuc e n))
-  ⟦_⟧' {tok = tok} {Γ = Γ} p γ = parse _ p ≡-refl γ
+  ⟦_⟧' {tok = tok} {name = name} p g = parse _ p ≡-refl g
     where
     parse :  forall {e} d {d'}
-          -> Parser tok Γ e d' -> d ≡ d' -> Env tok Γ
+          -> Parser tok name e d' -> d ≡ d' -> Grammar tok name
           -> forall {n} -> BoundedVec tok (suc n)
           -> P (BoundedVec tok (maybeSuc e n))
-    parse ._ fail    ≡-refl γ s       = mzero
-    parse ._ ε       ≡-refl γ s       = return s
-    parse ._ (sym p) ≡-refl γ []      = mzero
-    parse ._ (sym p) ≡-refl γ (c ∷ s) with p c
+    parse ._ fail    ≡-refl g s       = mzero
+    parse ._ ε       ≡-refl g s       = return s
+    parse ._ (sym p) ≡-refl g []      = mzero
+    parse ._ (sym p) ≡-refl g (c ∷ s) with p c
     ... | true  = return s
     ... | false = mzero
 
-    parse (node d₁ d₂) (_·_ {e₁ = true}               p₁ p₂) ≡-refl γ             s =        ⟦ p₂ ⟧' γ =<< ⟦ p₁ ⟧' γ s
-    parse (step d₁)    (_·_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl γ {n = suc n} s = ↑ <$> (⟦ p₂ ⟧' γ =<< ⟦ p₁ ⟧' γ s)
-    parse (step d₁)    (_·_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ {n = suc n} s =        ⟦ p₂ ⟧' γ =<< ⟦ p₁ ⟧' γ s
-    parse (step d₁)    (_·_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl γ {n = zero}  s = mzero
+    parse (node d₁ d₂) (_·_ {e₁ = true}               p₁ p₂) ≡-refl g             s =        ⟦ p₂ ⟧' g =<< ⟦ p₁ ⟧' g s
+    parse (step d₁)    (_·_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl g {n = suc n} s = ↑ <$> (⟦ p₂ ⟧' g =<< ⟦ p₁ ⟧' g s)
+    parse (step d₁)    (_·_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl g {n = suc n} s =        ⟦ p₂ ⟧' g =<< ⟦ p₁ ⟧' g s
+    parse (step d₁)    (_·_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl g {n = zero}  s = mzero
       -- None of p₁ and p₂ accept the empty string, and s has length at most 1.
-    parse (step d₁)    (_·_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ {n = zero}  []       = mzero
-    parse (step d₁)    (_·_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ {n = zero}  (c ∷ []) = ⟦ p₁ ⟧' γ {n = zero} (c ∷ [])
+    parse (step d₁)    (_·_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl g {n = zero}  []       = mzero
+    parse (step d₁)    (_·_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl g {n = zero}  (c ∷ []) = ⟦ p₁ ⟧' g {n = zero} (c ∷ [])
       -- Note that p₁ does not accept the empty string, whereas p₂ does.
 
-    parse (node d₁ d₂) (_∣_ {e₁ = true}  {e₂ = true}  p₁ p₂) ≡-refl γ s =        ⟦ p₁ ⟧' γ s  ++        ⟦ p₂ ⟧' γ s
-    parse (node d₁ d₂) (_∣_ {e₁ = true}  {e₂ = false} p₁ p₂) ≡-refl γ s =        ⟦ p₁ ⟧' γ s  ++ (↑ <$> ⟦ p₂ ⟧' γ s)
-    parse (node d₁ d₂) (_∣_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ s = (↑ <$> ⟦ p₁ ⟧' γ s) ++        ⟦ p₂ ⟧' γ s
-    parse (node d₁ d₂) (_∣_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl γ s =        ⟦ p₁ ⟧' γ s  ++        ⟦ p₂ ⟧' γ s
+    parse (node d₁ d₂) (_∣_ {e₁ = true}  {e₂ = true}  p₁ p₂) ≡-refl g s =        ⟦ p₁ ⟧' g s  ++        ⟦ p₂ ⟧' g s
+    parse (node d₁ d₂) (_∣_ {e₁ = true}  {e₂ = false} p₁ p₂) ≡-refl g s =        ⟦ p₁ ⟧' g s  ++ (↑ <$> ⟦ p₂ ⟧' g s)
+    parse (node d₁ d₂) (_∣_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl g s = (↑ <$> ⟦ p₁ ⟧' g s) ++        ⟦ p₂ ⟧' g s
+    parse (node d₁ d₂) (_∣_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl g s =        ⟦ p₁ ⟧' g s  ++        ⟦ p₂ ⟧' g s
 
-    parse (step d) (! x) ≡-refl γ s = ⟦ lookup x γ ⟧' γ s
+    parse (step d) (! x) ≡-refl g s = ⟦ g x ⟧' g s
 
     -- Impossible cases.
     parse leaf         (_·_ {e₁ = true}  p₁ p₂) () _ _
@@ -192,7 +160,7 @@ private
 
 open L
 
-⟦_⟧ :  forall {tok Γ e d}
-    -> Parser tok Γ e d -> Env tok Γ
+⟦_⟧ :  forall {tok name e d}
+    -> Parser tok name e d -> Grammar tok name
     -> [ tok ] -> P [ tok ]
-⟦ p ⟧ γ s = toList <$> ⟦ p ⟧' γ (↑ (fromList s))
+⟦ p ⟧ g s = toList <$> ⟦ p ⟧' g (↑ (fromList s))
