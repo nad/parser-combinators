@@ -65,6 +65,21 @@ data Parser (tok : Set) (name : ParserType) : ParserType where
         -> name e d -> Parser tok name e (step d)
 
 ------------------------------------------------------------------------
+-- Renaming parsers
+
+-- Is this useful?
+
+rename :  forall {tok name₁ name₂}
+       -> (forall {e d} -> name₁ e d -> name₂ e d)
+       -> forall {e d} -> Parser tok name₁ e d -> Parser tok name₂ e d
+rename f fail      = fail
+rename f ε         = ε
+rename f (sym p)   = sym p
+rename f (p₁ · p₂) = rename f p₁ · rename f p₂
+rename f (p₁ ∣ p₂) = rename f p₁ ∣ rename f p₂
+rename f (! x)     = ! f x
+
+------------------------------------------------------------------------
 -- Some derived parsers
 
 module Token (a : DecSetoid) where
