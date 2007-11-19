@@ -167,7 +167,7 @@ private
     ... | false = mzero
 
     parse (node d₁ d₂) (_·_ {e₁ = true}               p₁ p₂) ≡-refl γ             s =        ⟦ p₂ ⟧' γ =<< ⟦ p₁ ⟧' γ s
-    parse (step d₁)    (_·_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl γ {n = suc n} s = ↑ <*> (⟦ p₂ ⟧' γ =<< ⟦ p₁ ⟧' γ s)
+    parse (step d₁)    (_·_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl γ {n = suc n} s = ↑ <$> (⟦ p₂ ⟧' γ =<< ⟦ p₁ ⟧' γ s)
     parse (step d₁)    (_·_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ {n = suc n} s =        ⟦ p₂ ⟧' γ =<< ⟦ p₁ ⟧' γ s
     parse (step d₁)    (_·_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl γ {n = zero}  s = mzero
       -- None of p₁ and p₂ accept the empty string, and s has length at most 1.
@@ -176,8 +176,8 @@ private
       -- Note that p₁ does not accept the empty string, whereas p₂ does.
 
     parse (node d₁ d₂) (_∣_ {e₁ = true}  {e₂ = true}  p₁ p₂) ≡-refl γ s =        ⟦ p₁ ⟧' γ s  ++        ⟦ p₂ ⟧' γ s
-    parse (node d₁ d₂) (_∣_ {e₁ = true}  {e₂ = false} p₁ p₂) ≡-refl γ s =        ⟦ p₁ ⟧' γ s  ++ (↑ <*> ⟦ p₂ ⟧' γ s)
-    parse (node d₁ d₂) (_∣_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ s = (↑ <*> ⟦ p₁ ⟧' γ s) ++        ⟦ p₂ ⟧' γ s
+    parse (node d₁ d₂) (_∣_ {e₁ = true}  {e₂ = false} p₁ p₂) ≡-refl γ s =        ⟦ p₁ ⟧' γ s  ++ (↑ <$> ⟦ p₂ ⟧' γ s)
+    parse (node d₁ d₂) (_∣_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl γ s = (↑ <$> ⟦ p₁ ⟧' γ s) ++        ⟦ p₂ ⟧' γ s
     parse (node d₁ d₂) (_∣_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl γ s =        ⟦ p₁ ⟧' γ s  ++        ⟦ p₂ ⟧' γ s
 
     parse (step d) (! x) ≡-refl γ s = ⟦ lookup x γ ⟧' γ s
@@ -195,4 +195,4 @@ open L
 ⟦_⟧ :  forall {tok Γ e d}
     -> Parser tok Γ e d -> Env tok Γ
     -> [ tok ] -> P [ tok ]
-⟦ p ⟧ γ s = toList <*> ⟦ p ⟧' γ (↑ (fromList s))
+⟦ p ⟧ γ s = toList <$> ⟦ p ⟧' γ (↑ (fromList s))
