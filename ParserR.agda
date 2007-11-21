@@ -68,6 +68,12 @@ data Parser (tok : Set) (name : ParserType) : ParserType where
         -> Parser tok name e₂ (node d₁ d₂) r
   !_    :  forall {e d r}
         -> name e d r -> Parser tok name e (step d) r
+  bind₀ :  forall {d₁ e₂ d₂ r₁ r₂}
+        -> Parser tok name true d₁ r₁ -> (r₁ -> Parser tok name e₂ d₂ r₂)
+        -> Parser tok name e₂ (node d₁ d₂) r₂
+  bind₁ :  forall {d₁ e₂ d₂ r₁ r₂}
+        -> Parser tok name false d₁ r₁ -> (r₁ -> Parser tok name e₂ d₂ r₂)
+        -> Parser tok name false (step d₁) r₂
 
 _·_ : forall {tok name e₁ d₁ e₂ d₂ r₁ r₂} ->
       Parser tok name e₁ d₁ (r₁ -> r₂) -> Parser tok name e₂ d₂ r₁ ->
@@ -194,8 +200,11 @@ private
           ... | true  = put s >> return c
           ... | false = mzero
       parse₁ (node _ _) (p₁ ·₀ p₂)                (suc n) = parse₀ _ p₁ (suc n) <*> parse₁ _ p₂ (suc n)
+      parse₁ (node _ _) (bind₀ p₁ p₂)             (suc n) = parse₀ _ p₁ (suc n) >>= \x -> parse₁ _ (p₂ x) (suc n)
       parse₁ (step _)   (_·₁_ {e₂ = true } p₁ p₂) (suc n) = parse₁ _ p₁ (suc n) <*> parse₀ _ p₂ n
       parse₁ (step _)   (_·₁_ {e₂ = false} p₁ p₂) (suc n) = parse₁ _ p₁ (suc n) <*> parse₁↑  p₂ n
+      parse₁ (step _)   (bind₁ {e₂ = true } p₁ p₂)(suc n) = parse₁ _ p₁ (suc n) >>= \x -> parse₀ _ (p₂ x) n
+      parse₁ (step _)   (bind₁ {e₂ = false} p₁ p₂)(suc n) = parse₁ _ p₁ (suc n) >>= \x -> parse₁↑  (p₂ x) n
       parse₁ (node _ _) (p₁ ∣₁ p₂)                (suc n) = parse₁ _ p₁ (suc n) ++  parse₁ _ p₂ (suc n)
       parse₁ (step _)   (! x)                     (suc n) = parse₁ _ (g x) (suc n)
 
