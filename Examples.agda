@@ -53,7 +53,6 @@ module Ex₂ where
   ex₂ = ≡-refl
 
 {-
-
 module Ex₃ where
 
   -- This is not allowed:
@@ -71,7 +70,6 @@ module Ex₃ where
   grammar factor = token '0'
                  ∣ ! factor · token '*' · token '0'
                  ∣ token '(' · ! expr · token ')'
-
 -}
 
 module Ex₄ where
