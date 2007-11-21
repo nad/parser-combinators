@@ -171,84 +171,36 @@ private
     mutual
       parse₀ : forall d {r} ->
                Parser tok name true d r -> (n : ℕ) -> BoundedVec tok n -> P (BoundedVec tok n) r
-      parse₀ leaf       (ret x)    n s = return (x , s)
-      parse₀ (node _ _) (p₁ ·₀ p₂) n s = parse₀ _ p₁ n s >>* parse₀ _ p₂ n
-      parse₀ (node _ _) (_∣₀_ {e₂ = true } p₁ p₂) n       s = parse₀ _ p₁ n s ++ parse₀ _ p₂ n s
-      parse₀ (node _ _) (_∣₀_ {e₂ = false} p₁ p₂) zero    s = parse₀ _ p₁ zero s
-      parse₀ (node _ _) (_∣₀_ {e₂ = false} p₁ p₂) (suc n) s = parse₀ _ p₁ (suc n) s ++ (↑ <$>* parse₁ _ p₂ n s)
-      parse₀ (node _ _) (p₁ ∣₁ p₂) n s = parse₀ _ p₂ n s
-      parse₀ (step _)   (! x)      n s = parse₀ _ (g x) n s
+      parse₀ leaf       (ret x)                   n s = return (x , s)
+      parse₀ (node _ _) (p₁ ·₀ p₂)                n s = parse₀ _ p₁ n s >>* parse₀ _ p₂ n
+      parse₀ (node _ _) (_∣₀_ {e₂ = true } p₁ p₂) n s = parse₀ _ p₁ n s ++  parse₀ _ p₂ n s
+      parse₀ (node _ _) (_∣₀_ {e₂ = false} p₁ p₂) n s = parse₀ _ p₁ n s ++  parse₁↑  p₂ n s
+      parse₀ (node _ _) (p₁ ∣₁ p₂)                n s = parse₁↑  p₁ n s ++  parse₀ _ p₂ n s
+      parse₀ (step _)   (! x)                     n s = parse₀ _ (g x) n s
+
+      parse₁↑ : forall {d r} -> Parser tok name false d r -> (n : ℕ) ->
+                BoundedVec tok n -> P (BoundedVec tok n) r
+      parse₁↑ p zero    s = mzero
+      parse₁↑ p (suc n) s = ↑ <$>* parse₁ _ p (suc n) s
 
       parse₁ : forall d {r} ->
-               Parser tok name false d r -> (n : ℕ) -> BoundedVec tok (suc n) -> P (BoundedVec tok n) r
-      parse₁ leaf       fail       n s = mzero
-      parse₁ leaf       (sym p)    n []      = mzero
-      parse₁ leaf       (sym p)    n (c ∷ s) with p c
+               Parser tok name false d r -> (n : ℕ) -> BoundedVec tok n -> P (BoundedVec tok (pred n)) r
+      parse₁ _          _                         zero    s  = mzero
+      parse₁ leaf       fail                      (suc n) s  = mzero
+      parse₁ leaf       (sym p)                   (suc n) [] = mzero
+      parse₁ leaf       (sym p)                   (suc n) (c ∷ s) with p c
       ... | true  = return (c , s)
       ... | false = mzero
-      parse₁ (node _ _) (p₁ ·₀ p₂) n s = parse₀ _ p₁ _ s >>* parse₁ _ p₂ _
-      parse₁ (step _)   (_·₁_ {e₂ = true } p₁ p₂) n s = parse₁ _ p₁ _ s >>* parse₀ _ p₂ _
-        -- ^ doesn't pass termination
-      parse₁ (step _)   (_·₁_ {e₂ = false} p₁ p₂) zero    s = mzero
-      parse₁ (step _)   (_·₁_ {e₂ = false} p₁ p₂) (suc n) s = parse₁ _ p₁ _ s >>* \s -> (↑ <$>* parse₁ _ p₂ n s) 
-        -- ^ doesn't pass termination
-      parse₁ (node _ _) (p₁ ∣₁ p₂) n s = parse₁ _ p₁ _ s ++ parse₁ _ p₂ _ s
-      parse₁ (step _)   (! x)      n s = parse₁ _ (g x) n s
+      parse₁ (node _ _) (p₁ ·₀ p₂)                (suc n) s = parse₀ _ p₁ _ s >>* parse₁ _ p₂ _
+      parse₁ (step _)   (_·₁_ {e₂ = true } p₁ p₂) (suc n) s = parse₁ _ p₁ _ s >>* parse₀ _ p₂ _
+      parse₁ (step _)   (_·₁_ {e₂ = false} p₁ p₂) (suc n) s = parse₁ _ p₁ _ s >>* parse₁↑  p₂ _
+      parse₁ (node _ _) (p₁ ∣₁ p₂)                (suc n) s = parse₁ _ p₁ _ s ++  parse₁ _ p₂ _ s
+      parse₁ (step _)   (! x)                     (suc n) s = parse₁ _ (g x) _ s
 
     parse : forall e {d r} ->
             Parser tok name e d r -> (n : ℕ) -> BoundedVec tok (suc n) -> P (BoundedVec tok (maybeSuc e n)) r
     parse true  p n s = parse₀ _ p _ s
     parse false p n s = parse₁ _ p _ s
-
-{-
-    where
-    parse-[] : forall d {r e} ->
-               Parser tok name e d r -> e ≡ true -> Grammar tok name ->
-               P (BoundedVec tok zero) r
-    parse-[] ._ fail      ()     g
-    parse-[] ._ (sym _)   ()     g
-    parse-[] ._ (ret x)   ≡-refl g = return (x , [])
-    parse-[] (step d) (! x)     ≡-refl g = parse-[] d (g x) ≡-refl g
-    parse-[] (node d₁ d₂) (_∣_ {e₁ = true}  {e₂ = true}  p₁ p₂) ≡-refl g = parse-[] d₁ p₁ ≡-refl g ++ parse-[] d₂ p₂ ≡-refl g
-    parse-[] (node d₁ d₂) (_∣_ {e₁ = true}  {e₂ = false} p₁ p₂) ≡-refl g = parse-[] d₁ p₁ ≡-refl g
-    parse-[] (node d₁ d₂) (_∣_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl g = parse-[] d₂ p₂ ≡-refl g
-    parse-[] (node d₁ d₂) (_∣_ {e₁ = false} {e₂ = false} p₁ p₂) ()     g
-
-    parse :  forall {e} d {d'} {r}
-          -> Parser tok name e d' r -> d ≡ d' -> Grammar tok name
-          -> forall {n} -> BoundedVec tok (suc n)
-          -> P (BoundedVec tok (maybeSuc e n)) r
-    parse ._ fail    ≡-refl g s       = mzero
-    parse ._ (ret x) ≡-refl g s       = return (x , s)
-    parse ._ (sym p) ≡-refl g []      = mzero
-    parse ._ (sym p) ≡-refl g (c ∷ s) with p c
-    ... | true  = return (c , s)
-    ... | false = mzero
-
-    parse (node d₁ d₂) (_·_ {e₁ = true}               p₁ p₂) ≡-refl g             s =         ⟦ p₁ ⟧' g s >>* ⟦ p₂ ⟧' g
-    parse (step d₁)    (_·_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl g {n = suc n} s = ↑ <$>* (⟦ p₁ ⟧' g s >>* ⟦ p₂ ⟧' g)
-    parse (step d₁)    (_·_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl g {n = suc n} s =         ⟦ p₁ ⟧' g s >>* ⟦ p₂ ⟧' g
-    parse (step d₁)    (_·_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl g {n = zero}  s = mzero
-      -- None of p₁ and p₂ accept the empty string, and s has length at most 1.
-    parse (step d₁)    (_·_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl g {n = zero}  []       = mzero
-    parse (step d₁)    (_·_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl g {n = zero}  (c ∷ []) =
-      ⟦ p₁ ⟧' g {n = zero} (c ∷ []) >>* \_ -> parse-[] _ p₂ ≡-refl g
-      -- Note that p₁ does not accept the empty string, whereas p₂ does.
-
-    parse (node d₁ d₂) (_∣_ {e₁ = true}  {e₂ = true}  p₁ p₂) ≡-refl g s =         ⟦ p₁ ⟧' g s  ++         ⟦ p₂ ⟧' g s
-    parse (node d₁ d₂) (_∣_ {e₁ = true}  {e₂ = false} p₁ p₂) ≡-refl g s =         ⟦ p₁ ⟧' g s  ++ (↑ <$>* ⟦ p₂ ⟧' g s)
-    parse (node d₁ d₂) (_∣_ {e₁ = false} {e₂ = true}  p₁ p₂) ≡-refl g s = (↑ <$>* ⟦ p₁ ⟧' g s) ++         ⟦ p₂ ⟧' g s
-    parse (node d₁ d₂) (_∣_ {e₁ = false} {e₂ = false} p₁ p₂) ≡-refl g s =         ⟦ p₁ ⟧' g s  ++         ⟦ p₂ ⟧' g s
-
-    parse (step d) (! x) ≡-refl g s = ⟦ g x ⟧' g s
-
-    -- Impossible cases.
-    parse leaf         (_·_ {e₁ = true}  p₁ p₂) () _ _
-    parse (step d)     (_·_ {e₁ = true}  p₁ p₂) () _ _
-    parse leaf         (_·_ {e₁ = false} p₁ p₂) () _ _
-    parse (node d₁ d₂) (_·_ {e₁ = false} p₁ p₂) () _ _
-    parse leaf         (! x)                    () _ _
-    parse (node d₁ d₂) (! x)                    () _ _
 
 open L
 
@@ -256,4 +208,3 @@ open L
     -> Parser tok name e d r -> Grammar tok name
     -> [ tok ] -> P [ tok ] r
 ⟦ p ⟧ g s = toList <$>* ⟦ p ⟧' g (↑ (fromList s))
--}
