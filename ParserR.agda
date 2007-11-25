@@ -17,9 +17,10 @@ open BVec using (BoundedVec; []v; _∷v_; ↑)
 import Data.List as L
 open import Data.Nat
 open import Logic
-open import Monad
-open import Monad.Indexed
-open import Monad.State
+open import Category.Applicative.Indexed
+open import Category.Monad
+open import Category.Monad.Indexed
+open import Category.Monad.State
 open import Relation.Nullary
 open import Relation.Binary
 
@@ -130,7 +131,7 @@ Grammar tok name = forall {e d r} -> name e d r -> Parser tok name e d r
 
 -- Parser monad.
 
-P : Set -> ℕ -> ℕ -> Set -> Set
+P : Set -> IFun ℕ
 P tok = IStateT (BoundedVec tok) L.[_]
 
 PIMonadPlus : (tok : Set) -> RawIMonadPlus (P tok)
@@ -153,8 +154,8 @@ module Internal {tok : Set} {name : ParserType}
                 (g : Grammar tok name)
                 where
   private
-    open module LM {tok : Set} = IMonadPlusOps _ (PIMonadPlus  tok)
-    open module SM {tok : Set} = IMonadStateOps  (PIMonadState tok)
+    open module LM {tok : Set} = IMonadPlusOps  (PIMonadPlus  tok)
+    open module SM {tok : Set} = IMonadStateOps (PIMonadState tok)
 
   mutual
     parse₀ : forall d {r} ->

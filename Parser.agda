@@ -15,7 +15,7 @@ open import Data.BoundedVec
 import Data.List as L
 open import Data.Nat
 open import Logic
-open import Monad
+open import Category.Monad
 open import Relation.Nullary
 open import Relation.Binary
 
@@ -112,7 +112,7 @@ P : Set -> Set
 P = L.[_]
 
 private
-  open module LM = MonadPlusOps P L.ListMonadPlus
+  open module LM = MonadPlusOps L.ListMonadPlus
 
 -- For every successful parse the run function returns the remaining
 -- string. (Since there can be several successful parses a list of
