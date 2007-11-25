@@ -160,6 +160,7 @@ module Internal {tok : Set} {name : ParserType}
              Parser tok name true d r ->
              forall n -> P tok n n r
     parse₀ leaf       (ret x)                   n = return x
+    parse₀ (node _ _) (bind₀ p₁ p₂)             n = parse₀ _ p₁ n >>= \x -> parse₀ _ (p₂ x) n
     parse₀ (node _ _) (p₁ ·₀ p₂)                n = parse₀ _ p₁ n <*> parse₀ _ p₂ n
     parse₀ (node _ _) (_∣₀_ {e₂ = true } p₁ p₂) n = parse₀ _ p₁ n ++  parse₀ _ p₂ n
     parse₀ (node _ _) (_∣₀_ {e₂ = false} p₁ p₂) n = parse₀ _ p₁ n ++  parse₁↑  p₂ n
