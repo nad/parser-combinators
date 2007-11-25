@@ -9,6 +9,7 @@
 module ParserR where
 
 open import Data.Bool
+open import Data.Maybe
 open import Data.Product
 open import Data.Function
 open import Data.BoundedVec
@@ -51,9 +52,10 @@ ParserType : Set2
 ParserType = Empty -> Depth -> Set -> Set1
 
 data Parser (tok : Set) (name : ParserType) : ParserType where
-  fail  :  forall {r}      -> Parser tok name false leaf r
-  ret   :  forall {r} -> r -> Parser tok name true  leaf r
-  sym   :  (tok -> Bool)   -> Parser tok name false leaf tok
+  ret   :  forall {r} -> r -> Parser tok name true leaf r
+  sat   :  forall {r}
+        -> (tok -> Maybe r)
+        -> Parser tok name false leaf r
   _·₀_  :  forall {d₁ e₂ d₂ r₁ r₂}
         -> Parser tok name true d₁           (r₁ -> r₂)
         -> Parser tok name e₂   d₂           r₁
@@ -98,6 +100,9 @@ _∣_ {e₁ = false} = _∣₁_
 ------------------------------------------------------------------------
 -- Some derived parsers
 
+fail : forall {tok name r} -> Parser tok name false leaf r
+fail = sat (const nothing)
+
 module Token (a : DecSetoid) where
 
   private
@@ -107,12 +112,12 @@ module Token (a : DecSetoid) where
   -- Parses a given token.
 
   token : forall {name} -> tok -> Parser tok name false leaf tok
-  token x = sym p
+  token x = sat p
     where
-    p : tok -> Bool
+    p : tok -> Maybe tok
     p y with x ≟ y
-    ... | yes _ = true
-    ... | no  _ = false
+    ... | yes _ = just y
+    ... | no  _ = nothing
 
 ------------------------------------------------------------------------
 -- Run function for the parsers
@@ -170,15 +175,14 @@ module Internal {tok : Set} {name : ParserType}
     parse₁ : forall d {r} ->
              Parser tok name false d r ->
              forall n -> P tok n (pred n) r
-    parse₁ _          _                         zero     = mzero
-    parse₁ leaf       fail                      (suc n)  = mzero
-    parse₁ leaf       (sym p)                   (suc n)  = eat =<< get
+    parse₁ _        _       zero     = mzero
+    parse₁ leaf {r} (sat p) (suc n)  = eat =<< get
       where
-        eat : forall {n} -> BoundedVec tok (suc n) -> P tok (suc n) n tok
+        eat : forall {n} -> BoundedVec tok (suc n) -> P tok (suc n) n r
         eat []      = mzero
         eat (c ∷ s) with p c
-        ... | true  = put s >> return c
-        ... | false = mzero
+        ... | just x  = put s >> return x
+        ... | nothing = mzero
     parse₁ (node _ _) (p₁ ·₀ p₂)                 (suc n) = parse₀ _ p₁ (suc n) <*> parse₁ _ p₂ (suc n)
     parse₁ (node _ _) (bind₀ p₁ p₂)              (suc n) = parse₀ _ p₁ (suc n) >>= \x -> parse₁ _ (p₂ x) (suc n)
     parse₁ (step _)   (_·₁_ {e₂ = true } p₁ p₂)  (suc n) = parse₁ _ p₁ (suc n) <*> parse₀ _ p₂ n
