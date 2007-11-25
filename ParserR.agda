@@ -12,7 +12,8 @@ open import Data.Bool
 open import Data.Maybe
 open import Data.Product
 open import Data.Function
-open import Data.BoundedVec
+import Data.BoundedVec as BVec
+open BVec using (BoundedVec; []v; _∷v_; ↑)
 import Data.List as L
 open import Data.Nat
 open import Logic
@@ -177,11 +178,11 @@ module Internal {tok : Set} {name : ParserType}
              Parser tok name false d r ->
              forall n -> P tok n (pred n) r
     parse₁ _        _       zero     = mzero
-    parse₁ leaf {r} (sat p) (suc n)  = eat =<< get
+    parse₁ leaf {r} (sat p) (suc n)  = eat ∘ BVec.view =<< get
       where
-        eat : forall {n} -> BoundedVec tok (suc n) -> P tok (suc n) n r
-        eat []      = mzero
-        eat (c ∷ s) with p c
+        eat : forall {n} -> BVec.View tok (suc n) -> P tok (suc n) n r
+        eat []v      = mzero
+        eat (c ∷v s) with p c
         ... | just x  = put s >> return x
         ... | nothing = mzero
     parse₁ (node _ _) (p₁ ·₀ p₂)                 (suc n) = parse₀ _ p₁ (suc n) <*> parse₁ _ p₂ (suc n)
@@ -204,5 +205,5 @@ open L
 ⟦_⟧ :  forall {tok name e d r}
     -> Parser tok name e d r -> Grammar tok name
     -> [ tok ] -> [ r × [ tok ] ]
-⟦ p ⟧ g s = map (map-× id toList)
-                (Internal.parse g _ p _ (↑ (fromList s)))
+⟦ p ⟧ g s = map (map-× id BVec.toList)
+                (Internal.parse g _ p _ (↑ (BVec.fromList s)))
