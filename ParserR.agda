@@ -87,26 +87,6 @@ _∣_ : forall {tok name e₁ d₁ e₂ d₂ r} ->
 _∣_ {e₁ = true } = _∣₀_
 _∣_ {e₁ = false} = _∣₁_
 
-
-------------------------------------------------------------------------
--- Renaming parsers
-
--- Is this useful?
-
-{-
-rename :  forall {tok name₁ name₂}
-       -> (forall {e d r} -> name₁ e d r -> name₂ e d r)
-       -> forall {e d r} -> Parser tok name₁ e d r -> Parser tok name₂ e d r
-rename f fail      = fail
-rename f (ret x)   = ret x
-rename f (sym p)   = sym p
-rename f (p₁ ·₀ p₂) = rename f p₁ ·₀ rename f p₂
-rename f (p₁ ·₁ p₂) = rename f p₁ ·₁ rename f p₂
-rename f (p₁ ∣₀ p₂) = rename f p₁ ∣₀ rename f p₂
-rename f (p₁ ∣₁ p₂) = rename f p₁ ∣₁ rename f p₂
-rename f (! x)     = ! f x
--}
-
 ------------------------------------------------------------------------
 -- Some derived parsers
 
