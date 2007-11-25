@@ -46,44 +46,68 @@ data Depth : Set where
 
 -- Parsers, indexed on a type of names.
 
-infix  60 !_
-infixr 50 _·_
-infixr 40 _∣_
-
 ParserType : Set2
 ParserType = Empty -> Depth -> Set -> Set1
 
-data Parser (tok : Set) (name : ParserType) : ParserType where
-  ret   :  forall {r} -> r -> Parser tok name true leaf r
-  sat   :  forall {r}
-        -> (tok -> Maybe r)
-        -> Parser tok name false leaf r
-  seq₀  :  forall {d₁ e₂ d₂ r₁ r₂}
-        -> Parser tok name true d₁           (r₁ -> r₂)
-        -> Parser tok name e₂   d₂           r₁
-        -> Parser tok name e₂   (node d₁ d₂) r₂
-  seq₁  :  forall {d₁} e₂ {d₂ r₁ r₂}
-        -> Parser tok name false d₁        (r₁ -> r₂)
-        -> Parser tok name e₂    d₂        r₁
-        -> Parser tok name false (step d₁) r₂
-  alt₀  :  forall {d₁} e₂ {d₂ r}
-        -> Parser tok name true d₁           r
-        -> Parser tok name e₂   d₂           r
-        -> Parser tok name true (node d₁ d₂) r
-  alt₁  :  forall {d₁ e₂ d₂ r}
-        -> Parser tok name false d₁           r
-        -> Parser tok name e₂    d₂           r
-        -> Parser tok name e₂    (node d₁ d₂) r
-  !_    :  forall {e d r}
-        -> name e d r -> Parser tok name e (step d) r
-  bind₀ :  forall {d₁ e₂ d₂ r₁ r₂}
-        -> Parser tok name true d₁ r₁
-        -> (r₁ -> Parser tok name e₂ d₂ r₂)
-        -> Parser tok name e₂ (node d₁ d₂) r₂
-  bind₁ :  forall {d₁} e₂ {d₂ r₁ r₂}
-        -> Parser tok name false d₁ r₁
-        -> (r₁ -> Parser tok name e₂ d₂ r₂)
-        -> Parser tok name false (step d₁) r₂
+mutual
+
+  Parser : Set -> ParserType -> ParserType
+  Parser = Parser'
+
+  private
+
+    -- The constructors are private, since they are overly specialised
+    -- in order to simplify the implementation below.
+
+    data Parser' (tok : Set) (name : ParserType) : ParserType where
+      ret'  :  forall {r} -> r -> Parser tok name true leaf r
+      sat'  :  forall {r}
+            -> (tok -> Maybe r)
+            -> Parser tok name false leaf r
+      seq₀  :  forall {d₁ e₂ d₂ r₁ r₂}
+            -> Parser tok name true d₁           (r₁ -> r₂)
+            -> Parser tok name e₂   d₂           r₁
+            -> Parser tok name e₂   (node d₁ d₂) r₂
+      seq₁  :  forall {d₁} e₂ {d₂ r₁ r₂}
+            -> Parser tok name false d₁        (r₁ -> r₂)
+            -> Parser tok name e₂    d₂        r₁
+            -> Parser tok name false (step d₁) r₂
+      alt₀  :  forall {d₁} e₂ {d₂ r}
+            -> Parser tok name true d₁           r
+            -> Parser tok name e₂   d₂           r
+            -> Parser tok name true (node d₁ d₂) r
+      alt₁  :  forall {d₁ e₂ d₂ r}
+            -> Parser tok name false d₁           r
+            -> Parser tok name e₂    d₂           r
+            -> Parser tok name e₂    (node d₁ d₂) r
+      rec   :  forall {e d r}
+            -> name e d r -> Parser tok name e (step d) r
+      bind₀ :  forall {d₁ e₂ d₂ r₁ r₂}
+            -> Parser tok name true d₁ r₁
+            -> (r₁ -> Parser tok name e₂ d₂ r₂)
+            -> Parser tok name e₂ (node d₁ d₂) r₂
+      bind₁ :  forall {d₁} e₂ {d₂ r₁ r₂}
+            -> Parser tok name false d₁ r₁
+            -> (r₁ -> Parser tok name e₂ d₂ r₂)
+            -> Parser tok name false (step d₁) r₂
+
+------------------------------------------------------------------------
+-- Exported parsers
+
+infix  60 !_
+infixr 50 _·_
+infixr 40 _∣_
+infixl 30 _⟫=_
+
+ret : forall {tok name r} -> r -> Parser tok name true leaf r
+ret = ret'
+
+sat : forall {tok name r} ->
+      (tok -> Maybe r) -> Parser tok name false leaf r
+sat = sat'
+
+fail : forall {tok name r} -> Parser tok name false leaf r
+fail = sat (const nothing)
 
 _·_ : forall {tok name e₁ d₁ e₂ d₂ r₁ r₂} ->
       Parser tok name e₁ d₁ (r₁ -> r₂) ->
@@ -99,11 +123,17 @@ _∣_ : forall {tok name e₁ d₁ e₂ d₂ r} ->
 _∣_ {e₁ = true } = alt₀ _
 _∣_ {e₁ = false} = alt₁
 
-------------------------------------------------------------------------
--- Some derived parsers
+_⟫=_
+  : forall {tok name e₁ d₁ e₂ d₂ r₁ r₂} ->
+    Parser tok name e₁ d₁ r₁ ->
+    (r₁ -> Parser tok name e₂ d₂ r₂) ->
+    Parser tok name (e₁ ∧ e₂) (if e₁ then node d₁ d₂ else step d₁) r₂
+_⟫=_ {e₁ = true } = bind₀
+_⟫=_ {e₁ = false} = bind₁ _
 
-fail : forall {tok name r} -> Parser tok name false leaf r
-fail = sat (const nothing)
+!_ : forall {tok name e d r} ->
+     name e d r -> Parser tok name e (step d) r
+!_ = rec
 
 module Token (a : DecSetoid) where
 
@@ -161,13 +191,13 @@ module Internal {tok : Set} {name : ParserType}
     parse₀ : forall d {r} ->
              Parser tok name true d r ->
              forall n -> P tok n n r
-    parse₀ leaf       (ret x)            n = return x
+    parse₀ leaf       (ret' x)           n = return x
     parse₀ (node _ _) (bind₀      p₁ p₂) n = parse₀ _ p₁ n >>= \x -> parse₀ _ (p₂ x) n
     parse₀ (node _ _) (seq₀       p₁ p₂) n = parse₀ _ p₁ n <*> parse₀ _ p₂ n
     parse₀ (node _ _) (alt₀ true  p₁ p₂) n = parse₀ _ p₁ n ++  parse₀ _ p₂ n
     parse₀ (node _ _) (alt₀ false p₁ p₂) n = parse₀ _ p₁ n ++  parse₁↑  p₂ n
     parse₀ (node _ _) (alt₁       p₁ p₂) n = parse₁↑  p₁ n ++  parse₀ _ p₂ n
-    parse₀ (step _)   (! x)              n = parse₀ _ (g x) n
+    parse₀ (step _)   (rec x)            n = parse₀ _ (g x) n
 
     parse₁↑ : forall {d r} ->
               Parser tok name false d r ->
@@ -178,8 +208,8 @@ module Internal {tok : Set} {name : ParserType}
     parse₁ : forall d {r} ->
              Parser tok name false d r ->
              forall n -> P tok n (pred n) r
-    parse₁ _        _       zero     = mzero
-    parse₁ leaf {r} (sat p) (suc n)  = eat ∘ BVec.view =<< get
+    parse₁ _        _        zero     = mzero
+    parse₁ leaf {r} (sat' p) (suc n)  = eat ∘ BVec.view =<< get
       where
         eat : forall {n} -> BVec.View tok (suc n) -> P tok (suc n) n r
         eat []v      = mzero
@@ -193,7 +223,7 @@ module Internal {tok : Set} {name : ParserType}
     parse₁ (step _)   (bind₁ true  p₁ p₂) (suc n) = parse₁ _ p₁ (suc n) >>= \x -> parse₀ _ (p₂ x) n
     parse₁ (step _)   (bind₁ false p₁ p₂) (suc n) = parse₁ _ p₁ (suc n) >>= \x -> parse₁↑  (p₂ x) n
     parse₁ (node _ _) (alt₁        p₁ p₂) (suc n) = parse₁ _ p₁ (suc n) ++  parse₁ _ p₂ (suc n)
-    parse₁ (step _)   (! x)               (suc n) = parse₁ _ (g x) (suc n)
+    parse₁ (step _)   (rec x)             (suc n) = parse₁ _ (g x) (suc n)
 
   parse : forall e {d r} ->
           Parser tok name e d r -> (n : ℕ) ->
