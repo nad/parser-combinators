@@ -96,42 +96,42 @@ private
                where
 
     mutual
-      parse₀ : forall d {r} ->
+      parse₀ : forall {d r} ->
                Parser tok name true d r ->
                forall n -> P tok n n r
-      parse₀ leaf       (ret x)            n = return x
-      parse₀ (node _ _) (bind₀      p₁ p₂) n = parse₀ _ p₁ n >>= \x -> parse₀ _ (p₂ x) n
-      parse₀ (node _ _) (seq₀       p₁ p₂) n = parse₀ _ p₁ n <*> parse₀ _ p₂ n
-      parse₀ (node _ _) (alt₀ true  p₁ p₂) n = parse₀ _ p₁ n ++  parse₀ _ p₂ n
-      parse₀ (node _ _) (alt₀ false p₁ p₂) n = parse₀ _ p₁ n ++  parse₁↑  p₂ n
-      parse₀ (node _ _) (alt₁       p₁ p₂) n = parse₁↑  p₁ n ++  parse₀ _ p₂ n
-      parse₀ (step _)   (! x)              n = parse₀ _ (g x) n
+      parse₀ (ret x)            n = return x
+      parse₀ (bind₀      p₁ p₂) n = parse₀  p₁ n >>= \x -> parse₀ (p₂ x) n
+      parse₀ (seq₀       p₁ p₂) n = parse₀  p₁ n <*> parse₀  p₂ n
+      parse₀ (alt₀ true  p₁ p₂) n = parse₀  p₁ n ++  parse₀  p₂ n
+      parse₀ (alt₀ false p₁ p₂) n = parse₀  p₁ n ++  parse₁↑ p₂ n
+      parse₀ (alt₁       p₁ p₂) n = parse₁↑ p₁ n ++  parse₀  p₂ n
+      parse₀ (! x)              n = parse₀ (g x) n
 
       parse₁↑ : forall {d r} ->
                 Parser tok name false d r ->
                 forall n -> P tok n n r
       parse₁↑ p zero    = mzero
-      parse₁↑ p (suc n) = parse₁ _ p (suc n) >>= \r -> modify ↑ >> return r
+      parse₁↑ p (suc n) = parse₁ p (suc n) >>= \r -> modify ↑ >> return r
 
-      parse₁ : forall d {r} ->
+      parse₁ : forall {d r} ->
                Parser tok name false d r ->
                forall n -> P tok n (pred n) r
-      parse₁ _        _       zero     = mzero
-      parse₁ leaf {r} (sat p) (suc n)  = eat ∘ BVec.view =<< get
+      parse₁         _       zero     = mzero
+      parse₁ {r = r} (sat p) (suc n)  = eat ∘ BVec.view =<< get
         where
           eat : forall {n} -> BVec.View tok (suc n) -> P tok (suc n) n r
           eat []v      = mzero
           eat (c ∷v s) with p c
           ... | just x  = put s >> return x
           ... | nothing = mzero
-      parse₁ (node _ _) (seq₀        p₁ p₂) (suc n) = parse₀ _ p₁ (suc n) <*> parse₁ _ p₂ (suc n)
-      parse₁ (node _ _) (bind₀       p₁ p₂) (suc n) = parse₀ _ p₁ (suc n) >>= \x -> parse₁ _ (p₂ x) (suc n)
-      parse₁ (step _)   (seq₁  true  p₁ p₂) (suc n) = parse₁ _ p₁ (suc n) <*> parse₀ _ p₂ n
-      parse₁ (step _)   (seq₁  false p₁ p₂) (suc n) = parse₁ _ p₁ (suc n) <*> parse₁↑  p₂ n
-      parse₁ (step _)   (bind₁ true  p₁ p₂) (suc n) = parse₁ _ p₁ (suc n) >>= \x -> parse₀ _ (p₂ x) n
-      parse₁ (step _)   (bind₁ false p₁ p₂) (suc n) = parse₁ _ p₁ (suc n) >>= \x -> parse₁↑  (p₂ x) n
-      parse₁ (node _ _) (alt₁        p₁ p₂) (suc n) = parse₁ _ p₁ (suc n) ++  parse₁ _ p₂ (suc n)
-      parse₁ (step _)   (! x)               (suc n) = parse₁ _ (g x) (suc n)
+      parse₁ (seq₀        p₁ p₂) (suc n) = parse₀ p₁ (suc n) <*> parse₁ p₂ (suc n)
+      parse₁ (bind₀       p₁ p₂) (suc n) = parse₀ p₁ (suc n) >>= \x -> parse₁ (p₂ x) (suc n)
+      parse₁ (seq₁  true  p₁ p₂) (suc n) = parse₁ p₁ (suc n) <*> parse₀  p₂ n
+      parse₁ (seq₁  false p₁ p₂) (suc n) = parse₁ p₁ (suc n) <*> parse₁↑ p₂ n
+      parse₁ (bind₁ true  p₁ p₂) (suc n) = parse₁ p₁ (suc n) >>= \x -> parse₀  (p₂ x) n
+      parse₁ (bind₁ false p₁ p₂) (suc n) = parse₁ p₁ (suc n) >>= \x -> parse₁↑ (p₂ x) n
+      parse₁ (alt₁        p₁ p₂) (suc n) = parse₁ p₁ (suc n) ++  parse₁ p₂ (suc n)
+      parse₁ (! x)               (suc n) = parse₁ (g x) (suc n)
 
     parse : forall e {d r} ->
             Parser tok name e d r -> (n : ℕ) ->
