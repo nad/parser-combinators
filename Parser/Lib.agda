@@ -1,3 +1,15 @@
+------------------------------------------------------------------------
+-- Some defined parsers, collected in a library
+------------------------------------------------------------------------
+
+-- Recursive parsers cannot be defined simply as functions, but have
+-- to be defined in terms of a grammar.
+
+-- Non-recursive parsers can either be defined directly or by using a
+-- grammar. The grammar version may be harder to use in some cases,
+-- but has the potential advantage of increased sharing/less memory
+-- usage.
+
 module Parser.Lib (tok : Set) where
 
 open import Parser
@@ -64,10 +76,6 @@ module Combinators
          -> Parser tok name i₂ (r -> r -> r)
          -> Parser tok name _ r
   chain₁ a p op = ! lib (chain₁' a p op)
-
-  -- Note that non-recursive parsers can either be defined directly or
-  -- by using a constructor. The constructor version has the advantage
-  -- of increased sharing.
 
   library : forall {i r} -> Name name i r -> Parser tok name i r
   library (many  p)          = ε [] ∣ p +
