@@ -85,6 +85,8 @@ module Ex₄ where
 
   -- The language aⁿbⁿcⁿ, which is not context free.
 
+  -- The non-terminal top returns the number of 'a' characters parsed.
+
   data Name : ParserType where
     top :              Name _ ℕ
     as  :         ℕ -> Name _ ℕ
@@ -93,11 +95,13 @@ module Ex₄ where
   grammar : Grammar Char Name
   grammar top             = ε 0 ∣ ! as zero
   grammar (as n)          = suc <$ token 'a' ·
-                            (! as (suc n) ∣ _+_ $ ! bcs 'b' n · ! bcs 'c' n)
-  grammar (bcs c zero)    = suc <$ token c · ε 0
-  grammar (bcs c (suc n)) = suc <$ token c · ! bcs c n
+                            ( ! as (suc n)
+                            ∣ _+_ $ ! bcs 'b' n · ! bcs 'c' n
+                            )
+  grammar (bcs c zero)    = token c ·> ε 0
+  grammar (bcs c (suc n)) = token c ·> ! bcs c n
 
-  ex₁ : ⟦ ! top ⟧′ grammar "aaabbbccc" ≡ 9 ∷ []
+  ex₁ : ⟦ ! top ⟧′ grammar "aaabbbccc" ≡ 3 ∷ []
   ex₁ = ≡-refl
 
   ex₂ : ⟦ ! top ⟧′ grammar "aaabbccc" ≡ []
