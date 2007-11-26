@@ -13,7 +13,7 @@ open import Data.Bool
 open import Data.Maybe
 open import Data.Product.Record
 import Data.Product as Prod
-open import Data.Function
+open import Data.Function hiding (_$_)
 import Data.BoundedVec as BVec
 open import Relation.Nullary
 open import Relation.Binary
@@ -47,12 +47,12 @@ i₁ ·I i₂ = ( proj₁ i₁ ∧ proj₁ i₂
 -- Exported combinators
 
 infix  60 !_
-infixr 50 _·_
+infixl 50 _·_ _<·_ _·>_ _$_ _<$_
 infixr 40 _∣_
 infixl 30 _⟫=_
 
-ret : forall {tok name r} -> r -> Parser tok name unitI r
-ret = P.ret
+ε : forall {tok name r} -> r -> Parser tok name unitI r
+ε = P.ret
 
 sat : forall {tok name r} ->
       (tok -> Maybe r) -> Parser tok name (false , leaf) r
@@ -67,6 +67,30 @@ _·_ : forall {tok name e₁ d₁ i₂ r₁ r₂} -> let i₁ = (e₁ , d₁) in
       Parser tok name (i₁ ·I i₂) r₂
 _·_ {e₁ = true } = P.seq₀
 _·_ {e₁ = false} = P.seq₁ _
+
+_$_ : forall {tok name i r₁ r₂} ->
+      (r₁ -> r₂) ->
+      Parser tok name i r₁ ->
+      Parser tok name _ r₂
+f $ x = ε f · x
+
+_<·_ : forall {tok name i₁ i₂ r₁ r₂} ->
+       Parser tok name i₁ r₁ ->
+       Parser tok name i₂ r₂ ->
+       Parser tok name _ r₁
+x <· y = const $ x · y
+
+_·>_ : forall {tok name i₁ i₂ r₁ r₂} ->
+       Parser tok name i₁ r₁ ->
+       Parser tok name i₂ r₂ ->
+       Parser tok name _ r₂
+x ·> y = flip const $ x · y
+
+_<$_ : forall {tok name i r₁ r₂} ->
+      r₁ ->
+      Parser tok name i r₂ ->
+      Parser tok name _ r₁
+x <$ y = const x $ y
 
 _∣_ : forall {tok name e₁ d₁ e₂ d₂ r} ->
       Parser tok name (e₁ , d₁) r ->
