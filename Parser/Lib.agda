@@ -2,56 +2,88 @@ module Parser.Lib (tok : Set) where
 
 open import Parser
 open import Data.Bool
+open import Data.List
+open import Data.Product.Record hiding (_×_)
+open import Data.Product renaming (_,_ to <_∣_>)
 
 -- Some parameterised parsers.
 
+data Assoc : Set where
+  left  : Assoc
+  right : Assoc
+
 private
   data Name' (name : ParserType) : ParserType where
-    many    :  forall {d}
-            -> Parser tok name false d
-            -> Name' name _ _
-    many₁   :  forall {d}
-            -> Parser tok name false d
-            -> Name' name _ _
-    chain'  :  forall {e₁ d₁ d₂}
-            -> Parser tok name e₁ d₁
-            -> Parser tok name false d₂
-            -> Name' name _ _
-    chain₁' :  forall {e₁ d₁ d₂}
-            -> Parser tok name e₁ d₁
-            -> Parser tok name false d₂
-            -> Name' name _ _
+    many    :  forall {d r}
+            -> Parser tok name (false , d) r
+            -> Name' name _ [ r ]
+    many₁   :  forall {d r}
+            -> Parser tok name (false , d) r
+            -> Name' name _ [ r ]
+    chain'  :  forall {d₁ i₂ r}
+            -> Assoc
+            -> Parser tok name (false , d₁) r
+            -> Parser tok name i₂ (r -> r -> r)
+            -> r
+            -> Name' name _ r
+    chain₁' :  forall {d₁ i₂ r}
+            -> Assoc
+            -> Parser tok name (false , d₁) r
+            -> Parser tok name i₂ (r -> r -> r)
+            -> Name' name _ r
 
 Name : ParserType -> ParserType
 Name = Name'
 
 module Combinators
          {name : _}
-         (lib : forall {e d} -> Name name e d -> name e d)
+         (lib : forall {i r} -> Name name i r -> name i r)
          where
 
   infix 55 _⋆ _+
 
-  _⋆ : forall {d} -> Parser tok name false d -> Parser tok name _ _
-  _⋆ p = ! lib (many p)
+  _⋆ : forall {d r} ->
+       Parser tok name (false , d) r ->
+       Parser tok name _ [ r ]
+  p ⋆ = ! lib (many p)
 
-  _+ : forall {d} -> Parser tok name false d -> Parser tok name _ _
-  _+ p = ! lib (many₁ p)
+  _+ : forall {d r} ->
+       Parser tok name (false , d) r ->
+       Parser tok name _ [ r ]
+  p + = ! lib (many₁ p)
 
-  chain :  forall {e₁ d₁ d₂}
-        -> Parser tok name e₁ d₁
-        -> Parser tok name false d₂
-        -> Parser tok name _ _
-  chain p op = ! lib (chain' p op)
+  chain :  forall {d₁ i₂ r}
+        -> Assoc
+        -> Parser tok name (false , d₁) r
+        -> Parser tok name i₂ (r -> r -> r)
+        -> r
+        -> Parser tok name _ r
+  chain a p op x = ! lib (chain' a p op x)
 
-  chain₁ :  forall {e₁ d₁ d₂}
-         -> Parser tok name e₁ d₁
-         -> Parser tok name false d₂
-         -> Parser tok name _ _
-  chain₁ p op = ! lib (chain₁' p op)
+  chain₁ :  forall {d₁ i₂ r}
+         -> Assoc
+         -> Parser tok name (false , d₁) r
+         -> Parser tok name i₂ (r -> r -> r)
+         -> Parser tok name _ r
+  chain₁ a p op = ! lib (chain₁' a p op)
 
-  library : forall {e d} -> Name name e d -> Parser tok name e d
-  library (many  p)      = ε ∣ p +
-  library (many₁ p)      = p · p ⋆
-  library (chain'  p op) = ε ∣ chain₁ p op
-  library (chain₁' p op) = p · (op · p) ⋆
+  -- Note that non-recursive parsers can either be defined directly or
+  -- by using a constructor. The constructor version has the advantage
+  -- of increased sharing.
+
+  library : forall {i r} -> Name name i r -> Parser tok name i r
+  library (many  p)          = ε [] ∣ p +
+  library (many₁ p)          = _∷_ $ p · p ⋆
+  library (chain'  a p op x) = ε x ∣ chain₁ a p op
+  library (chain₁' a p op)   = comb a $ (<_∣_> $ p · op) ⋆ · p
+    where
+    comb : forall {r} -> Assoc -> [ r × (r -> r -> r) ] -> r -> r
+    comb right xs y = foldr app y xs
+      where
+      app : forall {r} -> r × (r -> r -> r) -> r -> r
+      app < x ∣ _•_ > y = x • y
+    comb left xs y = helper (reverse xs) y
+      where
+      helper : forall {r} -> [ r × (r -> r -> r) ] -> r -> r
+      helper []                 y = y
+      helper (< x ∣ _•_ > ∷ ps) y = helper ps x • y
