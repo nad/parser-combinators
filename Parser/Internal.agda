@@ -133,10 +133,10 @@ private
       parse₁ (alt₁        p₁ p₂) (suc n) = parse₁ p₁ (suc n) ++  parse₁ p₂ (suc n)
       parse₁ (! x)               (suc n) = parse₁ (g x) (suc n)
 
-    parse : forall e {d r} ->
-            Parser tok name e d r -> (n : ℕ) ->
+    parse : forall {e d r n} ->
+            Parser tok name e d r ->
             P tok (suc n) (if e then suc n else n) r
-    parse true  p n = parse₀ _ p (suc n)
-    parse false p n = parse₁ _ p (suc n)
+    parse {e = true}  {n = n} p = parse₀ p (suc n)
+    parse {e = false} {n = n} p = parse₁ p (suc n)
 
 open Dummy public

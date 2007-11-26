@@ -24,7 +24,7 @@ open import Relation.Binary
     -> Parser tok name e d r -> Grammar tok name
     -> [ tok ] -> [ r × [ tok ] ]
 ⟦ p ⟧ g s = map (map-× id BVec.toList)
-                (P.parse g _ p _ (BVec.↑ (BVec.fromList s)))
+                (P.parse g p (BVec.↑ (BVec.fromList s)))
 
 ------------------------------------------------------------------------
 -- Exported combinators
