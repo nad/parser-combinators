@@ -33,4 +33,6 @@ Index = Empty × Depth
 -- The parser type signature
 
 ParserType : Set2
-ParserType = Index -> Set -> Set1
+ParserType =  Index  -- The indices above.
+           -> Set    -- The result type.
+           -> Set1
