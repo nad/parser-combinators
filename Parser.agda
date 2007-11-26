@@ -27,6 +27,13 @@ open import Relation.Binary
 ⟦ p ⟧ g s = map (Prod.map-× id BVec.toList)
                 (P.parse g p (BVec.↑ (BVec.fromList s)))
 
+-- A variant which only returns parses which leave no remaining input.
+
+⟦_⟧! :  forall {tok name i r}
+     -> Parser tok name i r -> Grammar tok name
+     -> [ tok ] -> [ r ]
+⟦ p ⟧! g s = map Prod.proj₁ (filter (null ∘ Prod.proj₂) (⟦ p ⟧ g s))
+
 ------------------------------------------------------------------------
 -- Operations on indices
 
