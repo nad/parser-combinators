@@ -25,7 +25,7 @@ open import Relation.Binary
     -> Parser tok name i r -> Grammar tok name
     -> [ tok ] -> [ Prod._×_ r [ tok ] ]
 ⟦ p ⟧ g s = map (Prod.map-× id BVec.toList)
-                (P.parse g p (BVec.↑ (BVec.fromList s)))
+                (P.parse g p (BVec.fromList s))
 
 -- A variant which only returns parses which leave no remaining input.
 
