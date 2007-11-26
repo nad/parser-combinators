@@ -10,6 +10,7 @@ open import Logic
 import Data.Char as C
 import Data.String as S
 open C using (Char)
+open S using (String)
 open import Parser
 import Parser.Lib as Lib
 private
@@ -20,13 +21,13 @@ module Ex₁ where
   -- e ∷= 0 + e | 0
 
   data Name : ParserType where
-    e : Name _ _
+    e : Name _ Char
 
   grammar : Grammar Char Name
-  grammar e = token '0' · token '+' · ! e
+  grammar e = token '0' ·> token '+' ·> ! e
             ∣ token '0'
 
-  ex₁ : ⟦ ! e ⟧ grammar (S.toList "0+0") ≡ [] ∷ S.toList "+0" ∷ []
+  ex₁ : ⟦ ! e ⟧! grammar (S.toList "0+0") ≡ '0' ∷ []
   ex₁ = ≡-refl
 
 module Ex₂ where
@@ -35,21 +36,20 @@ module Ex₂ where
   -- f ∷= 0 | 0 * f | ( e )
 
   data Name : ParserType where
-    expr   : Name _ _
-    factor : Name _ _
+    expr   : Name _ Char
+    factor : Name _ Char
 
   grammar : Grammar Char Name
-  grammar expr   = ! factor · token '+' · ! expr
+  grammar expr   = ! factor ·> token '+' ·> ! expr
                  ∣ ! factor
   grammar factor = token '0'
-                 ∣ token '0' · token '*' · ! factor
-                 ∣ token '(' · ! expr · token ')'
+                 ∣ token '0' ·> token '*' ·> ! factor
+                 ∣ token '(' ·> ! expr <· token ')'
 
-  ex₁ : ⟦ ! expr ⟧ grammar (S.toList "(0*)") ≡ []
+  ex₁ : ⟦ ! expr ⟧! grammar (S.toList "(0*)") ≡ []
   ex₁ = ≡-refl
 
-  ex₂ : ⟦ ! expr ⟧ grammar (S.toList "0*(0+0)") ≡
-        S.toList "*(0+0)" ∷ [] ∷ []
+  ex₂ : ⟦ ! expr ⟧! grammar (S.toList "0*(0+0)") ≡ '0' ∷ []
   ex₂ = ≡-refl
 
 {-
@@ -61,15 +61,15 @@ module Ex₃ where
   -- f ∷= 0 | f * 0 | ( e )
 
   data Name : ParserType where
-    expr   : Name _ _
-    factor : Name _ _
+    expr   : Name _ Char
+    factor : Name _ Char
 
   grammar : Grammar Char Name
-  grammar expr   = ! factor · token '+' · ! expr
+  grammar expr   = ! factor ·> token '+' ·> ! expr
                  ∣ ! factor
   grammar factor = token '0'
-                 ∣ ! factor · token '*' · token '0'
-                 ∣ token '(' · ! expr · token ')'
+                 ∣ ! factor ·> token '*' ·> token '0'
+                 ∣ token '(' ·> ! expr <· token ')'
 -}
 
 module Ex₄ where
@@ -77,23 +77,21 @@ module Ex₄ where
   -- The language aⁿbⁿcⁿ, which is not context free.
 
   data Name : ParserType where
-    top :              Name _ _
-    as  :         ℕ -> Name _ _
-    bcs : Char -> ℕ -> Name _ _
+    top :              Name _ ℕ
+    as  :         ℕ -> Name _ ℕ
+    bcs : Char -> ℕ -> Name _ ℕ
 
   grammar : Grammar Char Name
-  grammar top             = ε ∣ ! as zero
-  grammar (as n)          = token 'a' ·
-                            (! as (suc n) ∣ ! bcs 'b' n · ! bcs 'c' n)
-  grammar (bcs c zero)    = token c · ε
-  grammar (bcs c (suc n)) = token c · ! bcs c n
+  grammar top             = ε 0 ∣ ! as zero
+  grammar (as n)          = suc <$ token 'a' ·
+                            (! as (suc n) ∣ _+_ $ ! bcs 'b' n · ! bcs 'c' n)
+  grammar (bcs c zero)    = suc <$ token c · ε 0
+  grammar (bcs c (suc n)) = suc <$ token c · ! bcs c n
 
-  ex₁ : ⟦ ! top ⟧ grammar (S.toList "aaabbbccc") ≡
-        S.toList "aaabbbccc" ∷ [] ∷ []
+  ex₁ : ⟦ ! top ⟧! grammar (S.toList "aaabbbccc") ≡ 9 ∷ []
   ex₁ = ≡-refl
 
-  ex₂ : ⟦ ! top ⟧ grammar (S.toList "aaabbccc") ≡
-        S.toList "aaabbccc" ∷ []
+  ex₂ : ⟦ ! top ⟧! grammar (S.toList "aaabbccc") ≡ []
   ex₂ = ≡-refl
 
 module Ex₅ where
@@ -101,9 +99,9 @@ module Ex₅ where
   -- A grammar making use of a parameterised parser from the library.
 
   data Name : ParserType where
-    lib : forall {e d} -> Lib.Name Char Name e d -> Name _ _
-    a   : Name _ _
-    as  : Name _ _
+    lib : forall {i r} -> Lib.Name Char Name i r -> Name _ r
+    a   : Name _ Char
+    as  : Name _ ℕ
 
   private
     open module L = Lib.Combinators Char lib
@@ -111,8 +109,7 @@ module Ex₅ where
   grammar : Grammar Char Name
   grammar (lib p) = library p
   grammar a       = token 'a'
-  grammar as      = ! a ⋆
+  grammar as      = length $ ! a ⋆
 
-  ex₁ : ⟦ ! as ⟧ grammar (S.toList "aab") ≡
-        S.toList "aab" ∷ S.toList "ab" ∷ S.toList "b" ∷ []
+  ex₁ : ⟦ ! as ⟧! grammar (S.toList "aaaaa") ≡ 5 ∷ []
   ex₁ = ≡-refl
