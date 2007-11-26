@@ -1,6 +1,7 @@
 module Parser.Lib (tok : Set) where
 
 open import Parser
+open import Parser.Lib.Types
 open import Data.Bool
 open import Data.List
 open import Data.Product.Record hiding (_×_)
@@ -8,11 +9,8 @@ open import Data.Product renaming (_,_ to <_∣_>)
 
 -- Some parameterised parsers.
 
-data Assoc : Set where
-  left  : Assoc
-  right : Assoc
-
 private
+
   data Name' (name : ParserType) : ParserType where
     many    :  forall {d r}
             -> Parser tok name (false , d) r
