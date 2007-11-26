@@ -12,7 +12,9 @@ import Data.String as S
 open C using (Char)
 open S using (String)
 open import Parser
-import Parser.Lib as Lib
+open import Parser.Lib.Types
+import Parser.Lib  as Lib
+import Parser.Char as CharLib
 private
   open module T = Token C.decSetoid
 
@@ -120,3 +122,80 @@ module Ex₅ where
 
   ex₁ : ⟦ ! as ⟧′ grammar "aaaaa" ≡ 5 ∷ []
   ex₁ = ≡-refl
+
+module Ex₆ where
+
+  -- A grammar which uses the chain₁ combinator.
+
+  Op : Set
+  Op = ℕ -> ℕ -> ℕ
+
+  private
+    module L = Lib Char
+
+  data Name : ParserType where
+    lib  : forall {i r} -> L.Name       Name i r -> Name _ r
+    cLib : forall {i r} -> CharLib.Name Name i r -> Name _ r
+    op   : Name _ Op
+    expr : Assoc -> Name _ ℕ
+
+  private
+    open module LC = Lib.Combinators Char lib
+    open module LC = CharLib.Combinators cLib
+
+  grammar : Grammar Char Name
+  grammar (lib p)  = library p
+  grammar (cLib p) = charLib p
+  grammar op       = _+_ <$ token '+'
+                   ∣ _*_ <$ token '*'
+                   ∣ _∸_ <$ token '∸'
+  grammar (expr a) = chain₁ a number (! op)
+
+  ex₁ : ⟦ number ⟧′ grammar "12345" ≡ 12345 ∷ []
+  ex₁ = ≡-refl
+
+  ex₂ : ⟦ ! expr left ⟧′ grammar "1+5*2∸3" ≡ 9 ∷ []
+  ex₂ = ≡-refl
+
+  ex₃ : ⟦ ! expr right ⟧′ grammar "1+5*2∸3" ≡ 1 ∷ []
+  ex₃ = ≡-refl
+
+module Ex₇ where
+
+  -- A proper expression example.
+
+  Op : Set
+  Op = ℕ -> ℕ -> ℕ
+
+  private
+    module L = Lib Char
+
+  data Name : ParserType where
+    lib    : forall {i r} -> L.Name       Name i r -> Name _ r
+    cLib   : forall {i r} -> CharLib.Name Name i r -> Name _ r
+    expr   : Name _ ℕ
+    term   : Name _ ℕ
+    factor : Name _ ℕ
+    addOp  : Name _ Op
+    mulOp  : Name _ Op
+
+  private
+    open module LC = Lib.Combinators Char lib
+    open module LC = CharLib.Combinators cLib
+
+  grammar : Grammar Char Name
+  grammar (lib p)  = library p
+  grammar (cLib p) = charLib p
+  grammar expr     = chain₁ left (! term)   (! addOp)
+  grammar term     = chain₁ left (! factor) (! mulOp)
+  grammar factor   = token '(' ·> ! expr <· token ')'
+                   ∣ number
+  grammar addOp    = _+_ <$ token '+'
+                   ∣ _∸_ <$ token '∸'
+  grammar mulOp    = _*_ <$ token '*'
+
+  ex₁ : ⟦ ! expr ⟧′ grammar "1+5*2∸3" ≡ 8 ∷ []
+  ex₁ = ≡-refl
+
+  ex₂ : ⟦ ! expr ⟧′ grammar "1+5*(2∸3)" ≡ 1 ∷ []
+  ex₂ = ≡-refl
