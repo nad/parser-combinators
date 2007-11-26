@@ -24,3 +24,9 @@ data Depth : Set where
   leaf : Depth
   step : Depth -> Depth
   node : Depth -> Depth -> Depth
+
+------------------------------------------------------------------------
+-- The parser type signature
+
+ParserType : Set2
+ParserType = Empty -> Depth -> Set -> Set1
