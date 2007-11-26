@@ -131,16 +131,13 @@ module Ex₆ where
 
   -- A grammar which uses the chain₁ combinator.
 
-  Op : Set
-  Op = ℕ -> ℕ -> ℕ
-
   private
     module L = Lib Char
 
   data Name : ParserType where
     lib  : forall {i r} -> L.Name       Name i r -> Name _ r
     cLib : forall {i r} -> CharLib.Name Name i r -> Name _ r
-    op   : Name _ Op
+    op   : Name _ (ℕ -> ℕ -> ℕ)
     expr : Assoc -> Name _ ℕ
 
   private
@@ -168,9 +165,6 @@ module Ex₇ where
 
   -- A proper expression example.
 
-  Op : Set
-  Op = ℕ -> ℕ -> ℕ
-
   private
     module L = Lib Char
 
@@ -180,8 +174,8 @@ module Ex₇ where
     expr   : Name _ ℕ
     term   : Name _ ℕ
     factor : Name _ ℕ
-    addOp  : Name _ Op
-    mulOp  : Name _ Op
+    addOp  : Name _ (ℕ -> ℕ -> ℕ)
+    mulOp  : Name _ (ℕ -> ℕ -> ℕ)
 
   private
     open module LC = Lib.Combinators Char lib
