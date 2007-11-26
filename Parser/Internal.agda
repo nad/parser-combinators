@@ -19,6 +19,11 @@ open import Category.Monad.State
 ------------------------------------------------------------------------
 -- Parser data type
 
+-- The parser type signature.
+
+ParserType : Set2
+ParserType = Empty -> Depth -> Set -> Set1
+
 -- A type for parsers which can be implemented using recursive
 -- descent. The types used ensure that the implementation below is
 -- structurally recursive.
