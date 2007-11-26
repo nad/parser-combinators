@@ -93,9 +93,9 @@ _·>_ : forall {tok name i₁ i₂ r₁ r₂} ->
 x ·> y = flip const $ x · y
 
 _<$_ : forall {tok name i r₁ r₂} ->
-      r₁ ->
-      Parser tok name i r₂ ->
-      Parser tok name _ r₁
+       r₁ ->
+       Parser tok name i r₂ ->
+       Parser tok name _ r₁
 x <$ y = const x $ y
 
 _∣_ : forall {tok name e₁ d₁ e₂ d₂ r} ->
