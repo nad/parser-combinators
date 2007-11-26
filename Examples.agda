@@ -16,6 +16,13 @@ import Parser.Lib as Lib
 private
   open module T = Token C.decSetoid
 
+-- A function used to simplify the examples a little.
+
+⟦_⟧′ :  forall {name i r}
+     -> Parser Char name i r -> Grammar Char name
+     -> String -> [ r ]
+⟦ p ⟧′ g s = ⟦ p ⟧! g (S.toList s)
+
 module Ex₁ where
 
   -- e ∷= 0 + e | 0
@@ -27,7 +34,7 @@ module Ex₁ where
   grammar e = token '0' ·> token '+' ·> ! e
             ∣ token '0'
 
-  ex₁ : ⟦ ! e ⟧! grammar (S.toList "0+0") ≡ '0' ∷ []
+  ex₁ : ⟦ ! e ⟧′ grammar "0+0" ≡ '0' ∷ []
   ex₁ = ≡-refl
 
 module Ex₂ where
@@ -46,10 +53,10 @@ module Ex₂ where
                  ∣ token '0' ·> token '*' ·> ! factor
                  ∣ token '(' ·> ! expr <· token ')'
 
-  ex₁ : ⟦ ! expr ⟧! grammar (S.toList "(0*)") ≡ []
+  ex₁ : ⟦ ! expr ⟧′ grammar "(0*)" ≡ []
   ex₁ = ≡-refl
 
-  ex₂ : ⟦ ! expr ⟧! grammar (S.toList "0*(0+0)") ≡ '0' ∷ []
+  ex₂ : ⟦ ! expr ⟧′ grammar "0*(0+0)" ≡ '0' ∷ []
   ex₂ = ≡-refl
 
 {-
@@ -88,10 +95,10 @@ module Ex₄ where
   grammar (bcs c zero)    = suc <$ token c · ε 0
   grammar (bcs c (suc n)) = suc <$ token c · ! bcs c n
 
-  ex₁ : ⟦ ! top ⟧! grammar (S.toList "aaabbbccc") ≡ 9 ∷ []
+  ex₁ : ⟦ ! top ⟧′ grammar "aaabbbccc" ≡ 9 ∷ []
   ex₁ = ≡-refl
 
-  ex₂ : ⟦ ! top ⟧! grammar (S.toList "aaabbccc") ≡ []
+  ex₂ : ⟦ ! top ⟧′ grammar "aaabbccc" ≡ []
   ex₂ = ≡-refl
 
 module Ex₅ where
@@ -111,5 +118,5 @@ module Ex₅ where
   grammar a       = token 'a'
   grammar as      = length $ ! a ⋆
 
-  ex₁ : ⟦ ! as ⟧! grammar (S.toList "aaaaa") ≡ 5 ∷ []
+  ex₁ : ⟦ ! as ⟧′ grammar "aaaaa" ≡ 5 ∷ []
   ex₁ = ≡-refl
