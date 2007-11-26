@@ -56,7 +56,6 @@ i₁ ·I i₂ = ( proj₁ i₁ ∧ proj₁ i₂
 infix  60 !_
 infixl 50 _·_ _<·_ _·>_ _$_ _<$_
 infixr 40 _∣_
-infixl 30 _⟫=_
 
 ε : forall {tok name r} -> r -> Parser tok name unitI r
 ε = P.ret
@@ -105,14 +104,6 @@ _∣_ : forall {tok name e₁ d₁ e₂ d₂ r} ->
       Parser tok name (e₁ ∨ e₂ , node d₁ d₂) r
 _∣_ {e₁ = true } = P.alt₀ _
 _∣_ {e₁ = false} = P.alt₁
-
-_⟫=_
-  : forall {tok name e₁ d₁ i₂ r₁ r₂} -> let i₁ = (e₁ , d₁) in
-    Parser tok name i₁ r₁ ->
-    (r₁ -> Parser tok name i₂ r₂) ->
-    Parser tok name (i₁ ·I i₂) r₂
-_⟫=_ {e₁ = true } = P.bind₀
-_⟫=_ {e₁ = false} = P.bind₁ _
 
 !_ : forall {tok name e d r} ->
      name (e , d) r -> Parser tok name (e , step d) r

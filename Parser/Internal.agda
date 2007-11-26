@@ -48,14 +48,6 @@ data Parser (tok : Set) (name : ParserType) : ParserType where
         -> Parser tok name (e₂    , node d₁ d₂) r
   !_    :  forall {e d r}
         -> name (e , d) r -> Parser tok name (e , step d) r
-  bind₀ :  forall {d₁ e₂ d₂ r₁ r₂}
-        -> Parser tok name (true , d₁) r₁
-        -> (r₁ -> Parser tok name (e₂ , d₂) r₂)
-        -> Parser tok name (e₂ , node d₁ d₂) r₂
-  bind₁ :  forall {d₁} e₂ {d₂ r₁ r₂}
-        -> Parser tok name (false , d₁) r₁
-        -> (r₁ -> Parser tok name (e₂ , d₂) r₂)
-        -> Parser tok name (false , step d₁) r₂
 
 ------------------------------------------------------------------------
 -- Run function for the parsers
@@ -100,7 +92,6 @@ private
                Parser tok name (true , d) r ->
                forall n -> P tok n n r
       parse₀ (ret x)            n = return x
-      parse₀ (bind₀      p₁ p₂) n = parse₀  p₁ n >>= \x -> parse₀ (p₂ x) n
       parse₀ (seq₀       p₁ p₂) n = parse₀  p₁ n <*> parse₀  p₂ n
       parse₀ (alt₀ true  p₁ p₂) n = parse₀  p₁ n ++  parse₀  p₂ n
       parse₀ (alt₀ false p₁ p₂) n = parse₀  p₁ n ++  parse₁↑ p₂ n
@@ -124,13 +115,10 @@ private
           eat (c ∷ s) with p c
           ... | just x  = put s >> return x
           ... | nothing = mzero
-      parse₁ (seq₀        p₁ p₂) (suc n) = parse₀ p₁ (suc n) <*> parse₁ p₂ (suc n)
-      parse₁ (bind₀       p₁ p₂) (suc n) = parse₀ p₁ (suc n) >>= \x -> parse₁ (p₂ x) (suc n)
+      parse₁ (seq₀        p₁ p₂) (suc n) = parse₀ p₁ (suc n) <*> parse₁  p₂ (suc n)
       parse₁ (seq₁  true  p₁ p₂) (suc n) = parse₁ p₁ (suc n) <*> parse₀  p₂ n
       parse₁ (seq₁  false p₁ p₂) (suc n) = parse₁ p₁ (suc n) <*> parse₁↑ p₂ n
-      parse₁ (bind₁ true  p₁ p₂) (suc n) = parse₁ p₁ (suc n) >>= \x -> parse₀  (p₂ x) n
-      parse₁ (bind₁ false p₁ p₂) (suc n) = parse₁ p₁ (suc n) >>= \x -> parse₁↑ (p₂ x) n
-      parse₁ (alt₁        p₁ p₂) (suc n) = parse₁ p₁ (suc n) ++  parse₁ p₂ (suc n)
+      parse₁ (alt₁        p₁ p₂) (suc n) = parse₁ p₁ (suc n) ++  parse₁  p₂ (suc n)
       parse₁ (! x)               (suc n) = parse₁ (g x) (suc n)
 
     parse : forall {e d r n} ->
