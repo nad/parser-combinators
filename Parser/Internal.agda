@@ -6,6 +6,7 @@ module Parser.Internal where
 
 open import Parser.Type
 open import Data.Bool
+open import Data.Product.Record
 open import Data.Maybe
 open import Data.Function
 import Data.BoundedVec as BVec
@@ -26,36 +27,36 @@ open import Category.Monad.State
 -- The parsers are indexed on a type of names.
 
 data Parser (tok : Set) (name : ParserType) : ParserType where
-  ret   :  forall {r} -> r -> Parser tok name true leaf r
+  ret   :  forall {r} -> r -> Parser tok name (true , leaf) r
   sat   :  forall {r}
         -> (tok -> Maybe r)
-        -> Parser tok name false leaf r
+        -> Parser tok name (false , leaf) r
   seq₀  :  forall {d₁ e₂ d₂ r₁ r₂}
-        -> Parser tok name true d₁           (r₁ -> r₂)
-        -> Parser tok name e₂   d₂           r₁
-        -> Parser tok name e₂   (node d₁ d₂) r₂
+        -> Parser tok name (true , d₁)         (r₁ -> r₂)
+        -> Parser tok name (e₂   , d₂)         r₁
+        -> Parser tok name (e₂   , node d₁ d₂) r₂
   seq₁  :  forall {d₁} e₂ {d₂ r₁ r₂}
-        -> Parser tok name false d₁        (r₁ -> r₂)
-        -> Parser tok name e₂    d₂        r₁
-        -> Parser tok name false (step d₁) r₂
+        -> Parser tok name (false , d₁)      (r₁ -> r₂)
+        -> Parser tok name (e₂    , d₂)      r₁
+        -> Parser tok name (false , step d₁) r₂
   alt₀  :  forall {d₁} e₂ {d₂ r}
-        -> Parser tok name true d₁           r
-        -> Parser tok name e₂   d₂           r
-        -> Parser tok name true (node d₁ d₂) r
+        -> Parser tok name (true , d₁)         r
+        -> Parser tok name (e₂   , d₂)         r
+        -> Parser tok name (true , node d₁ d₂) r
   alt₁  :  forall {d₁ e₂ d₂ r}
-        -> Parser tok name false d₁           r
-        -> Parser tok name e₂    d₂           r
-        -> Parser tok name e₂    (node d₁ d₂) r
+        -> Parser tok name (false , d₁)         r
+        -> Parser tok name (e₂    , d₂)         r
+        -> Parser tok name (e₂    , node d₁ d₂) r
   !_    :  forall {e d r}
-        -> name e d r -> Parser tok name e (step d) r
+        -> name (e , d) r -> Parser tok name (e , step d) r
   bind₀ :  forall {d₁ e₂ d₂ r₁ r₂}
-        -> Parser tok name true d₁ r₁
-        -> (r₁ -> Parser tok name e₂ d₂ r₂)
-        -> Parser tok name e₂ (node d₁ d₂) r₂
+        -> Parser tok name (true , d₁) r₁
+        -> (r₁ -> Parser tok name (e₂ , d₂) r₂)
+        -> Parser tok name (e₂ , node d₁ d₂) r₂
   bind₁ :  forall {d₁} e₂ {d₂ r₁ r₂}
-        -> Parser tok name false d₁ r₁
-        -> (r₁ -> Parser tok name e₂ d₂ r₂)
-        -> Parser tok name false (step d₁) r₂
+        -> Parser tok name (false , d₁) r₁
+        -> (r₁ -> Parser tok name (e₂ , d₂) r₂)
+        -> Parser tok name (false , step d₁) r₂
 
 ------------------------------------------------------------------------
 -- Run function for the parsers
@@ -63,7 +64,7 @@ data Parser (tok : Set) (name : ParserType) : ParserType where
 -- Grammars.
 
 Grammar : Set -> ParserType -> Set1
-Grammar tok name = forall {e d r} -> name e d r -> Parser tok name e d r
+Grammar tok name = forall {i r} -> name i r -> Parser tok name i r
 
 -- Parser monad.
 
@@ -97,7 +98,7 @@ private
 
     mutual
       parse₀ : forall {d r} ->
-               Parser tok name true d r ->
+               Parser tok name (true , d) r ->
                forall n -> P tok n n r
       parse₀ (ret x)            n = return x
       parse₀ (bind₀      p₁ p₂) n = parse₀  p₁ n >>= \x -> parse₀ (p₂ x) n
@@ -108,13 +109,13 @@ private
       parse₀ (! x)              n = parse₀ (g x) n
 
       parse₁↑ : forall {d r} ->
-                Parser tok name false d r ->
+                Parser tok name (false , d) r ->
                 forall n -> P tok n n r
       parse₁↑ p zero    = mzero
       parse₁↑ p (suc n) = parse₁ p (suc n) >>= \r -> modify ↑ >> return r
 
       parse₁ : forall {d r} ->
-               Parser tok name false d r ->
+               Parser tok name (false , d) r ->
                forall n -> P tok n (pred n) r
       parse₁         _       zero     = mzero
       parse₁ {r = r} (sat p) (suc n)  = eat ∘ BVec.view =<< get
@@ -134,7 +135,7 @@ private
       parse₁ (! x)               (suc n) = parse₁ (g x) (suc n)
 
     parse : forall {e d r n} ->
-            Parser tok name e d r ->
+            Parser tok name (e , d) r ->
             P tok (suc n) (if e then suc n else n) r
     parse {e = true}  {n = n} p = parse₀ p (suc n)
     parse {e = false} {n = n} p = parse₁ p (suc n)

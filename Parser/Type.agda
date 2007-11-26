@@ -5,6 +5,7 @@
 module Parser.Type where
 
 open import Data.Bool
+open import Data.Product.Record
 
 ------------------------------------------------------------------------
 -- Indices to the parser type
@@ -25,8 +26,11 @@ data Depth : Set where
   step : Depth -> Depth
   node : Depth -> Depth -> Depth
 
+Index : Set
+Index = Empty × Depth
+
 ------------------------------------------------------------------------
 -- The parser type signature
 
 ParserType : Set2
-ParserType = Empty -> Depth -> Set -> Set1
+ParserType = Index -> Set -> Set1
