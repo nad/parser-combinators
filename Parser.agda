@@ -14,7 +14,7 @@ open import Data.Maybe
 open import Data.Product.Record
 import Data.Product as Prod
 open import Data.Function hiding (_$_)
-import Data.BoundedVec as BVec
+import Data.BoundedVec.Inefficient as BVec
 open import Relation.Nullary
 open import Relation.Binary
 

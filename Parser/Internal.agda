@@ -9,8 +9,7 @@ open import Data.Bool
 open import Data.Product.Record
 open import Data.Maybe
 open import Data.Function
-import Data.BoundedVec as BVec
-open BVec using (BoundedVec; []v; _∷v_; ↑)
+open import Data.BoundedVec.Inefficient
 import Data.List as L
 open import Data.Nat
 open import Category.Applicative.Indexed
@@ -118,11 +117,11 @@ private
                Parser tok name (false , d) r ->
                forall n -> P tok n (pred n) r
       parse₁         _       zero     = mzero
-      parse₁ {r = r} (sat p) (suc n)  = eat ∘ BVec.view =<< get
+      parse₁ {r = r} (sat p) (suc n)  = eat =<< get
         where
-          eat : forall {n} -> BVec.View tok (suc n) -> P tok (suc n) n r
-          eat []v      = mzero
-          eat (c ∷v s) with p c
+          eat : forall {n} -> BoundedVec tok (suc n) -> P tok (suc n) n r
+          eat []      = mzero
+          eat (c ∷ s) with p c
           ... | just x  = put s >> return x
           ... | nothing = mzero
       parse₁ (seq₀        p₁ p₂) (suc n) = parse₀ p₁ (suc n) <*> parse₁ p₂ (suc n)
