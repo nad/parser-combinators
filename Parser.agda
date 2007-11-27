@@ -21,18 +21,26 @@ open import Relation.Binary
 ------------------------------------------------------------------------
 -- Run function for the parsers
 
-⟦_⟧ :  forall {tok name i r}
-    -> Parser tok name i r -> Grammar tok name
-    -> [ tok ] -> [ Prod._×_ r [ tok ] ]
-⟦ p ⟧ g s = map (Prod.map-× id BVec.toList)
-                (P.parse g p (BVec.fromList s))
+module Run (token : DecSetoid) where
 
--- A variant which only returns parses which leave no remaining input.
+  private
+    open module D = DecSetoid token
+    open module S = Setoid setoid renaming (carrier to tok)
+    open module R = P.Run token
 
-⟦_⟧! :  forall {tok name i r}
-     -> Parser tok name i r -> Grammar tok name
-     -> [ tok ] -> [ r ]
-⟦ p ⟧! g s = map Prod.proj₁ (filter (null ∘ Prod.proj₂) (⟦ p ⟧ g s))
+  ⟦_⟧ :  forall {name i r}
+      -> Parser tok name i r -> Grammar tok name
+      -> [ tok ] -> [ Prod._×_ r [ tok ] ]
+  ⟦ p ⟧ g s = map (Prod.map-× id BVec.toList)
+                  (R.parse g p (BVec.fromList s))
+
+  -- A variant which only returns parses which leave no remaining
+  -- input.
+
+  ⟦_⟧! :  forall {name i r}
+       -> Parser tok name i r -> Grammar tok name
+       -> [ tok ] -> [ r ]
+  ⟦ p ⟧! g s = map Prod.proj₁ (filter (null ∘ Prod.proj₂) (⟦ p ⟧ g s))
 
 ------------------------------------------------------------------------
 -- Operations on indices
@@ -60,12 +68,11 @@ infixr 40 _∣_
 ε : forall {tok name r} -> r -> Parser tok name unitI r
 ε = P.ret
 
-sat : forall {tok name r} ->
-      (tok -> Maybe r) -> Parser tok name (false , leaf) r
-sat = P.sat
-
 fail : forall {tok name r} -> Parser tok name (false , leaf) r
-fail = sat (const nothing)
+fail = P.fail
+
+sym : forall {tok name} -> tok -> Parser tok name (false , leaf) tok
+sym = P.sym
 
 _·_ : forall {tok name e₁ d₁ i₂ r₁ r₂} -> let i₁ = (e₁ , d₁) in
       Parser tok name i₁ (r₁ -> r₂) ->
@@ -108,19 +115,3 @@ _∣_ {e₁ = false} = P.alt₁
 !_ : forall {tok name e d r} ->
      name (e , d) r -> Parser tok name (e , step d) r
 !_ = P.!_
-
-module Sym (a : DecSetoid) where
-
-  private
-    open module D = DecSetoid a
-    open module S = Setoid setoid renaming (carrier to tok)
-
-  -- Parses a given token (symbol).
-
-  sym : forall {name} -> tok -> Parser tok name (false , leaf) tok
-  sym x = sat p
-    where
-    p : tok -> Maybe tok
-    p y with x ≟ y
-    ... | yes _ = just y
-    ... | no  _ = nothing
