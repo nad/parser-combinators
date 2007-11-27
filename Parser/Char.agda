@@ -42,16 +42,16 @@ module Combinators
 
   charLib : forall {i r} -> Name name i r -> Parser C.Char name i r
   charLib (lib' p) = library p
-  charLib digit'   = 0 <$ token '0'
-                   ∣ 1 <$ token '1'
-                   ∣ 2 <$ token '2'
-                   ∣ 3 <$ token '3'
-                   ∣ 4 <$ token '4'
-                   ∣ 5 <$ token '5'
-                   ∣ 6 <$ token '6'
-                   ∣ 7 <$ token '7'
-                   ∣ 8 <$ token '8'
-                   ∣ 9 <$ token '9'
-    where open module T = Token C.decSetoid
+  charLib digit'   = 0 <$ sym '0'
+                   ∣ 1 <$ sym '1'
+                   ∣ 2 <$ sym '2'
+                   ∣ 3 <$ sym '3'
+                   ∣ 4 <$ sym '4'
+                   ∣ 5 <$ sym '5'
+                   ∣ 6 <$ sym '6'
+                   ∣ 7 <$ sym '7'
+                   ∣ 8 <$ sym '8'
+                   ∣ 9 <$ sym '9'
+    where open module S = Sym C.decSetoid
   charLib number' = toNum $ digit +
     where toNum = foldr (\n x -> 10 * x + n) 0 ∘ reverse

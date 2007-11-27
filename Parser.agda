@@ -109,16 +109,16 @@ _∣_ {e₁ = false} = P.alt₁
      name (e , d) r -> Parser tok name (e , step d) r
 !_ = P.!_
 
-module Token (a : DecSetoid) where
+module Sym (a : DecSetoid) where
 
   private
     open module D = DecSetoid a
     open module S = Setoid setoid renaming (carrier to tok)
 
-  -- Parses a given token.
+  -- Parses a given token (symbol).
 
-  token : forall {name} -> tok -> Parser tok name (false , leaf) tok
-  token x = sat p
+  sym : forall {name} -> tok -> Parser tok name (false , leaf) tok
+  sym x = sat p
     where
     p : tok -> Maybe tok
     p y with x ≟ y

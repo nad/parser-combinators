@@ -33,8 +33,8 @@ module Ex₁ where
     e : Name _ Char
 
   grammar : Grammar Char Name
-  grammar e = token '0' ·> token '+' ·> ! e
-            ∣ token '0'
+  grammar e = sym '0' ·> sym '+' ·> ! e
+            ∣ sym '0'
 
   ex₁ : ⟦ ! e ⟧′ grammar "0+0" ≡ '0' ∷ []
   ex₁ = ≡-refl
@@ -49,11 +49,11 @@ module Ex₂ where
     factor : Name _ Char
 
   grammar : Grammar Char Name
-  grammar expr   = ! factor ·> token '+' ·> ! expr
+  grammar expr   = ! factor ·> sym '+' ·> ! expr
                  ∣ ! factor
-  grammar factor = token '0'
-                 ∣ token '0' ·> token '*' ·> ! factor
-                 ∣ token '(' ·> ! expr <· token ')'
+  grammar factor = sym '0'
+                 ∣ sym '0' ·> sym '*' ·> ! factor
+                 ∣ sym '(' ·> ! expr <· sym ')'
 
   ex₁ : ⟦ ! expr ⟧′ grammar "(0*)" ≡ []
   ex₁ = ≡-refl
@@ -74,11 +74,11 @@ module Ex₃ where
     factor : Name _ Char
 
   grammar : Grammar Char Name
-  grammar expr   = ! factor ·> token '+' ·> ! expr
+  grammar expr   = ! factor ·> sym '+' ·> ! expr
                  ∣ ! factor
-  grammar factor = token '0'
-                 ∣ ! factor ·> token '*' ·> token '0'
-                 ∣ token '(' ·> ! expr <· token ')'
+  grammar factor = sym '0'
+                 ∣ ! factor ·> sym '*' ·> sym '0'
+                 ∣ sym '(' ·> ! expr <· sym ')'
 -}
 
 module Ex₄ where
@@ -94,12 +94,12 @@ module Ex₄ where
 
   grammar : Grammar Char Name
   grammar top             = ε 0 ∣ ! as zero
-  grammar (as n)          = suc <$ token 'a' ·
+  grammar (as n)          = suc <$ sym 'a' ·
                             ( ! as (suc n)
                             ∣ _+_ $ ! bcs 'b' n · ! bcs 'c' n
                             )
-  grammar (bcs c zero)    = token c ·> ε 0
-  grammar (bcs c (suc n)) = token c ·> ! bcs c n
+  grammar (bcs c zero)    = sym c ·> ε 0
+  grammar (bcs c (suc n)) = sym c ·> ! bcs c n
 
   ex₁ : ⟦ ! top ⟧′ grammar "aaabbbccc" ≡ 3 ∷ []
   ex₁ = ≡-refl
@@ -121,7 +121,7 @@ module Ex₅ where
 
   grammar : Grammar Char Name
   grammar (lib p) = library p
-  grammar a       = token 'a'
+  grammar a       = sym 'a'
   grammar as      = length $ ! a ⋆
 
   ex₁ : ⟦ ! as ⟧′ grammar "aaaaa" ≡ 5 ∷ []
@@ -147,9 +147,9 @@ module Ex₆ where
   grammar : Grammar Char Name
   grammar (lib p)  = library p
   grammar (cLib p) = charLib p
-  grammar op       = _+_ <$ token '+'
-                   ∣ _*_ <$ token '*'
-                   ∣ _∸_ <$ token '∸'
+  grammar op       = _+_ <$ sym '+'
+                   ∣ _*_ <$ sym '*'
+                   ∣ _∸_ <$ sym '∸'
   grammar (expr a) = chain₁ a number (! op)
 
   ex₁ : ⟦ number ⟧′ grammar "12345" ≡ 12345 ∷ []
@@ -186,11 +186,11 @@ module Ex₇ where
   grammar (cLib p) = charLib p
   grammar expr     = chain₁ left (! term)   (! addOp)
   grammar term     = chain₁ left (! factor) (! mulOp)
-  grammar factor   = token '(' ·> ! expr <· token ')'
+  grammar factor   = sym '(' ·> ! expr <· sym ')'
                    ∣ number
-  grammar addOp    = _+_ <$ token '+'
-                   ∣ _∸_ <$ token '∸'
-  grammar mulOp    = _*_ <$ token '*'
+  grammar addOp    = _+_ <$ sym '+'
+                   ∣ _∸_ <$ sym '∸'
+  grammar mulOp    = _*_ <$ sym '*'
 
   ex₁ : ⟦ ! expr ⟧′ grammar "1+5*2∸3" ≡ 8 ∷ []
   ex₁ = ≡-refl
