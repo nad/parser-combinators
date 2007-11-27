@@ -58,7 +58,7 @@ infixl 50 _·_ _<·_ _·>_ _$_ _<$_
 infixr 40 _∣_
 
 ε : forall {tok name r} -> r -> Parser tok name unitI r
-ε = P.ret
+ε = P.ε
 
 sat : forall {tok name r} ->
       (tok -> Maybe r) -> Parser tok name (false , leaf) r
