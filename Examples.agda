@@ -16,7 +16,7 @@ open import Parser.Lib.Types
 import Parser.Lib  as Lib
 import Parser.Char as CharLib
 private
-  open module R = Run C.decSetoid
+  open module T = Token C.decSetoid
 
 -- A function used to simplify the examples a little.
 

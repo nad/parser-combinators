@@ -15,8 +15,6 @@ open import Data.Nat
 open import Category.Applicative.Indexed
 open import Category.Monad.Indexed
 open import Category.Monad.State
-open import Relation.Nullary
-open import Relation.Binary
 
 ------------------------------------------------------------------------
 -- Parser data type
@@ -30,9 +28,10 @@ open import Relation.Binary
 data Parser (tok : Set) (name : ParserType) : ParserType where
   !_    :  forall {e d r}
         -> name (e , d) r -> Parser tok name (e , step d) r
-  ret   :  forall {r} -> r   -> Parser tok name (true  , leaf) r
-  fail  :  forall {r} ->        Parser tok name (false , leaf) r
-  sym   :                tok -> Parser tok name (false , leaf) tok
+  ret   :  forall {r} -> r -> Parser tok name (true , leaf) r
+  sat   :  forall {r}
+        -> (tok -> Maybe r)
+        -> Parser tok name (false , leaf) r
   seq₀  :  forall {d₁ e₂ d₂ r₁ r₂}
         -> Parser tok name (true , d₁)         (r₁ -> r₂)
         -> Parser tok name (e₂   , d₂)         r₁
@@ -83,56 +82,53 @@ private
 -- 1) The upper bound of the length of the input string.
 -- 2) The depth of the parser.
 
-module Run (token : DecSetoid)
-           {name : ParserType}
-           (g : Grammar (Setoid.carrier (DecSetoid.setoid token)) name)
-           where
+private
+  module Dummy {tok : Set} {name : ParserType}
+               (g : Grammar tok name)
+               where
 
-  private
-    open module D = DecSetoid token
-    open module S = Setoid setoid renaming (carrier to tok)
+    mutual
+      parse₀ : forall {d r} ->
+               Parser tok name (true , d) r ->
+               forall n -> P tok n n r
+      parse₀ (! x)              n = parse₀ (g x) n
+      parse₀ (ret x)            n = return x
+      parse₀ (seq₀       p₁ p₂) n = parse₀  p₁ n <*> parse₀  p₂ n
+      parse₀ (alt₀ true  p₁ p₂) n = parse₀  p₁ n ++  parse₀  p₂ n
+      parse₀ (alt₀ false p₁ p₂) n = parse₀  p₁ n ++  parse₁↑ p₂ n
+      parse₀ (alt₁       p₁ p₂) n = parse₁↑ p₁ n ++  parse₀  p₂ n
 
-  mutual
-    parse₀ : forall {d r} ->
-             Parser tok name (true , d) r ->
-             forall n -> P tok n n r
-    parse₀ (! x)              n = parse₀ (g x) n
-    parse₀ (ret x)            n = return x
-    parse₀ (seq₀       p₁ p₂) n = parse₀  p₁ n <*> parse₀  p₂ n
-    parse₀ (alt₀ true  p₁ p₂) n = parse₀  p₁ n ++  parse₀  p₂ n
-    parse₀ (alt₀ false p₁ p₂) n = parse₀  p₁ n ++  parse₁↑ p₂ n
-    parse₀ (alt₁       p₁ p₂) n = parse₁↑ p₁ n ++  parse₀  p₂ n
+      parse₁ : forall {d r} ->
+               Parser tok name (false , d) r ->
+               forall n -> P tok n (pred n) r
+      parse₁ _                   zero    = mzero
+      parse₁ (! x)               (suc n) = parse₁ (g x) (suc n)
+      parse₁ (seq₀        p₁ p₂) (suc n) = parse₀ p₁ (suc n) <*> parse₁  p₂ (suc n)
+      parse₁ (seq₁  true  p₁ p₂) (suc n) = parse₁ p₁ (suc n) <*> parse₀  p₂ n
+      parse₁ (seq₁  false p₁ p₂) (suc n) = parse₁ p₁ (suc n) <*> parse₁↑ p₂ n
+      parse₁ (alt₁        p₁ p₂) (suc n) = parse₁ p₁ (suc n) ++  parse₁  p₂ (suc n)
+      parse₁ {r = r} (sat p)     (suc n) = eat =<< get
+        where
+          eat : forall {n} ->
+                BoundedVec tok (suc n) ->
+                P tok (suc n) n r
+          eat []      = mzero
+          eat (c ∷ s) with p c
+          ... | just x  = put s >> return x
+          ... | nothing = mzero
 
-    parse₁ : forall {d r} ->
-             Parser tok name (false , d) r ->
-             forall n -> P tok n (pred n) r
-    parse₁ _                   zero    = mzero
-    parse₁ (! x)               (suc n) = parse₁ (g x) (suc n)
-    parse₁ (seq₀        p₁ p₂) (suc n) = parse₀ p₁ (suc n) <*> parse₁  p₂ (suc n)
-    parse₁ (seq₁  true  p₁ p₂) (suc n) = parse₁ p₁ (suc n) <*> parse₀  p₂ n
-    parse₁ (seq₁  false p₁ p₂) (suc n) = parse₁ p₁ (suc n) <*> parse₁↑ p₂ n
-    parse₁ (alt₁        p₁ p₂) (suc n) = parse₁ p₁ (suc n) ++  parse₁  p₂ (suc n)
-    parse₁ fail                (suc n) = mzero
-    parse₁ (sym t)             (suc n) = eat =<< get
-      where
-        eat : forall {n} ->
-              BoundedVec tok (suc n) ->
-              P tok (suc n) n tok
-        eat []       = mzero
-        eat (t' ∷ s) with t' ≟ t
-        ... | yes _ = put s >> return t'
-        ... | no  _ = mzero
+      parse₁↑ : forall {d r} ->
+                Parser tok name (false , d) r ->
+                forall n -> P tok n n r
+      parse₁↑ p zero    = mzero
+      parse₁↑ p (suc n) = parse₁ p (suc n) >>= \r ->
+                          modify ↑ >>
+                          return r
 
-    parse₁↑ : forall {d r} ->
-              Parser tok name (false , d) r ->
-              forall n -> P tok n n r
-    parse₁↑ p zero    = mzero
-    parse₁↑ p (suc n) = parse₁ p (suc n) >>= \r ->
-                        modify ↑ >>
-                        return r
+    parse : forall {e d r n} ->
+            Parser tok name (e , d) r ->
+            P tok n (if e then n else pred n) r
+    parse {e = true}  {n = n} p = parse₀ p n
+    parse {e = false} {n = n} p = parse₁ p n
 
-  parse : forall {e d r n} ->
-          Parser tok name (e , d) r ->
-          P tok n (if e then n else pred n) r
-  parse {e = true}  {n = n} p = parse₀ p n
-  parse {e = false} {n = n} p = parse₁ p n
+open Dummy public

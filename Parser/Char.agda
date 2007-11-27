@@ -52,5 +52,6 @@ module Combinators
                    ∣ 7 <$ sym '7'
                    ∣ 8 <$ sym '8'
                    ∣ 9 <$ sym '9'
+    where open module S = Sym C.decSetoid
   charLib number' = toNum $ digit +
     where toNum = foldr (\n x -> 10 * x + n) 0 ∘ reverse
