@@ -47,7 +47,7 @@ unitI = (true , leaf)
 _·I_ : Index -> Index -> Index
 i₁ ·I i₂ = ( proj₁ i₁ ∧ proj₁ i₂
            , if proj₁ i₁ then node (proj₂ i₁) (proj₂ i₂)
-                         else step (proj₂ i₁)
+                         else proj₂ i₁
            )
 
 ------------------------------------------------------------------------
@@ -73,7 +73,7 @@ fail = sat (const nothing)
 
 forget : forall {tok name e d r} ->
          Parser tok name (e , d) r ->
-         Parser tok name (true , step d) r
+         Parser tok name (true , d) r
 forget p = P.forget _ p
 
 _·_ : forall {tok name e₁ d₁ i₂ r₁ r₂} -> let i₁ = (e₁ , d₁) in

@@ -34,7 +34,7 @@ data Parser (tok : Set) (name : ParserType) : ParserType where
          -> Parser tok name (false , leaf) r
   forget :  forall e {d r}
          -> Parser tok name (e , d) r
-         -> Parser tok name (true , step d) r
+         -> Parser tok name (true , d) r
   seq₀   :  forall {d₁ e₂ d₂ r₁ r₂}
          -> Parser tok name (true , d₁)         (r₁ -> r₂)
          -> Parser tok name (e₂   , d₂)         r₁
@@ -42,7 +42,7 @@ data Parser (tok : Set) (name : ParserType) : ParserType where
   seq₁   :  forall {d₁} e₂ {d₂ r₁ r₂}
          -> Parser tok name (false , d₁)      (r₁ -> r₂)
          -> Parser tok name (e₂    , d₂)      r₁
-         -> Parser tok name (false , step d₁) r₂
+         -> Parser tok name (false , d₁) r₂
   alt₀   :  forall {d₁} e₂ {d₂ r}
          -> Parser tok name (true , d₁)         r
          -> Parser tok name (e₂   , d₂)         r
@@ -84,6 +84,7 @@ private
 --
 -- 1) The upper bound of the length of the input string.
 -- 2) The depth of the parser.
+-- 3) The structure of the parser.
 
 private
   module Dummy {tok : Set} {name : ParserType}
