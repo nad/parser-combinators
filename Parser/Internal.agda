@@ -26,28 +26,31 @@ open import Category.Monad.State
 -- The parsers are indexed on a type of names.
 
 data Parser (tok : Set) (name : ParserType) : ParserType where
-  !_    :  forall {e d r}
-        -> name (e , d) r -> Parser tok name (e , step d) r
-  ret   :  forall {r} -> r -> Parser tok name (true , leaf) r
-  sat   :  forall {r}
-        -> (tok -> Maybe r)
-        -> Parser tok name (false , leaf) r
-  seq₀  :  forall {d₁ e₂ d₂ r₁ r₂}
-        -> Parser tok name (true , d₁)         (r₁ -> r₂)
-        -> Parser tok name (e₂   , d₂)         r₁
-        -> Parser tok name (e₂   , node d₁ d₂) r₂
-  seq₁  :  forall {d₁} e₂ {d₂ r₁ r₂}
-        -> Parser tok name (false , d₁)      (r₁ -> r₂)
-        -> Parser tok name (e₂    , d₂)      r₁
-        -> Parser tok name (false , step d₁) r₂
-  alt₀  :  forall {d₁} e₂ {d₂ r}
-        -> Parser tok name (true , d₁)         r
-        -> Parser tok name (e₂   , d₂)         r
-        -> Parser tok name (true , node d₁ d₂) r
-  alt₁  :  forall {d₁ e₂ d₂ r}
-        -> Parser tok name (false , d₁)         r
-        -> Parser tok name (e₂    , d₂)         r
-        -> Parser tok name (e₂    , node d₁ d₂) r
+  !_     :  forall {e d r}
+         -> name (e , d) r -> Parser tok name (e , step d) r
+  ret    :  forall {r} -> r -> Parser tok name (true , leaf) r
+  sat    :  forall {r}
+         -> (tok -> Maybe r)
+         -> Parser tok name (false , leaf) r
+  forget :  forall e {d r}
+         -> Parser tok name (e , d) r
+         -> Parser tok name (true , step d) r
+  seq₀   :  forall {d₁ e₂ d₂ r₁ r₂}
+         -> Parser tok name (true , d₁)         (r₁ -> r₂)
+         -> Parser tok name (e₂   , d₂)         r₁
+         -> Parser tok name (e₂   , node d₁ d₂) r₂
+  seq₁   :  forall {d₁} e₂ {d₂ r₁ r₂}
+         -> Parser tok name (false , d₁)      (r₁ -> r₂)
+         -> Parser tok name (e₂    , d₂)      r₁
+         -> Parser tok name (false , step d₁) r₂
+  alt₀   :  forall {d₁} e₂ {d₂ r}
+         -> Parser tok name (true , d₁)         r
+         -> Parser tok name (e₂   , d₂)         r
+         -> Parser tok name (true , node d₁ d₂) r
+  alt₁   :  forall {d₁ e₂ d₂ r}
+         -> Parser tok name (false , d₁)         r
+         -> Parser tok name (e₂    , d₂)         r
+         -> Parser tok name (e₂    , node d₁ d₂) r
 
 ------------------------------------------------------------------------
 -- Run function for the parsers
@@ -93,6 +96,8 @@ private
                forall n -> P tok n n r
       parse₀ (! x)              n = parse₀ (g x) n
       parse₀ (ret x)            n = return x
+      parse₀ (forget true  p)   n = parse₀  p n
+      parse₀ (forget false p)   n = parse₁↑ p n
       parse₀ (seq₀       p₁ p₂) n = parse₀  p₁ n <*> parse₀  p₂ n
       parse₀ (alt₀ true  p₁ p₂) n = parse₀  p₁ n ++  parse₀  p₂ n
       parse₀ (alt₀ false p₁ p₂) n = parse₀  p₁ n ++  parse₁↑ p₂ n

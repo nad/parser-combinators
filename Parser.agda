@@ -67,6 +67,15 @@ sat = P.sat
 fail : forall {tok name r} -> Parser tok name (false , leaf) r
 fail = sat (const nothing)
 
+-- Forget whether or not the parser accepts the empty string; take the
+-- safe route and pretend that the empty string is accepted. This can
+-- be used to make some functions simply typed.
+
+forget : forall {tok name e d r} ->
+         Parser tok name (e , d) r ->
+         Parser tok name (true , step d) r
+forget p = P.forget _ p
+
 _·_ : forall {tok name e₁ d₁ i₂ r₁ r₂} -> let i₁ = (e₁ , d₁) in
       Parser tok name i₁ (r₁ -> r₂) ->
       Parser tok name i₂ r₁ ->
