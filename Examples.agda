@@ -88,9 +88,9 @@ module Ex₄ where
   -- The non-terminal top returns the number of 'a' characters parsed.
 
   data Name : ParserType where
-    top :              Name _ ℕ
-    as  :         ℕ -> Name _ ℕ
-    bcs : Char -> ℕ -> Name _ ℕ
+    top :              Name _ ℕ  -- top     ∷= aⁿbⁿcⁿ
+    as  :         ℕ -> Name _ ℕ  -- as n    ∷= aˡ⁺¹bⁿ⁺ˡ⁺¹cⁿ⁺ˡ⁺¹
+    bcs : Char -> ℕ -> Name _ ℕ  -- bcs x n ∷= xⁿ⁺¹
 
   grammar : Grammar Char Name
   grammar top             = ε 0 ∣ ! as zero
