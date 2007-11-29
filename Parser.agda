@@ -121,8 +121,8 @@ _∣_ {e₁ = false} = P.alt₁
 module Sym (a : DecSetoid) where
 
   private
-    open module D = DecSetoid a
-    open module S = Setoid setoid renaming (carrier to tok)
+    open module D = DecSetoidOps a
+           using (_≟_) renaming (carrier to tok)
 
   -- Parses a given token (symbol).
 
