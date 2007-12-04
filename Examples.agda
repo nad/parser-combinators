@@ -15,8 +15,7 @@ open import Parser
 open import Parser.Lib.Types
 import Parser.Lib  as Lib
 import Parser.Char as CharLib
-private
-  open module T = Sym C.decSetoid
+open Sym C.decSetoid
 
 -- A function used to simplify the examples a little.
 
@@ -116,8 +115,7 @@ module Ex₅ where
     a   : Name _ Char
     as  : Name _ ℕ
 
-  private
-    open module L = Lib.Combinators Char lib
+  open Lib.Combinators Char lib
 
   grammar : Grammar Char Name
   grammar (lib p) = library p
@@ -131,8 +129,7 @@ module Ex₆ where
 
   -- A grammar which uses the chain₁ combinator.
 
-  private
-    module L = Lib Char
+  module L = Lib Char
 
   data Name : ParserType where
     lib  : forall {i r} -> L.Name       Name i r -> Name _ r
@@ -140,9 +137,8 @@ module Ex₆ where
     op   : Name _ (ℕ -> ℕ -> ℕ)
     expr : Assoc -> Name _ ℕ
 
-  private
-    open module LC = Lib.Combinators Char lib
-    open module LC = CharLib.Combinators cLib
+  open Lib.Combinators Char lib
+  open CharLib.Combinators cLib
 
   grammar : Grammar Char Name
   grammar (lib p)  = library p
@@ -165,8 +161,7 @@ module Ex₇ where
 
   -- A proper expression example.
 
-  private
-    module L = Lib Char
+  module L = Lib Char
 
   data Name : ParserType where
     lib    : forall {i r} -> L.Name       Name i r -> Name _ r
@@ -177,9 +172,8 @@ module Ex₇ where
     addOp  : Name _ (ℕ -> ℕ -> ℕ)
     mulOp  : Name _ (ℕ -> ℕ -> ℕ)
 
-  private
-    open module LC = Lib.Combinators Char lib
-    open module LC = CharLib.Combinators cLib
+  open Lib.Combinators Char lib
+  open CharLib.Combinators cLib
 
   grammar : Grammar Char Name
   grammar (lib p)  = library p

@@ -32,7 +32,7 @@ module Combinators
          (lib : forall {i r} -> Name name i r -> name i r)
          where
 
-  open module LC = L.Combinators (lib ∘₁ lib')
+  open L.Combinators (lib ∘₁ lib')
 
   digit : Parser C.Char name _ ℕ
   digit = ! lib digit'
@@ -52,6 +52,6 @@ module Combinators
                    ∣ 7 <$ sym '7'
                    ∣ 8 <$ sym '8'
                    ∣ 9 <$ sym '9'
-    where open module S = Sym C.decSetoid
+    where open Sym C.decSetoid
   charLib number' = toNum $ digit +
     where toNum = foldr (\n x -> 10 * x + n) 0 ∘ reverse
