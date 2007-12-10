@@ -19,8 +19,8 @@ open Sym C.decSetoid
 
 -- A function used to simplify the examples a little.
 
-⟦_⟧′ :  forall {name i r}
-     -> Parser Char name i r -> Grammar Char name
+⟦_⟧′ :  forall {nt i r}
+     -> Parser Char nt i r -> Grammar Char nt
      -> String -> [ r ]
 ⟦ p ⟧′ g s = ⟦ p ⟧! g (S.toList s)
 
@@ -28,10 +28,10 @@ module Ex₁ where
 
   -- e ∷= 0 + e | 0
 
-  data Name : ParserType where
-    e : Name _ Char
+  data Nonterminal : ParserType where
+    e : Nonterminal _ Char
 
-  grammar : Grammar Char Name
+  grammar : Grammar Char Nonterminal
   grammar e = sym '0' ·> sym '+' ·> ! e
             ∣ sym '0'
 
@@ -43,11 +43,11 @@ module Ex₂ where
   -- e ∷= f + e | f
   -- f ∷= 0 | 0 * f | ( e )
 
-  data Name : ParserType where
-    expr   : Name _ Char
-    factor : Name _ Char
+  data Nonterminal : ParserType where
+    expr   : Nonterminal _ Char
+    factor : Nonterminal _ Char
 
-  grammar : Grammar Char Name
+  grammar : Grammar Char Nonterminal
   grammar expr   = ! factor ·> sym '+' ·> ! expr
                  ∣ ! factor
   grammar factor = sym '0'
@@ -68,11 +68,11 @@ module Ex₃ where
   -- e ∷= f + e | f
   -- f ∷= 0 | f * 0 | ( e )
 
-  data Name : ParserType where
-    expr   : Name _ Char
-    factor : Name _ Char
+  data Nonterminal : ParserType where
+    expr   : Nonterminal _ Char
+    factor : Nonterminal _ Char
 
-  grammar : Grammar Char Name
+  grammar : Grammar Char Nonterminal
   grammar expr   = ! factor ·> sym '+' ·> ! expr
                  ∣ ! factor
   grammar factor = sym '0'
@@ -86,12 +86,12 @@ module Ex₄ where
 
   -- The non-terminal top returns the number of 'a' characters parsed.
 
-  data Name : ParserType where
-    top :              Name _ ℕ  -- top     ∷= aⁿbⁿcⁿ
-    as  :         ℕ -> Name _ ℕ  -- as n    ∷= aˡ⁺¹bⁿ⁺ˡ⁺¹cⁿ⁺ˡ⁺¹
-    bcs : Char -> ℕ -> Name _ ℕ  -- bcs x n ∷= xⁿ⁺¹
+  data NT : ParserType where
+    top :              NT _ ℕ  -- top     ∷= aⁿbⁿcⁿ
+    as  :         ℕ -> NT _ ℕ  -- as n    ∷= aˡ⁺¹bⁿ⁺ˡ⁺¹cⁿ⁺ˡ⁺¹
+    bcs : Char -> ℕ -> NT _ ℕ  -- bcs x n ∷= xⁿ⁺¹
 
-  grammar : Grammar Char Name
+  grammar : Grammar Char NT
   grammar top             = ε 0 ∣ ! as zero
   grammar (as n)          = suc <$ sym 'a' ·
                             ( ! as (suc n)
@@ -110,14 +110,14 @@ module Ex₅ where
 
   -- A grammar making use of a parameterised parser from the library.
 
-  data Name : ParserType where
-    lib : forall {i r} -> Lib.Name Char Name i r -> Name _ r
-    a   : Name _ Char
-    as  : Name _ ℕ
+  data NT : ParserType where
+    lib : forall {i r} -> Lib.Nonterminal Char NT i r -> NT _ r
+    a   : NT _ Char
+    as  : NT _ ℕ
 
   open Lib.Combinators Char lib
 
-  grammar : Grammar Char Name
+  grammar : Grammar Char NT
   grammar (lib p) = library p
   grammar a       = sym 'a'
   grammar as      = length $ ! a ⋆
@@ -131,16 +131,16 @@ module Ex₆ where
 
   module L = Lib Char
 
-  data Name : ParserType where
-    lib  : forall {i r} -> L.Name       Name i r -> Name _ r
-    cLib : forall {i r} -> CharLib.Name Name i r -> Name _ r
-    op   : Name _ (ℕ -> ℕ -> ℕ)
-    expr : Assoc -> Name _ ℕ
+  data NT : ParserType where
+    lib  : forall {i r} -> L.Nonterminal       NT i r -> NT _ r
+    cLib : forall {i r} -> CharLib.Nonterminal NT i r -> NT _ r
+    op   : NT _ (ℕ -> ℕ -> ℕ)
+    expr : Assoc -> NT _ ℕ
 
   open Lib.Combinators Char lib
   open CharLib.Combinators cLib
 
-  grammar : Grammar Char Name
+  grammar : Grammar Char NT
   grammar (lib p)  = library p
   grammar (cLib p) = charLib p
   grammar op       = _+_ <$ sym '+'
@@ -163,19 +163,19 @@ module Ex₇ where
 
   module L = Lib Char
 
-  data Name : ParserType where
-    lib    : forall {i r} -> L.Name       Name i r -> Name _ r
-    cLib   : forall {i r} -> CharLib.Name Name i r -> Name _ r
-    expr   : Name _ ℕ
-    term   : Name _ ℕ
-    factor : Name _ ℕ
-    addOp  : Name _ (ℕ -> ℕ -> ℕ)
-    mulOp  : Name _ (ℕ -> ℕ -> ℕ)
+  data NT : ParserType where
+    lib    : forall {i r} -> L.Nonterminal       NT i r -> NT _ r
+    cLib   : forall {i r} -> CharLib.Nonterminal NT i r -> NT _ r
+    expr   : NT _ ℕ
+    term   : NT _ ℕ
+    factor : NT _ ℕ
+    addOp  : NT _ (ℕ -> ℕ -> ℕ)
+    mulOp  : NT _ (ℕ -> ℕ -> ℕ)
 
   open Lib.Combinators Char lib
   open CharLib.Combinators cLib
 
-  grammar : Grammar Char Name
+  grammar : Grammar Char NT
   grammar (lib p)  = library p
   grammar (cLib p) = charLib p
   grammar expr     = chain₁ left (! term)   (! addOp)

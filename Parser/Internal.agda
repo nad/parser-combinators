@@ -23,34 +23,34 @@ open import Category.Monad.State
 -- descent. The types used ensure that the implementation below is
 -- structurally recursive.
 
--- The parsers are indexed on a type of names.
+-- The parsers are indexed on a type of nonterminals.
 
-data Parser (tok : Set) (name : ParserType) : ParserType where
+data Parser (tok : Set) (nt : ParserType) : ParserType where
   !_     :  forall {e d r}
-         -> name (e , d) r -> Parser tok name (e , step d) r
-  ε      :  forall {r} -> r -> Parser tok name (true , leaf) r
+         -> nt (e , d) r -> Parser tok nt (e , step d) r
+  ε      :  forall {r} -> r -> Parser tok nt (true , leaf) r
   sat    :  forall {r}
          -> (tok -> Maybe r)
-         -> Parser tok name (false , leaf) r
+         -> Parser tok nt (false , leaf) r
   forget :  forall e {d r}
-         -> Parser tok name (e , d) r
-         -> Parser tok name (true , d) r
+         -> Parser tok nt (e , d) r
+         -> Parser tok nt (true , d) r
   seq₀   :  forall {d₁ e₂ d₂ r₁ r₂}
-         -> Parser tok name (true , d₁)         (r₁ -> r₂)
-         -> Parser tok name (e₂   , d₂)         r₁
-         -> Parser tok name (e₂   , node d₁ d₂) r₂
+         -> Parser tok nt (true , d₁)         (r₁ -> r₂)
+         -> Parser tok nt (e₂   , d₂)         r₁
+         -> Parser tok nt (e₂   , node d₁ d₂) r₂
   seq₁   :  forall {d₁} e₂ {d₂ r₁ r₂}
-         -> Parser tok name (false , d₁)      (r₁ -> r₂)
-         -> Parser tok name (e₂    , d₂)      r₁
-         -> Parser tok name (false , d₁) r₂
+         -> Parser tok nt (false , d₁)      (r₁ -> r₂)
+         -> Parser tok nt (e₂    , d₂)      r₁
+         -> Parser tok nt (false , d₁) r₂
   alt₀   :  forall {d₁} e₂ {d₂ r}
-         -> Parser tok name (true , d₁)         r
-         -> Parser tok name (e₂   , d₂)         r
-         -> Parser tok name (true , node d₁ d₂) r
+         -> Parser tok nt (true , d₁)         r
+         -> Parser tok nt (e₂   , d₂)         r
+         -> Parser tok nt (true , node d₁ d₂) r
   alt₁   :  forall {d₁ e₂ d₂ r}
-         -> Parser tok name (false , d₁)         r
-         -> Parser tok name (e₂    , d₂)         r
-         -> Parser tok name (e₂    , node d₁ d₂) r
+         -> Parser tok nt (false , d₁)         r
+         -> Parser tok nt (e₂    , d₂)         r
+         -> Parser tok nt (e₂    , node d₁ d₂) r
 
 ------------------------------------------------------------------------
 -- Run function for the parsers
@@ -58,7 +58,7 @@ data Parser (tok : Set) (name : ParserType) : ParserType where
 -- Grammars.
 
 Grammar : Set -> ParserType -> Set1
-Grammar tok name = forall {i r} -> name i r -> Parser tok name i r
+Grammar tok nt = forall {i r} -> nt i r -> Parser tok nt i r
 
 -- Parser monad.
 
@@ -88,13 +88,13 @@ private
 -- 3) The structure of the parser.
 
 private
-  module Dummy {tok : Set} {name : ParserType}
-               (g : Grammar tok name)
+  module Dummy {tok : Set} {nt : ParserType}
+               (g : Grammar tok nt)
                where
 
     mutual
       parse₀ : forall {d r} ->
-               Parser tok name (true , d) r ->
+               Parser tok nt (true , d) r ->
                forall n -> P tok n n r
       parse₀ (! x)              n = parse₀ (g x) n
       parse₀ (ε x)              n = return x
@@ -106,7 +106,7 @@ private
       parse₀ (alt₁       p₁ p₂) n = parse₁↑ p₁ n ++  parse₀  p₂ n
 
       parse₁ : forall {d r} ->
-               Parser tok name (false , d) r ->
+               Parser tok nt (false , d) r ->
                forall n -> P tok n (pred n) r
       parse₁ _                   zero    = mzero
       parse₁ (! x)               (suc n) = parse₁ (g x) (suc n)
@@ -125,7 +125,7 @@ private
           ... | nothing = mzero
 
       parse₁↑ : forall {d r} ->
-                Parser tok name (false , d) r ->
+                Parser tok nt (false , d) r ->
                 forall n -> P tok n n r
       parse₁↑ p zero    = mzero
       parse₁↑ p (suc n) = parse₁ p (suc n) >>= \r ->
@@ -133,7 +133,7 @@ private
                           return r
 
     parse : forall {e d r n} ->
-            Parser tok name (e , d) r ->
+            Parser tok nt (e , d) r ->
             P tok n (if e then n else pred n) r
     parse {e = true}  {n = n} p = parse₀ p n
     parse {e = false} {n = n} p = parse₁ p n

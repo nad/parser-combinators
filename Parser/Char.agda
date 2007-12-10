@@ -19,28 +19,28 @@ private
 -- Some parameterised parsers.
 
 private
-  data Name' (name : ParserType) : ParserType where
-    lib'    : forall {i r} -> L.Name name i r -> Name' name i r
-    digit'  : Name' name _ ℕ
-    number' : Name' name _ ℕ
+  data NT (nt : ParserType) : ParserType where
+    lib'    : forall {i r} -> L.Nonterminal nt i r -> NT nt i r
+    digit'  : NT nt _ ℕ
+    number' : NT nt _ ℕ
 
-Name : ParserType -> ParserType
-Name = Name'
+Nonterminal : ParserType -> ParserType
+Nonterminal = NT
 
 module Combinators
-         {name : _}
-         (lib : forall {i r} -> Name name i r -> name i r)
+         {nt : _}
+         (lib : forall {i r} -> Nonterminal nt i r -> nt i r)
          where
 
   open L.Combinators (lib ∘₁ lib')
 
-  digit : Parser C.Char name _ ℕ
+  digit : Parser C.Char nt _ ℕ
   digit = ! lib digit'
 
-  number : Parser C.Char name _ ℕ
+  number : Parser C.Char nt _ ℕ
   number = ! lib number'
 
-  charLib : forall {i r} -> Name name i r -> Parser C.Char name i r
+  charLib : forall {i r} -> Nonterminal nt i r -> Parser C.Char nt i r
   charLib (lib' p) = library p
   charLib digit'   = 0 <$ sym '0'
                    ∣ 1 <$ sym '1'

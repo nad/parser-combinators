@@ -23,61 +23,61 @@ open import Data.Product renaming (_,_ to <_∣_>)
 
 private
 
-  data Name' (name : ParserType) : ParserType where
+  data NT (nt : ParserType) : ParserType where
     many    :  forall {d r}
-            -> Parser tok name (false , d) r
-            -> Name' name _ [ r ]
+            -> Parser tok nt (false , d) r
+            -> NT nt _ [ r ]
     many₁   :  forall {d r}
-            -> Parser tok name (false , d) r
-            -> Name' name _ [ r ]
+            -> Parser tok nt (false , d) r
+            -> NT nt _ [ r ]
     chain'  :  forall {d₁ i₂ r}
             -> Assoc
-            -> Parser tok name (false , d₁) r
-            -> Parser tok name i₂ (r -> r -> r)
+            -> Parser tok nt (false , d₁) r
+            -> Parser tok nt i₂ (r -> r -> r)
             -> r
-            -> Name' name _ r
+            -> NT nt _ r
     chain₁' :  forall {d₁ i₂ r}
             -> Assoc
-            -> Parser tok name (false , d₁) r
-            -> Parser tok name i₂ (r -> r -> r)
-            -> Name' name _ r
+            -> Parser tok nt (false , d₁) r
+            -> Parser tok nt i₂ (r -> r -> r)
+            -> NT nt _ r
 
-Name : ParserType -> ParserType
-Name = Name'
+Nonterminal : ParserType -> ParserType
+Nonterminal = NT
 
 module Combinators
-         {name : _}
-         (lib : forall {i r} -> Name name i r -> name i r)
+         {nt : _}
+         (lib : forall {i r} -> Nonterminal nt i r -> nt i r)
          where
 
   infix 55 _⋆ _+
 
   _⋆ : forall {d r} ->
-       Parser tok name (false , d) r ->
-       Parser tok name _ [ r ]
+       Parser tok nt (false , d) r ->
+       Parser tok nt _ [ r ]
   p ⋆ = ! lib (many p)
 
   _+ : forall {d r} ->
-       Parser tok name (false , d) r ->
-       Parser tok name _ [ r ]
+       Parser tok nt (false , d) r ->
+       Parser tok nt _ [ r ]
   p + = ! lib (many₁ p)
 
   chain :  forall {d₁ i₂ r}
         -> Assoc
-        -> Parser tok name (false , d₁) r
-        -> Parser tok name i₂ (r -> r -> r)
+        -> Parser tok nt (false , d₁) r
+        -> Parser tok nt i₂ (r -> r -> r)
         -> r
-        -> Parser tok name _ r
+        -> Parser tok nt _ r
   chain a p op x = ! lib (chain' a p op x)
 
   chain₁ :  forall {d₁ i₂ r}
          -> Assoc
-         -> Parser tok name (false , d₁) r
-         -> Parser tok name i₂ (r -> r -> r)
-         -> Parser tok name _ r
+         -> Parser tok nt (false , d₁) r
+         -> Parser tok nt i₂ (r -> r -> r)
+         -> Parser tok nt _ r
   chain₁ a p op = ! lib (chain₁' a p op)
 
-  library : forall {i r} -> Name name i r -> Parser tok name i r
+  library : forall {i r} -> Nonterminal nt i r -> Parser tok nt i r
   library (many  p)          = ε [] ∣ p +
   library (many₁ p)          = _∷_ $ p · p ⋆
   library (chain'  a p op x) = ε x ∣ chain₁ a p op
