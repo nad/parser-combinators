@@ -55,7 +55,7 @@ i₁ ·I i₂ = ( proj₁ i₁ ∧ proj₁ i₂
 
 infix  60 !_
 infixl 50 _·_ _<·_ _·>_ _$_ _<$_
-infixr 40 _∣_
+infixl 40 _∣_
 
 ε : forall {tok nt r} -> r -> Parser tok nt unitI r
 ε = P.ε
