@@ -1,2 +1,12 @@
 (^|/)\..*\.agda\.el$
 \.agdai$
+\.bak$
+\.log$
+\.nav$
+\.out$
+\.ptb$
+\.snm$
+\.toc$
+\.aux$
+(^|/)\.auctex-auto$
+\.tex$
