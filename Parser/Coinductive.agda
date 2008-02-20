@@ -9,10 +9,6 @@
 -- hard/impossible to form interesting parsers. The intention is that
 -- Parser' should be coinductive (so that interesting parsers can be
 -- formed), while parse' should be defined using structural recursion.
--- This seems to require slightly different indices, though, and I
--- wanted to document the current indices (which have a nice algebraic
--- structure, see Parser.Coinductive.Index) before starting to change
--- things.
 
 module Parser.Coinductive where
 
@@ -27,13 +23,17 @@ open import Data.Function
 
 private
 
+  -- returnPlus below takes a _list_ of immediate results, since
+  -- otherwise the returnPlus/returnPlus case of _∣'_ would not type
+  -- check. (Its type would have to be changed.)
+
   data Parser' (tok r : Set) : Index -> Set where
     symbolBind : forall {i} ->
                  (tok -> Parser' tok r i) -> Parser' tok r 0I
     fail'      : Parser' tok r 0I
     returnPlus : forall {e c} ->
-                 r -> Parser' tok r (e , c) ->
-                 Parser' tok r (true , {- step -} c)
+                 [ r ] -> Parser' tok r (e , c) ->
+                 Parser' tok r (true , step c)
 
   cast : forall {tok i₁ i₂ r} ->
          i₁ ≡ i₂ -> Parser' tok r i₁ -> Parser' tok r i₂
@@ -47,21 +47,23 @@ private
   P tok = StateT [ tok ] [_]
 
   _∣'_ : forall {tok r i₁ i₂} ->
-         Parser' tok r i₁ ->
-         Parser' tok r i₂ ->
+         Parser' tok r i₁ -> Parser' tok r i₂ ->
          Parser' tok r (i₁ ∣I i₂)
-  symbolBind f₁     ∣' symbolBind f₂   = symbolBind (\c -> f₁ c ∣' f₂ c)
-  fail'             ∣' p₂              = p₂
-  p₁@(symbolBind _) ∣' fail'           = p₁
-  (returnPlus x p₁) ∣' p₂              = returnPlus x (p₁ ∣' p₂)
-  p₁@(symbolBind _) ∣' returnPlus x p₂ = returnPlus x (p₁ ∣' p₂)
+  fail'               ∣' p₂                = p₂
+  p₁@(returnPlus _ _) ∣' fail'             = p₁
+  p₁@(symbolBind _)   ∣' fail'             = p₁
+  symbolBind f₁       ∣' symbolBind f₂     = symbolBind (\c -> f₁ c ∣' f₂ c)
+  p₁@(symbolBind _)   ∣' returnPlus xs p₂  = returnPlus xs (p₁ ∣' p₂)
+  returnPlus xs p₁    ∣' p₂@(symbolBind _) = returnPlus xs (p₂ ∣' p₁)
+  returnPlus xs₁ p₁   ∣' returnPlus xs₂ p₂ = returnPlus (xs₁ ++ xs₂) (p₁ ∣' p₂)
 
   parse' : forall {tok r i} ->
            Parser' tok r i -> P tok r
-  parse' (symbolBind f)   (c ∷ s) = parse' (f c) s
-  parse' (symbolBind f)   []      = []
-  parse' fail'            _       = []
-  parse' (returnPlus x p) s       = pair x s ∷ parse' p s
+  parse' (symbolBind f)    (c ∷ s) = parse' (f c) s
+  parse' (symbolBind f)    []      = []
+  parse' fail'             _       = []
+  parse' (returnPlus xs p) s       = map (\x -> pair x s) xs ++
+                                     parse' p s
 
 ------------------------------------------------------------------------
 -- CPS transformation
@@ -101,4 +103,4 @@ _∣_ {i₁ = i₁} {i₂ = i₂} p₁ p₂ {i' = i₃} k =
 
 parse : forall {tok r i} ->
         Parser tok r i -> P tok r
-parse p = parse' (p \x -> returnPlus x fail')
+parse p = parse' (p \x -> returnPlus (x ∷ []) fail')
