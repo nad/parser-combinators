@@ -45,6 +45,29 @@ private
                  [ r ] -> Parser tok r (e , c) ->
                  Parser tok r (true , suc c)
 
+  -- Coinductive coeliminator.
+
+  data ParserF (tok r : Set) (X : Index -> Set) : Index -> Set where
+    symbolBindF : forall {i} ->
+                  (tok -> X i) -> ParserF tok r X 0I
+    failF       : ParserF tok r X 0I
+    returnPlusF : forall {e c} ->
+                  [ r ] -> X (e , c) ->
+                  ParserF tok r X (true , suc c)
+    -- Short-circuiting constructor; gives the final answer
+    -- immediately, in one step.
+    doneF       : forall {i} -> Parser tok r i -> ParserF tok r X i
+
+  coelim : forall {tok r e d} -> let i = (e , d) in
+           (X : Index -> Set) ->
+           (forall {i} -> X i -> ParserF tok r X i) ->
+           X i -> Parser tok r i
+  coelim {e = e} {d = d} X step x with e | d | step x
+  ... | ._ | ._ | symbolBindF f     = symbolBind (\c -> coelim X step (f c))
+  ... | ._ | ._ | failF             = fail
+  ... | ._ | ._ | returnPlusF xs x' = returnPlus xs (coelim X step x')
+  ... | _  | _  | doneF p           = p
+
   cast : forall {tok i₁ i₂ r} ->
          i₁ ≡ i₂ -> Parser tok r i₁ -> Parser tok r i₂
   cast ≡-refl p = p
@@ -52,15 +75,22 @@ private
   -- Note that this function is productive.
 
   _∣_ : forall {tok r i₁ i₂} ->
-         Parser tok r i₁ -> Parser tok r i₂ ->
-         Parser tok r (i₁ ∣I i₂)
-  fail                ∣ p₂                = p₂
-  p₁@(returnPlus _ _) ∣ fail              = p₁
-  p₁@(symbolBind _)   ∣ fail              = p₁
-  symbolBind f₁       ∣ symbolBind f₂     = symbolBind (\c -> f₁ c ∣ f₂ c)
-  p₁@(symbolBind _)   ∣ returnPlus xs p₂  = returnPlus xs (p₁ ∣ p₂)
-  returnPlus xs p₁    ∣ p₂@(symbolBind _) = returnPlus xs (p₂ ∣ p₁)
-  returnPlus xs₁ p₁   ∣ returnPlus xs₂ p₂ = returnPlus (xs₁ ++ xs₂) (p₁ ∣ p₂)
+        Parser tok r i₁ -> Parser tok r i₂ ->
+        Parser tok r (i₁ ∣I i₂)
+  _∣_ {tok} {r} p₁ p₂ = coelim X f < p₁ ∣ p₂ >
+    where
+    data X : Index -> Set where
+      <_∣_> : forall {i₁ i₂} ->
+              Parser tok r i₁ -> Parser tok r i₂ -> X (i₁ ∣I i₂)
+
+    f : forall {i} -> X i -> ParserF tok r X i
+    f < fail                ∣ p₂                > = doneF p₂
+    f < p₁@(returnPlus _ _) ∣ fail              > = doneF p₁
+    f < p₁@(symbolBind _)   ∣ fail              > = doneF p₁
+    f < symbolBind f₁       ∣ symbolBind f₂     > = symbolBindF (\c -> < f₁ c ∣ f₂ c >)
+    f < p₁@(symbolBind _)   ∣ returnPlus xs p₂  > = returnPlusF xs < p₁ ∣ p₂ >
+    f < returnPlus xs p₁    ∣ p₂@(symbolBind _) > = returnPlusF xs < p₂ ∣ p₁ >
+    f < returnPlus xs₁ p₁   ∣ returnPlus xs₂ p₂ > = returnPlusF (xs₁ ++ xs₂) < p₁ ∣ p₂ >
 
   -- parse is structurally recursive over the following lexicographic
   -- measure:
@@ -71,7 +101,7 @@ private
   -- Note that Parser is viewed as being coinductive.
 
   parse : forall {tok r e c} ->
-           Parser tok r (e , c) -> P tok r
+          Parser tok r (e , c) -> P tok r
   parse (symbolBind f)    (c ∷ s) = parse (f c) s
   parse (symbolBind f)    []      = []
   parse fail              _       = []
