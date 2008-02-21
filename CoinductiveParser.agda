@@ -84,39 +84,50 @@ private
 -- transformer to the Base parser above to improve the efficiency of
 -- left-nested uses of bind.
 
-Parser : Set -> Set -> Index -> Set1
-Parser tok r i = forall {r' i'} ->
-                 (r -> Base.Parser tok r' i') ->
-                 Base.Parser tok r' (i ·I i')
+data Parser (tok r : Set) (i : Index) : Set1 where
+  parser : (forall {i' r'} ->
+            (r -> Base.Parser tok r' i') ->
+            Base.Parser tok r' (i ·I i')) ->
+           Parser tok r i
+
+private
+
+  unP : forall {tok r i r' i'} ->
+        Parser tok r i ->
+        (r -> Base.Parser tok r' i') ->
+        Base.Parser tok r' (i ·I i')
+  unP (parser p) = p
 
 symbol : forall {tok} -> Parser tok tok 0I
-symbol = Base.symbolBind
+symbol = parser Base.symbolBind
 
 fail : forall {tok r} -> Parser tok r 0I
-fail = \k -> Base.fail
+fail = parser \k -> Base.fail
 
 return : forall {tok r} -> r -> Parser tok r 1I
-return x = \k -> k x
+return x = parser \k -> k x
 
 _>>=_ : forall {tok r₁ r₂ i₁ i₂} ->
         Parser tok r₁ i₁ -> (r₁ -> Parser tok r₂ i₂) ->
         Parser tok r₂ (i₁ ·I i₂)
-_>>=_ {i₁ = i₁} {i₂ = i₂} p f {i' = i₃} k =
-  Base.cast (sym $ *-assoc i₁ i₂ i₃) (p \x -> f x k)
+_>>=_ {tok} {r₁} {r₂} {i₁} {i₂} (parser p) f = parser
+  \{i₃} k -> Base.cast (sym $ *-assoc i₁ i₂ i₃)
+                       (p \x -> unP (f x) k)
   where open IndexSemiring
 
 _∣_ : forall {tok r i₁ i₂} ->
       Parser tok r i₁ ->
       Parser tok r i₂ ->
       Parser tok r (i₁ ∣I i₂)
-_∣_ {i₁ = i₁} {i₂ = i₂} p₁ p₂ {i' = i₃} k =
-  Base.cast (sym $ Prod.proj₂ distrib i₃ i₁ i₂)
-            (Base._∣_ (p₁ k) (p₂ k))
+_∣_ {i₁ = i₁} {i₂ = i₂} (parser p₁) (parser p₂) =
+  parser \{i₃} k ->
+    Base.cast (sym $ Prod.proj₂ distrib i₃ i₁ i₂)
+              (Base._∣_ (p₁ k) (p₂ k))
   where open IndexSemiring
 
 parse : forall {tok r i} ->
         Parser tok r i -> P tok r
-parse {tok} {r} p = Base.parse (p k)
+parse {tok} {r} (parser p) = Base.parse (p k)
   where
   k : r -> Base.Parser tok r (true , 1)
   k x = Base.returnPlus (x ∷ []) Base.fail
