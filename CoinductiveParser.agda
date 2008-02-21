@@ -66,12 +66,12 @@ private
   -- measure:
   --
   -- ⑴ The input string.
-  -- ⑵ The Corners index.
+  -- ⑵ The Distance index.
   --
   -- Note that Parser is viewed as being coinductive.
 
   parse : forall {tok r e c} ->
-           Parser tok r (e , c) -> P tok r
+          Parser tok r (e , c) -> P tok r
   parse (symbolBind f)    (c ∷ s) = parse (f c) s
   parse (symbolBind f)    []      = []
   parse fail              _       = []
