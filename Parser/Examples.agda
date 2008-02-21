@@ -2,7 +2,7 @@
 -- Examples
 ------------------------------------------------------------------------
 
-module Examples where
+module Parser.Examples where
 
 open import Data.List
 open import Data.Nat
