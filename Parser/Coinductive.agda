@@ -5,10 +5,7 @@
 -- This code is based on "Parallel Parsing Processes" by Koen
 -- Claessen.
 
--- Currently this code is terminating but uninteresting, since it's
--- hard/impossible to form interesting parsers. The intention is that
--- Parser' should be coinductive (so that interesting parsers can be
--- formed), while parse' should be defined using structural recursion.
+-- Note that the Parser' type below is assumed to be coinductive.
 
 module Parser.Coinductive where
 
@@ -27,6 +24,7 @@ private
   -- otherwise the returnPlus/returnPlus case of _∣'_ would not type
   -- check. (Its type would have to be changed.)
 
+  {- co -}
   data Parser' (tok r : Set) : Index -> Set where
     symbolBind : forall {i} ->
                  (tok -> Parser' tok r i) -> Parser' tok r 0I
@@ -46,6 +44,8 @@ private
   P : Set -> (Set -> Set)
   P tok = StateT [ tok ] [_]
 
+  -- Note that this function is productive.
+
   _∣'_ : forall {tok r i₁ i₂} ->
          Parser' tok r i₁ -> Parser' tok r i₂ ->
          Parser' tok r (i₁ ∣I i₂)
@@ -57,8 +57,16 @@ private
   returnPlus xs p₁    ∣' p₂@(symbolBind _) = returnPlus xs (p₂ ∣' p₁)
   returnPlus xs₁ p₁   ∣' returnPlus xs₂ p₂ = returnPlus (xs₁ ++ xs₂) (p₁ ∣' p₂)
 
-  parse' : forall {tok r i} ->
-           Parser' tok r i -> P tok r
+  -- parse' is structurally recursive over the following lexicographic
+  -- measure:
+  --
+  -- ⑴ The input string.
+  -- ⑵ The Corners index.
+  --
+  -- Note that Parser' is viewed as being coinductive.
+
+  parse' : forall {tok r e c} ->
+           Parser' tok r (e , c) -> P tok r
   parse' (symbolBind f)    (c ∷ s) = parse' (f c) s
   parse' (symbolBind f)    []      = []
   parse' fail'             _       = []
