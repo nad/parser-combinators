@@ -58,6 +58,8 @@ private
 
   -- Note that this function is productive.
 
+  infixl 0 _∣_
+
   _∣_ : forall {tok r i₁ i₂} ->
          Parser tok r i₁ -> Parser tok r i₂ ->
          Parser tok r (i₁ ∣I i₂)
@@ -125,6 +127,8 @@ fail = parser \k -> Base.fail
 return : forall {tok r} -> r -> Parser tok r 1I
 return x = parser \k -> k x
 
+infixl 1 _>>=_
+
 _>>=_ : forall {tok r₁ r₂ i₁ i₂} ->
         Parser tok r₁ i₁ -> (r₁ -> Parser tok r₂ i₂) ->
         Parser tok r₂ (i₁ ·I i₂)
@@ -132,6 +136,8 @@ _>>=_ {tok} {r₁} {r₂} {i₁} {i₂} (parser p) f = parser
   \{i₃} k -> Base.cast (sym $ *-assoc i₁ i₂ i₃)
                        (p \x -> unP (f x) k)
   where open IndexSemiring
+
+infixl 0 _∣_
 
 _∣_ : forall {tok r i₁ i₂} ->
       Parser tok r i₁ ->
