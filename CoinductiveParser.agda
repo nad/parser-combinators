@@ -45,6 +45,14 @@ private
                  [ r ] -> Parser tok r (e , c) ->
                  Parser tok r (true , suc c)
 
+  -- Note that the type of this return function is not suitable if you
+  -- want to state the monad laws (since (true , 1) is not a zero in
+  -- the monoid which is used here). The return function defined below
+  -- has a more suitable type, though.
+
+  return : forall {tok r} -> r -> Parser tok r (true , 1)
+  return x = returnPlus (x ∷ []) fail
+
   cast : forall {tok i₁ i₂ r} ->
          i₁ ≡ i₂ -> Parser tok r i₁ -> Parser tok r i₂
   cast ≡-refl p = p
@@ -133,7 +141,4 @@ _∣_ {i₁ = i₁} {i₂ = i₂} (parser p₁) (parser p₂) =
 
 parse : forall {tok r i} ->
         Parser tok r i -> P tok r
-parse {tok} {r} (parser p) = Base.parse (p k)
-  where
-  k : r -> Base.Parser tok r (true , 1)
-  k x = Base.returnPlus (x ∷ []) Base.fail
+parse (parser p) = Base.parse (p Base.return)
