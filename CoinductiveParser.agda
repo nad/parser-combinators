@@ -19,6 +19,7 @@ open import Data.List
 open import Category.Monad.State
 open import Logic
 open import Data.Function
+open import Data.Maybe
 
 ------------------------------------------------------------------------
 -- Parser monad
@@ -38,8 +39,8 @@ private
 
   {- co -}
   data Parser (tok r : Set) : Index -> Set where
-    symbolBind : forall {i} ->
-                 (tok -> Parser tok r i) -> Parser tok r 0I
+    symbolBind : forall {i : tok -> Index} ->
+                 ((c : tok) -> Parser tok r (i c)) -> Parser tok r 0I
     fail       : Parser tok r 0I
     returnPlus : forall {e c} ->
                  [ r ] -> Parser tok r (e , c) ->
@@ -117,6 +118,11 @@ fail = parser \k -> Base.fail
 return : forall {tok r} -> r -> Parser tok r 1I
 return x = parser \k -> k x
 
+-- Note that _>>=_ cannot easily be given a dependent type (where the
+-- second argument has type (x : r₁) -> Parser tok r₂ (i₂ x)). What
+-- would the type of the result of _>>=_ be? The type would depend on
+-- the input string, which is not an argument to _>>=_.
+
 infixl 1 _>>=_
 
 _>>=_ : forall {tok r₁ r₂ i₁ i₂} ->
@@ -138,6 +144,24 @@ _∣_ {i₁ = i₁} {i₂ = i₂} (parser p₁) (parser p₂) =
     Base.cast (sym $ Prod.proj₂ distrib i₃ i₁ i₂)
               (Base._∣_ (p₁ k) (p₂ k))
   where open IndexSemiring
+
+-- Since _>>=_ has a non-dependent type it is hard to define sat
+-- without using the underlying parsers in Base, and hence sat is
+-- provided here.
+
+sat : forall {tok r} ->
+      (tok -> Maybe r) -> Parser tok r 0I
+sat {tok} {r} p = parser \k -> Base.symbolBind (\c -> ok k (p c))
+  where
+  okIndex : Index -> Maybe r -> Index
+  okIndex i' nothing  = 0I
+  okIndex i' (just _) = i'
+
+  ok : forall {r' i'} ->
+       (r -> Base.Parser tok r' i') ->
+       (x : Maybe r) -> Base.Parser tok r' (okIndex i' x)
+  ok k nothing  = Base.fail
+  ok k (just x) = k x
 
 parse : forall {tok r i} ->
         Parser tok r i -> P tok r
