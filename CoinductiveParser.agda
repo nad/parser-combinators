@@ -36,6 +36,11 @@ private
   -- otherwise the returnPlus/returnPlus case of _∣'_ would not type
   -- check. (Its type would have to be changed.)
 
+  -- The forget parser can be used to forget whether or not its
+  -- argument accepts the empty string by taking the safe route and
+  -- pretending that the empty string is accepted. This can be used to
+  -- make some functions simply typed.
+
   {- co -}
   data Parser (tok r : Set) : Index -> Set where
     symbolBind : forall {i} ->
@@ -44,6 +49,8 @@ private
     returnPlus : forall {e c} ->
                  [ r ] -> Parser tok r (e , c) ->
                  Parser tok r (true , suc c)
+    forget     : forall {e c} ->
+                 Parser tok r (e , c) -> Parser tok r (true , suc c)
 
   cast : forall {tok i₁ i₂ r} ->
          i₁ ≡ i₂ -> Parser tok r i₁ -> Parser tok r i₂
@@ -61,6 +68,12 @@ private
   p₁@(symbolBind _)   ∣ returnPlus xs p₂  = returnPlus xs (p₁ ∣ p₂)
   returnPlus xs p₁    ∣ p₂@(symbolBind _) = returnPlus xs (p₂ ∣ p₁)
   returnPlus xs₁ p₁   ∣ returnPlus xs₂ p₂ = returnPlus (xs₁ ++ xs₂) (p₁ ∣ p₂)
+  returnPlus xs₁ p₁   ∣ forget p₂         = returnPlus xs₁ (p₁ ∣ p₂)
+  p₁@(symbolBind _)   ∣ forget p₂         = forget (p₁ ∣ p₂)
+  forget p₁           ∣ fail              = forget p₁
+  forget p₁           ∣ p₂@(symbolBind _) = forget (p₂ ∣ p₁)
+  forget p₁           ∣ returnPlus xs₂ p₂ = returnPlus xs₂ (p₁ ∣ p₂)
+  forget p₁           ∣ forget p₂         = forget (p₁ ∣ p₂)
 
   -- parse is structurally recursive over the following lexicographic
   -- measure:
@@ -76,6 +89,7 @@ private
   parse (symbolBind f)    []      = []
   parse fail              _       = []
   parse (returnPlus xs p) s       = map (\x -> pair x s) xs ++ parse p s
+  parse (forget p)        s       = parse p s
 
 ------------------------------------------------------------------------
 -- CPS transformation
@@ -97,6 +111,10 @@ private
         (r -> Base.Parser tok r' i') ->
         Base.Parser tok r' (i ·I i')
   unP (parser p) = p
+
+forget : forall {tok r e c} ->
+         Parser tok r (e , c) -> Parser tok r (true , {! !})
+forget (parser p) = parser \k -> {!p k !}
 
 symbol : forall {tok} -> Parser tok tok 0I
 symbol = parser Base.symbolBind
