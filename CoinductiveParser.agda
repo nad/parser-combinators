@@ -42,9 +42,9 @@ private
     symbolBind : forall {i : tok -> Index} ->
                  ((c : tok) -> Parser tok r (i c)) -> Parser tok r 0I
     fail       : Parser tok r 0I
-    returnPlus : forall {e c} ->
-                 [ r ] -> Parser tok r (e , c) ->
-                 Parser tok r (true , suc c)
+    returnPlus : forall {e d} ->
+                 [ r ] -> Parser tok r (e , d) ->
+                 Parser tok r (true , suc d)
 
   -- Note that the type of this return function is not suitable if you
   -- want to state the monad laws (since (true , 1) is not a zero in
@@ -81,8 +81,8 @@ private
   --
   -- Note that Parser is viewed as being coinductive.
 
-  parse : forall {tok r e c} ->
-          Parser tok r (e , c) -> P tok r
+  parse : forall {tok r e d} ->
+          Parser tok r (e , d) -> P tok r
   parse (symbolBind f)    (c ∷ s) = parse (f c) s
   parse (symbolBind f)    []      = []
   parse fail              _       = []

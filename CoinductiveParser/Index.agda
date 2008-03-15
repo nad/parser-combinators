@@ -109,11 +109,11 @@ private
   ·-identity : Identity 1I _·I_
   ·-identity = pair (\_ -> ≡-refl) (\x -> helper (proj₁ x) (proj₂ x))
     where
-    helper : forall e c ->
-             _≡_ {a = Index} (e ∧ true , if e then c ⊔ zero else c)
-                             (e        , c)
-    helper false c = ≡-refl
-    helper true  c = ≡-cong (_,_ true) (Prod.proj₂ NR.+-identity c)
+    helper : forall e d ->
+             _≡_ {a = Index} (e ∧ true , if e then d ⊔ zero else d)
+                             (e        , d)
+    helper false d = ≡-refl
+    helper true  d = ≡-cong (_,_ true) (Prod.proj₂ NR.+-identity d)
 
   ·-∣-distrib : _·I_ DistributesOver _∣I_
   ·-∣-distrib = pair
@@ -127,48 +127,48 @@ private
                 (distribʳ₂ (proj₂ i₁) (proj₂ i₂) (proj₂ i₃)
                                       (proj₁ i₂) (proj₁ i₃)))
     where
-    lemma : forall c₁ c₂ c₃ -> c₁ ⊔ (c₂ ⊔ c₃) ≡ c₁ ⊔ c₂ ⊔ (c₁ ⊔ c₃)
-    lemma c₁ c₂ c₃ = begin
-      c₁       ⊔ (c₂ ⊔ c₃)   ≡⟨ ≡-sym (NL.∧-idempotent c₁)
+    lemma : forall d₁ d₂ d₃ -> d₁ ⊔ (d₂ ⊔ d₃) ≡ d₁ ⊔ d₂ ⊔ (d₁ ⊔ d₃)
+    lemma d₁ d₂ d₃ = begin
+      d₁       ⊔ (d₂ ⊔ d₃)   ≡⟨ ≡-sym (NL.∧-idempotent d₁)
                                   ⟨ NR.+-pres-≈ ⟩
-                                byDef {x = c₂ ⊔ c₃} ⟩
-      c₁ ⊔  c₁ ⊔ (c₂ ⊔ c₃)   ≡⟨ NR.+-assoc c₁ c₁ (c₂ ⊔ c₃) ⟩
-      c₁ ⊔ (c₁ ⊔ (c₂ ⊔ c₃))  ≡⟨ byDef {x = c₁} ⟨ NR.+-pres-≈ ⟩
-                                ≡-sym (NR.+-assoc c₁ c₂ c₃) ⟩
-      c₁ ⊔ (c₁ ⊔  c₂ ⊔ c₃)   ≡⟨ byDef {x = c₁} ⟨ NR.+-pres-≈ ⟩
-                                  (NR.+-comm c₁ c₂ ⟨ NR.+-pres-≈ ⟩
-                                   byDef {x = c₃}) ⟩
-      c₁ ⊔ (c₂ ⊔  c₁ ⊔ c₃)   ≡⟨ byDef {x = c₁} ⟨ NR.+-pres-≈ ⟩
-                                NR.+-assoc c₂ c₁ c₃ ⟩
-      c₁ ⊔ (c₂ ⊔ (c₁ ⊔ c₃))  ≡⟨ ≡-sym $ NR.+-assoc c₁ c₂ (c₁ ⊔ c₃) ⟩
-      c₁ ⊔ c₂  ⊔ (c₁ ⊔ c₃)   ∎
+                                byDef {x = d₂ ⊔ d₃} ⟩
+      d₁ ⊔  d₁ ⊔ (d₂ ⊔ d₃)   ≡⟨ NR.+-assoc d₁ d₁ (d₂ ⊔ d₃) ⟩
+      d₁ ⊔ (d₁ ⊔ (d₂ ⊔ d₃))  ≡⟨ byDef {x = d₁} ⟨ NR.+-pres-≈ ⟩
+                                ≡-sym (NR.+-assoc d₁ d₂ d₃) ⟩
+      d₁ ⊔ (d₁ ⊔  d₂ ⊔ d₃)   ≡⟨ byDef {x = d₁} ⟨ NR.+-pres-≈ ⟩
+                                  (NR.+-comm d₁ d₂ ⟨ NR.+-pres-≈ ⟩
+                                   byDef {x = d₃}) ⟩
+      d₁ ⊔ (d₂ ⊔  d₁ ⊔ d₃)   ≡⟨ byDef {x = d₁} ⟨ NR.+-pres-≈ ⟩
+                                NR.+-assoc d₂ d₁ d₃ ⟩
+      d₁ ⊔ (d₂ ⊔ (d₁ ⊔ d₃))  ≡⟨ ≡-sym $ NR.+-assoc d₁ d₂ (d₁ ⊔ d₃) ⟩
+      d₁ ⊔ d₂  ⊔ (d₁ ⊔ d₃)   ∎
 
-    distribˡ₂ : forall c₁ c₂ c₃ e₁ ->
-                 if e₁ then c₁ ⊔ (c₂ ⊔ c₃) else c₁ ≡
-                (if e₁ then c₁ ⊔ c₂        else c₁) ⊔
-                (if e₁ then c₁ ⊔ c₃        else c₁)
-    distribˡ₂ c₁ c₂ c₃ true  = lemma c₁ c₂ c₃
-    distribˡ₂ c₁ c₂ c₃ false = ≡-sym (NL.∧-idempotent c₁)
+    distribˡ₂ : forall d₁ d₂ d₃ e₁ ->
+                 if e₁ then d₁ ⊔ (d₂ ⊔ d₃) else d₁ ≡
+                (if e₁ then d₁ ⊔ d₂        else d₁) ⊔
+                (if e₁ then d₁ ⊔ d₃        else d₁)
+    distribˡ₂ d₁ d₂ d₃ true  = lemma d₁ d₂ d₃
+    distribˡ₂ d₁ d₂ d₃ false = ≡-sym (NL.∧-idempotent d₁)
 
-    distribʳ₂ : forall c₁ c₂ c₃ e₂ e₃ ->
-                if e₂ ∨ e₃ then c₂ ⊔ c₃ ⊔ c₁ else (c₂ ⊔ c₃)
+    distribʳ₂ : forall d₁ d₂ d₃ e₂ e₃ ->
+                if e₂ ∨ e₃ then d₂ ⊔ d₃ ⊔ d₁ else (d₂ ⊔ d₃)
                 ≡
-                (if e₂ then c₂ ⊔ c₁ else c₂) ⊔
-                (if e₃ then c₃ ⊔ c₁ else c₃)
-    distribʳ₂ c₁ c₂ c₃ true true = begin
-      c₂ ⊔ c₃ ⊔ c₁         ≡⟨ NR.+-comm (c₂ ⊔ c₃) c₁ ⟩
-      c₁ ⊔ (c₂ ⊔ c₃)       ≡⟨ lemma c₁ c₂ c₃ ⟩
-      c₁ ⊔ c₂ ⊔ (c₁ ⊔ c₃)  ≡⟨ NR.+-comm c₁ c₂ ⟨ NR.+-pres-≈ ⟩
-                              NR.+-comm c₁ c₃ ⟩
-      c₂ ⊔ c₁ ⊔ (c₃ ⊔ c₁)  ∎
-    distribʳ₂ c₁ c₂ c₃ true false = begin
-      c₂ ⊔  c₃ ⊔ c₁   ≡⟨ NR.+-assoc c₂ c₃ c₁ ⟩
-      c₂ ⊔ (c₃ ⊔ c₁)  ≡⟨ byDef {x = c₂} ⟨ NR.+-pres-≈ ⟩
-                         NR.+-comm c₃ c₁ ⟩
-      c₂ ⊔ (c₁ ⊔ c₃)  ≡⟨ ≡-sym $ NR.+-assoc c₂ c₁ c₃ ⟩
-      c₂ ⊔  c₁ ⊔ c₃   ∎
-    distribʳ₂ c₁ c₂ c₃ false true  = NR.+-assoc c₂ c₃ c₁
-    distribʳ₂ c₁ c₂ c₃ false false = ≡-refl
+                (if e₂ then d₂ ⊔ d₁ else d₂) ⊔
+                (if e₃ then d₃ ⊔ d₁ else d₃)
+    distribʳ₂ d₁ d₂ d₃ true true = begin
+      d₂ ⊔ d₃ ⊔ d₁         ≡⟨ NR.+-comm (d₂ ⊔ d₃) d₁ ⟩
+      d₁ ⊔ (d₂ ⊔ d₃)       ≡⟨ lemma d₁ d₂ d₃ ⟩
+      d₁ ⊔ d₂ ⊔ (d₁ ⊔ d₃)  ≡⟨ NR.+-comm d₁ d₂ ⟨ NR.+-pres-≈ ⟩
+                              NR.+-comm d₁ d₃ ⟩
+      d₂ ⊔ d₁ ⊔ (d₃ ⊔ d₁)  ∎
+    distribʳ₂ d₁ d₂ d₃ true false = begin
+      d₂ ⊔  d₃ ⊔ d₁   ≡⟨ NR.+-assoc d₂ d₃ d₁ ⟩
+      d₂ ⊔ (d₃ ⊔ d₁)  ≡⟨ byDef {x = d₂} ⟨ NR.+-pres-≈ ⟩
+                         NR.+-comm d₃ d₁ ⟩
+      d₂ ⊔ (d₁ ⊔ d₃)  ≡⟨ ≡-sym $ NR.+-assoc d₂ d₁ d₃ ⟩
+      d₂ ⊔  d₁ ⊔ d₃   ∎
+    distribʳ₂ d₁ d₂ d₃ false true  = NR.+-assoc d₂ d₃ d₁
+    distribʳ₂ d₁ d₂ d₃ false false = ≡-refl
 
 -- Not quite a semiring, but the proper name is too long...
 

@@ -62,26 +62,26 @@ mutual
   -- constructors... I think the definitions are OK, but more solid
   -- arguments would be nice.
 
-  _⋆ : forall {tok r c} ->
-       Parser tok r     (false , c) ->
+  _⋆ : forall {tok r d} ->
+       Parser tok r     (false , d) ->
        Parser tok [ r ] _
   p ⋆ = return [] ∣ p +
 
-  _+ : forall {tok r c} ->
-       Parser tok r     (false , c) ->
+  _+ : forall {tok r d} ->
+       Parser tok r     (false , d) ->
        Parser tok [ r ] _
   p + = _∷_ <$> p ⊛ p ⋆
 
 -- p sepBy sep parses one or more ps separated by seps.
 
-_sepBy_ : forall {tok r r' i c} ->
-          Parser tok r i -> Parser tok r' (false , c) ->
+_sepBy_ : forall {tok r r' i d} ->
+          Parser tok r i -> Parser tok r' (false , d) ->
           Parser tok [ r ] _
 p sepBy sep = _∷_ <$> p ⊛ (sep ⊛> p) ⋆
 
-chain₁ :  forall {tok c₁ i₂ r}
+chain₁ :  forall {tok d₁ i₂ r}
        -> Assoc
-       -> Parser tok r (false , c₁)
+       -> Parser tok r (false , d₁)
        -> Parser tok (r -> r -> r) i₂
        -> Parser tok r _
 chain₁ a p op = comb a <$> (<_∣_> <$> p ⊛ op) ⋆ ⊛ p
@@ -97,9 +97,9 @@ chain₁ a p op = comb a <$> (<_∣_> <$> p ⊛ op) ⋆ ⊛ p
     helper []                 y = y
     helper (< x ∣ _•_ > ∷ ps) y = helper ps x • y
 
-chain :  forall {tok c₁ i₂ r}
+chain :  forall {tok d₁ i₂ r}
       -> Assoc
-      -> Parser tok r (false , c₁)
+      -> Parser tok r (false , d₁)
       -> Parser tok (r -> r -> r) i₂
       -> r
       -> Parser tok r _
