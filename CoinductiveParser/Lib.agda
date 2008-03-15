@@ -20,8 +20,9 @@ open import Relation.Nullary
 open import Relation.Binary
 
 ------------------------------------------------------------------------
--- Some derived parsers that we could get for free with better library
--- support
+-- Applicative functor parsers
+
+-- We could get these for free with better library support.
 
 infixl 4 _⊛_ _<⊛_ _⊛>_ _<$>_ _<$_
 
