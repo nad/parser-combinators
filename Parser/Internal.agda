@@ -100,34 +100,34 @@ private
       parse₀ (ε x)              n = return x
       parse₀ (forget true  p)   n = parse₀  p n
       parse₀ (forget false p)   n = parse₁↑ p n
-      parse₀ (seq₀       p₁ p₂) n = parse₀  p₁ n <*> parse₀  p₂ n
-      parse₀ (alt₀ true  p₁ p₂) n = parse₀  p₁ n ++  parse₀  p₂ n
-      parse₀ (alt₀ false p₁ p₂) n = parse₀  p₁ n ++  parse₁↑ p₂ n
-      parse₀ (alt₁       p₁ p₂) n = parse₁↑ p₁ n ++  parse₀  p₂ n
+      parse₀ (seq₀       p₁ p₂) n = parse₀  p₁ n ⊛ parse₀  p₂ n
+      parse₀ (alt₀ true  p₁ p₂) n = parse₀  p₁ n ∣ parse₀  p₂ n
+      parse₀ (alt₀ false p₁ p₂) n = parse₀  p₁ n ∣ parse₁↑ p₂ n
+      parse₀ (alt₁       p₁ p₂) n = parse₁↑ p₁ n ∣ parse₀  p₂ n
 
       parse₁ : forall {d r} ->
                Parser tok nt (false , d) r ->
                forall n -> P tok n (pred n) r
-      parse₁ _                   zero    = mzero
+      parse₁ _                   zero    = ∅
       parse₁ (! x)               (suc n) = parse₁ (g x) (suc n)
-      parse₁ (seq₀        p₁ p₂) (suc n) = parse₀ p₁ (suc n) <*> parse₁  p₂ (suc n)
-      parse₁ (seq₁  true  p₁ p₂) (suc n) = parse₁ p₁ (suc n) <*> parse₀  p₂ n
-      parse₁ (seq₁  false p₁ p₂) (suc n) = parse₁ p₁ (suc n) <*> parse₁↑ p₂ n
-      parse₁ (alt₁        p₁ p₂) (suc n) = parse₁ p₁ (suc n) ++  parse₁  p₂ (suc n)
+      parse₁ (seq₀        p₁ p₂) (suc n) = parse₀ p₁ (suc n) ⊛ parse₁  p₂ (suc n)
+      parse₁ (seq₁  true  p₁ p₂) (suc n) = parse₁ p₁ (suc n) ⊛ parse₀  p₂ n
+      parse₁ (seq₁  false p₁ p₂) (suc n) = parse₁ p₁ (suc n) ⊛ parse₁↑ p₂ n
+      parse₁ (alt₁        p₁ p₂) (suc n) = parse₁ p₁ (suc n) ∣ parse₁  p₂ (suc n)
       parse₁ {r = r} (sat p)     (suc n) = eat =<< get
         where
           eat : forall {n} ->
                 BoundedVec tok (suc n) ->
                 P tok (suc n) n r
-          eat []      = mzero
+          eat []      = ∅
           eat (c ∷ s) with p c
           ... | just x  = put s >> return x
-          ... | nothing = mzero
+          ... | nothing = ∅
 
       parse₁↑ : forall {d r} ->
                 Parser tok nt (false , d) r ->
                 forall n -> P tok n n r
-      parse₁↑ p zero    = mzero
+      parse₁↑ p zero    = ∅
       parse₁↑ p (suc n) = parse₁ p (suc n) >>= \r ->
                           modify ↑ >>
                           return r
