@@ -166,3 +166,10 @@ sat {tok} {r} p = parser \k -> Base.symbolBind (\c -> ok k (p c))
 parse : forall {tok r i} ->
         Parser tok r i -> P tok r
 parse (parser p) = Base.parse (p Base.return)
+
+-- A variant which only returns parses which leave no remaining input.
+
+parse-complete : forall {tok r i} ->
+                 Parser tok r i -> [ tok ] -> [ r ]
+parse-complete p s =
+  map Prod.proj₁ (filter (null ∘ Prod.proj₂) (parse p s))
