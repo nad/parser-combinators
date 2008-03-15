@@ -236,3 +236,8 @@ private
   notCommutative : ¬ Commutative _·I_
   notCommutative comm = lemma $ ≡-cong proj₂ $
     comm (true , suc zero) (false , zero)
+
+  -- Note that we don't want these properties to be true. The second
+  -- one implies the first, and the first implies that
+  --   p = p ⊛> symbol
+  -- is an OK definition, even though it is left recursive.
