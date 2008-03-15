@@ -1,0 +1,141 @@
+------------------------------------------------------------------------
+-- A library of parser combinators
+------------------------------------------------------------------------
+
+module CoinductiveParser.Lib where
+
+open import Parser.Lib.Types
+open import CoinductiveParser
+open import CoinductiveParser.Index
+
+open import Data.Bool
+open import Data.Nat
+open import Data.Product.Record hiding (_×_)
+open import Data.Product renaming (_,_ to <_∣_>)
+open import Data.List
+open import Data.Function
+open import Data.Maybe
+import Data.Char as C
+open import Relation.Nullary
+open import Relation.Binary
+
+------------------------------------------------------------------------
+-- Some derived parsers that we could get for free with better library
+-- support
+
+infixl 4 _⊛_ _<⊛_ _⊛>_ _<$>_ _<$_
+
+-- Parser together with return and _⊛_ form a (generalised)
+-- applicative functor. (Warning: I have not checked that the laws are
+-- actually satisfied.)
+
+-- Note that all the resulting indices can be inferred.
+
+_⊛_ : forall {tok r₁ r₂ i₁ i₂} ->
+      Parser tok (r₁ -> r₂) i₁ -> Parser tok r₁ i₂ ->
+      Parser tok r₂ _ -- (i₁ ·I (i₂ ·I 1I))
+f ⊛ x = f >>= \f' -> x >>= \x' -> return (f' x')
+
+_<$>_ : forall {tok r₁ r₂ i} ->
+        (r₁ -> r₂) -> Parser tok r₁ i -> Parser tok r₂ _ -- (i ·I 1I)
+f <$> x = return f ⊛ x
+
+_<⊛_ : forall {tok i₁ i₂ r₁ r₂} ->
+       Parser tok r₁ i₁ -> Parser tok r₂ i₂ -> Parser tok r₁ _
+x <⊛ y = const <$> x ⊛ y
+
+_⊛>_ : forall {tok i₁ i₂ r₁ r₂} ->
+       Parser tok r₁ i₁ -> Parser tok r₂ i₂ -> Parser tok r₂ _
+x ⊛> y = flip const <$> x ⊛ y
+
+_<$_ : forall {tok r₁ r₂ i} ->
+       r₁ -> Parser tok r₂ i -> Parser tok r₁ _
+x <$ y = const x <$> y
+
+------------------------------------------------------------------------
+-- Parsers for sequences
+
+mutual
+
+  -- Are these definitions productive? _∣_ and _⊛_ are not
+  -- constructors... I think the definitions are OK, but more solid
+  -- arguments would be nice.
+
+  _⋆ : forall {tok r c} ->
+       Parser tok r     (false , c) ->
+       Parser tok [ r ] _
+  p ⋆ = return [] ∣ p +
+
+  _+ : forall {tok r c} ->
+       Parser tok r     (false , c) ->
+       Parser tok [ r ] _
+  p + = _∷_ <$> p ⊛ p ⋆
+
+-- p sepBy sep parses one or more ps separated by seps.
+
+_sepBy_ : forall {tok r r' i c} ->
+          Parser tok r i -> Parser tok r' (false , c) ->
+          Parser tok [ r ] _
+p sepBy sep = _∷_ <$> p ⊛ (sep ⊛> p) ⋆
+
+chain₁ :  forall {tok c₁ i₂ r}
+       -> Assoc
+       -> Parser tok r (false , c₁)
+       -> Parser tok (r -> r -> r) i₂
+       -> Parser tok r _
+chain₁ a p op = comb a <$> (<_∣_> <$> p ⊛ op) ⋆ ⊛ p
+  where
+  comb : forall {r} -> Assoc -> [ r × (r -> r -> r) ] -> r -> r
+  comb right xs y = foldr app y xs
+    where
+    app : forall {r} -> r × (r -> r -> r) -> r -> r
+    app < x ∣ _•_ > y = x • y
+  comb left xs y = helper (reverse xs) y
+    where
+    helper : forall {r} -> [ r × (r -> r -> r) ] -> r -> r
+    helper []                 y = y
+    helper (< x ∣ _•_ > ∷ ps) y = helper ps x • y
+
+chain :  forall {tok c₁ i₂ r}
+      -> Assoc
+      -> Parser tok r (false , c₁)
+      -> Parser tok (r -> r -> r) i₂
+      -> r
+      -> Parser tok r _
+chain a p op x = return x ∣ chain₁ a p op
+
+------------------------------------------------------------------------
+-- Parsing a given token (symbol)
+
+module Sym (a : DecSetoid) where
+
+  open DecSetoid a using (_≟_) renaming (carrier to tok)
+
+  sym : tok -> Parser tok tok _
+  sym x = sat p
+    where
+    p : tok -> Maybe tok
+    p y with x ≟ y
+    ... | yes _ = just y
+    ... | no  _ = nothing
+
+------------------------------------------------------------------------
+-- Character parsers
+
+digit : Parser C.Char ℕ _
+digit = 0 <$ sym '0'
+      ∣ 1 <$ sym '1'
+      ∣ 2 <$ sym '2'
+      ∣ 3 <$ sym '3'
+      ∣ 4 <$ sym '4'
+      ∣ 5 <$ sym '5'
+      ∣ 6 <$ sym '6'
+      ∣ 7 <$ sym '7'
+      ∣ 8 <$ sym '8'
+      ∣ 9 <$ sym '9'
+  where open Sym C.decSetoid
+
+number : Parser C.Char ℕ _
+number = toNum <$> digit +
+  where
+  toNum = foldr (\n x -> 10 * x + n) 0 ∘ reverse
