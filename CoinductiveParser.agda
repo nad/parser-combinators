@@ -34,7 +34,7 @@ private
  module Base where
 
   -- returnPlus below takes a _list_ of immediate results, since
-  -- otherwise the returnPlus/returnPlus case of _∣'_ would not type
+  -- otherwise the returnPlus/returnPlus case of _∣_ would not type
   -- check. (Its type would have to be changed.)
 
   {- co -}
@@ -63,8 +63,7 @@ private
   infixl 0 _∣_
 
   _∣_ : forall {tok r i₁ i₂} ->
-         Parser tok r i₁ -> Parser tok r i₂ ->
-         Parser tok r (i₁ ∣I i₂)
+        Parser tok r i₁ -> Parser tok r i₂ -> Parser tok r (i₁ ∣I i₂)
   fail                ∣ p₂                = p₂
   p₁@(returnPlus _ _) ∣ fail              = p₁
   p₁@(symbolBind _)   ∣ fail              = p₁
