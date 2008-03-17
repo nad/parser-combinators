@@ -58,10 +58,6 @@ x <$ y = const x <$> y
 
 mutual
 
-  -- Are these definitions productive? _∣_ and _⊛_ are not
-  -- constructors... I think the definitions are OK, but more solid
-  -- arguments would be nice.
-
   _⋆ : forall {tok r d} ->
        Parser tok r     (false , d) ->
        Parser tok [ r ] _
@@ -71,6 +67,32 @@ mutual
        Parser tok r     (false , d) ->
        Parser tok [ r ] _
   p + = _∷_ <$> p ⊛ p ⋆
+
+  -- Are these definitions productive? _∣_ and _⊛_ are not
+  -- constructors... Unfolding (and ignoring some casts) we get
+  -- (unless I've made some mistake)
+  --
+  --   p ⋆ = parser \k -> Base._∣_ (k []) (unP (p +) k)
+  --
+  -- and
+  --
+  --   p + = parser (\k -> unP p     (\x  ->
+  --                       unP (p ⋆) (\xs -> k (x ∷ xs))))
+  --       = parser (\k -> unP p     (\x  -> Base._∣_ (k (x ∷ []))
+  --                      (unP (p +) (\xs -> k (x ∷ xs))))).
+  --
+  -- Assume that p + is applied to the continuation k =
+  -- const Base.fail. We get
+  --
+  --   unP (p +) k = unP p (\x -> unP (p +) (\xs -> Base.fail)).
+  --
+  -- Note that this implies that the definitions above are not
+  -- (obviously) productive! Perhaps our type system ensures that
+  -- unP p ... unfolds to a guarded application (since p does not
+  -- accept the empty string), but I don't expect that any automatic
+  -- productivity checker will spot this (not in the near future,
+  -- anyway). It seems as if we need to use a type system which allows
+  -- us to encode productivity in the types.
 
 -- p sepBy sep parses one or more ps separated by seps.
 

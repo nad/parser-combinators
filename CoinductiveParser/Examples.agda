@@ -6,6 +6,8 @@ module CoinductiveParser.Examples where
 
 open import Data.List
 open import Data.Nat
+open import Data.Bool
+open import Data.Product.Record
 open import Logic
 import Data.Char as C
 import Data.String as S
@@ -21,6 +23,20 @@ open Sym C.decSetoid
 
 _∈?_ : forall {i r} -> String -> Parser Char r i -> [ r ]
 s ∈? p = parse-complete p (S.toList s)
+
+module Ex₀ where
+
+  -- This example illustrates a problem with this library. This
+  -- definition is not productive, but is otherwise well-typed. That
+  -- is fine, but if this definition is rejected by a productivity
+  -- checker, how can we expect the other definitions below to be
+  -- accepted? In fact, are they productive? Maybe not...
+
+  p : Parser Char String (false , 12)
+  p = return 5 ⊛> p
+
+  -- ex₁ : "apa" ∈? p ≡ {! !}
+  -- ex₁ = ≡-refl
 
 module Ex₁ where
 
