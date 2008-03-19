@@ -143,16 +143,16 @@ module Ex₇ where
 
   -- A proper expression example.
 
-  addOp    = _+_ <$ sym '+'
-           ∣ _∸_ <$ sym '∸'
-  mulOp    = _*_ <$ sym '*'
+  addOp = _+_ <$ sym '+'
+        ∣ _∸_ <$ sym '∸'
+  mulOp = _*_ <$ sym '*'
 
   mutual
 
-    expr     = chain₁ left term   addOp
-    term     = chain₁ left factor mulOp
-    factor   = sym '(' ⊛> expr <⊛ sym ')'
-             ∣ number
+    expr   = chain₁ left term   addOp
+    term   = chain₁ left factor mulOp
+    factor = sym '(' ⊛> expr <⊛ sym ')'
+           ∣ number
 
   ex₁ : "1+5*2∸3" ∈? expr ≡ 8 ∷ []
   ex₁ = ≡-refl
