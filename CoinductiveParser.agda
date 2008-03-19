@@ -127,7 +127,7 @@ infixl 1 _>>=_
 _>>=_ : forall {tok r₁ r₂ i₁ i₂} ->
         Parser tok i₁ r₁ -> (r₁ -> Parser tok i₂ r₂) ->
         Parser tok (i₁ ·I i₂) r₂
-_>>=_ {tok} {r₁} {r₂} {i₁} {i₂} (parser p) f = parser
+_>>=_ {i₁ = i₁} {i₂} (parser p) f = parser
   \{i₃} k -> Base.cast (sym $ *-assoc i₁ i₂ i₃)
                        (p \x -> unP (f x) k)
   where open IndexSemiring
