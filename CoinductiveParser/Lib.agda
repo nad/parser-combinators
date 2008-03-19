@@ -33,24 +33,24 @@ infixl 4 _⊛_ _<⊛_ _⊛>_ _<$>_ _<$_
 -- Note that all the resulting indices can be inferred.
 
 _⊛_ : forall {tok r₁ r₂ i₁ i₂} ->
-      Parser tok (r₁ -> r₂) i₁ -> Parser tok r₁ i₂ ->
-      Parser tok r₂ _ -- (i₁ ·I (i₂ ·I 1I))
+      Parser tok i₁ (r₁ -> r₂) -> Parser tok i₂ r₁ ->
+      Parser tok _ r₂ -- (i₁ ·I (i₂ ·I 1I))
 f ⊛ x = f >>= \f' -> x >>= \x' -> return (f' x')
 
 _<$>_ : forall {tok r₁ r₂ i} ->
-        (r₁ -> r₂) -> Parser tok r₁ i -> Parser tok r₂ _ -- (i ·I 1I)
+        (r₁ -> r₂) -> Parser tok i r₁ -> Parser tok _ r₂ -- (i ·I 1I)
 f <$> x = return f ⊛ x
 
 _<⊛_ : forall {tok i₁ i₂ r₁ r₂} ->
-       Parser tok r₁ i₁ -> Parser tok r₂ i₂ -> Parser tok r₁ _
+       Parser tok i₁ r₁ -> Parser tok i₂ r₂ -> Parser tok _ r₁
 x <⊛ y = const <$> x ⊛ y
 
 _⊛>_ : forall {tok i₁ i₂ r₁ r₂} ->
-       Parser tok r₁ i₁ -> Parser tok r₂ i₂ -> Parser tok r₂ _
+       Parser tok i₁ r₁ -> Parser tok i₂ r₂ -> Parser tok _ r₂
 x ⊛> y = flip const <$> x ⊛ y
 
 _<$_ : forall {tok r₁ r₂ i} ->
-       r₁ -> Parser tok r₂ i -> Parser tok r₁ _
+       r₁ -> Parser tok i r₂ -> Parser tok _ r₁
 x <$ y = const x <$> y
 
 ------------------------------------------------------------------------
@@ -59,13 +59,13 @@ x <$ y = const x <$> y
 mutual
 
   _⋆ : forall {tok r d} ->
-       Parser tok r     (false , d) ->
-       Parser tok [ r ] _
+       Parser tok (false , d) r     ->
+       Parser tok _           [ r ]
   p ⋆ = return [] ∣ p +
 
   _+ : forall {tok r d} ->
-       Parser tok r     (false , d) ->
-       Parser tok [ r ] _
+       Parser tok (false , d) r     ->
+       Parser tok _           [ r ]
   p + = _∷_ <$> p ⊛ p ⋆
 
   -- Are these definitions productive? _∣_ and _⊛_ are not
@@ -97,15 +97,15 @@ mutual
 -- p sepBy sep parses one or more ps separated by seps.
 
 _sepBy_ : forall {tok r r' i d} ->
-          Parser tok r i -> Parser tok r' (false , d) ->
-          Parser tok [ r ] _
+          Parser tok i r -> Parser tok (false , d) r' ->
+          Parser tok _ [ r ]
 p sepBy sep = _∷_ <$> p ⊛ (sep ⊛> p) ⋆
 
 chain₁ :  forall {tok d₁ i₂ r}
        -> Assoc
-       -> Parser tok r (false , d₁)
-       -> Parser tok (r -> r -> r) i₂
-       -> Parser tok r _
+       -> Parser tok (false , d₁) r
+       -> Parser tok i₂ (r -> r -> r)
+       -> Parser tok _ r
 chain₁ a p op = comb a <$> (<_∣_> <$> p ⊛ op) ⋆ ⊛ p
   where
   comb : forall {r} -> Assoc -> [ r × (r -> r -> r) ] -> r -> r
@@ -121,10 +121,10 @@ chain₁ a p op = comb a <$> (<_∣_> <$> p ⊛ op) ⋆ ⊛ p
 
 chain :  forall {tok d₁ i₂ r}
       -> Assoc
-      -> Parser tok r (false , d₁)
-      -> Parser tok (r -> r -> r) i₂
+      -> Parser tok (false , d₁) r
+      -> Parser tok i₂ (r -> r -> r)
       -> r
-      -> Parser tok r _
+      -> Parser tok _ r
 chain a p op x = return x ∣ chain₁ a p op
 
 ------------------------------------------------------------------------
@@ -134,7 +134,7 @@ module Sym (a : DecSetoid) where
 
   open DecSetoid a using (_≟_) renaming (carrier to tok)
 
-  sym : tok -> Parser tok tok _
+  sym : tok -> Parser tok _ tok
   sym x = sat p
     where
     p : tok -> Maybe tok
@@ -145,7 +145,7 @@ module Sym (a : DecSetoid) where
 ------------------------------------------------------------------------
 -- Character parsers
 
-digit : Parser C.Char ℕ _
+digit : Parser C.Char _ ℕ
 digit = 0 <$ sym '0'
       ∣ 1 <$ sym '1'
       ∣ 2 <$ sym '2'
@@ -158,7 +158,7 @@ digit = 0 <$ sym '0'
       ∣ 9 <$ sym '9'
   where open Sym C.decSetoid
 
-number : Parser C.Char ℕ _
+number : Parser C.Char _ ℕ
 number = toNum <$> digit +
   where
   toNum = foldr (\n x -> 10 * x + n) 0 ∘ reverse

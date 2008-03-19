@@ -94,27 +94,27 @@ private
 -- transformer to the Base parser above to improve the efficiency of
 -- left-nested uses of bind.
 
-data Parser (tok r : Set) (i : Index) : Set1 where
+data Parser (tok : Set) (i : Index) (r : Set) : Set1 where
   parser : (forall {i' r'} ->
             (r -> Base.Parser tok r' i') ->
             Base.Parser tok r' (i ·I i')) ->
-           Parser tok r i
+           Parser tok i r
 
 private
 
   unP : forall {tok r i r' i'} ->
-        Parser tok r i ->
+        Parser tok i r ->
         (r -> Base.Parser tok r' i') ->
         Base.Parser tok r' (i ·I i')
   unP (parser p) = p
 
-symbol : forall {tok} -> Parser tok tok 0I
+symbol : forall {tok} -> Parser tok 0I tok
 symbol = parser Base.symbolBind
 
-fail : forall {tok r} -> Parser tok r 0I
+fail : forall {tok r} -> Parser tok 0I r
 fail = parser \k -> Base.fail
 
-return : forall {tok r} -> r -> Parser tok r 1I
+return : forall {tok r} -> r -> Parser tok 1I r
 return x = parser \k -> k x
 
 -- Note that _>>=_ cannot easily be given a dependent type (where the
@@ -125,8 +125,8 @@ return x = parser \k -> k x
 infixl 1 _>>=_
 
 _>>=_ : forall {tok r₁ r₂ i₁ i₂} ->
-        Parser tok r₁ i₁ -> (r₁ -> Parser tok r₂ i₂) ->
-        Parser tok r₂ (i₁ ·I i₂)
+        Parser tok i₁ r₁ -> (r₁ -> Parser tok i₂ r₂) ->
+        Parser tok (i₁ ·I i₂) r₂
 _>>=_ {tok} {r₁} {r₂} {i₁} {i₂} (parser p) f = parser
   \{i₃} k -> Base.cast (sym $ *-assoc i₁ i₂ i₃)
                        (p \x -> unP (f x) k)
@@ -135,9 +135,9 @@ _>>=_ {tok} {r₁} {r₂} {i₁} {i₂} (parser p) f = parser
 infixl 0 _∣_
 
 _∣_ : forall {tok r i₁ i₂} ->
-      Parser tok r i₁ ->
-      Parser tok r i₂ ->
-      Parser tok r (i₁ ∣I i₂)
+      Parser tok i₁         r ->
+      Parser tok i₂         r ->
+      Parser tok (i₁ ∣I i₂) r
 _∣_ {i₁ = i₁} {i₂ = i₂} (parser p₁) (parser p₂) =
   parser \{i₃} k ->
     Base.cast (sym $ Prod.proj₂ distrib i₃ i₁ i₂)
@@ -149,7 +149,7 @@ _∣_ {i₁ = i₁} {i₂ = i₂} (parser p₁) (parser p₂) =
 -- provided here.
 
 sat : forall {tok r} ->
-      (tok -> Maybe r) -> Parser tok r 0I
+      (tok -> Maybe r) -> Parser tok 0I r
 sat {tok} {r} p = parser \k -> Base.symbolBind (\c -> ok k (p c))
   where
   okIndex : Index -> Maybe r -> Index
@@ -163,12 +163,12 @@ sat {tok} {r} p = parser \k -> Base.symbolBind (\c -> ok k (p c))
   ok k (just x) = k x
 
 parse : forall {tok r i} ->
-        Parser tok r i -> P tok r
+        Parser tok i r -> P tok r
 parse (parser p) = Base.parse (p Base.return)
 
 -- A variant which only returns parses which leave no remaining input.
 
 parse-complete : forall {tok r i} ->
-                 Parser tok r i -> [ tok ] -> [ r ]
+                 Parser tok i r -> [ tok ] -> [ r ]
 parse-complete p s =
   map Prod.proj₁ (filter (null ∘ Prod.proj₂) (parse p s))

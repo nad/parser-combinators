@@ -21,7 +21,7 @@ open Sym C.decSetoid
 
 -- A function used to simplify the examples a little.
 
-_∈?_ : forall {i r} -> String -> Parser Char r i -> [ r ]
+_∈?_ : forall {i r} -> String -> Parser Char i r -> [ r ]
 s ∈? p = parse-complete p (S.toList s)
 
 module Ex₀ where
@@ -32,7 +32,7 @@ module Ex₀ where
   -- checker, how can we expect the other definitions below to be
   -- accepted? In fact, are they productive? Maybe not...
 
-  p : Parser Char String (false , 12)
+  p : Parser Char (false , 12) String
   p = return 5 ⊛> p
 
   -- ex₁ : "apa" ∈? p ≡ {! !}
@@ -96,11 +96,11 @@ module Ex₄ where
   -- as n    ∷= aˡ⁺¹bⁿ⁺ˡ⁺¹cⁿ⁺ˡ⁺¹
   -- bcs x n ∷= xⁿ⁺¹
 
-  bcs : Char -> ℕ -> Parser Char ℕ _
+  bcs : Char -> ℕ -> Parser Char _ ℕ
   bcs c zero    = sym c ⊛> return 0
   bcs c (suc n) = sym c ⊛> bcs c n
 
-  as : ℕ -> Parser Char ℕ _
+  as : ℕ -> Parser Char _ ℕ
   as n = suc <$ sym 'a' ⊛
          ( as (suc n)
          ∣ _+_ <$> bcs 'b' n ⊛ bcs 'c' n
@@ -132,7 +132,7 @@ module Ex₆ where
      ∣ _*_ <$ sym '*'
      ∣ _∸_ <$ sym '∸'
 
-  expr : Assoc -> Parser Char ℕ _
+  expr : Assoc -> Parser Char _ ℕ
   expr a = chain₁ a number op
 
   ex₁ : "12345" ∈? number ≡ 12345 ∷ []
