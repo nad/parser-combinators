@@ -16,10 +16,14 @@ open import Data.Bool
 open import Data.Nat
 open import Data.Product.Record
 open import Data.List
+import Data.Vec as Vec
+open Vec using (Vec) renaming ([] to nil; _∷_ to cons; _++_ to _<+>_)
 open import Category.Monad.State
 open import Logic
 open import Data.Function
 open import Data.Maybe
+open import Relation.Binary.PropositionalEquality
+open ≡-Reasoning
 
 ------------------------------------------------------------------------
 -- Parser monad
@@ -33,17 +37,22 @@ P tok = StateT [ tok ] [_]
 private
  module Base where
 
-  -- returnPlus below takes a _list_ of immediate results, since
+  -- returnPlus below takes a _vector_ of immediate results, since
   -- otherwise the returnPlus/returnPlus case of _∣_ would not type
   -- check. (Its type would have to be changed.)
+  --
+  -- (The vector could just as well have been a list, if it were not
+  -- for the unused module IncorrectBind below. However, documenting
+  -- that this list is never empty is not a bad thing, and does not
+  -- cost much.)
 
   {- co -}
   data Parser (tok r : Set) : Index -> Set where
     symbolBind : forall {i : tok -> Index} ->
                  ((c : tok) -> Parser tok r (i c)) -> Parser tok r 0I
     fail       : Parser tok r 0I
-    returnPlus : forall {e d} ->
-                 [ r ] -> Parser tok r (e , d) ->
+    returnPlus : forall {e d n} ->
+                 Vec r (suc n) -> Parser tok r (e , d) ->
                  Parser tok r (true , suc d)
 
   -- Note that the type of this return function is not suitable if you
@@ -52,7 +61,7 @@ private
   -- has a more suitable type, though.
 
   return : forall {tok r} -> r -> Parser tok r (true , 1)
-  return x = returnPlus (x ∷ []) fail
+  return x = returnPlus (Vec.singleton x) fail
 
   cast : forall {tok i₁ i₂ r} ->
          i₁ ≡ i₂ -> Parser tok r i₁ -> Parser tok r i₂
@@ -70,7 +79,7 @@ private
   symbolBind f₁       ∣ symbolBind f₂     = symbolBind (\c -> f₁ c ∣ f₂ c)
   p₁@(symbolBind _)   ∣ returnPlus xs p₂  = returnPlus xs (p₁ ∣ p₂)
   returnPlus xs p₁    ∣ p₂@(symbolBind _) = returnPlus xs (p₂ ∣ p₁)
-  returnPlus xs₁ p₁   ∣ returnPlus xs₂ p₂ = returnPlus (xs₁ ++ xs₂) (p₁ ∣ p₂)
+  returnPlus xs₁ p₁   ∣ returnPlus xs₂ p₂ = returnPlus (xs₁ <+> xs₂) (p₁ ∣ p₂)
 
   -- parse is structurally recursive over the following lexicographic
   -- measure:
@@ -85,14 +94,78 @@ private
   parse (symbolBind f)    (c ∷ s) = parse (f c) s
   parse (symbolBind f)    []      = []
   parse fail              _       = []
-  parse (returnPlus xs p) s       = map (\x -> pair x s) xs ++ parse p s
+  parse (returnPlus xs p) s       =
+    map (\x -> pair x s) (Vec.toList xs) ++ parse p s
+
+  -- It may be interesting to note that it is hard to define bind
+  -- directly. Note that the module Incorrect is not used for
+  -- anything; bind is defined further down using CPS.
+
+  private
+   module IncorrectBind where
+
+    -- choice xs p is basically foldr _∣_ p xs, but well-typed.
+
+    choice : forall {tok r i₁ i₂ n} ->
+             Vec (Parser tok r i₁) (suc n) -> Parser tok r i₂ ->
+             Parser tok r (i₁ ∣I i₂)
+    choice                (cons p₁ nil)           p₂ = p₁ ∣ p₂
+    choice {i₁ = i₁} {i₂} (cons p₁ ps@(cons _ _)) p₂ =
+      cast lemma (p₁ ∣ choice ps p₂)
+      where
+      open IndexSemiring
+
+      lemma : i₁ ∣I (i₁ ∣I i₂) ≡ (i₁ ∣I i₂)
+      lemma = begin
+        i₁ ∣I (i₁ ∣I i₂)
+          ≡⟨ sym $ +-assoc i₁ i₁ i₂ ⟩
+        (i₁ ∣I i₁) ∣I i₂
+          ≡⟨ ≡-cong₂ _∣I_ (∣-idempotent i₁) ≡-refl ⟩
+        i₁ ∣I i₂
+          ∎
+
+    -- This function is used to state the type of bind.
+
+    bind-index : forall {tok r i} ->
+                 Parser tok r i -> Index -> Index
+    bind-index (symbolBind f)    _ = 0I
+    bind-index fail              _ = 0I
+    bind-index (returnPlus xs p) i = i
+
+    bind-index-lemma : forall {tok r i₁} (p : Parser tok r i₁) i₂ ->
+                       i₂ ∣I bind-index p i₂ ≡ i₂
+    bind-index-lemma (symbolBind f) i =
+      Prod.proj₂ IndexSemiring.+-identity i
+    bind-index-lemma fail i =
+      Prod.proj₂ IndexSemiring.+-identity i
+    bind-index-lemma (returnPlus xs p) i = ∣-idempotent i
+
+    -- Note that bind has a non-trivial type. This is not a
+    -- fundamental problem, though. The big problem is that bind is
+    -- not productive (in general). The recursive call p >>= g in the
+    -- last line is not guarded if, for instance, g = const fail, in
+    -- which case we have (ignoring some casts)
+    --
+    --   returnPlus xs p >>= g  =  p >>= g.
+    --
+    -- If furthermore p = returnPlus xs p, then we have a real
+    -- problem.
+
+    _>>=_ : forall {tok r₁ r₂ i₁ i₂} ->
+            (p₁ : Parser tok r₁ i₁) -> (r₁ -> Parser tok r₂ i₂) ->
+            Parser tok r₂ (bind-index p₁ i₂)
+    symbolBind f    >>= g = symbolBind (\c -> f c >>= g)
+    fail            >>= g = fail
+    returnPlus xs p >>= g = cast (bind-index-lemma p _)
+                                 (choice (Vec.map g xs) (p >>= g))
 
 ------------------------------------------------------------------------
 -- CPS transformation
 
 -- The code below manually applies the continuation-passing monad
 -- transformer to the Base parser above to improve the efficiency of
--- left-nested uses of bind.
+-- left-nested uses of bind. (And, in light of Base.Incorrect._>>=_,
+-- to enable a well-founded definition of bind.)
 
 data Parser (tok : Set) (i : Index) (r : Set) : Set1 where
   parser : (forall {i' r'} ->
