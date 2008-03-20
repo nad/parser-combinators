@@ -14,12 +14,14 @@ open import Data.Nat using (ℕ; zero; suc; _⊔_)
 open import Data.Nat.Properties
 
 open import Algebra
+import Algebra.Props.BooleanAlgebra as BAlg
 import Algebra.Props.DistributiveLattice as DL
 private
   module NR = CommutativeSemiringWithoutOne
                 ℕ-⊔-⊓-0-commutativeSemiringWithoutOne
   module NL = DL ℕ-distributiveLattice
   module BR = CommutativeSemiring Bool-commutativeSemiring-∨-∧
+  module BA = BAlg Bool-booleanAlgebra
 
 open import Logic
 open import Relation.Binary.PropositionalEquality
@@ -169,6 +171,18 @@ private
       d₂ ⊔  d₁ ⊔ d₃   ∎
     distribʳ₂ d₁ d₂ d₃ false true  = NR.+-assoc d₂ d₃ d₁
     distribʳ₂ d₁ d₂ d₃ false false = ≡-refl
+
+·-idempotent : Idempotent _·I_
+·-idempotent i = ≡-cong₂ _,_ (BA.∧-idempotent (proj₁ i))
+                             (lemma (proj₁ i) (proj₂ i))
+  where
+  lemma : forall b x -> if b then x ⊔ x else x ≡ x
+  lemma true  x = NL.∧-idempotent x
+  lemma false x = ≡-refl
+
+∣-idempotent : Idempotent _∣I_
+∣-idempotent i = ≡-cong₂ _,_ (BA.∨-idempotent (proj₁ i))
+                             (NL.∧-idempotent (proj₂ i))
 
 -- Not quite a semiring, but the proper name is too long...
 
