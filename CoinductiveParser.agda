@@ -11,10 +11,10 @@ module CoinductiveParser where
 
 open import CoinductiveParser.Index
 
-import Data.Product as Prod; open Prod using () renaming (_,_ to pair)
+open import Data.Product renaming (_,_ to pair)
 open import Data.Bool
 open import Data.Nat
-open import Data.Product.Record
+open import Data.Product.Record using (_,_)
 open import Data.List
 import Data.Vec as Vec
 open Vec using (Vec) renaming ([] to nil; _∷_ to cons; _++_ to _<+>_)
@@ -132,12 +132,12 @@ private
     bind-index fail              _ = 0I
     bind-index (returnPlus xs p) i = i
 
+    open IndexSemiring
+
     bind-index-lemma : forall {tok r i₁} (p : Parser tok r i₁) i₂ ->
                        i₂ ∣I bind-index p i₂ ≡ i₂
-    bind-index-lemma (symbolBind f) i =
-      Prod.proj₂ IndexSemiring.+-identity i
-    bind-index-lemma fail i =
-      Prod.proj₂ IndexSemiring.+-identity i
+    bind-index-lemma (symbolBind f)    i = proj₂ +-identity i
+    bind-index-lemma fail              i = proj₂ +-identity i
     bind-index-lemma (returnPlus xs p) i = ∣-idempotent i
 
     -- Note that bind has a non-trivial type. This is not a
@@ -213,7 +213,7 @@ _∣_ : forall {tok r i₁ i₂} ->
       Parser tok (i₁ ∣I i₂) r
 _∣_ {i₁ = i₁} {i₂ = i₂} (parser p₁) (parser p₂) =
   parser \{i₃} k ->
-    Base.cast (sym $ Prod.proj₂ distrib i₃ i₁ i₂)
+    Base.cast (sym $ proj₂ distrib i₃ i₁ i₂)
               (Base._∣_ (p₁ k) (p₂ k))
   where open IndexSemiring
 
@@ -243,5 +243,4 @@ parse (parser p) = Base.parse (p Base.return)
 
 parse-complete : forall {tok r i} ->
                  Parser tok i r -> [ tok ] -> [ r ]
-parse-complete p s =
-  map Prod.proj₁ (filter (null ∘ Prod.proj₂) (parse p s))
+parse-complete p s = map proj₁ (filter (null ∘ proj₂) (parse p s))
