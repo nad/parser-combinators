@@ -8,13 +8,23 @@ open import Parser.Type
 open import Data.Bool
 open import Data.Product.Record
 open import Data.Maybe
-open import Data.Function
+open import Data.Function hiding (_∘_)
 open import Data.BoundedVec.Inefficient
 import Data.List as L
 open import Data.Nat
 open import Category.Applicative.Indexed
 open import Category.Monad.Indexed
 open import Category.Monad.State
+
+------------------------------------------------------------------------
+-- A suitably typed composition operator
+
+private
+
+  infixr 9 _∘_
+
+  _∘_ : {a c : Set} {b : Set1} -> (b -> c) -> (a -> b) -> (a -> c)
+  f ∘ g = \x -> f (g x)
 
 ------------------------------------------------------------------------
 -- Parser data type
@@ -35,13 +45,13 @@ data Parser (tok : Set) (nt : ParserType) : ParserType where
   forget :  forall e {c r}
          -> Parser tok nt (e , c) r
          -> Parser tok nt (true , c) r
-  seq₀   :  forall {c₁ e₂ c₂ r₁ r₂}
-         -> Parser tok nt (true , c₁)         (r₁ -> r₂)
-         -> Parser tok nt (e₂   , c₂)         r₁
-         -> Parser tok nt (e₂   , node c₁ c₂) r₂
-  seq₁   :  forall {c₁} e₂ {c₂ r₁ r₂}
-         -> Parser tok nt (false , c₁)      (r₁ -> r₂)
-         -> Parser tok nt (e₂    , c₂)      r₁
+  bind₀  :  forall {c₁ e₂ c₂ r₁ r₂}
+         -> Parser tok nt (true , c₁) r₁
+         -> (r₁ -> Parser tok nt (e₂ , c₂) r₂)
+         -> Parser tok nt (e₂ , node c₁ c₂) r₂
+  bind₁  :  forall {c₁} e₂ {c₂ r₁ r₂}
+         -> Parser tok nt (false , c₁) r₁
+         -> (r₁ -> Parser tok nt (e₂ , c₂) r₂)
          -> Parser tok nt (false , c₁) r₂
   alt₀   :  forall {c₁} e₂ {c₂ r}
          -> Parser tok nt (true , c₁)         r
@@ -88,33 +98,34 @@ private
 -- 3) The structure of the parser.
 
 private
+
   module Dummy {tok : Set} {nt : ParserType}
                (g : Grammar tok nt)
                where
 
     mutual
-      parse₀ : forall {c r} ->
+      parse₀ : forall n {c r} ->
                Parser tok nt (true , c) r ->
-               forall n -> P tok n n r
-      parse₀ (! x)              n = parse₀ (g x) n
-      parse₀ (ret x)            n = return x
-      parse₀ (forget true  p)   n = parse₀  p n
-      parse₀ (forget false p)   n = parse₁↑ p n
-      parse₀ (seq₀       p₁ p₂) n = parse₀  p₁ n ⊛ parse₀  p₂ n
-      parse₀ (alt₀ true  p₁ p₂) n = parse₀  p₁ n ∣ parse₀  p₂ n
-      parse₀ (alt₀ false p₁ p₂) n = parse₀  p₁ n ∣ parse₁↑ p₂ n
-      parse₀ (alt₁       p₁ p₂) n = parse₁↑ p₁ n ∣ parse₀  p₂ n
+               P tok n n r
+      parse₀ n (! x)              = parse₀ n (g x)
+      parse₀ n (ret x)            = return x
+      parse₀ n (forget true  p)   = parse₀  n p
+      parse₀ n (forget false p)   = parse₁↑ n p
+      parse₀ n (bind₀      p₁ p₂) = parse₀  n p₁ >>= parse₀  n ∘ p₂
+      parse₀ n (alt₀ true  p₁ p₂) = parse₀  n p₁ ∣   parse₀  n   p₂
+      parse₀ n (alt₀ false p₁ p₂) = parse₀  n p₁ ∣   parse₁↑ n   p₂
+      parse₀ n (alt₁       p₁ p₂) = parse₁↑ n p₁ ∣   parse₀  n   p₂
 
-      parse₁ : forall {c r} ->
+      parse₁ : forall n {c r} ->
                Parser tok nt (false , c) r ->
-               forall n -> P tok n (pred n) r
-      parse₁ _                   zero    = ∅
-      parse₁ (! x)               (suc n) = parse₁ (g x) (suc n)
-      parse₁ (seq₀        p₁ p₂) (suc n) = parse₀ p₁ (suc n) ⊛ parse₁  p₂ (suc n)
-      parse₁ (seq₁  true  p₁ p₂) (suc n) = parse₁ p₁ (suc n) ⊛ parse₀  p₂ n
-      parse₁ (seq₁  false p₁ p₂) (suc n) = parse₁ p₁ (suc n) ⊛ parse₁↑ p₂ n
-      parse₁ (alt₁        p₁ p₂) (suc n) = parse₁ p₁ (suc n) ∣ parse₁  p₂ (suc n)
-      parse₁ {r = r} (sat p)     (suc n) = eat =<< get
+               P tok n (pred n) r
+      parse₁ zero    _                   = ∅
+      parse₁ (suc n) (! x)               = parse₁ (suc n) (g x)
+      parse₁ (suc n) (bind₀       p₁ p₂) = parse₀ (suc n) p₁ >>= parse₁  (suc n) ∘ p₂
+      parse₁ (suc n) (bind₁ true  p₁ p₂) = parse₁ (suc n) p₁ >>= parse₀  n       ∘ p₂
+      parse₁ (suc n) (bind₁ false p₁ p₂) = parse₁ (suc n) p₁ >>= parse₁↑ n       ∘ p₂
+      parse₁ (suc n) (alt₁        p₁ p₂) = parse₁ (suc n) p₁ ∣   parse₁  (suc n)   p₂
+      parse₁ (suc n) {r = r} (sat p)     = eat =<< get
         where
           eat : forall {n} ->
                 BoundedVec tok (suc n) ->
@@ -124,18 +135,18 @@ private
           ... | just x  = put s >> return x
           ... | nothing = ∅
 
-      parse₁↑ : forall {c r} ->
+      parse₁↑ : forall n {c r} ->
                 Parser tok nt (false , c) r ->
-                forall n -> P tok n n r
-      parse₁↑ p zero    = ∅
-      parse₁↑ p (suc n) = parse₁ p (suc n) >>= \r ->
+                P tok n n r
+      parse₁↑ zero    p = ∅
+      parse₁↑ (suc n) p = parse₁ (suc n) p >>= \r ->
                           modify ↑ >>
                           return r
 
     parse : forall {e c r n} ->
             Parser tok nt (e , c) r ->
             P tok n (if e then n else pred n) r
-    parse {e = true}  {n = n} p = parse₀ p n
-    parse {e = false} {n = n} p = parse₁ p n
+    parse {e = true}  {n = n} p = parse₀ n p
+    parse {e = false} {n = n} p = parse₁ n p
 
 open Dummy public

@@ -57,8 +57,8 @@ i₁ ∣I i₂ = (proj₁ i₁ ∨ proj₁ i₂ , node (proj₂ i₁) (proj₂ i
 ------------------------------------------------------------------------
 -- Exported combinators
 
-infixl 50 _⊛_
 infixl 40 _∣_
+infixl 10 _>>=_
 
 return : forall {tok r} -> r -> Parser tok 1I r
 return = P.ret
@@ -75,12 +75,12 @@ forget : forall {tok e c r} ->
          Parser tok (true , step c) r
 forget p = P.forget _ p
 
-_⊛_ : forall {tok e₁ c₁ i₂ r₁ r₂} -> let i₁ = (e₁ , c₁) in
-      Parser tok i₁ (r₁ -> r₂) ->
-      Parser tok i₂ r₁ ->
-      Parser tok (i₁ ·I i₂) r₂
-_⊛_ {e₁ = true } = P.seq₀
-_⊛_ {e₁ = false} = P.seq₁ _
+_>>=_ : forall {tok e₁ c₁ i₂ r₁ r₂} -> let i₁ = (e₁ , c₁) in
+        Parser tok i₁ r₁ ->
+        (r₁ -> Parser tok i₂ r₂) ->
+        Parser tok (i₁ ·I i₂) r₂
+_>>=_ {e₁ = true } = P.bind₀
+_>>=_ {e₁ = false} = P.bind₁ _
 
 _∣_ : forall {tok e₁ c₁ i₂ r} -> let i₁ = (e₁ , c₁) in
       Parser tok i₁ r ->

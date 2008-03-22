@@ -83,12 +83,18 @@ forget : forall {tok nt e c r} ->
          Parser tok nt (true , c) r
 forget p = P.forget _ p
 
-_⊛_ : forall {tok nt e₁ c₁ i₂ r₁ r₂} -> let i₁ = (e₁ , c₁) in
+_>>=_ : forall {tok nt e₁ c₁ i₂ r₁ r₂} -> let i₁ = (e₁ , c₁) in
+      Parser tok nt i₁ r₁ ->
+      (r₁ -> Parser tok nt i₂ r₂) ->
+      Parser tok nt (i₁ ·I i₂) r₂
+_>>=_ {e₁ = true } = P.bind₀
+_>>=_ {e₁ = false} = P.bind₁ _
+
+_⊛_ : forall {tok nt i₁ i₂ r₁ r₂} ->
       Parser tok nt i₁ (r₁ -> r₂) ->
       Parser tok nt i₂ r₁ ->
-      Parser tok nt (i₁ ·I i₂) r₂
-_⊛_ {e₁ = true } = P.seq₀
-_⊛_ {e₁ = false} = P.seq₁ _
+      Parser tok nt _  r₂
+p₁ ⊛ p₂ = p₁ >>= \f -> p₂ >>= \x -> return (f x)
 
 _<$>_ : forall {tok nt i r₁ r₂} ->
         (r₁ -> r₂) ->

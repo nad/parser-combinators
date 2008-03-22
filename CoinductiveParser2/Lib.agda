@@ -29,9 +29,13 @@ fail = sat (const nothing)
 
 -- We could get these for free with better library support.
 
-infixl 50 _<⊛_ _⊛>_ _<$>_ _<$_
+infixl 50 _⊛_ _<⊛_ _⊛>_ _<$>_ _<$_
 
 -- Note that all the resulting indices can be inferred.
+
+_⊛_ : forall {tok i₁ i₂ r₁ r₂} ->
+      Parser tok i₁ (r₁ -> r₂) -> Parser tok i₂ r₁ -> Parser tok _ r₂
+p₁ ⊛ p₂ = p₁ >>= \f -> p₂ >>= \x -> return (f x)
 
 _<$>_ : forall {tok r₁ r₂ i} ->
         (r₁ -> r₂) -> Parser tok i r₁ -> Parser tok _ r₂
