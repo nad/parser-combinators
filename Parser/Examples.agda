@@ -19,10 +19,9 @@ open Sym C.decSetoid
 
 -- A function used to simplify the examples a little.
 
-⟦_⟧′ :  forall {nt i r}
-     -> Parser Char nt i r -> Grammar Char nt
-     -> String -> [ r ]
-⟦ p ⟧′ g s = ⟦ p ⟧! g (S.toList s)
+_∈?_/_ :  forall {nt i r}
+       -> String -> Parser Char nt i r -> Grammar Char nt -> [ r ]
+s ∈? p / g = parse-complete p g (S.toList s)
 
 module Ex₁ where
 
@@ -32,10 +31,10 @@ module Ex₁ where
     e : Nonterminal _ Char
 
   grammar : Grammar Char Nonterminal
-  grammar e = sym '0' ·> sym '+' ·> ! e
+  grammar e = sym '0' ⊛> sym '+' ⊛> ! e
             ∣ sym '0'
 
-  ex₁ : ⟦ ! e ⟧′ grammar "0+0" ≡ '0' ∷ []
+  ex₁ : "0+0" ∈? (! e) / grammar ≡ '0' ∷ []
   ex₁ = ≡-refl
 
 module Ex₂ where
@@ -48,16 +47,16 @@ module Ex₂ where
     factor : Nonterminal _ Char
 
   grammar : Grammar Char Nonterminal
-  grammar expr   = ! factor ·> sym '+' ·> ! expr
+  grammar expr   = ! factor ⊛> sym '+' ⊛> ! expr
                  ∣ ! factor
   grammar factor = sym '0'
-                 ∣ sym '0' ·> sym '*' ·> ! factor
-                 ∣ sym '(' ·> ! expr <· sym ')'
+                 ∣ sym '0' ⊛> sym '*' ⊛> ! factor
+                 ∣ sym '(' ⊛> ! expr <⊛ sym ')'
 
-  ex₁ : ⟦ ! expr ⟧′ grammar "(0*)" ≡ []
+  ex₁ : "(0*)" ∈? (! expr) / grammar ≡ []
   ex₁ = ≡-refl
 
-  ex₂ : ⟦ ! expr ⟧′ grammar "0*(0+0)" ≡ '0' ∷ []
+  ex₂ : "0*(0+0)" ∈? (! expr) / grammar ≡ '0' ∷ []
   ex₂ = ≡-refl
 
 {-
@@ -73,11 +72,11 @@ module Ex₃ where
     factor : Nonterminal _ Char
 
   grammar : Grammar Char Nonterminal
-  grammar expr   = ! factor ·> sym '+' ·> ! expr
+  grammar expr   = ! factor ⊛> sym '+' ⊛> ! expr
                  ∣ ! factor
   grammar factor = sym '0'
-                 ∣ ! factor ·> sym '*' ·> sym '0'
-                 ∣ sym '(' ·> ! expr <· sym ')'
+                 ∣ ! factor ⊛> sym '*' ⊛> sym '0'
+                 ∣ sym '(' ⊛> ! expr <⊛ sym ')'
 -}
 
 module Ex₄ where
@@ -92,18 +91,18 @@ module Ex₄ where
     bcs : Char -> ℕ -> NT _ ℕ  -- bcs x n ∷= xⁿ⁺¹
 
   grammar : Grammar Char NT
-  grammar top             = ε 0 ∣ ! as zero
-  grammar (as n)          = suc <$ sym 'a' ·
+  grammar top             = return 0 ∣ ! as zero
+  grammar (as n)          = suc <$ sym 'a' ⊛
                             ( ! as (suc n)
-                            ∣ _+_ $ ! bcs 'b' n · ! bcs 'c' n
+                            ∣ _+_ <$> ! bcs 'b' n ⊛ ! bcs 'c' n
                             )
-  grammar (bcs c zero)    = sym c ·> ε 0
-  grammar (bcs c (suc n)) = sym c ·> ! bcs c n
+  grammar (bcs c zero)    = sym c ⊛> return 0
+  grammar (bcs c (suc n)) = sym c ⊛> ! bcs c n
 
-  ex₁ : ⟦ ! top ⟧′ grammar "aaabbbccc" ≡ 3 ∷ []
+  ex₁ : "aaabbbccc" ∈? (! top) / grammar ≡ 3 ∷ []
   ex₁ = ≡-refl
 
-  ex₂ : ⟦ ! top ⟧′ grammar "aaabbccc" ≡ []
+  ex₂ : "aaabbccc" ∈? (! top) / grammar ≡ []
   ex₂ = ≡-refl
 
 module Ex₅ where
@@ -120,9 +119,9 @@ module Ex₅ where
   grammar : Grammar Char NT
   grammar (lib p) = library p
   grammar a       = sym 'a'
-  grammar as      = length $ ! a ⋆
+  grammar as      = length <$> ! a ⋆
 
-  ex₁ : ⟦ ! as ⟧′ grammar "aaaaa" ≡ 5 ∷ []
+  ex₁ : "aaaaa" ∈? (! as) / grammar ≡ 5 ∷ []
   ex₁ = ≡-refl
 
 module Ex₆ where
@@ -148,13 +147,13 @@ module Ex₆ where
                    ∣ _∸_ <$ sym '∸'
   grammar (expr a) = chain₁ a number (! op)
 
-  ex₁ : ⟦ number ⟧′ grammar "12345" ≡ 12345 ∷ []
+  ex₁ : "12345" ∈? number / grammar ≡ 12345 ∷ []
   ex₁ = ≡-refl
 
-  ex₂ : ⟦ ! expr left ⟧′ grammar "1+5*2∸3" ≡ 9 ∷ []
+  ex₂ : "1+5*2∸3" ∈? (! expr left) / grammar ≡ 9 ∷ []
   ex₂ = ≡-refl
 
-  ex₃ : ⟦ ! expr right ⟧′ grammar "1+5*2∸3" ≡ 1 ∷ []
+  ex₃ : "1+5*2∸3" ∈? (! expr right) / grammar ≡ 1 ∷ []
   ex₃ = ≡-refl
 
 module Ex₇ where
@@ -180,14 +179,14 @@ module Ex₇ where
   grammar (cLib p) = charLib p
   grammar expr     = chain₁ left (! term)   (! addOp)
   grammar term     = chain₁ left (! factor) (! mulOp)
-  grammar factor   = sym '(' ·> ! expr <· sym ')'
+  grammar factor   = sym '(' ⊛> ! expr <⊛ sym ')'
                    ∣ number
   grammar addOp    = _+_ <$ sym '+'
                    ∣ _∸_ <$ sym '∸'
   grammar mulOp    = _*_ <$ sym '*'
 
-  ex₁ : ⟦ ! expr ⟧′ grammar "1+5*2∸3" ≡ 8 ∷ []
+  ex₁ : "1+5*2∸3" ∈? (! expr) / grammar ≡ 8 ∷ []
   ex₁ = ≡-refl
 
-  ex₂ : ⟦ ! expr ⟧′ grammar "1+5*(2∸3)" ≡ 1 ∷ []
+  ex₂ : "1+5*(2∸3)" ∈? (! expr) / grammar ≡ 1 ∷ []
   ex₂ = ≡-refl

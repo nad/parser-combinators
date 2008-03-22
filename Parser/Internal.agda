@@ -28,7 +28,7 @@ open import Category.Monad.State
 data Parser (tok : Set) (nt : ParserType) : ParserType where
   !_     :  forall {e c r}
          -> nt (e , c) r -> Parser tok nt (e , step c) r
-  ε      :  forall {r} -> r -> Parser tok nt (true , leaf) r
+  ret    :  forall {r} -> r -> Parser tok nt (true , leaf) r
   sat    :  forall {r}
          -> (tok -> Maybe r)
          -> Parser tok nt (false , leaf) r
@@ -97,7 +97,7 @@ private
                Parser tok nt (true , c) r ->
                forall n -> P tok n n r
       parse₀ (! x)              n = parse₀ (g x) n
-      parse₀ (ε x)              n = return x
+      parse₀ (ret x)            n = return x
       parse₀ (forget true  p)   n = parse₀  p n
       parse₀ (forget false p)   n = parse₁↑ p n
       parse₀ (seq₀       p₁ p₂) n = parse₀  p₁ n ⊛ parse₀  p₂ n

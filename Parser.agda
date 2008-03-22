@@ -13,7 +13,7 @@ open import Data.Bool
 open import Data.Maybe
 open import Data.Product.Record
 import Data.Product as Prod
-open import Data.Function hiding (_$_)
+open import Data.Function
 import Data.BoundedVec.Inefficient as BVec
 open import Relation.Nullary
 open import Relation.Binary
@@ -21,28 +21,31 @@ open import Relation.Binary
 ------------------------------------------------------------------------
 -- Run function for the parsers
 
-⟦_⟧ :  forall {tok nt i r}
-    -> Parser tok nt i r -> Grammar tok nt
-    -> [ tok ] -> [ Prod._×_ r [ tok ] ]
-⟦ p ⟧ g s = map (Prod.map-× id BVec.toList)
-                (P.parse g p (BVec.fromList s))
+parse :  forall {tok nt i r}
+      -> Parser tok nt i r -> Grammar tok nt
+      -> [ tok ] -> [ Prod._×_ r [ tok ] ]
+parse p g s = map (Prod.map-× id BVec.toList)
+                  (P.parse g p (BVec.fromList s))
 
 -- A variant which only returns parses which leave no remaining input.
 
-⟦_⟧! :  forall {tok nt i r}
-     -> Parser tok nt i r -> Grammar tok nt
-     -> [ tok ] -> [ r ]
-⟦ p ⟧! g s = map Prod.proj₁ (filter (null ∘ Prod.proj₂) (⟦ p ⟧ g s))
+parse-complete :  forall {tok nt i r}
+               -> Parser tok nt i r -> Grammar tok nt
+               -> [ tok ] -> [ r ]
+parse-complete p g s =
+  map Prod.proj₁ (filter (null ∘ Prod.proj₂) (parse p g s))
 
 ------------------------------------------------------------------------
 -- Operations on indices
 
--- (unitI, _·I_) almost forms a monoid.
-
 infixr 50 _·I_
+infixr 40 _∣I_
 
-unitI : Index
-unitI = (true , leaf)
+0I : Index
+0I = (false , leaf)
+
+1I : Index
+1I = (true , leaf)
 
 _·I_ : Index -> Index -> Index
 i₁ ·I i₂ = ( proj₁ i₁ ∧ proj₁ i₂
@@ -50,21 +53,25 @@ i₁ ·I i₂ = ( proj₁ i₁ ∧ proj₁ i₂
                          else proj₂ i₁
            )
 
+_∣I_ : Index -> Index -> Index
+i₁ ∣I i₂ = (proj₁ i₁ ∨ proj₁ i₂ , node (proj₂ i₁) (proj₂ i₂))
+
 ------------------------------------------------------------------------
 -- Exported combinators
 
 infix  60 !_
-infixl 50 _·_ _<·_ _·>_ _$_ _<$_
+infixl 50 _⊛_ _<⊛_ _⊛>_ _<$>_ _<$_
 infixl 40 _∣_
+infixl 10 _>>=_
 
-ε : forall {tok nt r} -> r -> Parser tok nt unitI r
-ε = P.ε
+return : forall {tok nt r} -> r -> Parser tok nt 1I r
+return = P.ret
 
 sat : forall {tok nt r} ->
-      (tok -> Maybe r) -> Parser tok nt (false , leaf) r
+      (tok -> Maybe r) -> Parser tok nt 0I r
 sat = P.sat
 
-fail : forall {tok nt r} -> Parser tok nt (false , leaf) r
+fail : forall {tok nt r} -> Parser tok nt 0I r
 fail = sat (const nothing)
 
 -- Forget whether or not the parser accepts the empty string; take the
@@ -76,41 +83,41 @@ forget : forall {tok nt e c r} ->
          Parser tok nt (true , c) r
 forget p = P.forget _ p
 
-_·_ : forall {tok nt e₁ c₁ i₂ r₁ r₂} -> let i₁ = (e₁ , c₁) in
+_⊛_ : forall {tok nt e₁ c₁ i₂ r₁ r₂} -> let i₁ = (e₁ , c₁) in
       Parser tok nt i₁ (r₁ -> r₂) ->
       Parser tok nt i₂ r₁ ->
       Parser tok nt (i₁ ·I i₂) r₂
-_·_ {e₁ = true } = P.seq₀
-_·_ {e₁ = false} = P.seq₁ _
+_⊛_ {e₁ = true } = P.seq₀
+_⊛_ {e₁ = false} = P.seq₁ _
 
-_$_ : forall {tok nt i r₁ r₂} ->
-      (r₁ -> r₂) ->
-      Parser tok nt i r₁ ->
-      Parser tok nt _ r₂
-f $ x = ε f · x
+_<$>_ : forall {tok nt i r₁ r₂} ->
+        (r₁ -> r₂) ->
+        Parser tok nt i r₁ ->
+        Parser tok nt _ r₂
+f <$> x = return f ⊛ x
 
-_<·_ : forall {tok nt i₁ i₂ r₁ r₂} ->
+_<⊛_ : forall {tok nt i₁ i₂ r₁ r₂} ->
        Parser tok nt i₁ r₁ ->
        Parser tok nt i₂ r₂ ->
        Parser tok nt _ r₁
-x <· y = const $ x · y
+x <⊛ y = const <$> x ⊛ y
 
-_·>_ : forall {tok nt i₁ i₂ r₁ r₂} ->
+_⊛>_ : forall {tok nt i₁ i₂ r₁ r₂} ->
        Parser tok nt i₁ r₁ ->
        Parser tok nt i₂ r₂ ->
        Parser tok nt _ r₂
-x ·> y = flip const $ x · y
+x ⊛> y = flip const <$> x ⊛ y
 
 _<$_ : forall {tok nt i r₁ r₂} ->
        r₁ ->
        Parser tok nt i r₂ ->
        Parser tok nt _ r₁
-x <$ y = const x $ y
+x <$ y = const x <$> y
 
-_∣_ : forall {tok nt e₁ c₁ e₂ c₂ r} ->
-      Parser tok nt (e₁ , c₁) r ->
-      Parser tok nt (e₂ , c₂) r ->
-      Parser tok nt (e₁ ∨ e₂ , node c₁ c₂) r
+_∣_ : forall {tok nt e₁ c₁ i₂ r} -> let i₁ = (e₁ , c₁) in
+      Parser tok nt i₁ r ->
+      Parser tok nt i₂ r ->
+      Parser tok nt (i₁ ∣I i₂) r
 _∣_ {e₁ = true } = P.alt₀ _
 _∣_ {e₁ = false} = P.alt₁
 
@@ -124,7 +131,7 @@ module Sym (a : DecSetoid) where
 
   -- Parses a given token (symbol).
 
-  sym : forall {nt} -> tok -> Parser tok nt (false , leaf) tok
+  sym : forall {nt} -> tok -> Parser tok nt 0I tok
   sym x = sat p
     where
     p : tok -> Maybe tok

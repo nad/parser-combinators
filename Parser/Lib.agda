@@ -78,10 +78,10 @@ module Combinators
   chain₁ a p op = ! lib (chain₁' a p op)
 
   library : forall {i r} -> Nonterminal nt i r -> Parser tok nt i r
-  library (many  p)          = ε [] ∣ p +
-  library (many₁ p)          = _∷_ $ p · p ⋆
-  library (chain'  a p op x) = ε x ∣ chain₁ a p op
-  library (chain₁' a p op)   = comb a $ (<_∣_> $ p · op) ⋆ · p
+  library (many  p)          = return [] ∣ p +
+  library (many₁ p)          = _∷_ <$> p ⊛ p ⋆
+  library (chain'  a p op x) = return x ∣ chain₁ a p op
+  library (chain₁' a p op)   = comb a <$> (<_∣_> <$> p ⊛ op) ⋆ ⊛ p
     where
     comb : forall {r} -> Assoc -> [ r × (r -> r -> r) ] -> r -> r
     comb right xs y = foldr app y xs
