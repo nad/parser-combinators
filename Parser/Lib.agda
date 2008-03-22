@@ -24,21 +24,21 @@ open import Data.Product renaming (_,_ to <_∣_>)
 private
 
   data NT (nt : ParserType) : ParserType where
-    many    :  forall {d r}
-            -> Parser tok nt (false , d) r
+    many    :  forall {c r}
+            -> Parser tok nt (false , c) r
             -> NT nt _ [ r ]
-    many₁   :  forall {d r}
-            -> Parser tok nt (false , d) r
+    many₁   :  forall {c r}
+            -> Parser tok nt (false , c) r
             -> NT nt _ [ r ]
-    chain'  :  forall {d₁ i₂ r}
+    chain'  :  forall {c₁ i₂ r}
             -> Assoc
-            -> Parser tok nt (false , d₁) r
+            -> Parser tok nt (false , c₁) r
             -> Parser tok nt i₂ (r -> r -> r)
             -> r
             -> NT nt _ r
-    chain₁' :  forall {d₁ i₂ r}
+    chain₁' :  forall {c₁ i₂ r}
             -> Assoc
-            -> Parser tok nt (false , d₁) r
+            -> Parser tok nt (false , c₁) r
             -> Parser tok nt i₂ (r -> r -> r)
             -> NT nt _ r
 
@@ -52,27 +52,27 @@ module Combinators
 
   infix 55 _⋆ _+
 
-  _⋆ : forall {d r} ->
-       Parser tok nt (false , d) r ->
+  _⋆ : forall {c r} ->
+       Parser tok nt (false , c) r ->
        Parser tok nt _ [ r ]
   p ⋆ = ! lib (many p)
 
-  _+ : forall {d r} ->
-       Parser tok nt (false , d) r ->
+  _+ : forall {c r} ->
+       Parser tok nt (false , c) r ->
        Parser tok nt _ [ r ]
   p + = ! lib (many₁ p)
 
-  chain :  forall {d₁ i₂ r}
+  chain :  forall {c₁ i₂ r}
         -> Assoc
-        -> Parser tok nt (false , d₁) r
+        -> Parser tok nt (false , c₁) r
         -> Parser tok nt i₂ (r -> r -> r)
         -> r
         -> Parser tok nt _ r
   chain a p op x = ! lib (chain' a p op x)
 
-  chain₁ :  forall {d₁ i₂ r}
+  chain₁ :  forall {c₁ i₂ r}
          -> Assoc
-         -> Parser tok nt (false , d₁) r
+         -> Parser tok nt (false , c₁) r
          -> Parser tok nt i₂ (r -> r -> r)
          -> Parser tok nt _ r
   chain₁ a p op = ! lib (chain₁' a p op)

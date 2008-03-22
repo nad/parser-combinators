@@ -71,12 +71,12 @@ fail = sat (const nothing)
 -- safe route and pretend that the empty string is accepted. This can
 -- be used to make some functions simply typed.
 
-forget : forall {tok nt e d r} ->
-         Parser tok nt (e , d) r ->
-         Parser tok nt (true , d) r
+forget : forall {tok nt e c r} ->
+         Parser tok nt (e , c) r ->
+         Parser tok nt (true , c) r
 forget p = P.forget _ p
 
-_·_ : forall {tok nt e₁ d₁ i₂ r₁ r₂} -> let i₁ = (e₁ , d₁) in
+_·_ : forall {tok nt e₁ c₁ i₂ r₁ r₂} -> let i₁ = (e₁ , c₁) in
       Parser tok nt i₁ (r₁ -> r₂) ->
       Parser tok nt i₂ r₁ ->
       Parser tok nt (i₁ ·I i₂) r₂
@@ -107,15 +107,15 @@ _<$_ : forall {tok nt i r₁ r₂} ->
        Parser tok nt _ r₁
 x <$ y = const x $ y
 
-_∣_ : forall {tok nt e₁ d₁ e₂ d₂ r} ->
-      Parser tok nt (e₁ , d₁) r ->
-      Parser tok nt (e₂ , d₂) r ->
-      Parser tok nt (e₁ ∨ e₂ , node d₁ d₂) r
+_∣_ : forall {tok nt e₁ c₁ e₂ c₂ r} ->
+      Parser tok nt (e₁ , c₁) r ->
+      Parser tok nt (e₂ , c₂) r ->
+      Parser tok nt (e₁ ∨ e₂ , node c₁ c₂) r
 _∣_ {e₁ = true } = P.alt₀ _
 _∣_ {e₁ = false} = P.alt₁
 
-!_ : forall {tok nt e d r} ->
-     nt (e , d) r -> Parser tok nt (e , step d) r
+!_ : forall {tok nt e c r} ->
+     nt (e , c) r -> Parser tok nt (e , step c) r
 !_ = P.!_
 
 module Sym (a : DecSetoid) where

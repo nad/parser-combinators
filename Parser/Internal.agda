@@ -26,31 +26,31 @@ open import Category.Monad.State
 -- The parsers are indexed on a type of nonterminals.
 
 data Parser (tok : Set) (nt : ParserType) : ParserType where
-  !_     :  forall {e d r}
-         -> nt (e , d) r -> Parser tok nt (e , step d) r
+  !_     :  forall {e c r}
+         -> nt (e , c) r -> Parser tok nt (e , step c) r
   ε      :  forall {r} -> r -> Parser tok nt (true , leaf) r
   sat    :  forall {r}
          -> (tok -> Maybe r)
          -> Parser tok nt (false , leaf) r
-  forget :  forall e {d r}
-         -> Parser tok nt (e , d) r
-         -> Parser tok nt (true , d) r
-  seq₀   :  forall {d₁ e₂ d₂ r₁ r₂}
-         -> Parser tok nt (true , d₁)         (r₁ -> r₂)
-         -> Parser tok nt (e₂   , d₂)         r₁
-         -> Parser tok nt (e₂   , node d₁ d₂) r₂
-  seq₁   :  forall {d₁} e₂ {d₂ r₁ r₂}
-         -> Parser tok nt (false , d₁)      (r₁ -> r₂)
-         -> Parser tok nt (e₂    , d₂)      r₁
-         -> Parser tok nt (false , d₁) r₂
-  alt₀   :  forall {d₁} e₂ {d₂ r}
-         -> Parser tok nt (true , d₁)         r
-         -> Parser tok nt (e₂   , d₂)         r
-         -> Parser tok nt (true , node d₁ d₂) r
-  alt₁   :  forall {d₁ e₂ d₂ r}
-         -> Parser tok nt (false , d₁)         r
-         -> Parser tok nt (e₂    , d₂)         r
-         -> Parser tok nt (e₂    , node d₁ d₂) r
+  forget :  forall e {c r}
+         -> Parser tok nt (e , c) r
+         -> Parser tok nt (true , c) r
+  seq₀   :  forall {c₁ e₂ c₂ r₁ r₂}
+         -> Parser tok nt (true , c₁)         (r₁ -> r₂)
+         -> Parser tok nt (e₂   , c₂)         r₁
+         -> Parser tok nt (e₂   , node c₁ c₂) r₂
+  seq₁   :  forall {c₁} e₂ {c₂ r₁ r₂}
+         -> Parser tok nt (false , c₁)      (r₁ -> r₂)
+         -> Parser tok nt (e₂    , c₂)      r₁
+         -> Parser tok nt (false , c₁) r₂
+  alt₀   :  forall {c₁} e₂ {c₂ r}
+         -> Parser tok nt (true , c₁)         r
+         -> Parser tok nt (e₂   , c₂)         r
+         -> Parser tok nt (true , node c₁ c₂) r
+  alt₁   :  forall {c₁ e₂ c₂ r}
+         -> Parser tok nt (false , c₁)         r
+         -> Parser tok nt (e₂    , c₂)         r
+         -> Parser tok nt (e₂    , node c₁ c₂) r
 
 ------------------------------------------------------------------------
 -- Run function for the parsers
@@ -84,7 +84,7 @@ private
 -- following lexicographic measure:
 --
 -- 1) The upper bound of the length of the input string.
--- 2) The depth of the parser.
+-- 2) The parser's proper left corner tree.
 -- 3) The structure of the parser.
 
 private
@@ -93,8 +93,8 @@ private
                where
 
     mutual
-      parse₀ : forall {d r} ->
-               Parser tok nt (true , d) r ->
+      parse₀ : forall {c r} ->
+               Parser tok nt (true , c) r ->
                forall n -> P tok n n r
       parse₀ (! x)              n = parse₀ (g x) n
       parse₀ (ε x)              n = return x
@@ -105,8 +105,8 @@ private
       parse₀ (alt₀ false p₁ p₂) n = parse₀  p₁ n ∣ parse₁↑ p₂ n
       parse₀ (alt₁       p₁ p₂) n = parse₁↑ p₁ n ∣ parse₀  p₂ n
 
-      parse₁ : forall {d r} ->
-               Parser tok nt (false , d) r ->
+      parse₁ : forall {c r} ->
+               Parser tok nt (false , c) r ->
                forall n -> P tok n (pred n) r
       parse₁ _                   zero    = ∅
       parse₁ (! x)               (suc n) = parse₁ (g x) (suc n)
@@ -124,16 +124,16 @@ private
           ... | just x  = put s >> return x
           ... | nothing = ∅
 
-      parse₁↑ : forall {d r} ->
-                Parser tok nt (false , d) r ->
+      parse₁↑ : forall {c r} ->
+                Parser tok nt (false , c) r ->
                 forall n -> P tok n n r
       parse₁↑ p zero    = ∅
       parse₁↑ p (suc n) = parse₁ p (suc n) >>= \r ->
                           modify ↑ >>
                           return r
 
-    parse : forall {e d r n} ->
-            Parser tok nt (e , d) r ->
+    parse : forall {e c r n} ->
+            Parser tok nt (e , c) r ->
             P tok n (if e then n else pred n) r
     parse {e = true}  {n = n} p = parse₀ p n
     parse {e = false} {n = n} p = parse₁ p n

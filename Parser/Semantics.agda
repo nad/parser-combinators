@@ -25,12 +25,12 @@ mutual
   data Semantics {tok : Set} {nt : ParserType} (g : Grammar tok nt)
                  : forall {i r} ->
                    [ tok ] -> Parser tok nt i r -> Set1 where
-    !-sem      : forall {e d r} s (x : nt (e , d) r) ->
+    !-sem      : forall {e c r} s (x : nt (e , c) r) ->
                  s ∈⟦ g x ⟧ g -> s ∈⟦ ! x ⟧ g
     ε-sem      : forall {r} (x : r) -> [] ∈⟦ ε x ⟧ g
     sat-sem    : forall {r} (p : tok -> Maybe r) c x -> p c ≡ just x ->
                  c ∷ [] ∈⟦ sat p ⟧ g
-    forget-sem : forall {e d r s} {p : Parser tok nt (e , d) r} ->
+    forget-sem : forall {e c r s} {p : Parser tok nt (e , c) r} ->
                  s ∈⟦ p ⟧ g -> s ∈⟦ forget p ⟧ g
     ·-sem      : forall {i₁ i₂ r₁ r₂ s₁ s₂}
                         {p₁ : Parser tok nt i₁ (r₁ -> r₂)}
@@ -44,3 +44,14 @@ mutual
                         {p₁ : Parser tok nt i₁ r}
                         {p₂ : Parser tok nt i₂ r} ->
                  s ∈⟦ p₂ ⟧ g -> s ∈⟦ p₁ ∣ p₂ ⟧ g
+
+------------------------------------------------------------------------
+-- Soundness of recognition
+
+data NonEmpty {a : Set} : [ a ] -> Set where
+  nonEmpty : forall x xs -> NonEmpty (x ∷ xs)
+
+postulate
+  sound : forall {tok nt i r}
+          (p : Parser tok nt i r) (g : Grammar tok nt) (s : [ tok ]) ->
+          NonEmpty (⟦ p ⟧! g s) -> s ∈⟦ p ⟧ g

@@ -19,19 +19,16 @@ open import Data.Product.Record
 Empty : Set
 Empty = Bool
 
--- The spine of the parser, except that the right argument of _·_ is
--- omitted if the left one does not accept empty strings.
+-- The proper left corners of the parser, represented as a tree. See
+-- the definition of Parser.Internal.Parser.
 
--- This can also be seen as the spine of the parser's first set (the
--- set of first characters which the parser can accept).
-
-data Depth : Set where
-  leaf : Depth
-  step : Depth -> Depth
-  node : Depth -> Depth -> Depth
+data Corners : Set where
+  leaf : Corners
+  step : Corners -> Corners
+  node : Corners -> Corners -> Corners
 
 Index : Set
-Index = Empty × Depth
+Index = Empty × Corners
 
 ------------------------------------------------------------------------
 -- The parser type signature
