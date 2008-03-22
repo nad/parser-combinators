@@ -8,6 +8,10 @@ import CoinductiveParser
 import CoinductiveParser.Examples
 import CoinductiveParser.Index
 import CoinductiveParser.Lib
+import CoinductiveParser2
+import CoinductiveParser2.Examples
+import CoinductiveParser2.Internal
+import CoinductiveParser2.Lib
 import Parser
 import Parser.Char
 import Parser.Examples
