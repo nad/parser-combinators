@@ -15,9 +15,10 @@ open import Data.Product renaming (_,_ to pair)
 open import Data.Bool
 open import Data.Nat
 open import Data.Product.Record using (_,_)
-open import Data.List
+import Data.List as List
+open List using ([_]; []; _∷_; _++_)
 import Data.Vec as Vec
-open Vec using (Vec) renaming ([] to nil; _∷_ to cons; _++_ to _<+>_)
+open Vec using (Vec; []; _∷_) renaming (_++_ to _<+>_)
 open import Category.Monad.State
 open import Logic
 open import Data.Function
@@ -95,7 +96,7 @@ private
   parse (symbolBind f)    []      = []
   parse fail              _       = []
   parse (returnPlus xs p) s       =
-    map (\x -> pair x s) (Vec.toList xs) ++ parse p s
+    List.map (\x -> pair x s) (Vec.toList xs) ++ parse p s
 
   -- It may be interesting to note that it is hard to define bind
   -- directly. Note that the module Incorrect is not used for
@@ -109,8 +110,8 @@ private
     choice : forall {tok r i₁ i₂ n} ->
              Vec (Parser tok r i₁) (suc n) -> Parser tok r i₂ ->
              Parser tok r (i₁ ∣I i₂)
-    choice                (cons p₁ nil)           p₂ = p₁ ∣ p₂
-    choice {i₁ = i₁} {i₂} (cons p₁ ps@(cons _ _)) p₂ =
+    choice                (p₁ ∷ [])         p₂ = p₁ ∣ p₂
+    choice {i₁ = i₁} {i₂} (p₁ ∷ ps@(_ ∷ _)) p₂ =
       cast lemma (p₁ ∣ choice ps p₂)
       where
       open IndexSemiring
@@ -243,4 +244,5 @@ parse (parser p) = Base.parse (p Base.return)
 
 parse-complete : forall {tok r i} ->
                  Parser tok i r -> [ tok ] -> [ r ]
-parse-complete p s = map proj₁ (filter (null ∘ proj₂) (parse p s))
+parse-complete p s =
+  List.map proj₁ (List.filter (List.null ∘ proj₂) (parse p s))
