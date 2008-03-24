@@ -37,9 +37,6 @@ private
 {- co -}
 data Parser (tok : Set) : Index -> Set -> Set1 where
   ret    :  forall {r} -> r -> Parser tok (true , leaf) r
-  sat    :  forall {r}
-         -> (tok -> Maybe r)
-         -> Parser tok (false , leaf) r
   forget :  forall e {c r}
          -> Parser tok (e , c) r
          -> Parser tok (true , step c) r
@@ -55,10 +52,13 @@ data Parser (tok : Set) : Index -> Set -> Set1 where
          -> Parser tok (true , c₁)         r
          -> Parser tok (e₂   , c₂)         r
          -> Parser tok (true , node c₁ c₂) r
-  alt₁   :  forall {c₁ e₂ c₂ r}
+  alt₁   :  forall {c₁} e₂ {c₂ r}
          -> Parser tok (false , c₁)         r
          -> Parser tok (e₂    , c₂)         r
          -> Parser tok (e₂    , node c₁ c₂) r
+  sat    :  forall {r}
+         -> (tok -> Maybe r)
+         -> Parser tok (false , leaf) r
 
 ------------------------------------------------------------------------
 -- Run function for the parsers
@@ -90,26 +90,26 @@ private
 -- 2) The parser's proper left corner tree.
 
 mutual
-  parse₀ : forall n {tok c r} ->
-           Parser tok (true , c) r ->
-           P tok n n r
-  parse₀ n (ret x)            = return x
-  parse₀ n (forget true  p)   = parse₀  n p
-  parse₀ n (forget false p)   = parse₁↑ n p
-  parse₀ n (bind₀      p₁ p₂) = parse₀  n p₁ >>= parse₀  n ∘ p₂
-  parse₀ n (alt₀ true  p₁ p₂) = parse₀  n p₁ ∣   parse₀  n   p₂
-  parse₀ n (alt₀ false p₁ p₂) = parse₀  n p₁ ∣   parse₁↑ n   p₂
-  parse₀ n (alt₁       p₁ p₂) = parse₁↑ n p₁ ∣   parse₀  n   p₂
 
-  parse₁ : forall n {tok r c} ->
-           Parser tok (false , c) r ->
-           P tok n (pred n) r
-  parse₁ zero    _                   = ∅
-  parse₁ (suc n) (bind₀       p₁ p₂) = parse₀ (suc n) p₁ >>= parse₁  (suc n) ∘ p₂
-  parse₁ (suc n) (bind₁ true  p₁ p₂) = parse₁ (suc n) p₁ >>= parse₀  n       ∘ p₂
-  parse₁ (suc n) (bind₁ false p₁ p₂) = parse₁ (suc n) p₁ >>= parse₁↑ n       ∘ p₂
-  parse₁ (suc n) (alt₁        p₁ p₂) = parse₁ (suc n) p₁ ∣   parse₁  (suc n)   p₂
-  parse₁ (suc n) {tok} {r} (sat p)   = eat =<< get
+  -- The pattern matching on {e = ...} below is only there to work
+  -- around a bug in Agda's coverage checker.
+
+  parse : forall n {tok r e c} ->
+          Parser tok (e , c) r ->
+          P tok n (if e then n else pred n) r
+  parse n       (ret x)             = return x
+  parse n       (forget true  p)    = parse  n p
+  parse n       (forget false p)    = parse↑ n p
+  parse n       (bind₀       p₁ p₂) = parse  n      p₁ >>= parse  n ∘ p₂
+  parse zero    (bind₁ _     p₁ p₂) = ∅
+  parse (suc n) (bind₁ true  p₁ p₂) = parse (suc n) p₁ >>= parse  n ∘ p₂
+  parse (suc n) (bind₁ false p₁ p₂) = parse (suc n) p₁ >>= parse↑ n ∘ p₂
+  parse n       (alt₀  true  p₁ p₂) = parse  n      p₁ ∣   parse  n   p₂
+  parse n       (alt₀  false p₁ p₂) = parse  n      p₁ ∣   parse↑ n   p₂
+  parse n {e = true}  (alt₁  .true  p₁ p₂) = parse↑ n      p₁ ∣   parse  n   p₂
+  parse n {e = false} (alt₁  .false p₁ p₂) = parse  n      p₁ ∣   parse  n   p₂
+  parse zero    (sat p)             = ∅
+  parse (suc n) {tok} {r} (sat p)   = eat =<< get
     where
       eat : forall {n} ->
             BoundedVec tok (suc n) ->
@@ -119,16 +119,10 @@ mutual
       ... | just x  = put s >> return x
       ... | nothing = ∅
 
-  parse₁↑ : forall n {tok c r} ->
-            Parser tok (false , c) r ->
-            P tok n n r
-  parse₁↑ zero    p = ∅
-  parse₁↑ (suc n) p = parse₁ (suc n) p >>= \r ->
-                      modify ↑ >>
-                      return r
-
-parse : forall {tok e c r n} ->
-        Parser tok (e , c) r ->
-        P tok n (if e then n else pred n) r
-parse {e = true}  {n = n} p = parse₀ n p
-parse {e = false} {n = n} p = parse₁ n p
+  parse↑ : forall n {tok c r} ->
+           Parser tok (false , c) r ->
+           P tok n n r
+  parse↑ zero    p = ∅
+  parse↑ (suc n) p = parse (suc n) p >>= \r ->
+                     modify ↑ >>
+                     return r

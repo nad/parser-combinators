@@ -24,7 +24,7 @@ open import Relation.Binary
 parse : forall {tok i r} ->
         Parser tok i r -> [ tok ] -> [ Prod._×_ r [ tok ] ]
 parse p s = map (Prod.map-× id BVec.toList)
-                (P.parse p (BVec.fromList s))
+                (P.parse _ p (BVec.fromList s))
 
 -- A variant which only returns parses which leave no remaining input.
 
@@ -87,4 +87,4 @@ _∣_ : forall {tok e₁ c₁ i₂ r} -> let i₁ = (e₁ , c₁) in
       Parser tok i₂ r ->
       Parser tok (i₁ ∣I i₂) r
 _∣_ {e₁ = true } = P.alt₀ _
-_∣_ {e₁ = false} = P.alt₁
+_∣_ {e₁ = false} = P.alt₁ _

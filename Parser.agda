@@ -24,7 +24,7 @@ parse :  forall {tok nt i r}
       -> Parser tok nt i r -> Grammar tok nt
       -> [ tok ] -> [ Prod._×_ r [ tok ] ]
 parse p g s = map (Prod.map-× id BVec.toList)
-                  (P.parse g p (BVec.fromList s))
+                  (P.parse g _ p (BVec.fromList s))
 
 -- A variant which only returns parses which leave no remaining input.
 
@@ -90,7 +90,7 @@ _∣_ : forall {tok nt e₁ c₁ i₂ r} -> let i₁ = (e₁ , c₁) in
       Parser tok nt i₂ r ->
       Parser tok nt (i₁ ∣I i₂) r
 _∣_ {e₁ = true } = P.alt₀ _
-_∣_ {e₁ = false} = P.alt₁
+_∣_ {e₁ = false} = P.alt₁ _
 
 !_ : forall {tok nt e c r} ->
      nt (e , c) r -> Parser tok nt (e , step c) r
