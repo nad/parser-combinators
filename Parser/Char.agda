@@ -10,14 +10,16 @@ module Parser.Char where
 open import Parser
 open import Data.Unit
 open import Data.Nat
+open import Data.Bool
 import Data.Char as C
+open C using (Char; _==_)
 open import Data.List
 open import Data.Function hiding (_$_)
 import Parser.Token
 open import Parser.SimpleLib
 import Parser.Lib as Lib
 private
-  module L = Lib C.Char
+  module L = Lib Char
 
 -- Some parameterised parsers.
 
@@ -38,18 +40,18 @@ module Combinators
 
   open L.Combinators (lib ∘₁ lib')
 
-  digit : Parser C.Char nt _ ℕ
+  digit : Parser Char nt _ ℕ
   digit = ! lib digit'
 
-  number : Parser C.Char nt _ ℕ
+  number : Parser Char nt _ ℕ
   number = ! lib number'
 
-  whitespace : Parser C.Char nt _ ⊤
+  whitespace : Parser Char nt _ ⊤
   whitespace = ! lib whitespace'
 
   open Parser.Token C.decSetoid
 
-  charLib : forall {i r} -> Nonterminal nt i r -> Parser C.Char nt i r
+  charLib : forall {i r} -> Nonterminal nt i r -> Parser Char nt i r
   charLib (lib' p) = library p
   charLib digit'   = 0 <$ sym '0'
                    ∣ 1 <$ sym '1'
@@ -63,7 +65,9 @@ module Combinators
                    ∣ 9 <$ sym '9'
   charLib number' = toNum <$> digit +
     where toNum = foldr (\n x -> 10 * x + n) 0 ∘ reverse
-  charLib whitespace' =
-    tt <$ (sym ' ' ∣ sym '\t' ∣ sym '\n' ∣ sym '\r')
-          -- This is an incomplete but useful list of whitespace
-          -- characters.
+  -- whitespace recognises an incomplete but useful list of whitespace
+  -- characters.
+  charLib whitespace' = sat' isSpace
+    where
+    isSpace = \c ->
+      (c == ' ') ∨ (c == '\t') ∨ (c == '\n') ∨ (c == '\r')
