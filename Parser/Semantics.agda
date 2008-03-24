@@ -8,6 +8,7 @@
 module Parser.Semantics where
 
 open import Parser
+open import Parser.SimpleLib
 
 open import Data.List
 open import Data.Product.Record
