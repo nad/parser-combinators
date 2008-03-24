@@ -2,18 +2,11 @@
 -- A parser for PBM images; illustrates essential use of bind
 ------------------------------------------------------------------------
 
--- Note that I am using the simple "Plain PBM" format, and I do not
+-- Note that I am using the simple "Plain PBM" format, and I try to
 -- adhere to the following statement from the pbm man page:
 --
 --   "Programs that read this format should be as lenient as possible,
 --   accepting anything that looks remotely like a bitmap."
---
--- Furthermore I do not require every line in the "raster" to be at
--- most 70 characters long.
---
--- Finally note that the format is not formally specified, and my
--- interpretation of the informal specification may not be entirely
--- "correct".
 
 -- The idea to write this particular parser was taken from "The Power
 -- of Pi" by Oury and Swierstra.
@@ -27,7 +20,7 @@ open import Data.Nat
 import Data.String as String
 open String using (String) renaming (_++_ to _<+>_)
 import Data.Char as Char
-open Char using (Char)
+open Char using (Char; _==_)
 open import Logic
 open import Data.Product.Record
 open import Data.Function
@@ -99,26 +92,20 @@ open CharLib.Combinators cLib
 grammar : Grammar Char NT
 grammar (lib p)  = library p
 grammar (cLib p) = charLib p
-grammar comment  = tt <$ sym '#'
-                      <⊛ (sat' (not ∘ Char._==_ '\n')) ⋆
-                      <⊛ sym '\n'
+grammar comment  = tt <$ sym '#' <⊛ sat' (not ∘ _==_ '\n') ⋆ <⊛ sym '\n'
 grammar colour   = white <$ sym '0'
                  ∣ black <$ sym '1'
 grammar pbm      =
-  (! comment) ⋆ ⊛>
+  w∣c ⋆ ⊛>
   string (String.toVec "P1") ⊛>
-  (whitespace ∣ ! comment) ⋆ ⊛>
-  whitespace ⊛>
-  (whitespace ∣ ! comment) ⋆ ⊛>
+  w∣c ⋆ ⊛>
   number >>= \cols ->
-  whitespace + ⊛>
+  w∣c + ⊛>
   number >>= \rows ->
-  whitespace + ⊛>
-  (makePBM <$>
-   exactly rows (whitespace ⋆ ⊛>
-                 exactly cols (! colour <⊛ whitespace ⋆) <⊛
-                 sym '\n')) <⊛
-  (return tt ∣ whitespace <⊛ any ⋆)
+  w∣c ⊛>
+  (makePBM <$> exactly rows (exactly cols (w∣c ⋆ ⊛> ! colour))) <⊛
+  any ⋆
+  where w∣c = whitespace ∣ ! comment
 
 module Example where
 
