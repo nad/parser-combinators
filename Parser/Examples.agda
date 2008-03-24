@@ -12,10 +12,11 @@ import Data.String as S
 open C using (Char)
 open S using (String)
 open import Parser
+open import Parser.SimpleLib
 open import Parser.Lib.Types
 import Parser.Lib  as Lib
 import Parser.Char as CharLib
-open Sym C.decSetoid
+import Parser.Token as Tok; open Tok C.decSetoid
 
 -- A function used to simplify the examples a little.
 

@@ -15,8 +15,6 @@ open import Data.Product.Record
 import Data.Product as Prod
 open import Data.Function
 import Data.BoundedVec.Inefficient as BVec
-open import Relation.Nullary
-open import Relation.Binary
 
 ------------------------------------------------------------------------
 -- Run function for the parsers
@@ -60,7 +58,6 @@ i₁ ∣I i₂ = (proj₁ i₁ ∨ proj₁ i₂ , node (proj₂ i₁) (proj₂ i
 -- Exported combinators
 
 infix  60 !_
-infixl 50 _⊛_ _<⊛_ _⊛>_ _<$>_ _<$_
 infixl 40 _∣_
 infixl 10 _>>=_
 
@@ -90,36 +87,6 @@ _>>=_ : forall {tok nt e₁ c₁ i₂ r₁ r₂} -> let i₁ = (e₁ , c₁) in
 _>>=_ {e₁ = true } = P.bind₀
 _>>=_ {e₁ = false} = P.bind₁ _
 
-_⊛_ : forall {tok nt i₁ i₂ r₁ r₂} ->
-      Parser tok nt i₁ (r₁ -> r₂) ->
-      Parser tok nt i₂ r₁ ->
-      Parser tok nt _  r₂
-p₁ ⊛ p₂ = p₁ >>= \f -> p₂ >>= \x -> return (f x)
-
-_<$>_ : forall {tok nt i r₁ r₂} ->
-        (r₁ -> r₂) ->
-        Parser tok nt i r₁ ->
-        Parser tok nt _ r₂
-f <$> x = return f ⊛ x
-
-_<⊛_ : forall {tok nt i₁ i₂ r₁ r₂} ->
-       Parser tok nt i₁ r₁ ->
-       Parser tok nt i₂ r₂ ->
-       Parser tok nt _ r₁
-x <⊛ y = const <$> x ⊛ y
-
-_⊛>_ : forall {tok nt i₁ i₂ r₁ r₂} ->
-       Parser tok nt i₁ r₁ ->
-       Parser tok nt i₂ r₂ ->
-       Parser tok nt _ r₂
-x ⊛> y = flip const <$> x ⊛ y
-
-_<$_ : forall {tok nt i r₁ r₂} ->
-       r₁ ->
-       Parser tok nt i r₂ ->
-       Parser tok nt _ r₁
-x <$ y = const x <$> y
-
 _∣_ : forall {tok nt e₁ c₁ i₂ r} -> let i₁ = (e₁ , c₁) in
       Parser tok nt i₁ r ->
       Parser tok nt i₂ r ->
@@ -130,17 +97,3 @@ _∣_ {e₁ = false} = P.alt₁
 !_ : forall {tok nt e c r} ->
      nt (e , c) r -> Parser tok nt (e , step c) r
 !_ = P.!_
-
-module Sym (a : DecSetoid) where
-
-  open DecSetoid a using (_≟_) renaming (carrier to tok)
-
-  -- Parses a given token (symbol).
-
-  sym : forall {nt} -> tok -> Parser tok nt 0I tok
-  sym x = sat p
-    where
-    p : tok -> Maybe tok
-    p y with x ≟ y
-    ... | yes _ = just y
-    ... | no  _ = nothing

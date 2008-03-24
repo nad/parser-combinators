@@ -13,6 +13,7 @@
 module Parser.Lib (tok : Set) where
 
 open import Parser
+open import Parser.SimpleLib
 open import Parser.Lib.Types
 open import Data.Bool
 open import Data.List

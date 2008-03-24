@@ -12,6 +12,8 @@ open import Data.Nat
 import Data.Char as C
 open import Data.List
 open import Data.Function hiding (_$_)
+import Parser.Token
+open import Parser.SimpleLib
 import Parser.Lib as Lib
 private
   module L = Lib C.Char
@@ -40,6 +42,8 @@ module Combinators
   number : Parser C.Char nt _ ℕ
   number = ! lib number'
 
+  open Parser.Token C.decSetoid
+
   charLib : forall {i r} -> Nonterminal nt i r -> Parser C.Char nt i r
   charLib (lib' p) = library p
   charLib digit'   = 0 <$ sym '0'
@@ -52,6 +56,5 @@ module Combinators
                    ∣ 7 <$ sym '7'
                    ∣ 8 <$ sym '8'
                    ∣ 9 <$ sym '9'
-    where open Sym C.decSetoid
   charLib number' = toNum <$> digit +
     where toNum = foldr (\n x -> 10 * x + n) 0 ∘ reverse
