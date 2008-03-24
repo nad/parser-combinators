@@ -18,6 +18,7 @@ open import Data.Product.Record
 open import Data.Bool
 open import Data.Function
 open import Data.Maybe
+open import Data.Unit
 
 ------------------------------------------------------------------------
 -- Applicative functor parsers
@@ -94,3 +95,10 @@ sequence (p ∷₁ ps) = _∷_ <$> p ⊛ sequence ps
 
 fail : forall {tok nt r} -> Parser tok nt 0I r
 fail = sat (const nothing)
+
+any : forall {tok nt} -> Parser tok nt 0I tok
+any = sat just
+
+sat' : forall {tok nt} -> (tok -> Bool) -> Parser tok nt 0I ⊤
+sat' p = sat (boolToMaybe ∘ p)
+
