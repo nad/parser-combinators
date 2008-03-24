@@ -19,6 +19,7 @@ open import Data.Bool
 open import Data.Function
 open import Data.Maybe
 open import Data.Unit
+open import Logic
 
 ------------------------------------------------------------------------
 -- Applicative functor parsers
@@ -70,23 +71,24 @@ private
   exactly' zero    p = singleton <$> p
   exactly' (suc n) p = _∷_ <$> p ⊛ exactly' n p
 
--- ...so we might as well generalise the function a little. exactly n
--- p parses n occurrences of p.
+-- ...so we might as well generalise the function a little.
+-- exactly n p parses n occurrences of p.
 
-exactly : forall {tok nt c r} n -> let n=0 = decToBool (n ℕ-≟ 0) in
-          Parser tok nt (false , c) r ->
-          Parser tok nt (n=0 , if n=0 then leaf else node leaf c)
-                        (Vec r n)
+exactly-index : Index -> ℕ -> Index
+exactly-index i zero    = _
+exactly-index i (suc n) = _
+
+exactly : forall {tok nt i r} n ->
+          Parser tok nt i r ->
+          Parser tok nt (exactly-index i n) (Vec r n)
 exactly zero    p = return []
 exactly (suc n) p = _∷_ <$> p ⊛ exactly n p
 
 -- A function with a similar type:
 
-sequence : forall {tok nt c r n} -> let n=0 = decToBool (n ℕ-≟ 0) in
-           Vec₁ (Parser tok nt (false , c) r) n ->
-           Parser tok nt
-                  (n=0 , if n=0 then leaf else node leaf c)
-                  (Vec r n)
+sequence : forall {tok nt i r n} ->
+           Vec₁ (Parser tok nt i r) n ->
+           Parser tok nt (exactly-index i n) (Vec r n)
 sequence []₁       = return []
 sequence (p ∷₁ ps) = _∷_ <$> p ⊛ sequence ps
 

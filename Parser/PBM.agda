@@ -35,8 +35,6 @@ open import Data.Bool
 open import Data.Unit
 open import Data.Maybe
 import Data.Nat.Show as N
-open import Data.Bool.Properties
-open import Algebra.Structures
 open import Relation.Nullary
 
 open import Parser
@@ -115,26 +113,12 @@ grammar pbm      =
   number >>= \cols ->
   whitespace + ⊛>
   number >>= \rows ->
-  whitespace ⋆ ⊛>
-  (makePBM <$> image rows cols) <⊛
+  whitespace + ⊛>
+  (makePBM <$>
+   exactly rows (whitespace ⋆ ⊛>
+                 exactly cols (! colour <⊛ whitespace ⋆) <⊛
+                 sym '\n')) <⊛
   (return tt ∣ whitespace <⊛ any ⋆)
-  where
-  i = (false ,
-       node leaf
-            (step (node leaf (node (node (node leaf leaf) leaf) leaf))))
-
-  image : forall rows cols ->
-          Parser Char NT i (Matrix Colour rows cols)
-  image zero         cols = whitespace ⊛> (whitespace ⋆ ⊛> return Vec.[])
-  image rows@(suc _) cols =
-    whitespace ⊛>
-    exactly rows (cast lem ≡-refl
-                  (whitespace ⋆ ⊛>
-                   exactly cols (! colour <⊛ whitespace ⋆) <⊛
-                   sym '\n'))
-    where
-    open IsCommutativeSemiring _ Bool-isCommutativeSemiring-∨-∧
-    lem = *-comm ((decToBool (cols ℕ-≟ 0) ∧ true) ∧ true) false
 
 module Example where
 
