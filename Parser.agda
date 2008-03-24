@@ -69,9 +69,6 @@ sat : forall {tok nt r} ->
       (tok -> Maybe r) -> Parser tok nt 0I r
 sat = P.sat
 
-fail : forall {tok nt r} -> Parser tok nt 0I r
-fail = sat (const nothing)
-
 -- Forget whether or not the parser accepts the empty string; take the
 -- safe route and pretend that the empty string is accepted. This can
 -- be used to make some functions simply typed.

@@ -17,6 +17,7 @@ open import Relation.Nullary
 open import Data.Product.Record
 open import Data.Bool
 open import Data.Function
+open import Data.Maybe
 
 ------------------------------------------------------------------------
 -- Applicative functor parsers
@@ -87,3 +88,9 @@ sequence : forall {tok nt c r n} -> let n=0 = decToBool (n ℕ-≟ 0) in
                   (Vec r n)
 sequence []₁       = return []
 sequence (p ∷₁ ps) = _∷_ <$> p ⊛ sequence ps
+
+------------------------------------------------------------------------
+-- Variants of sat
+
+fail : forall {tok nt r} -> Parser tok nt 0I r
+fail = sat (const nothing)
