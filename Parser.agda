@@ -15,6 +15,7 @@ open import Data.Product.Record
 import Data.Product as Prod
 open import Data.Function
 import Data.BoundedVec.Inefficient as BVec
+open import Logic
 
 ------------------------------------------------------------------------
 -- Run function for the parsers
@@ -97,3 +98,11 @@ _∣_ {e₁ = false} = P.alt₁
 !_ : forall {tok nt e c r} ->
      nt (e , c) r -> Parser tok nt (e , step c) r
 !_ = P.!_
+
+------------------------------------------------------------------------
+-- Casting the indices
+
+cast : forall {tok nt e₁ c₁ e₂ c₂ r} ->
+       e₁ ≡ e₂ -> c₁ ≡ c₂ ->
+       Parser tok nt (e₁ , c₁) r -> Parser tok nt (e₂ , c₂) r
+cast ≡-refl ≡-refl p = p
