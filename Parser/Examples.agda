@@ -13,7 +13,7 @@ open C using (Char)
 open S using (String)
 open import Parser
 open import Parser.SimpleLib
-open import Parser.Lib.Types
+open import Utilities
 import Parser.Lib  as Lib
 import Parser.Char as CharLib
 import Parser.Token as Tok; open Tok C.decSetoid

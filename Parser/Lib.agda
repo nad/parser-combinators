@@ -14,11 +14,11 @@ module Parser.Lib (tok : Set) where
 
 open import Parser
 open import Parser.SimpleLib
-open import Parser.Lib.Types
+open import Utilities
 open import Data.Bool
 open import Data.List
-open import Data.Product.Record hiding (_×_)
-open import Data.Product renaming (_,_ to <_∣_>)
+open import Data.Product.Record using (_,_)
+open import Data.Product renaming (_,_ to pair)
 
 -- Some parameterised parsers.
 
@@ -82,15 +82,5 @@ module Combinators
   library (many  p)          = return [] ∣ p +
   library (many₁ p)          = _∷_ <$> p ⊛ p ⋆
   library (chain'  a p op x) = return x ∣ chain₁ a p op
-  library (chain₁' a p op)   = comb a <$> (<_∣_> <$> p ⊛ op) ⋆ ⊛ p
-    where
-    comb : forall {r} -> Assoc -> [ r × (r -> r -> r) ] -> r -> r
-    comb right xs y = foldr app y xs
-      where
-      app : forall {r} -> r × (r -> r -> r) -> r -> r
-      app < x ∣ _•_ > y = x • y
-    comb left xs y = helper (reverse xs) y
-      where
-      helper : forall {r} -> [ r × (r -> r -> r) ] -> r -> r
-      helper []                 y = y
-      helper (< x ∣ _•_ > ∷ ps) y = helper ps x • y
+  library (chain₁' a p op)   = chain₁-combine a <$>
+                                 (pair <$> p ⊛ op) ⋆ ⊛ p

@@ -15,7 +15,7 @@ open C using (Char)
 open S using (String)
 
 open import CoinductiveParser2
-open import Parser.Lib.Types
+open import Utilities
 open import CoinductiveParser2.Lib
 open Sym C.decSetoid
 

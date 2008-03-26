@@ -4,14 +4,14 @@
 
 module CoinductiveParser.Lib where
 
-open import Parser.Lib.Types
+open import Utilities
 open import CoinductiveParser
 open import CoinductiveParser.Index
 
 open import Data.Bool
 open import Data.Nat
-open import Data.Product.Record hiding (_×_)
-open import Data.Product renaming (_,_ to <_∣_>)
+open import Data.Product.Record using (_,_)
+open import Data.Product renaming (_,_ to pair)
 open import Data.List
 open import Data.Function
 open import Data.Maybe
@@ -106,18 +106,7 @@ chain₁ :  forall {tok d₁ i₂ r}
        -> Parser tok (false , d₁) r
        -> Parser tok i₂ (r -> r -> r)
        -> Parser tok _ r
-chain₁ a p op = comb a <$> (<_∣_> <$> p ⊛ op) ⋆ ⊛ p
-  where
-  comb : forall {r} -> Assoc -> [ r × (r -> r -> r) ] -> r -> r
-  comb right xs y = foldr app y xs
-    where
-    app : forall {r} -> r × (r -> r -> r) -> r -> r
-    app < x ∣ _•_ > y = x • y
-  comb left xs y = helper (reverse xs) y
-    where
-    helper : forall {r} -> [ r × (r -> r -> r) ] -> r -> r
-    helper []                 y = y
-    helper (< x ∣ _•_ > ∷ ps) y = helper ps x • y
+chain₁ a p op = chain₁-combine a <$> (pair <$> p ⊛ op) ⋆ ⊛ p
 
 chain :  forall {tok d₁ i₂ r}
       -> Assoc

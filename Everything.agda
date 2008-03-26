@@ -17,9 +17,9 @@ import Parser.Char
 import Parser.Examples
 import Parser.Internal
 import Parser.Lib
-import Parser.Lib.Types
 import Parser.PBM
 import Parser.Semantics
 import Parser.SimpleLib
 import Parser.Token
 import Parser.Type
+import Utilities
