@@ -48,8 +48,8 @@ infixr 40 _∣I_
 
 _·I_ : Index -> Index -> Index
 i₁ ·I i₂ = ( proj₁ i₁ ∧ proj₁ i₂
-           , if proj₁ i₁ then node (proj₂ i₁) (proj₂ i₂)
-                         else proj₂ i₁
+           , (if proj₁ i₁ then node (proj₂ i₁) (proj₂ i₂)
+                          else proj₂ i₁)
            )
 
 _∣I_ : Index -> Index -> Index

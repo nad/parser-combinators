@@ -65,8 +65,8 @@ infixl 40 _∣I_
 
 _·I_ : Index -> Index -> Index
 i₁ ·I i₂ = ( proj₁ i₁ ∧ proj₁ i₂
-           , if proj₁ i₁ then proj₂ i₁ ⊔ proj₂ i₂
-                         else proj₂ i₁
+           , (if proj₁ i₁ then proj₂ i₁ ⊔ proj₂ i₂
+                          else proj₂ i₁)
            )
 
 _∣I_ : Index -> Index -> Index
@@ -112,7 +112,7 @@ private
   ·-identity = pair (\_ -> ≡-refl) (\x -> helper (proj₁ x) (proj₂ x))
     where
     helper : forall e d ->
-             _≡_ {a = Index} (e ∧ true , if e then d ⊔ zero else d)
+             _≡_ {a = Index} (e ∧ true , (if e then d ⊔ zero else d))
                              (e        , d)
     helper false d = ≡-refl
     helper true  d = ≡-cong (_,_ true) (Prod.proj₂ NR.+-identity d)
@@ -146,14 +146,14 @@ private
       d₁ ⊔ d₂  ⊔ (d₁ ⊔ d₃)   ∎
 
     distribˡ₂ : forall d₁ d₂ d₃ e₁ ->
-                 if e₁ then d₁ ⊔ (d₂ ⊔ d₃) else d₁ ≡
+                (if e₁ then d₁ ⊔ (d₂ ⊔ d₃) else d₁) ≡
                 (if e₁ then d₁ ⊔ d₂        else d₁) ⊔
                 (if e₁ then d₁ ⊔ d₃        else d₁)
     distribˡ₂ d₁ d₂ d₃ true  = lemma d₁ d₂ d₃
     distribˡ₂ d₁ d₂ d₃ false = ≡-sym (NL.∧-idempotent d₁)
 
     distribʳ₂ : forall d₁ d₂ d₃ e₂ e₃ ->
-                if e₂ ∨ e₃ then d₂ ⊔ d₃ ⊔ d₁ else (d₂ ⊔ d₃)
+                (if e₂ ∨ e₃ then d₂ ⊔ d₃ ⊔ d₁ else d₂ ⊔ d₃)
                 ≡
                 (if e₂ then d₂ ⊔ d₁ else d₂) ⊔
                 (if e₃ then d₃ ⊔ d₁ else d₃)
@@ -176,7 +176,7 @@ private
 ·-idempotent i = ≡-cong₂ _,_ (BA.∧-idempotent (proj₁ i))
                              (lemma (proj₁ i) (proj₂ i))
   where
-  lemma : forall b x -> if b then x ⊔ x else x ≡ x
+  lemma : forall b x -> (if b then x ⊔ x else x) ≡ x
   lemma true  x = NL.∧-idempotent x
   lemma false x = ≡-refl
 
