@@ -66,15 +66,6 @@ return = P.ret
 sat : forall {tok r} -> (tok -> Maybe r) -> Parser tok 0I r
 sat = P.sat
 
--- Forget whether or not the parser accepts the empty string; take the
--- safe route and pretend that the empty string is accepted. This can
--- be used to make some functions simply typed.
-
-forget : forall {tok e c r} ->
-         Parser tok (e , c) r ->
-         Parser tok (true , step c) r
-forget p = P.forget _ p
-
 _>>=_ : forall {tok e₁ c₁ i₂ r₁ r₂} -> let i₁ = (e₁ , c₁) in
         Parser tok i₁ r₁ ->
         (r₁ -> Parser tok i₂ r₂) ->

@@ -31,8 +31,6 @@ mutual
     return-sem : forall {r} (x : r) -> [] ∈⟦ return x ⟧ g
     sat-sem    : forall {r} (p : tok -> Maybe r) c x -> p c ≡ just x ->
                  c ∷ [] ∈⟦ sat p ⟧ g
-    forget-sem : forall {e c r s} {p : Parser tok nt (e , c) r} ->
-                 s ∈⟦ p ⟧ g -> s ∈⟦ forget p ⟧ g
     -- The following rule should really describe the intended
     -- semantics of _>>=_, not _⊛_.
     ⊛-sem      : forall {i₁ i₂ r₁ r₂ s₁ s₂}

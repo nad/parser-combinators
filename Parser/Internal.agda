@@ -39,9 +39,6 @@ data Parser (tok : Set) (nt : ParserType) : ParserType where
   !_     :  forall {e c r}
          -> nt (e , c) r -> Parser tok nt (e , step c) r
   ret    :  forall {r} -> r -> Parser tok nt (true , leaf) r
-  forget :  forall e {c r}
-         -> Parser tok nt (e , c) r
-         -> Parser tok nt (true , c) r
   bind₀  :  forall {c₁ e₂ c₂ r₁ r₂}
          -> Parser tok nt (true , c₁) r₁
          -> (r₁ -> Parser tok nt (e₂ , c₂) r₂)
@@ -112,8 +109,6 @@ private
             P tok n (if e then n else pred n) r
     parse n       (! x)               = parse n (g x)
     parse n       (ret x)             = return x
-    parse n       (forget true  p)    = parse  n p
-    parse n       (forget false p)    = parse↑ n p
     parse n       (bind₀       p₁ p₂) = parse  n      p₁ >>= parse  n ∘ p₂
     parse zero    (bind₁ _     p₁ p₂) = ∅
     parse (suc n) (bind₁ true  p₁ p₂) = parse (suc n) p₁ >>= parse  n ∘ p₂

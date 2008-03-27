@@ -37,9 +37,6 @@ private
 {- co -}
 data Parser (tok : Set) : Index -> Set -> Set1 where
   ret    :  forall {r} -> r -> Parser tok (true , leaf) r
-  forget :  forall e {c r}
-         -> Parser tok (e , c) r
-         -> Parser tok (true , step c) r
   bind₀  :  forall {c₁ e₂ c₂ r₁ r₂}
          -> Parser tok (true , c₁) r₁
          -> (r₁ -> Parser tok (e₂ , c₂) r₂)
@@ -98,8 +95,6 @@ mutual
           Parser tok (e , c) r ->
           P tok n (if e then n else pred n) r
   parse n       (ret x)             = return x
-  parse n       (forget true  p)    = parse  n p
-  parse n       (forget false p)    = parse↑ n p
   parse n       (bind₀       p₁ p₂) = parse  n      p₁ >>= parse  n ∘ p₂
   parse zero    (bind₁ _     p₁ p₂) = ∅
   parse (suc n) (bind₁ true  p₁ p₂) = parse (suc n) p₁ >>= parse  n ∘ p₂
