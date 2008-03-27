@@ -5,10 +5,10 @@
 -- Currently it is only specified when a string is _accepted_ by a
 -- parser; semantic actions are not included.
 
-module Parser.Semantics where
+module RecursiveDescent.Inductive.Semantics where
 
-open import Parser
-open import Parser.SimpleLib
+open import RecursiveDescent.Inductive
+open import RecursiveDescent.Inductive.SimpleLib
 
 open import Data.List
 open import Data.Product.Record

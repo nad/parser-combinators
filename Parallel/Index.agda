@@ -2,7 +2,7 @@
 -- Indices
 ------------------------------------------------------------------------
 
-module CoinductiveParser.Index where
+module Parallel.Index where
 
 open import Data.Product.Record
 import Data.Product as Prod; open Prod using () renaming (_,_ to pair)

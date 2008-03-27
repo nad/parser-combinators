@@ -2,10 +2,11 @@
 -- A library of parser combinators
 ------------------------------------------------------------------------
 
-module CoinductiveParser2.Lib where
+module Parallel.Lib where
 
 open import Utilities
-open import CoinductiveParser2
+open import Parallel
+open import Parallel.Index
 
 open import Data.Bool
 open import Data.Nat
@@ -14,7 +15,6 @@ open import Data.Product renaming (_,_ to pair)
 open import Data.List
 open import Data.Function
 open import Data.Maybe
-open import Data.Unit
 import Data.Char as C
 open import Relation.Nullary
 open import Relation.Binary
@@ -24,16 +24,21 @@ open import Relation.Binary
 
 -- We could get these for free with better library support.
 
-infixl 50 _⊛_ _<⊛_ _⊛>_ _<$>_ _<$_
+infixl 4 _⊛_ _<⊛_ _⊛>_ _<$>_ _<$_
+
+-- Parser together with return and _⊛_ form a (generalised)
+-- applicative functor. (Warning: I have not checked that the laws are
+-- actually satisfied.)
 
 -- Note that all the resulting indices can be inferred.
 
-_⊛_ : forall {tok i₁ i₂ r₁ r₂} ->
-      Parser tok i₁ (r₁ -> r₂) -> Parser tok i₂ r₁ -> Parser tok _ r₂
-p₁ ⊛ p₂ = p₁ >>= \f -> p₂ >>= \x -> return (f x)
+_⊛_ : forall {tok r₁ r₂ i₁ i₂} ->
+      Parser tok i₁ (r₁ -> r₂) -> Parser tok i₂ r₁ ->
+      Parser tok _ r₂ -- (i₁ ·I (i₂ ·I 1I))
+f ⊛ x = f >>= \f' -> x >>= \x' -> return (f' x')
 
 _<$>_ : forall {tok r₁ r₂ i} ->
-        (r₁ -> r₂) -> Parser tok i r₁ -> Parser tok _ r₂
+        (r₁ -> r₂) -> Parser tok i r₁ -> Parser tok _ r₂ -- (i ·I 1I)
 f <$> x = return f ⊛ x
 
 _<⊛_ : forall {tok i₁ i₂ r₁ r₂} ->
@@ -51,8 +56,6 @@ x <$ y = const x <$> y
 ------------------------------------------------------------------------
 -- Parsers for sequences
 
-infix 60 _⋆ _+
-
 mutual
 
   _⋆ : forall {tok r d} ->
@@ -66,15 +69,30 @@ mutual
   p + = _∷_ <$> p ⊛ p ⋆
 
   -- Are these definitions productive? _∣_ and _⊛_ are not
-  -- constructors... Unfolding we get (unless I've made some mistake)
+  -- constructors... Unfolding (and ignoring some casts) we get
+  -- (unless I've made some mistake)
   --
-  --   p ⋆ = alt₁ (ret []) (p +)
+  --   p ⋆ = parser \k -> Base._∣_ (k []) (unP (p +) k)
   --
   -- and
   --
-  --   p + = seq₁ true (seq₀ (ret _∷_) p) (p ⋆).
+  --   p + = parser (\k -> unP p     (\x  ->
+  --                       unP (p ⋆) (\xs -> k (x ∷ xs))))
+  --       = parser (\k -> unP p     (\x  -> Base._∣_ (k (x ∷ []))
+  --                      (unP (p +) (\xs -> k (x ∷ xs))))).
   --
-  -- These definitions are guarded.
+  -- Assume that p + is applied to the continuation k =
+  -- const Base.fail. We get
+  --
+  --   unP (p +) k = unP p (\x -> unP (p +) (\xs -> Base.fail)).
+  --
+  -- Note that this implies that the definitions above are not
+  -- (obviously) productive! Perhaps our type system ensures that
+  -- unP p ... unfolds to a guarded application (since p does not
+  -- accept the empty string), but I don't expect that any automatic
+  -- productivity checker will spot this (not in the near future,
+  -- anyway). It seems as if we need to use a type system which allows
+  -- us to encode productivity in the types.
 
 -- p sepBy sep parses one or more ps separated by seps.
 
@@ -97,27 +115,6 @@ chain :  forall {tok d₁ i₂ r}
       -> r
       -> Parser tok _ r
 chain a p op x = return x ∣ chain₁ a p op
-
-------------------------------------------------------------------------
--- sat and friends
-
-sat : forall {tok r} ->
-      (tok -> Maybe r) -> Parser tok _ r
-sat {tok} {r} p = symbol !>>= \c -> ok (p c)
-  where
-  okIndex : Maybe r -> Index
-  okIndex nothing  = _
-  okIndex (just _) = _
-
-  ok : (x : Maybe r) -> Parser tok (okIndex x) r
-  ok nothing  = fail
-  ok (just x) = return x
-
-sat' : forall {tok} -> (tok -> Bool) -> Parser tok _ ⊤
-sat' p = sat (boolToMaybe ∘ p)
-
-any : forall {tok} -> Parser tok _ tok
-any = sat just
 
 ------------------------------------------------------------------------
 -- Parsing a given token (symbol)

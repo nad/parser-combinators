@@ -10,10 +10,10 @@
 -- but has the potential advantage of increased sharing/less memory
 -- usage.
 
-module Parser.Lib (tok : Set) where
+module RecursiveDescent.Inductive.Lib (tok : Set) where
 
-open import Parser
-open import Parser.SimpleLib
+open import RecursiveDescent.Inductive
+open import RecursiveDescent.Inductive.SimpleLib
 open import Utilities
 open import Data.Bool
 open import Data.List

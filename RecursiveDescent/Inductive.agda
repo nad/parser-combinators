@@ -2,10 +2,10 @@
 -- Terminating parser "combinator" interface
 ------------------------------------------------------------------------
 
-module Parser where
+module RecursiveDescent.Inductive where
 
-open import Parser.Type public
-import Parser.Internal as P
+open import RecursiveDescent.Type public
+import RecursiveDescent.Inductive.Internal as P
 open P public using (Parser; Grammar)
 
 open import Data.List
@@ -38,13 +38,6 @@ parse-complete p g s =
 -- Operations on indices
 
 infixr 50 _·I_
-infixr 40 _∣I_
-
-0I : Index
-0I = (false , leaf)
-
-1I : Index
-1I = (true , leaf)
 
 _·I_ : Index -> Index -> Index
 i₁ ·I i₂ = ( proj₁ i₁ ∧ proj₁ i₂
@@ -52,15 +45,16 @@ i₁ ·I i₂ = ( proj₁ i₁ ∧ proj₁ i₂
                           else proj₂ i₁)
            )
 
-_∣I_ : Index -> Index -> Index
-i₁ ∣I i₂ = (proj₁ i₁ ∨ proj₁ i₂ , node (proj₂ i₁) (proj₂ i₂))
-
 ------------------------------------------------------------------------
 -- Exported combinators
 
 infix  60 !_
 infixl 40 _∣_
 infixl 10 _>>=_ _!>>=_
+
+!_ : forall {tok nt e c r} ->
+     nt (e , c) r -> Parser tok nt (e , step c) r
+!_ = P.!_
 
 symbol : forall {tok nt} -> Parser tok nt 0I tok
 symbol = P.symbol
@@ -94,10 +88,6 @@ _∣_ : forall {tok nt e₁ c₁ i₂ r} -> let i₁ = (e₁ , c₁) in
       Parser tok nt (i₁ ∣I i₂) r
 _∣_ {e₁ = true } = P.alt₀
 _∣_ {e₁ = false} = P.alt₁ _
-
-!_ : forall {tok nt e c r} ->
-     nt (e , c) r -> Parser tok nt (e , step c) r
-!_ = P.!_
 
 ------------------------------------------------------------------------
 -- Casting the indices

@@ -59,3 +59,12 @@ private
 
   exˡ : chain₁-combine left  ((x , _+_) ∷ (y , _*_) ∷ []) z ≡ (x + y) * z
   exˡ = ≡-refl
+
+------------------------------------------------------------------------
+-- A suitably typed composition operator
+
+infixr 9 _∘′_
+
+_∘′_ : {a c : Set} {b : a -> Set1} ->
+       (forall {x} -> b x -> c) -> ((x : a) -> b x) -> (a -> c)
+f ∘′ g = \x -> f (g x)

@@ -4,12 +4,12 @@
 
 open import Relation.Binary
 
-module Parser.Token (D : DecSetoid) where
+module RecursiveDescent.Inductive.Token (D : DecSetoid) where
 
 open DecSetoid D using (_≟_) renaming (carrier to tok)
 
-open import Parser
-open import Parser.SimpleLib
+open import RecursiveDescent.Inductive
+open import RecursiveDescent.Inductive.SimpleLib
 
 open import Data.Maybe
 open import Relation.Nullary

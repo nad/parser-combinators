@@ -2,10 +2,10 @@
 -- Terminating parser combinator interface
 ------------------------------------------------------------------------
 
-module CoinductiveParser2 where
+module RecursiveDescent.Coinductive where
 
-open import Parser.Type public
-import CoinductiveParser2.Internal as P
+open import RecursiveDescent.Type public
+import RecursiveDescent.Coinductive.Internal as P
 open P public using (Parser)
 
 open import Data.List
@@ -35,22 +35,12 @@ parse-complete p s =
 -- Operations on indices
 
 infixr 50 _·I_
-infixr 40 _∣I_
-
-0I : Index
-0I = (false , leaf)
-
-1I : Index
-1I = (true , leaf)
 
 _·I_ : Index -> Index -> Index
 i₁ ·I i₂ = ( proj₁ i₁ ∧ proj₁ i₂
            , (if proj₁ i₁ then node (proj₂ i₁) (proj₂ i₂)
                           else step (proj₂ i₁))
            )
-
-_∣I_ : Index -> Index -> Index
-i₁ ∣I i₂ = (proj₁ i₁ ∨ proj₁ i₂ , node (proj₂ i₁) (proj₂ i₂))
 
 ------------------------------------------------------------------------
 -- Exported combinators

@@ -4,22 +4,22 @@
 
 module Everything where
 
-import CoinductiveParser
-import CoinductiveParser.Examples
-import CoinductiveParser.Index
-import CoinductiveParser.Lib
-import CoinductiveParser2
-import CoinductiveParser2.Examples
-import CoinductiveParser2.Internal
-import CoinductiveParser2.Lib
-import Parser
-import Parser.Char
-import Parser.Examples
-import Parser.Internal
-import Parser.Lib
-import Parser.PBM
-import Parser.Semantics
-import Parser.SimpleLib
-import Parser.Token
-import Parser.Type
+import Parallel
+import Parallel.Examples
+import Parallel.Index
+import Parallel.Lib
+import RecursiveDescent.Coinductive
+import RecursiveDescent.Coinductive.Examples
+import RecursiveDescent.Coinductive.Internal
+import RecursiveDescent.Coinductive.Lib
+import RecursiveDescent.Inductive
+import RecursiveDescent.Inductive.Char
+import RecursiveDescent.Inductive.Examples
+import RecursiveDescent.Inductive.Internal
+import RecursiveDescent.Inductive.Lib
+import RecursiveDescent.Inductive.PBM
+import RecursiveDescent.Inductive.Semantics
+import RecursiveDescent.Inductive.SimpleLib
+import RecursiveDescent.Inductive.Token
+import RecursiveDescent.Type
 import Utilities

@@ -2,7 +2,7 @@
 -- Examples
 ------------------------------------------------------------------------
 
-module CoinductiveParser2.Examples where
+module RecursiveDescent.Coinductive.Examples where
 
 open import Data.List
 open import Data.Nat
@@ -14,9 +14,9 @@ import Data.String as S
 open C using (Char)
 open S using (String)
 
-open import CoinductiveParser2
+open import RecursiveDescent.Coinductive
 open import Utilities
-open import CoinductiveParser2.Lib
+open import RecursiveDescent.Coinductive.Lib
 open Sym C.decSetoid
 
 -- A function used to simplify the examples a little.

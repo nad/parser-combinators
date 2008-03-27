@@ -2,7 +2,7 @@
 -- Examples
 ------------------------------------------------------------------------
 
-module CoinductiveParser.Examples where
+module Parallel.Examples where
 
 open import Data.List
 open import Data.Nat
@@ -14,9 +14,9 @@ import Data.String as S
 open C using (Char)
 open S using (String)
 
-open import CoinductiveParser
+open import Parallel
 open import Utilities
-open import CoinductiveParser.Lib
+open import Parallel.Lib
 open Sym C.decSetoid
 
 -- A function used to simplify the examples a little.

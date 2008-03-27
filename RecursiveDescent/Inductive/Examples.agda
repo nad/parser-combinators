@@ -2,7 +2,7 @@
 -- Examples
 ------------------------------------------------------------------------
 
-module Parser.Examples where
+module RecursiveDescent.Inductive.Examples where
 
 open import Data.List
 open import Data.Nat
@@ -11,12 +11,12 @@ import Data.Char as C
 import Data.String as S
 open C using (Char)
 open S using (String)
-open import Parser
-open import Parser.SimpleLib
+open import RecursiveDescent.Inductive
+open import RecursiveDescent.Inductive.SimpleLib
 open import Utilities
-import Parser.Lib  as Lib
-import Parser.Char as CharLib
-import Parser.Token as Tok; open Tok C.decSetoid
+import RecursiveDescent.Inductive.Lib  as Lib
+import RecursiveDescent.Inductive.Char as CharLib
+import RecursiveDescent.Inductive.Token as Tok; open Tok C.decSetoid
 
 -- A function used to simplify the examples a little.
 

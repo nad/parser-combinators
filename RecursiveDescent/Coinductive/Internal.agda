@@ -4,9 +4,9 @@
 
 -- Note that Parser is assumed to be coinductive.
 
-module CoinductiveParser2.Internal where
+module RecursiveDescent.Coinductive.Internal where
 
-open import Parser.Type
+open import RecursiveDescent.Type
 open import Data.Bool
 open import Data.Product.Record
 open import Data.Maybe
@@ -16,17 +16,7 @@ open import Data.Nat
 open import Category.Applicative.Indexed
 open import Category.Monad.Indexed
 open import Category.Monad.State
-
-------------------------------------------------------------------------
--- A suitably typed composition operator
-
-private
-
-  infixr 9 _∘_
-
-  _∘_ : {a c : Set} {b : a -> Set1} ->
-        (forall {x} -> b x -> c) -> ((x : a) -> b x) -> (a -> c)
-  f ∘ g = \x -> f (g x)
+open import Utilities
 
 ------------------------------------------------------------------------
 -- Parser data type
@@ -98,12 +88,12 @@ mutual
   parse (suc n) symbol             = eat =<< get
   parse n       (ret x)            = return x
   parse n       fail               = ∅
-  parse n       (bind₀      p₁ p₂) = parse  n      p₁ >>= parse  n ∘ p₂
+  parse n       (bind₀      p₁ p₂) = parse  n      p₁ >>= parse  n ∘′ p₂
   parse zero    (bind₁      p₁ p₂) = ∅
-  parse (suc n) (bind₁      p₁ p₂) = parse (suc n) p₁ >>= parse↑ n ∘ p₂
-  parse n       (alt₀       p₁ p₂) = parse  n      p₁ ∣   parse↑ n   p₂
-  parse n {e = true}  (alt₁ .true  p₁ p₂) = parse↑ n      p₁ ∣   parse  n   p₂
-  parse n {e = false} (alt₁ .false p₁ p₂) = parse  n      p₁ ∣   parse  n   p₂
+  parse (suc n) (bind₁      p₁ p₂) = parse (suc n) p₁ >>= parse↑ n ∘′ p₂
+  parse n       (alt₀       p₁ p₂) = parse  n      p₁ ∣   parse↑ n    p₂
+  parse n {e = true}  (alt₁ .true  p₁ p₂) = parse↑ n      p₁ ∣   parse  n    p₂
+  parse n {e = false} (alt₁ .false p₁ p₂) = parse  n      p₁ ∣   parse  n    p₂
 
   parse↑ : forall n {e tok c r} -> Parser tok (e , c) r -> P tok n n r
   parse↑ n       {true}  p = parse n p
