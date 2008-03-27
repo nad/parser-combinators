@@ -2,7 +2,7 @@
 -- A terminating parser data type and the accompanying interpreter
 ------------------------------------------------------------------------
 
-module RecursiveDescent.Inductive.Internal where
+module RecursiveDescent.Inductive.Indexed.Internal where
 
 open import RecursiveDescent.Type
 open import Data.Bool
