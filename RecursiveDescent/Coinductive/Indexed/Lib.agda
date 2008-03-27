@@ -2,10 +2,10 @@
 -- A library of parser combinators
 ------------------------------------------------------------------------
 
-module RecursiveDescent.Coinductive.Lib where
+module RecursiveDescent.Coinductive.Indexed.Lib where
 
 open import Utilities
-open import RecursiveDescent.Coinductive
+open import RecursiveDescent.Coinductive.Indexed
 
 open import Data.Bool
 open import Data.Nat

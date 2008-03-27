@@ -8,10 +8,10 @@ import Parallel
 import Parallel.Examples
 import Parallel.Index
 import Parallel.Lib
-import RecursiveDescent.Coinductive
-import RecursiveDescent.Coinductive.Examples
-import RecursiveDescent.Coinductive.Internal
-import RecursiveDescent.Coinductive.Lib
+import RecursiveDescent.Coinductive.Indexed
+import RecursiveDescent.Coinductive.Indexed.Examples
+import RecursiveDescent.Coinductive.Indexed.Internal
+import RecursiveDescent.Coinductive.Indexed.Lib
 import RecursiveDescent.Inductive
 import RecursiveDescent.Inductive.Char
 import RecursiveDescent.Inductive.Examples
