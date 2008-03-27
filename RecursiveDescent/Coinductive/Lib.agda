@@ -68,11 +68,12 @@ mutual
   -- Are these definitions productive? _∣_ and _⊛_ are not
   -- constructors... Unfolding we get (unless I've made some mistake)
   --
-  --   p ⋆ = alt₁ (ret []) (p +)
+  --   p ⋆ = alt₁ false (ret []) (p +)
   --
   -- and
   --
-  --   p + = seq₁ true (seq₀ (ret _∷_) p) (p ⋆).
+  --   p + = bind₁ (bind₀ (ret _∷_) (\f -> bind₁ p (\x -> ret (f x))))
+  --               (\f -> bind₀ (p ⋆) (\x -> ret (f x)))
   --
   -- These definitions are guarded.
 
