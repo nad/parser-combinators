@@ -99,9 +99,9 @@ grammar pbm      =
   w∣c ⋆ ⊛>
   string (String.toVec "P1") ⊛>
   w∣c ⋆ ⊛>
-  number >>= \cols ->
+  number !>>= \cols ->  -- _>>=_ works just as well.
   w∣c + ⊛>
-  number >>= \rows ->
+  number >>=  \rows ->  -- _!>>=_ works just as well.
   w∣c ⊛>
   (makePBM <$> exactly rows (exactly cols (w∣c ⋆ ⊛> ! colour))) <⊛
   any ⋆

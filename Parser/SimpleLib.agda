@@ -93,14 +93,23 @@ sequence []₁       = return []
 sequence (p ∷₁ ps) = _∷_ <$> p ⊛ sequence ps
 
 ------------------------------------------------------------------------
--- Variants of sat
+-- sat and friends
 
-fail : forall {tok nt r} -> Parser tok nt 0I r
-fail = sat (const nothing)
+sat : forall {tok nt r} ->
+      (tok -> Maybe r) -> Parser tok nt 0I r
+sat {tok} {nt} {r} p = symbol !>>= \c -> ok (p c)
+  where
+  okIndex : Maybe r -> Index
+  okIndex nothing  = _
+  okIndex (just _) = _
 
-any : forall {tok nt} -> Parser tok nt 0I tok
-any = sat just
+  ok : (x : Maybe r) -> Parser tok nt (okIndex x) r
+  ok nothing  = fail
+  ok (just x) = return x
 
 sat' : forall {tok nt} -> (tok -> Bool) -> Parser tok nt 0I ⊤
 sat' p = sat (boolToMaybe ∘ p)
+
+any : forall {tok nt} -> Parser tok nt 0I tok
+any = sat just
 

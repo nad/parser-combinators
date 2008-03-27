@@ -14,15 +14,10 @@ open import Data.Product renaming (_,_ to pair)
 open import Data.List
 open import Data.Function
 open import Data.Maybe
+open import Data.Unit
 import Data.Char as C
 open import Relation.Nullary
 open import Relation.Binary
-
-------------------------------------------------------------------------
--- A parser which always fails
-
-fail : forall {tok r} -> Parser tok 0I r
-fail = sat (const nothing)
 
 ------------------------------------------------------------------------
 -- Applicative functor parsers
@@ -102,6 +97,27 @@ chain :  forall {tok d₁ i₂ r}
       -> r
       -> Parser tok _ r
 chain a p op x = return x ∣ chain₁ a p op
+
+------------------------------------------------------------------------
+-- sat and friends
+
+sat : forall {tok r} ->
+      (tok -> Maybe r) -> Parser tok _ r
+sat {tok} {r} p = symbol !>>= \c -> ok (p c)
+  where
+  okIndex : Maybe r -> Index
+  okIndex nothing  = _
+  okIndex (just _) = _
+
+  ok : (x : Maybe r) -> Parser tok (okIndex x) r
+  ok nothing  = fail
+  ok (just x) = return x
+
+sat' : forall {tok} -> (tok -> Bool) -> Parser tok _ ⊤
+sat' p = sat (boolToMaybe ∘ p)
+
+any : forall {tok} -> Parser tok _ tok
+any = sat just
 
 ------------------------------------------------------------------------
 -- Parsing a given token (symbol)

@@ -195,6 +195,10 @@ return x = parser \k -> k x
 -- second argument has type (x : r₁) -> Parser tok r₂ (i₂ x)). What
 -- would the type of the result of _>>=_ be? The type would depend on
 -- the input string, which is not an argument to _>>=_.
+--
+-- Note also that the variant _!>>=_ from Parser/CoinductiveParser2
+-- cannot (?) be implemented, since the continuation given to p cannot
+-- be dependently typed.
 
 infixl 1 _>>=_
 

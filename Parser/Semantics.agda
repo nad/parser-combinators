@@ -28,11 +28,10 @@ mutual
                    [ tok ] -> Parser tok nt i r -> Set1 where
     !-sem      : forall {e c r} s (x : nt (e , c) r) ->
                  s ∈⟦ g x ⟧ g -> s ∈⟦ ! x ⟧ g
+    symbol-sem : forall c -> singleton c ∈⟦ symbol ⟧ g
     return-sem : forall {r} (x : r) -> [] ∈⟦ return x ⟧ g
-    sat-sem    : forall {r} (p : tok -> Maybe r) c x -> p c ≡ just x ->
-                 c ∷ [] ∈⟦ sat p ⟧ g
     -- The following rule should really describe the intended
-    -- semantics of _>>=_, not _⊛_.
+    -- semantics of _>>=_, not _⊛_. _!>>=_ should also get a rule.
     ⊛-sem      : forall {i₁ i₂ r₁ r₂ s₁ s₂}
                         {p₁ : Parser tok nt i₁ (r₁ -> r₂)}
                         {p₂ : Parser tok nt i₂ r₁} ->

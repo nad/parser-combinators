@@ -10,12 +10,12 @@ open import Parser.Type
 open import Data.Bool
 open import Data.Product.Record
 open import Data.Maybe
-open import Category.Applicative.Indexed
-open import Data.Nat
-open import Category.Monad.State
 open import Data.BoundedVec.Inefficient
 import Data.List as L
+open import Data.Nat
+open import Category.Applicative.Indexed
 open import Category.Monad.Indexed
+open import Category.Monad.State
 
 ------------------------------------------------------------------------
 -- A suitably typed composition operator
@@ -24,7 +24,8 @@ private
 
   infixr 9 _∘_
 
-  _∘_ : {a c : Set} {b : Set1} -> (b -> c) -> (a -> b) -> (a -> c)
+  _∘_ : {a c : Set} {b : a -> Set1} ->
+        (forall {x} -> b x -> c) -> ((x : a) -> b x) -> (a -> c)
   f ∘ g = \x -> f (g x)
 
 ------------------------------------------------------------------------
@@ -36,16 +37,18 @@ private
 
 {- co -}
 data Parser (tok : Set) : Index -> Set -> Set1 where
+  symbol :  Parser tok (false , leaf) tok
   ret    :  forall {r} -> r -> Parser tok (true , leaf) r
+  fail   :  forall {r} -> Parser tok (false , leaf) r
   bind₀  :  forall {c₁ e₂ c₂ r₁ r₂}
          -> Parser tok (true , c₁) r₁
          -> (r₁ -> Parser tok (e₂ , c₂) r₂)
          -> Parser tok (e₂ , node c₁ c₂) r₂
-  bind₁  :  forall {c₁} e₂ {c₂ r₁ r₂}
+  bind₁  :  forall {c₁ r₁ r₂} {i₂ : r₁ -> Index}
          -> Parser tok (false , c₁) r₁
-         -> (r₁ -> Parser tok (e₂ , c₂) r₂)
+         -> ((x : r₁) -> Parser tok (i₂ x) r₂)
          -> Parser tok (false , step c₁) r₂
-  alt₀   :  forall {c₁} e₂ {c₂ r}
+  alt₀   :  forall {c₁ e₂ c₂ r}
          -> Parser tok (true , c₁)         r
          -> Parser tok (e₂   , c₂)         r
          -> Parser tok (true , node c₁ c₂) r
@@ -53,9 +56,6 @@ data Parser (tok : Set) : Index -> Set -> Set1 where
          -> Parser tok (false , c₁)         r
          -> Parser tok (e₂    , c₂)         r
          -> Parser tok (e₂    , node c₁ c₂) r
-  sat    :  forall {r}
-         -> (tok -> Maybe r)
-         -> Parser tok (false , leaf) r
 
 ------------------------------------------------------------------------
 -- Run function for the parsers
@@ -88,36 +88,30 @@ private
 
 mutual
 
-  -- The pattern matching on {e = ...} below is only there to work
+  -- The pattern matching on {e = ...} in parse is only there to work
   -- around a bug in Agda's coverage checker.
 
-  parse : forall n {tok r e c} ->
+  parse : forall n {tok e c r} ->
           Parser tok (e , c) r ->
           P tok n (if e then n else pred n) r
-  parse n       (ret x)             = return x
-  parse n       (bind₀       p₁ p₂) = parse  n      p₁ >>= parse  n ∘ p₂
-  parse zero    (bind₁ _     p₁ p₂) = ∅
-  parse (suc n) (bind₁ true  p₁ p₂) = parse (suc n) p₁ >>= parse  n ∘ p₂
-  parse (suc n) (bind₁ false p₁ p₂) = parse (suc n) p₁ >>= parse↑ n ∘ p₂
-  parse n       (alt₀  true  p₁ p₂) = parse  n      p₁ ∣   parse  n   p₂
-  parse n       (alt₀  false p₁ p₂) = parse  n      p₁ ∣   parse↑ n   p₂
-  parse n {e = true}  (alt₁  .true  p₁ p₂) = parse↑ n      p₁ ∣   parse  n   p₂
-  parse n {e = false} (alt₁  .false p₁ p₂) = parse  n      p₁ ∣   parse  n   p₂
-  parse zero    (sat p)             = ∅
-  parse (suc n) {tok} {r} (sat p)   = eat =<< get
-    where
-      eat : forall {n} ->
-            BoundedVec tok (suc n) ->
-            P tok (suc n) n r
-      eat []      = ∅
-      eat (c ∷ s) with p c
-      ... | just x  = put s >> return x
-      ... | nothing = ∅
+  parse zero    symbol             = ∅
+  parse (suc n) symbol             = eat =<< get
+  parse n       (ret x)            = return x
+  parse n       fail               = ∅
+  parse n       (bind₀      p₁ p₂) = parse  n      p₁ >>= parse  n ∘ p₂
+  parse zero    (bind₁      p₁ p₂) = ∅
+  parse (suc n) (bind₁      p₁ p₂) = parse (suc n) p₁ >>= parse↑ n ∘ p₂
+  parse n       (alt₀       p₁ p₂) = parse  n      p₁ ∣   parse↑ n   p₂
+  parse n {e = true}  (alt₁ .true  p₁ p₂) = parse↑ n      p₁ ∣   parse  n   p₂
+  parse n {e = false} (alt₁ .false p₁ p₂) = parse  n      p₁ ∣   parse  n   p₂
 
-  parse↑ : forall n {tok c r} ->
-           Parser tok (false , c) r ->
-           P tok n n r
-  parse↑ zero    p = ∅
-  parse↑ (suc n) p = parse (suc n) p >>= \r ->
-                     modify ↑ >>
-                     return r
+  parse↑ : forall n {e tok c r} -> Parser tok (e , c) r -> P tok n n r
+  parse↑ n       {true}  p = parse n p
+  parse↑ zero    {false} p = ∅
+  parse↑ (suc n) {false} p = parse (suc n) p >>= \r ->
+                             modify ↑ >>
+                             return r
+
+  eat : forall {tok n} -> BoundedVec tok (suc n) -> P tok (suc n) n tok
+  eat []      = ∅
+  eat (c ∷ s) = put s >> return c
