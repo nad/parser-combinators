@@ -4,7 +4,7 @@
 
 -- Note that Parser is assumed to be coinductive.
 
-module RecursiveDescent.Coinductive.Plain.Internal where
+module RecursiveDescent.Coinductive.Internal where
 
 open import RecursiveDescent.Type
 open import Data.Bool
@@ -17,7 +17,6 @@ open import Category.Applicative.Indexed
 open import Category.Monad.Indexed
 open import Category.Monad.State
 open import Utilities
-open import Logic
 
 ------------------------------------------------------------------------
 -- Parser data type
@@ -31,14 +30,10 @@ data Parser (tok : Set) : Index -> Set -> Set1 where
   symbol :  Parser tok (false , leaf) tok
   ret    :  forall {r} -> r -> Parser tok (true , leaf) r
   fail   :  forall {r} -> Parser tok (false , leaf) r
-  seq₀   :  forall {c₁ e₂ c₂ r₁ r₂}
-         -> Parser tok (true , c₁) (r₁ -> r₂)
-         -> Parser tok (e₂ , c₂) r₁
+  bind₀  :  forall {c₁ e₂ c₂ r₁ r₂}
+         -> Parser tok (true , c₁) r₁
+         -> (r₁ -> Parser tok (e₂ , c₂) r₂)
          -> Parser tok (e₂ , node c₁ c₂) r₂
-  seq₁   :  forall {c₁ i₂ r₁ r₂}
-         -> Parser tok (false , c₁) (r₁ -> r₂)
-         -> Parser tok i₂ r₁
-         -> Parser tok (false , step c₁) r₂
   bind₁  :  forall {c₁ r₁ r₂} {i₂ : r₁ -> Index}
          -> Parser tok (false , c₁) r₁
          -> ((x : r₁) -> Parser tok (i₂ x) r₂)
@@ -93,9 +88,7 @@ mutual
   parse (suc n) symbol             = eat =<< get
   parse n       (ret x)            = return x
   parse n       fail               = ∅
-  parse n       (seq₀       p₁ p₂) = parse  n      p₁ ⊛   parse  n    p₂
-  parse zero    (seq₁       p₁ p₂) = ∅
-  parse (suc n) (seq₁       p₁ p₂) = parse (suc n) p₁ ⊛   parse↑ n    p₂
+  parse n       (bind₀      p₁ p₂) = parse  n      p₁ >>= parse  n ∘′ p₂
   parse zero    (bind₁      p₁ p₂) = ∅
   parse (suc n) (bind₁      p₁ p₂) = parse (suc n) p₁ >>= parse↑ n ∘′ p₂
   parse n       (alt₀       p₁ p₂) = parse  n      p₁ ∣   parse↑ n    p₂
@@ -112,10 +105,3 @@ mutual
   eat : forall {tok n} -> BoundedVec tok (suc n) -> P tok (suc n) n tok
   eat []      = ∅
   eat (c ∷ s) = put s >> return c
-
-------------------------------------------------------------------------
--- Casting the indices
-
-cast : forall {tok i₁ i₂ r} ->
-       i₁ ≡ i₂ -> Parser tok i₁ r -> Parser tok i₂ r
-cast ≡-refl p = p

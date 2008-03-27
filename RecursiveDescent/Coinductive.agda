@@ -2,10 +2,10 @@
 -- Terminating parser combinator interface
 ------------------------------------------------------------------------
 
-module RecursiveDescent.Coinductive.Indexed where
+module RecursiveDescent.Coinductive where
 
 open import RecursiveDescent.Type public
-import RecursiveDescent.Coinductive.Indexed.Internal as P
+import RecursiveDescent.Coinductive.Internal as P
 open P public using (Parser)
 
 open import Data.List
