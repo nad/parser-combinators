@@ -1,14 +1,14 @@
 ------------------------------------------------------------------------
 -- Library parsers which do not require the complicated setup used in
--- RecursiveDescent.Inductive.Indexed.Lib
+-- RecursiveDescent.Inductive.Lib
 ------------------------------------------------------------------------
 
 -- This module also provides an example of a parser for which the
 -- Index cannot be inferred.
 
-module RecursiveDescent.Inductive.Indexed.SimpleLib where
+module RecursiveDescent.Inductive.SimpleLib where
 
-open import RecursiveDescent.Inductive.Indexed
+open import RecursiveDescent.Inductive
 
 open import Data.Nat
 open import Data.Vec

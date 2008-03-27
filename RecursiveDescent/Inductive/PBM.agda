@@ -11,7 +11,7 @@
 -- The idea to write this particular parser was taken from "The Power
 -- of Pi" by Oury and Swierstra.
 
-module RecursiveDescent.Inductive.Indexed.PBM where
+module RecursiveDescent.Inductive.PBM where
 
 import Data.Vec as Vec
 open Vec using (Vec; _++_)
@@ -30,12 +30,12 @@ open import Data.Maybe
 import Data.Nat.Show as N
 open import Relation.Nullary
 
-open import RecursiveDescent.Inductive.Indexed
-open import RecursiveDescent.Inductive.Indexed.SimpleLib
-import RecursiveDescent.Inductive.Indexed.Token as Tok; open Tok Char.decSetoid
-import RecursiveDescent.Inductive.Indexed.Lib as Lib
+open import RecursiveDescent.Inductive
+open import RecursiveDescent.Inductive.SimpleLib
+import RecursiveDescent.Inductive.Token as Tok; open Tok Char.decSetoid
+import RecursiveDescent.Inductive.Lib as Lib
 module L = Lib Char
-import RecursiveDescent.Inductive.Indexed.Char as CharLib
+import RecursiveDescent.Inductive.Char as CharLib
 
 ------------------------------------------------------------------------
 -- The PBM type

@@ -2,7 +2,7 @@
 -- Examples
 ------------------------------------------------------------------------
 
-module RecursiveDescent.Inductive.Indexed.Examples where
+module RecursiveDescent.Inductive.Examples where
 
 open import Data.List
 open import Data.Nat
@@ -11,12 +11,12 @@ import Data.Char as C
 import Data.String as S
 open C using (Char)
 open S using (String)
-open import RecursiveDescent.Inductive.Indexed
-open import RecursiveDescent.Inductive.Indexed.SimpleLib
+open import RecursiveDescent.Inductive
+open import RecursiveDescent.Inductive.SimpleLib
 open import Utilities
-import RecursiveDescent.Inductive.Indexed.Lib  as Lib
-import RecursiveDescent.Inductive.Indexed.Char as CharLib
-import RecursiveDescent.Inductive.Indexed.Token as Tok; open Tok C.decSetoid
+import RecursiveDescent.Inductive.Lib  as Lib
+import RecursiveDescent.Inductive.Char as CharLib
+import RecursiveDescent.Inductive.Token as Tok; open Tok C.decSetoid
 
 -- A function used to simplify the examples a little.
 

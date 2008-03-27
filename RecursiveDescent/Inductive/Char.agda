@@ -5,9 +5,9 @@
 -- This code also illustrates how a library can make use of another
 -- library.
 
-module RecursiveDescent.Inductive.Indexed.Char where
+module RecursiveDescent.Inductive.Char where
 
-open import RecursiveDescent.Inductive.Indexed
+open import RecursiveDescent.Inductive
 open import Data.Unit
 open import Data.Nat
 open import Data.Bool
@@ -15,9 +15,9 @@ import Data.Char as C
 open C using (Char; _==_)
 open import Data.List
 open import Data.Function hiding (_$_)
-import RecursiveDescent.Inductive.Indexed.Token
-open import RecursiveDescent.Inductive.Indexed.SimpleLib
-import RecursiveDescent.Inductive.Indexed.Lib as Lib
+import RecursiveDescent.Inductive.Token
+open import RecursiveDescent.Inductive.SimpleLib
+import RecursiveDescent.Inductive.Lib as Lib
 private
   module L = Lib Char
 
@@ -49,7 +49,7 @@ module Combinators
   whitespace : Parser Char nt _ ⊤
   whitespace = ! lib whitespace'
 
-  open RecursiveDescent.Inductive.Indexed.Token C.decSetoid
+  open RecursiveDescent.Inductive.Token C.decSetoid
 
   charLib : forall {i r} -> Nonterminal nt i r -> Parser Char nt i r
   charLib (lib' p) = library p

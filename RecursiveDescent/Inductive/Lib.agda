@@ -10,10 +10,10 @@
 -- but has the potential advantage of increased sharing/less memory
 -- usage.
 
-module RecursiveDescent.Inductive.Indexed.Lib (tok : Set) where
+module RecursiveDescent.Inductive.Lib (tok : Set) where
 
-open import RecursiveDescent.Inductive.Indexed
-open import RecursiveDescent.Inductive.Indexed.SimpleLib
+open import RecursiveDescent.Inductive
+open import RecursiveDescent.Inductive.SimpleLib
 open import Utilities
 open import Data.Bool
 open import Data.List
