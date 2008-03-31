@@ -23,8 +23,6 @@ open import Category.Monad.State
 open import Logic
 open import Data.Function
 open import Data.Maybe
-open import Relation.Binary.PropositionalEquality
-open ≡-Reasoning
 
 ------------------------------------------------------------------------
 -- Parser monad
@@ -105,25 +103,13 @@ private
   private
    module IncorrectBind where
 
-    -- choice xs p is basically foldr _∣_ p xs, but well-typed.
+    -- choice ≈ foldr₁ _∣_.
 
-    choice : forall {tok r i₁ i₂ n} ->
-             Vec (Parser tok r i₁) (suc n) -> Parser tok r i₂ ->
-             Parser tok r (i₁ ∣I i₂)
-    choice                (p₁ ∷ [])         p₂ = p₁ ∣ p₂
-    choice {i₁ = i₁} {i₂} (p₁ ∷ ps@(_ ∷ _)) p₂ =
-      cast lemma (p₁ ∣ choice ps p₂)
-      where
-      open IndexSemiring
-
-      lemma : i₁ ∣I (i₁ ∣I i₂) ≡ (i₁ ∣I i₂)
-      lemma = begin
-        i₁ ∣I (i₁ ∣I i₂)
-          ≡⟨ sym $ +-assoc i₁ i₁ i₂ ⟩
-        (i₁ ∣I i₁) ∣I i₂
-          ≡⟨ ≡-cong₂ _∣I_ (∣-idempotent i₁) ≡-refl ⟩
-        i₁ ∣I i₂
-          ∎
+    choice : forall {tok r i n} ->
+             Vec (Parser tok r i) (suc n) -> Parser tok r i
+    choice {i = i} =
+      Vec.foldr₁ (\p₁ p₂ -> cast (∣-idempotent i) (p₁ ∣ p₂))
+      where open IndexSemiring
 
     -- This function is used to state the type of bind.
 
@@ -158,7 +144,7 @@ private
     symbolBind f    >>= g = symbolBind (\c -> f c >>= g)
     fail            >>= g = fail
     returnPlus xs p >>= g = cast (bind-index-lemma p _)
-                                 (choice (Vec.map g xs) (p >>= g))
+                                 (choice (Vec.map g xs) ∣ p >>= g)
 
 ------------------------------------------------------------------------
 -- CPS transformation
