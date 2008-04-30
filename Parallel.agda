@@ -20,9 +20,9 @@ open List using ([_]; []; _∷_; _++_)
 import Data.Vec as Vec
 open Vec using (Vec; []; _∷_) renaming (_++_ to _<+>_)
 open import Category.Monad.State
-open import Logic
 open import Data.Function
 open import Data.Maybe
+open import Relation.Binary.PropositionalEquality
 
 ------------------------------------------------------------------------
 -- Parser monad

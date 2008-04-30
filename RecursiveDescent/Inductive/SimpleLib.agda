@@ -19,7 +19,6 @@ open import Data.Bool
 open import Data.Function
 open import Data.Maybe
 open import Data.Unit
-open import Logic
 
 ------------------------------------------------------------------------
 -- Applicative functor parsers

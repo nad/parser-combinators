@@ -9,7 +9,6 @@ open import Data.Product.Record
 open import Relation.Nullary
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
-open import Logic
 open import Data.Function
 
 ------------------------------------------------------------------------

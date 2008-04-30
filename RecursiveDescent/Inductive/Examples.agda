@@ -6,11 +6,11 @@ module RecursiveDescent.Inductive.Examples where
 
 open import Data.List
 open import Data.Nat
-open import Logic
 import Data.Char as C
 import Data.String as S
 open C using (Char)
 open S using (String)
+open import Relation.Binary.PropositionalEquality
 open import RecursiveDescent.Inductive
 open import RecursiveDescent.Inductive.SimpleLib
 open import Utilities

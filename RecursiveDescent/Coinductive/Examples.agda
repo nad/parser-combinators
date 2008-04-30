@@ -8,7 +8,7 @@ open import Data.List
 open import Data.Nat
 open import Data.Bool
 open import Data.Product.Record
-open import Logic
+open import Relation.Binary.PropositionalEquality
 import Data.Char as C
 import Data.String as S
 open C using (Char)

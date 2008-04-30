@@ -13,7 +13,6 @@ open import RecursiveDescent.Inductive.SimpleLib
 open import Data.List
 open import Data.Product.Record
 open import Data.Maybe
-open import Logic
 
 infix 3 _∈⟦_⟧_
 

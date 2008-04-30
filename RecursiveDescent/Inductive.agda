@@ -15,7 +15,6 @@ open import Data.Product.Record
 import Data.Product as Prod
 open import Data.Function
 import Data.BoundedVec.Inefficient as BVec
-open import Logic
 
 ------------------------------------------------------------------------
 -- Run function for the parsers

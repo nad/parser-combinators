@@ -23,10 +23,10 @@ private
   module BR = CommutativeSemiring Bool-commutativeSemiring-∨-∧
   module BA = BAlg Bool-booleanAlgebra
 
-open import Logic
 open import Relation.Binary.PropositionalEquality
 open ≡-Reasoning
 open import Data.Function
+open import Relation.Nullary
 
 ------------------------------------------------------------------------
 -- The index type
@@ -235,7 +235,7 @@ nearSemiring = record
 
 private
 
-  lemma : suc zero ≡ zero -> ⊥
+  lemma : suc zero ≢ zero
   lemma ()
 
   -- The indices very nearly form a semiring (∣I, ·I, 0I, 1I). The

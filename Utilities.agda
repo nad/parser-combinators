@@ -49,7 +49,7 @@ private
                  (_+_ _*_ : r -> r -> r)
                  where
 
-  open import Logic
+  open import Relation.Binary.PropositionalEquality
 
   ex : shift ((x , A) ∷ (y , B) ∷ []) z ≡ (x , ((A , y) ∷ (B , z) ∷ []))
   ex = ≡-refl

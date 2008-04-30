@@ -21,7 +21,6 @@ import Data.String as String
 open String using (String) renaming (_++_ to _<+>_)
 import Data.Char as Char
 open Char using (Char; _==_)
-open import Logic
 open import Data.Product.Record
 open import Data.Function
 open import Data.Bool
@@ -29,6 +28,7 @@ open import Data.Unit
 open import Data.Maybe
 import Data.Nat.Show as N
 open import Relation.Nullary
+open import Relation.Binary.PropositionalEquality
 
 open import RecursiveDescent.Inductive
 open import RecursiveDescent.Inductive.SimpleLib
