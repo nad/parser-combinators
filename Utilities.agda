@@ -61,10 +61,13 @@ private
   exˡ = ≡-refl
 
 ------------------------------------------------------------------------
--- A suitably typed composition operator
+-- Some suitably typed composition operators
 
-infixr 9 _∘′_
+infixr 9 _∘′_ _∘₂_
 
 _∘′_ : {a c : Set} {b : a -> Set1} ->
        (forall {x} -> b x -> c) -> ((x : a) -> b x) -> (a -> c)
 f ∘′ g = \x -> f (g x)
+
+_∘₂_ : {a b c : Set2} -> (b -> c) -> (a -> b) -> (a -> c)
+f ∘₂ g = \x -> f (g x)

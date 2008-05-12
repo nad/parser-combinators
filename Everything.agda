@@ -21,5 +21,10 @@ import RecursiveDescent.Inductive.PBM
 import RecursiveDescent.Inductive.Semantics
 import RecursiveDescent.Inductive.SimpleLib
 import RecursiveDescent.Inductive.Token
+import RecursiveDescent.InductiveWithFix
+import RecursiveDescent.InductiveWithFix.Internal
+import RecursiveDescent.InductiveWithFix.Examples
+import RecursiveDescent.InductiveWithFix.Lib
+import RecursiveDescent.InductiveWithFix.PBM
 import RecursiveDescent.Type
 import Utilities
