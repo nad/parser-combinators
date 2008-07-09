@@ -8,10 +8,10 @@ open import Utilities
 open import RecursiveDescent.Coinductive
 
 open import Data.Bool
-open import Data.Nat
+open import Data.Nat hiding (_≟_)
 open import Data.Product.Record using (_,_)
 open import Data.Product renaming (_,_ to pair)
-open import Data.List
+open import Data.List hiding (any)
 open import Data.Function
 open import Data.Maybe
 open import Data.Unit
@@ -58,21 +58,21 @@ mutual
   _⋆ : forall {tok r d} ->
        Parser tok (false , d) r     ->
        Parser tok _           [ r ]
-  p ⋆ = return [] ∣ p +
+  p ⋆ ~ return [] ∣ p +
 
   _+ : forall {tok r d} ->
        Parser tok (false , d) r     ->
        Parser tok _           [ r ]
-  p + = _∷_ <$> p ⊛ p ⋆
+  p + ~ _∷_ <$> p ⊛ p ⋆
 
   -- Are these definitions productive? _∣_ and _⊛_ are not
   -- constructors... Unfolding we get (unless I've made some mistake)
   --
-  --   p ⋆ = alt₁ false (ret []) (p +)
+  --   p ⋆ ~ alt₁ false (ret []) (p +)
   --
   -- and
   --
-  --   p + = bind₁ (bind₀ (ret _∷_) (\f -> bind₁ p (\x -> ret (f x))))
+  --   p + ~ bind₁ (bind₀ (ret _∷_) (\f -> bind₁ p (\x -> ret (f x))))
   --               (\f -> bind₀ (p ⋆) (\x -> ret (f x)))
   --
   -- These definitions are guarded.

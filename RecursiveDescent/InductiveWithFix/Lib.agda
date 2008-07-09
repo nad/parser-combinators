@@ -16,7 +16,7 @@ module RecursiveDescent.InductiveWithFix.Lib where
 open import RecursiveDescent.InductiveWithFix
 open import Utilities
 
-open import Data.Nat
+open import Data.Nat hiding (_≟_)
 import Data.Vec  as V;  open V  using (Vec)
 import Data.Vec1 as V₁; open V₁ using (Vec₁)
 import Data.List as L ; open L  using ([_])

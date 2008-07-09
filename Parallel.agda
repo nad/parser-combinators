@@ -5,8 +5,6 @@
 -- This code is based on "Parallel Parsing Processes" by Koen
 -- Claessen.
 
--- Note that the type Base.Parser below is assumed to be coinductive.
-
 module Parallel where
 
 open import Parallel.Index
@@ -45,8 +43,7 @@ private
   -- that this list is never empty is not a bad thing, and does not
   -- cost much.)
 
-  {- co -}
-  data Parser (tok r : Set) : Index -> Set where
+  codata Parser (tok r : Set) : Index -> Set where
     symbolBind : forall {i : tok -> Index} ->
                  ((c : tok) -> Parser tok r (i c)) -> Parser tok r 0I
     fail       : Parser tok r 0I
@@ -66,27 +63,23 @@ private
          i₁ ≡ i₂ -> Parser tok r i₁ -> Parser tok r i₂
   cast ≡-refl p = p
 
-  -- Note that this function is productive.
-
   infixl 0 _∣_
 
   _∣_ : forall {tok r i₁ i₂} ->
         Parser tok r i₁ -> Parser tok r i₂ -> Parser tok r (i₁ ∣I i₂)
-  fail                ∣ p₂                = p₂
-  p₁@(returnPlus _ _) ∣ fail              = p₁
-  p₁@(symbolBind _)   ∣ fail              = p₁
-  symbolBind f₁       ∣ symbolBind f₂     = symbolBind (\c -> f₁ c ∣ f₂ c)
-  p₁@(symbolBind _)   ∣ returnPlus xs p₂  = returnPlus xs (p₁ ∣ p₂)
-  returnPlus xs p₁    ∣ p₂@(symbolBind _) = returnPlus xs (p₂ ∣ p₁)
-  returnPlus xs₁ p₁   ∣ returnPlus xs₂ p₂ = returnPlus (xs₁ <+> xs₂) (p₁ ∣ p₂)
+  fail              ∣ p₂                ~ p₂
+  returnPlus xs p₁  ∣ fail              ~ returnPlus xs p₁
+  symbolBind f₁     ∣ fail              ~ symbolBind f₁
+  symbolBind f₁     ∣ symbolBind f₂     ~ symbolBind (\c -> f₁ c ∣ f₂ c)
+  symbolBind f₁     ∣ returnPlus xs p₂  ~ returnPlus xs (symbolBind f₁ ∣ p₂)
+  returnPlus xs p₁  ∣ symbolBind f₂     ~ returnPlus xs (symbolBind f₂ ∣ p₁)
+  returnPlus xs₁ p₁ ∣ returnPlus xs₂ p₂ ~ returnPlus (xs₁ <+> xs₂) (p₁ ∣ p₂)
 
   -- parse is structurally recursive over the following lexicographic
   -- measure:
   --
   -- ⑴ The input string.
   -- ⑵ The Distance index.
-  --
-  -- Note that Parser is viewed as being coinductive.
 
   parse : forall {tok r e d} ->
           Parser tok r (e , d) -> P tok r
@@ -141,9 +134,9 @@ private
     _>>=_ : forall {tok r₁ r₂ i₁ i₂} ->
             (p₁ : Parser tok r₁ i₁) -> (r₁ -> Parser tok r₂ i₂) ->
             Parser tok r₂ (bind-index p₁ i₂)
-    symbolBind f    >>= g = symbolBind (\c -> f c >>= g)
-    fail            >>= g = fail
-    returnPlus xs p >>= g = cast (bind-index-lemma p _)
+    symbolBind f    >>= g ~ symbolBind (\c -> f c >>= g)
+    fail            >>= g ~ fail
+    returnPlus xs p >>= g ~ cast (bind-index-lemma p _)
                                  (choice (Vec.map g xs) ∣ p >>= g)
 
 ------------------------------------------------------------------------
@@ -173,6 +166,17 @@ symbol = parser Base.symbolBind
 
 fail : forall {tok r} -> Parser tok 0I r
 fail = parser \k -> Base.fail
+
+-- A problematic variant of fail. See Parallel.Lib.
+
+problematic : forall {tok r} -> r -> Parser tok 0I r
+problematic x = parser (\k -> helper (k x))
+  where
+  helper : forall {tok r' i'} ->
+           Base.Parser tok r' i' -> Base.Parser tok r' 0I
+  helper (Base.symbolBind _)   = Base.fail
+  helper Base.fail             = Base.fail
+  helper (Base.returnPlus _ _) = Base.fail
 
 return : forall {tok r} -> r -> Parser tok 1I r
 return x = parser \k -> k x

@@ -30,14 +30,14 @@ module Ex₀ where
   -- This is not well-typed.
 
   p : Parser Char _ String
-  p = return 5 ⊛> p
+  p ~ return 5 ⊛> p
 -}
 
 module Ex₁ where
 
   -- e ∷= 0 + e | 0
 
-  e = sym '0' ⊛> sym '+' ⊛> e
+  e ~ sym '0' ⊛> sym '+' ⊛> e
     ∣ sym '0'
 
   ex₁ : "0+0" ∈? e ≡ '0' ∷ []
@@ -50,10 +50,10 @@ module Ex₂ where
 
   mutual
 
-    expr   = factor ⊛> sym '+' ⊛> expr
+    expr   ~ factor ⊛> sym '+' ⊛> expr
            ∣ factor
 
-    factor = sym '0'
+    factor ~ sym '0'
            ∣ sym '0' ⊛> sym '*' ⊛> factor
            ∣ sym '(' ⊛> expr <⊛ sym ')'
 
@@ -96,7 +96,7 @@ module Ex₄ where
   bcs c (suc n) = sym c ⊛> bcs c n
 
   as : ℕ -> Parser Char _ ℕ
-  as n = suc <$ sym 'a' ⊛
+  as n ~ suc <$ sym 'a' ⊛
          ( as (suc n)
          ∣ _+_ <$> bcs 'b' n ⊛ bcs 'c' n
          )
@@ -149,9 +149,9 @@ module Ex₇ where
 
   mutual
 
-    expr   = chain₁ left term   addOp
-    term   = chain₁ left factor mulOp
-    factor = sym '(' ⊛> expr <⊛ sym ')'
+    expr   ~ chain₁ left term   addOp
+    term   ~ chain₁ left factor mulOp
+    factor ~ sym '(' ⊛> expr <⊛ sym ')'
            ∣ number
 
   ex₁ : "1+5*2∸3" ∈? expr ≡ 8 ∷ []

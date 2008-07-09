@@ -2,8 +2,6 @@
 -- A terminating parser data type and the accompanying interpreter
 ------------------------------------------------------------------------
 
--- Note that Parser is assumed to be coinductive.
-
 module RecursiveDescent.Coinductive.Internal where
 
 open import RecursiveDescent.Type
@@ -25,8 +23,7 @@ open import Utilities
 -- descent. The types used ensure that the implementation below is
 -- structurally recursive.
 
-{- co -}
-data Parser (tok : Set) : Index -> Set -> Set1 where
+codata Parser (tok : Set) : Index -> Set -> Set1 where
   symbol :  Parser tok (false , leaf) tok
   ret    :  forall {r} -> r -> Parser tok (true , leaf) r
   fail   :  forall {r} -> Parser tok (false , leaf) r

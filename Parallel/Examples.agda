@@ -33,7 +33,7 @@ module Ex₀ where
   -- accepted? In fact, are they productive? Maybe not...
 
   p : Parser Char (false , 12) String
-  p = return 5 ⊛> p
+  p ~ return 5 ⊛> p
 
   -- ex₁ : "apa" ∈? p ≡ {! !}
   -- ex₁ = ≡-refl
@@ -42,7 +42,7 @@ module Ex₁ where
 
   -- e ∷= 0 + e | 0
 
-  e = sym '0' ⊛> sym '+' ⊛> e
+  e ~ sym '0' ⊛> sym '+' ⊛> e
     ∣ sym '0'
 
   ex₁ : "0+0" ∈? e ≡ '0' ∷ []
@@ -55,10 +55,10 @@ module Ex₂ where
 
   mutual
 
-    expr   = factor ⊛> sym '+' ⊛> expr
+    expr   ~ factor ⊛> sym '+' ⊛> expr
            ∣ factor
 
-    factor = sym '0'
+    factor ~ sym '0'
            ∣ sym '0' ⊛> sym '*' ⊛> factor
            ∣ sym '(' ⊛> expr <⊛ sym ')'
 
@@ -78,10 +78,10 @@ module Ex₃ where
 
   mutual
 
-    expr   = factor ⊛> sym '+' ⊛> expr
+    expr   ~ factor ⊛> sym '+' ⊛> expr
            ∣ factor
 
-    factor = sym '0'
+    factor ~ sym '0'
            ∣ factor ⊛> sym '*' ⊛> sym '0'
            ∣ sym '(' ⊛> expr <⊛ sym ')'
 -}
@@ -101,7 +101,7 @@ module Ex₄ where
   bcs c (suc n) = sym c ⊛> bcs c n
 
   as : ℕ -> Parser Char _ ℕ
-  as n = suc <$ sym 'a' ⊛
+  as n ~ suc <$ sym 'a' ⊛
          ( as (suc n)
          ∣ _+_ <$> bcs 'b' n ⊛ bcs 'c' n
          )
@@ -135,14 +135,18 @@ module Ex₆ where
   expr : Assoc -> Parser Char _ ℕ
   expr a = chain₁ a number op
 
-  ex₁ : "12345" ∈? number ≡ 12345 ∷ []
+  ex₁ : "123" ∈? number ≡ 123 ∷ []
   ex₁ = ≡-refl
 
-  ex₂ : "1+5*2∸3" ∈? expr left ≡ 9 ∷ []
-  ex₂ = ≡-refl
+  -- Note: The type checking of the following definitions does not
+  -- appear to terminate (with the version of Agda which is current at
+  -- the time of writing).
 
-  ex₃ : "1+5*2∸3" ∈? expr right ≡ 1 ∷ []
-  ex₃ = ≡-refl
+  -- ex₂ : "1+5*2∸3" ∈? expr left ≡ 9 ∷ []
+  -- ex₂ = ≡-refl
+
+  -- ex₃ : "1+5*2∸3" ∈? expr right ≡ 1 ∷ []
+  -- ex₃ = ≡-refl
 
 module Ex₇ where
 
@@ -154,13 +158,17 @@ module Ex₇ where
 
   mutual
 
-    expr   = chain₁ left term   addOp
-    term   = chain₁ left factor mulOp
-    factor = sym '(' ⊛> expr <⊛ sym ')'
+    expr   ~ chain₁ left term   addOp
+    term   ~ chain₁ left factor mulOp
+    factor ~ sym '(' ⊛> expr <⊛ sym ')'
            ∣ number
 
-  ex₁ : "1+5*2∸3" ∈? expr ≡ 8 ∷ []
-  ex₁ = ≡-refl
+  -- Note: The type checking of the following definitions does not
+  -- appear to terminate (with the version of Agda which is current at
+  -- the time of writing).
 
-  ex₂ : "1+5*(2∸3)" ∈? expr ≡ 1 ∷ []
-  ex₂ = ≡-refl
+  -- ex₁ : "1+5*2∸3" ∈? expr ≡ 8 ∷ []
+  -- ex₁ = ≡-refl
+
+  -- ex₂ : "1+5*(2∸3)" ∈? expr ≡ 1 ∷ []
+  -- ex₂ = ≡-refl
