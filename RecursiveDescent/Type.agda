@@ -15,10 +15,6 @@ open import Data.Function
 -- Indices to the parser type
 
 -- Does the parser accept empty strings?
---
--- Since we have a "forget" combinator this is actually a conservative
--- approximation, so a true value means that the parser _may_ accept
--- empty strings, but is not guaranteed to.
 
 Empty : Set
 Empty = Bool
