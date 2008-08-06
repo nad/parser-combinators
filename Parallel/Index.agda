@@ -198,7 +198,7 @@ indexSemiring = record
       { isMonoid = record
         { isSemigroup = record
           { assoc    = ∣-assoc
-          ; •-pres-≈ = ≡-cong₂ _∣I_
+          ; ∙-pres-≈ = ≡-cong₂ _∣I_
           }
         ; identity = ∣-identity
         }
@@ -207,7 +207,7 @@ indexSemiring = record
     ; *-isMonoid = record
       { isSemigroup = record
         { assoc    = ·-assoc
-        ; •-pres-≈ = ≡-cong₂ _·I_
+        ; ∙-pres-≈ = ≡-cong₂ _·I_
         }
       ; identity = ·-identity
       }

@@ -11,7 +11,7 @@ module RecursiveDescent.Inductive.SimpleLib where
 open import RecursiveDescent.Inductive
 
 open import Data.Nat
-open import Data.Vec
+open import Data.Vec hiding (_⊛_; _>>=_)
 open import Data.Vec1 renaming ([] to []₁; _∷_ to _∷₁_)
 open import Relation.Nullary
 open import Data.Product.Record
