@@ -121,9 +121,9 @@ PIMonadState : (tok : Set) -> RawIMonadState (BoundedVec tok) (P tok)
 PIMonadState tok = StateTIMonadState (BoundedVec tok) L.ListMonad
 
 private
-  open module LM {tok : Set} = RawIMonadPlus  (PIMonadPlus  tok)
-  open module SM {tok : Set} = RawIMonadState (PIMonadState tok)
-                                 using (get; put; modify)
+  open module LM {tok} = RawIMonadPlus  (PIMonadPlus  tok)
+  open module SM {tok} = RawIMonadState (PIMonadState tok)
+                           using (get; put; modify)
 
 -- For every successful parse the run function returns the remaining
 -- string. (Since there can be several successful parses a list of

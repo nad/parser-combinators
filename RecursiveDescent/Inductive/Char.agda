@@ -34,8 +34,7 @@ Nonterminal : ParserType -> ParserType
 Nonterminal = NT
 
 module Combinators
-         {nt : _}
-         (lib : forall {i r} -> Nonterminal nt i r -> nt i r)
+         {nt} (lib : forall {i r} -> Nonterminal nt i r -> nt i r)
          where
 
   open L.Combinators (lib ∘₁ lib')
