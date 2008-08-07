@@ -44,9 +44,9 @@ infixl 10 _>>=_ _!>>=_
      nt (e , c) r -> Parser tok nt (e , step c) r
 !_ = P.!_
 
-fix :  forall {tok nt i r}
-    -> Parser tok (Lift i r nt) i r
-    -> Parser tok nt i r
+fix :  forall {tok nt e c r}
+    -> Parser tok (Lift (e , step c) r nt) (e , c) r
+    -> Parser tok nt (e , step c) r
 fix = P.fix
 
 symbol : forall {tok nt} -> Parser tok nt 0I tok

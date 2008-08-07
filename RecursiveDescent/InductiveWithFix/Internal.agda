@@ -38,9 +38,9 @@ data Lift (i : Index) (r : Set) (nt : ParserType) : ParserType where
 data Parser (tok : Set) (nt : ParserType) : ParserType where
   !_     :  forall {e c r}
          -> nt (e , c) r -> Parser tok nt (e , step c) r
-  fix    :  forall {i r}
-         -> Parser tok (Lift i r nt) i r
-         -> Parser tok nt i r
+  fix    :  forall {e c r}
+         -> Parser tok (Lift (e , step c) r nt) (e , c) r
+         -> Parser tok nt (e , step c) r
   symbol :  Parser tok nt (false , leaf) tok
   ret    :  forall {r} -> r -> Parser tok nt (true , leaf) r
   fail   :  forall {r} -> Parser tok nt (false , leaf) r
@@ -76,15 +76,16 @@ liftMap F map g (↟ x) = ↟ (map g x)
 lift' : forall {tok nt i r i' r'}
         (F : ParserType -> ParserType) -> Map F ->
         Parser tok (F nt) i r -> Parser tok (F (Lift i' r' nt)) i r
-lift' F map (! x)           = ! (map ↟ x)
-lift' F map (fix {i} {r} p) = fix (lift' (Lift i r ∘₂ F) (liftMap F map) p)
-lift' F map symbol          = symbol
-lift' F map (ret x)         = ret x
-lift' F map fail            = fail
-lift' F map (bind₀  p₁ p₂)  = bind₀  (lift' F map p₁) (\x -> lift' F map (p₂ x))
-lift' F map (bind₁  p₁ p₂)  = bind₁  (lift' F map p₁) (\x -> lift' F map (p₂ x))
-lift' F map (alt₀   p₁ p₂)  = alt₀   (lift' F map p₁) (lift' F map p₂)
-lift' F map (alt₁ e p₁ p₂)  = alt₁ e (lift' F map p₁) (lift' F map p₂)
+lift' F map (! x)               ~ ! (map ↟ x)
+lift' F map (fix {e} {c} {r} p) ~ fix (lift' (Lift (e , step c) r ∘₂ F)
+                                             (liftMap F map) p)
+lift' F map symbol              ~ symbol
+lift' F map (ret x)             ~ ret x
+lift' F map fail                ~ fail
+lift' F map (bind₀  p₁ p₂)      ~ bind₀  (lift' F map p₁) (\x -> lift' F map (p₂ x))
+lift' F map (bind₁  p₁ p₂)      ~ bind₁  (lift' F map p₁) (\x -> lift' F map (p₂ x))
+lift' F map (alt₀   p₁ p₂)      ~ alt₀   (lift' F map p₁) (lift' F map p₂)
+lift' F map (alt₁ e p₁ p₂)      ~ alt₁ e (lift' F map p₁) (lift' F map p₂)
 
 -- Note that lift p is linear in the size of p (in a sense; note that
 -- p can contain higher-order components), assuming that p contains at
@@ -135,7 +136,6 @@ private
 --
 -- 1) The upper bound of the length of the input string.
 -- 2) The parser's proper left corner tree.
--- 3) The structure of the parser.
 
 -- The pattern matching on {e = ...} in parse is only there to work
 -- around a bug in Agda's coverage checker.
