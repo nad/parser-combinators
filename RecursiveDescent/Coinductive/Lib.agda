@@ -6,6 +6,7 @@ module RecursiveDescent.Coinductive.Lib where
 
 open import Utilities
 open import RecursiveDescent.Coinductive
+open import RecursiveDescent.Index
 
 open import Data.Bool
 open import Data.Nat hiding (_≟_)

@@ -4,7 +4,7 @@
 
 module RecursiveDescent.Coinductive.Internal where
 
-open import RecursiveDescent.Type
+open import RecursiveDescent.Index
 open import Data.Bool
 open import Data.Product.Record
 open import Data.Maybe
@@ -23,7 +23,7 @@ open import Utilities
 -- descent. The types used ensure that the implementation below is
 -- structurally recursive.
 
-codata Parser (tok : Set) : Index -> Set -> Set1 where
+codata Parser (tok : Set) : ParserType where
   symbol :  Parser tok (false , leaf) tok
   ret    :  forall {r} -> r -> Parser tok (true , leaf) r
   fail   :  forall {r} -> Parser tok (false , leaf) r

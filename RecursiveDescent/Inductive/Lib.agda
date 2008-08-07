@@ -12,9 +12,11 @@
 
 module RecursiveDescent.Inductive.Lib (tok : Set) where
 
+open import RecursiveDescent.Index
 open import RecursiveDescent.Inductive
 open import RecursiveDescent.Inductive.SimpleLib
 open import Utilities
+
 open import Data.Bool
 open import Data.List
 open import Data.Product.Record using (_,_)

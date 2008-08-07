@@ -7,7 +7,6 @@
 
 module RecursiveDescent.Inductive.Char where
 
-open import RecursiveDescent.Inductive
 open import Data.Unit
 open import Data.Nat
 open import Data.Bool
@@ -15,6 +14,9 @@ import Data.Char as C
 open C using (Char; _==_)
 open import Data.List
 open import Data.Function hiding (_$_)
+
+open import RecursiveDescent.Index
+open import RecursiveDescent.Inductive
 import RecursiveDescent.Inductive.Token
 open import RecursiveDescent.Inductive.SimpleLib
 import RecursiveDescent.Inductive.Lib as Lib

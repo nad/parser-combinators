@@ -4,7 +4,7 @@
 
 module RecursiveDescent.InductiveWithFix where
 
-open import RecursiveDescent.Type public
+open import RecursiveDescent.Index
 import RecursiveDescent.InductiveWithFix.Internal as P
 open P public using (Parser; Grammar; Lift; fresh; lift)
 
@@ -32,17 +32,6 @@ parse-complete :  forall {tok nt i r}
                -> [ tok ] -> [ r ]
 parse-complete p g s =
   map Prod.proj₁ (filter (null ∘ Prod.proj₂) (parse p g s))
-
-------------------------------------------------------------------------
--- Operations on indices
-
-infixr 50 _·I_
-
-_·I_ : Index -> Index -> Index
-i₁ ·I i₂ = ( proj₁ i₁ ∧ proj₁ i₂
-           , (if proj₁ i₁ then node (proj₂ i₁) (proj₂ i₂)
-                          else proj₂ i₁)
-           )
 
 ------------------------------------------------------------------------
 -- Exported combinators
@@ -83,7 +72,7 @@ _!>>=_ : forall {tok nt c₁ r₁ r₂} {i₂ : r₁ -> Index} ->
          let i₁ = (false , c₁) in
          Parser tok nt i₁ r₁ ->
          ((x : r₁) -> Parser tok nt (i₂ x) r₂) ->
-         Parser tok nt i₁ r₂
+         Parser tok nt (i₁ ·I 1I) r₂
 _!>>=_ = P.bind₁
 
 _∣_ : forall {tok nt e₁ c₁ i₂ r} -> let i₁ = (e₁ , c₁) in

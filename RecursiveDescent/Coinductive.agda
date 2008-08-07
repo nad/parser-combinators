@@ -4,7 +4,7 @@
 
 module RecursiveDescent.Coinductive where
 
-open import RecursiveDescent.Type public
+open import RecursiveDescent.Index
 import RecursiveDescent.Coinductive.Internal as P
 open P public using (Parser)
 
@@ -30,17 +30,6 @@ parse-complete : forall {tok i r} ->
                  Parser tok i r -> [ tok ] -> [ r ]
 parse-complete p s =
   map Prod.proj₁ (filter (null ∘ Prod.proj₂) (parse p s))
-
-------------------------------------------------------------------------
--- Operations on indices
-
-infixr 50 _·I_
-
-_·I_ : Index -> Index -> Index
-i₁ ·I i₂ = ( proj₁ i₁ ∧ proj₁ i₂
-           , (if proj₁ i₁ then node (proj₂ i₁) (proj₂ i₂)
-                          else step (proj₂ i₁))
-           )
 
 ------------------------------------------------------------------------
 -- Exported combinators

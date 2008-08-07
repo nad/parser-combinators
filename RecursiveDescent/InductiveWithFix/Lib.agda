@@ -13,6 +13,7 @@
 
 module RecursiveDescent.InductiveWithFix.Lib where
 
+open import RecursiveDescent.Index
 open import RecursiveDescent.InductiveWithFix
 open import Utilities
 
@@ -99,9 +100,14 @@ chain a p op x = return x ∣ chain₁ a p op
 
 private
 
+  exactly'-corners : Corners -> ℕ -> Corners
+  exactly'-corners c zero    = _
+  exactly'-corners c (suc n) = _
+
   exactly' : forall {tok nt c r} n ->
              Parser tok nt (false , c) r ->
-             Parser tok nt (false , node leaf c) (Vec r (suc n))
+             Parser tok nt (false , exactly'-corners c n)
+                           (Vec r (suc n))
   exactly' zero    p = V.singleton <$> p
   exactly' (suc n) p = V._∷_ <$> p ⊛ exactly' n p
 
@@ -130,7 +136,7 @@ sequence (V₁._∷_ p ps) = V._∷_ <$> p ⊛ sequence ps
 -- sat and friends
 
 sat : forall {tok nt r} ->
-      (tok -> Maybe r) -> Parser tok nt 0I r
+      (tok -> Maybe r) -> Parser tok nt (0I ·I 1I) r
 sat {tok} {nt} {r} p = symbol !>>= \c -> ok (p c)
   where
   okIndex : Maybe r -> Index
@@ -141,10 +147,10 @@ sat {tok} {nt} {r} p = symbol !>>= \c -> ok (p c)
   ok nothing  = fail
   ok (just x) = return x
 
-sat' : forall {tok nt} -> (tok -> Bool) -> Parser tok nt 0I ⊤
+sat' : forall {tok nt} -> (tok -> Bool) -> Parser tok nt _ ⊤
 sat' p = sat (boolToMaybe ∘ p)
 
-any : forall {tok nt} -> Parser tok nt 0I tok
+any : forall {tok nt} -> Parser tok nt _ tok
 any = sat just
 
 ------------------------------------------------------------------------

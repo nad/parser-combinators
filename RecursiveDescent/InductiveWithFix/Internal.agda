@@ -4,7 +4,6 @@
 
 module RecursiveDescent.InductiveWithFix.Internal where
 
-open import RecursiveDescent.Type
 open import Data.Bool
 open import Data.Product.Record
 open import Data.Maybe
@@ -14,6 +13,8 @@ open import Data.Nat
 open import Category.Applicative.Indexed
 open import Category.Monad.Indexed
 open import Category.Monad.State
+
+open import RecursiveDescent.Index
 open import Utilities
 
 ------------------------------------------------------------------------
@@ -50,7 +51,7 @@ data Parser (tok : Set) (nt : ParserType) : ParserType where
   bind₁  :  forall {c₁ r₁ r₂} {i₂ : r₁ -> Index}
          -> Parser tok nt (false , c₁) r₁
          -> ((x : r₁) -> Parser tok nt (i₂ x) r₂)
-         -> Parser tok nt (false , c₁) r₂
+         -> Parser tok nt (false , step c₁) r₂
   alt₀   :  forall {c₁ e₂ c₂ r}
          -> Parser tok nt (true , c₁)         r
          -> Parser tok nt (e₂   , c₂)         r

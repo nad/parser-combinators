@@ -12,6 +12,7 @@ import RecursiveDescent.Coinductive
 import RecursiveDescent.Coinductive.Examples
 import RecursiveDescent.Coinductive.Internal
 import RecursiveDescent.Coinductive.Lib
+import RecursiveDescent.Index
 import RecursiveDescent.Inductive
 import RecursiveDescent.Inductive.Char
 import RecursiveDescent.Inductive.Examples
@@ -22,9 +23,8 @@ import RecursiveDescent.Inductive.Semantics
 import RecursiveDescent.Inductive.SimpleLib
 import RecursiveDescent.Inductive.Token
 import RecursiveDescent.InductiveWithFix
-import RecursiveDescent.InductiveWithFix.Internal
 import RecursiveDescent.InductiveWithFix.Examples
+import RecursiveDescent.InductiveWithFix.Internal
 import RecursiveDescent.InductiveWithFix.Lib
 import RecursiveDescent.InductiveWithFix.PBM
-import RecursiveDescent.Type
 import Utilities

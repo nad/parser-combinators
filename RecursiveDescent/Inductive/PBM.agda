@@ -30,6 +30,7 @@ import Data.Nat.Show as N
 open import Relation.Nullary
 open import Relation.Binary.PropositionalEquality
 
+open import RecursiveDescent.Index
 open import RecursiveDescent.Inductive
 open import RecursiveDescent.Inductive.SimpleLib
 import RecursiveDescent.Inductive.Token as Tok; open Tok Char.decSetoid

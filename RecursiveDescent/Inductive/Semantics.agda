@@ -7,6 +7,7 @@
 
 module RecursiveDescent.Inductive.Semantics where
 
+open import RecursiveDescent.Index
 open import RecursiveDescent.Inductive
 open import RecursiveDescent.Inductive.SimpleLib
 

@@ -1,8 +1,8 @@
 ------------------------------------------------------------------------
--- A type signature for parsers
+-- Parser indices
 ------------------------------------------------------------------------
 
-module RecursiveDescent.Type where
+module RecursiveDescent.Index where
 
 open import Data.Bool
 open import Data.Product.Record
@@ -30,17 +30,15 @@ data Corners : Set where
 Index : Set
 Index = Empty × Corners
 
-------------------------------------------------------------------------
--- The parser type signature
+-- The parser type signature. The second argument is the result type.
 
 ParserType : Set2
-ParserType =  Index  -- The indices above.
-           -> Set    -- The result type.
-           -> Set1
+ParserType = Index -> Set -> Set1
 
 ------------------------------------------------------------------------
 -- Operations on indices
 
+infixr 50 _·I_
 infixr 40 _∣I_
 
 0I : Index
@@ -51,6 +49,12 @@ infixr 40 _∣I_
 
 _∣I_ : Index -> Index -> Index
 i₁ ∣I i₂ = (proj₁ i₁ ∨ proj₁ i₂ , node (proj₂ i₁) (proj₂ i₂))
+
+_·I_ : Index -> Index -> Index
+i₁ ·I i₂ = ( proj₁ i₁ ∧ proj₁ i₂
+           , (if proj₁ i₁ then node (proj₂ i₁) (proj₂ i₂)
+                          else step (proj₂ i₁))
+           )
 
 ------------------------------------------------------------------------
 -- Testing indices for equality

@@ -11,7 +11,9 @@ import Data.String as S
 open C using (Char)
 open S using (String)
 open import Relation.Binary.PropositionalEquality
+
 open import Utilities
+open import RecursiveDescent.Index
 open import RecursiveDescent.InductiveWithFix
 open import RecursiveDescent.InductiveWithFix.Lib
 open Token C.decSetoid
