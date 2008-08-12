@@ -3,8 +3,8 @@
 -- RecursiveDescent.Inductive.Lib
 ------------------------------------------------------------------------
 
--- This module also provides an example of a parser for which the
--- Index cannot be inferred.
+-- This module also provides more examples of parsers for which the
+-- indices cannot be inferred.
 
 module RecursiveDescent.Inductive.SimpleLib where
 

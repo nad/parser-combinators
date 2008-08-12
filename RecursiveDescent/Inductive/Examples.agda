@@ -129,7 +129,7 @@ module Ex₅ where
 
 module Ex₆ where
 
-  -- A grammar which uses the chain₁ combinator.
+  -- A grammar which uses the chain≥ combinator.
 
   module L = Lib Char
 
@@ -148,7 +148,7 @@ module Ex₆ where
   grammar op       = _+_ <$ sym '+'
                    ∣ _*_ <$ sym '*'
                    ∣ _∸_ <$ sym '∸'
-  grammar (expr a) = chain₁ a number (! op)
+  grammar (expr a) = chain≥ 0 a number (! op)
 
   ex₁ : "12345" ∈? number / grammar ≡ 12345 ∷ []
   ex₁ = ≡-refl
@@ -180,8 +180,8 @@ module Ex₇ where
   grammar : Grammar Char NT
   grammar (lib p)  = library p
   grammar (cLib p) = charLib p
-  grammar expr     = chain₁ left (! term)   (! addOp)
-  grammar term     = chain₁ left (! factor) (! mulOp)
+  grammar expr     = chain≥ 0 left (! term)   (! addOp)
+  grammar term     = chain≥ 0 left (! factor) (! mulOp)
   grammar factor   = sym '(' ⊛> ! expr <⊛ sym ')'
                    ∣ number
   grammar addOp    = _+_ <$ sym '+'
