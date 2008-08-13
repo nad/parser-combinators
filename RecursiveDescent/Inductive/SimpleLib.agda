@@ -13,7 +13,8 @@ open import RecursiveDescent.Index
 
 open import Data.Nat
 open import Data.Vec hiding (_⊛_; _>>=_)
-open import Data.Vec1 renaming ([] to []₁; _∷_ to _∷₁_)
+open import Data.Vec1 using (Vec₁; []; _∷_)
+open import Data.List using ([_]; []; _∷_)
 open import Relation.Nullary
 open import Data.Product.Record
 open import Data.Bool
@@ -94,8 +95,49 @@ exactly (suc n) p = _∷_ <$> p ⊛ exactly n p
 sequence : forall {tok nt i r n} ->
            Vec₁ (Parser tok nt i r) n ->
            Parser tok nt (exactly-index i n) (Vec r n)
-sequence []₁       = return []
-sequence (p ∷₁ ps) = _∷_ <$> p ⊛ sequence ps
+sequence []       = return []
+sequence (p ∷ ps) = _∷_ <$> p ⊛ sequence ps
+
+-- p between ps parses p repeatedly, between the elements of ps:
+--   ∙ between (x ∷ y ∷ z ∷ []) ≈ x ∙ y ∙ z.
+
+between-index : Index -> Index -> ℕ -> Index
+between-index i i′ zero    = _
+between-index i i′ (suc n) = _
+
+_between_ : forall {tok nt i r i′ r′ n} ->
+            Parser tok nt i r -> Vec₁ (Parser tok nt i′ r′) (suc n) ->
+            Parser tok nt (between-index i i′ n) (Vec r n)
+p between (x ∷ [])     = [] <$ x
+p between (x ∷ y ∷ xs) = _∷_ <$> (x ⊛> p) ⊛ (p between (y ∷ xs))
+
+------------------------------------------------------------------------
+-- N-ary variants of _∣_
+
+-- choice ps parses one of the elements in ps.
+
+choice-index : Index -> ℕ -> Index
+choice-index i zero    = _
+choice-index i (suc n) = _
+
+choice : forall {tok nt i r n} ->
+         Vec₁ (Parser tok nt i r) n ->
+         Parser tok nt (choice-index i n) r
+choice []       = fail
+choice (p ∷ ps) = p ∣ choice ps
+
+-- choiceMap f xs ≈ choice (map f xs), but avoids use of Vec₁ and
+-- fromList.
+
+choiceMap-index : forall {a} -> (a -> Index) -> [ a ] -> Index
+choiceMap-index i []       = _
+choiceMap-index i (x ∷ xs) = _
+
+choiceMap : forall {tok nt r a} {i : a -> Index} ->
+            ((x : a) -> Parser tok nt (i x) r) -> (xs : [ a ]) ->
+            Parser tok nt (choiceMap-index i xs) r
+choiceMap f []       = fail
+choiceMap f (x ∷ xs) = f x ∣ choiceMap f xs
 
 ------------------------------------------------------------------------
 -- sat and friends
@@ -117,4 +159,3 @@ sat' p = sat (boolToMaybe ∘ p)
 
 any : forall {tok nt} -> Parser tok nt _ tok
 any = sat just
-
