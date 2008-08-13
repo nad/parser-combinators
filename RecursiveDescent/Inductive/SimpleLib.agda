@@ -21,6 +21,11 @@ open import Data.Bool
 open import Data.Function
 open import Data.Maybe
 open import Data.Unit
+open import Data.Bool.Properties
+open import Algebra
+private
+  module BCS = CommutativeSemiring Bool-commutativeSemiring-∨-∧
+open import Relation.Binary.PropositionalEquality
 
 ------------------------------------------------------------------------
 -- Applicative functor parsers
@@ -34,6 +39,18 @@ _⊛_ : forall {tok nt i₁ i₂ r₁ r₂} ->
       Parser tok nt i₂ r₁ ->
       Parser tok nt _  r₂
 p₁ ⊛ p₂ = p₁ >>= \f -> p₂ >>= \x -> return (f x)
+
+-- A variant: If the second parser does not accept the empty string,
+-- then neither does the combination. (This is immediate for the first
+-- parser, but for the second one a small lemma is needed, hence this
+-- variant.)
+
+_⊛!_ : forall {tok nt i₁ c₂ r₁ r₂} ->
+       Parser tok nt i₁ (r₁ -> r₂) ->
+       Parser tok nt (false , c₂) r₁ ->
+       Parser tok nt (false , _)  r₂
+_⊛!_ {i₁ = i₁} p₁ p₂ = cast (BCS.*-comm (proj₁ i₁) false) ≡-refl
+                            (p₁ ⊛ p₂)
 
 _<$>_ : forall {tok nt i r₁ r₂} ->
         (r₁ -> r₂) ->
