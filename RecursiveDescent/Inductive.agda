@@ -15,6 +15,7 @@ open import Data.Product.Record
 import Data.Product as Prod
 open import Data.Function
 import Data.BoundedVec.Inefficient as BVec
+open import Relation.Binary.PropositionalEquality
 
 ------------------------------------------------------------------------
 -- Run function for the parsers
@@ -76,3 +77,8 @@ _∣_ : forall {tok nt e₁ c₁ i₂ r} -> let i₁ = (e₁ , c₁) in
       Parser tok nt (i₁ ∣I i₂) r
 _∣_ {e₁ = true } = P.alt₀
 _∣_ {e₁ = false} = P.alt₁ _
+
+cast : forall {tok nt e₁ e₂ c₁ c₂ r} ->
+       e₁ ≡ e₂ -> c₁ ≡ c₂ ->
+       Parser tok nt (e₁ , c₁) r -> Parser tok nt (e₂ , c₂) r
+cast ≡-refl ≡-refl p = p
