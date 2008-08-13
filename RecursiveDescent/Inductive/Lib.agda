@@ -90,5 +90,5 @@ module Combinators
   library (many₁ p)            = _∷_ <$> p ⊛ p ⋆
   library (atLeast' zero    p) = p ⋆
   library (atLeast' (suc n) p) = _∷_ <$> p ⊛ atLeast n p
-  library (chain≥' n a p op)   = chain₁-combine a <$>
-                                   atLeast n (pair <$> p ⊛ op) ⊛ p
+  library (chain≥' n a p op)   = chain≥-combine a <$>
+                                   p ⊛ atLeast n (pair <$> op ⊛! p)
