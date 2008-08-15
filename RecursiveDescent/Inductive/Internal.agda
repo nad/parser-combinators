@@ -32,22 +32,18 @@ data Parser (tok : Set) (nt : ParserType) : ParserType where
   symbol :  Parser tok nt (false , leaf) tok
   ret    :  forall {r} -> r -> Parser tok nt (true , leaf) r
   fail   :  forall {r} -> Parser tok nt (false , leaf) r
-  bind₀  :  forall {c₁ e₂ c₂ r₁ r₂}
+  bind₁  :  forall {c₁ e₂ c₂ r₁ r₂}
          -> Parser tok nt (true , c₁) r₁
          -> (r₁ -> Parser tok nt (e₂ , c₂) r₂)
          -> Parser tok nt (e₂ , node c₁ c₂) r₂
-  bind₁  :  forall {c₁ r₁ r₂} {i₂ : r₁ -> Index}
+  bind₂  :  forall {c₁ r₁ r₂} {i₂ : r₁ -> Index}
          -> Parser tok nt (false , c₁) r₁
          -> ((x : r₁) -> Parser tok nt (i₂ x) r₂)
          -> Parser tok nt (false , step c₁) r₂
-  alt₀   :  forall {c₁ e₂ c₂ r}
-         -> Parser tok nt (true , c₁)         r
-         -> Parser tok nt (e₂   , c₂)         r
-         -> Parser tok nt (true , node c₁ c₂) r
-  alt₁   :  forall {c₁} e₂ {c₂ r}
-         -> Parser tok nt (false , c₁)         r
-         -> Parser tok nt (e₂    , c₂)         r
-         -> Parser tok nt (e₂    , node c₁ c₂) r
+  alt    :  forall e₁ e₂ {c₁ c₂ r}
+         -> Parser tok nt (e₁      , c₁)         r
+         -> Parser tok nt (e₂      , c₂)         r
+         -> Parser tok nt (e₁ ∨ e₂ , node c₁ c₂) r
 
 ------------------------------------------------------------------------
 -- Run function for the parsers
@@ -91,17 +87,17 @@ private
     parse : forall n {e c r} ->
             Parser tok nt (e , c) r ->
             P tok n (if e then n else pred n) r
-    parse n       (! x)              = parse n (g x)
-    parse zero    symbol             = ∅
-    parse (suc n) symbol             = eat =<< get
-    parse n       (ret x)            = return x
-    parse n       fail               = ∅
-    parse n       (bind₀      p₁ p₂) = parse  n      p₁ >>= parse  n ∘′ p₂
-    parse zero    (bind₁      p₁ p₂) = ∅
-    parse (suc n) (bind₁      p₁ p₂) = parse (suc n) p₁ >>= parse↑ n ∘′ p₂
-    parse n       (alt₀       p₁ p₂) = parse  n      p₁ ∣   parse↑ n    p₂
-    parse n       (alt₁ true  p₁ p₂) = parse↑ n      p₁ ∣   parse  n    p₂
-    parse n       (alt₁ false p₁ p₂) = parse  n      p₁ ∣   parse  n    p₂
+    parse n       (! x)                   = parse n (g x)
+    parse zero    symbol                  = ∅
+    parse (suc n) symbol                  = eat =<< get
+    parse n       (ret x)                 = return x
+    parse n       fail                    = ∅
+    parse n       (bind₁           p₁ p₂) = parse  n      p₁ >>= parse  n ∘′ p₂
+    parse zero    (bind₂           p₁ p₂) = ∅
+    parse (suc n) (bind₂           p₁ p₂) = parse (suc n) p₁ >>= parse↑ n ∘′ p₂
+    parse n       (alt true  _     p₁ p₂) = parse  n      p₁ ∣   parse↑ n    p₂
+    parse n       (alt false true  p₁ p₂) = parse↑ n      p₁ ∣   parse  n    p₂
+    parse n       (alt false false p₁ p₂) = parse  n      p₁ ∣   parse  n    p₂
 
     parse↑ : forall n {e c r} -> Parser tok nt (e , c) r -> P tok n n r
     parse↑ n       {true}  p = parse n p
