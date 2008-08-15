@@ -92,14 +92,16 @@ module Dummy {n} (g : PrecedenceGraph n) where
     prec : (t : ⊤ × PrecedenceTree n) ->
            Parser NamePart NT (false , prec-corners t) Expr
     prec (pair _ (G.node (pair p ops) ts)) =
-        app               <$> int closed
-      ∣ flip (foldr app)  <$> int prefx + ⊛ ↑
-      ∣ foldl (flip app)  <$> ↑ ⊛ int postfx +
-      ∣ flip app          <$> ↑ ⊛ int (infx non) ⊛ ↑
-      ∣ foldl appl        <$> ↑ ⊛ (int (infx left) ⊗ ↑) +
-      ∣ flip (foldr appr) <$> (↑ ⊗ int (infx right)) + ⊛ ↑
+        app                <$>  ⟦ closed ⟧
+      ∣ flip (foldr app)   <$>  ⟦ prefx ⟧ + ⊛ ↑
+      ∣ foldl (flip app)   <$>  ↑ ⊛ ⟦ postfx ⟧ +
+      ∣ flip app           <$>  ↑ ⊛ ⟦ infx non ⟧ ⊛ ↑
+      ∣ flip (foldr appr)  <$>  (↑ ⊗ ⟦ infx right ⟧) + ⊛ ↑
+      ∣ foldl appl         <$>  ↑ ⊛ (⟦ infx left ⟧ ⊗ ↑) +
       where
-      int = internal g p
+      -- ⟦ fa ⟧ parses the internal parts of operators with the
+      -- current precedence level and fixity/associativity fa.
+      ⟦_⟧ = internal g p
 
       -- Operator applications where the outermost operator binds
       -- tighter than the current precedence level.
