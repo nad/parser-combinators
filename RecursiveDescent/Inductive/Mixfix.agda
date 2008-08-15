@@ -1,0 +1,124 @@
+------------------------------------------------------------------------
+-- Parsing of mixfix operators
+------------------------------------------------------------------------
+
+module RecursiveDescent.Inductive.Mixfix where
+
+import Data.Graph.Acyclic as G
+open G using (_[_])
+import Data.Vec as Vec
+import Data.List as List
+open List using ([]; _∷_; foldr; foldl) renaming ([_] to List)
+import Data.Vec1 as Vec1
+open Vec1 using (Vec₁)
+open import Data.Product renaming (_,_ to _⊗_)
+open import Data.Product.Record using (_,_)
+open import Data.Bool
+open import Data.Unit
+open import Data.Nat
+open import Data.Function
+
+open import RecursiveDescent.Inductive.Mixfix.Token
+open import RecursiveDescent.Inductive.Mixfix.FA
+open import RecursiveDescent.Inductive.Mixfix.Expr
+open import RecursiveDescent.Index
+open import RecursiveDescent.Inductive
+open import RecursiveDescent.Inductive.SimpleLib
+import RecursiveDescent.Inductive.Lib as Lib
+import RecursiveDescent.Inductive.Token as Tok; open Tok tokenSetoid
+open import Utilities
+
+-- Nonterminals.
+
+data NT : ParserType where
+  lib : forall {i r} (p : Lib.Nonterminal Token NT i r) -> NT _ r
+
+  -- Expressions.
+  expr : forall {n} (g : PrecedenceGraph n) -> NT _ Expr
+
+open Lib.Combinators Token lib
+
+-- A vector containing parsers recognising the name parts of the
+-- operator.
+
+nameParts : forall {fa m} -> Operator fa m ->
+            Vec₁ (Parser Token NT _ Token) (1 + m)
+nameParts (oper ns) = Vec1.map₀₁ (\n -> sym (namePart n)) ns
+
+-- Internal parts (all name parts plus internal expressions) of
+-- operators of the given precedence, fixity and associativity.
+
+internal : forall {n} (g : PrecedenceGraph n)
+           (p : Precedence n) (fa : FA) ->
+           Parser Token NT _ (∃ (OpApp fa))
+internal g p fa =
+  choiceMap (\op -> (\args -> , (proj₂ op ∙ args)) <$>
+                      (! expr g between nameParts (proj₂ op))) ops
+  where
+  -- All matching operators.
+  ops = List.gfilter (hasFA fa) (G.label $ G.head $ g [ p ])
+
+-- The code below represents precedences using trees where the root is
+-- a precedence level and the children contain all higher precedence
+-- levels. This representation ensures that the code is structurally
+-- recursive.
+
+PrecedenceTree : ℕ -> Set
+PrecedenceTree n = G.Tree (Precedence n × List (∃₂ Operator)) ⊤
+
+module Dummy {n} (g : PrecedenceGraph n) where
+
+  precs-corners : List (⊤ × PrecedenceTree n) -> Corners
+  precs-corners []       = _
+  precs-corners (t ∷ ts) = _
+
+  prec-corners : ⊤ × PrecedenceTree n -> Corners
+  prec-corners (_ ⊗ G.node (p ⊗ ops) ts) = _
+
+  mutual
+
+    -- Atoms, parenthesised expressions, and operator applications
+    -- where the outermost operator has one of the given precedences.
+
+    precs⁺ : (ts : List (⊤ × PrecedenceTree n)) ->
+             Parser Token NT _ Expr
+    precs⁺ ts = atom <$  sym atom
+              ∣ ⟨_⟩  <$> (sym ⟨ ⊛> ! expr g <⊛ sym ⟩)
+              ∣ precs ts
+
+    -- Operator applications where the outermost operator has one of
+    -- the given precedences. (Reason for not using choiceMap: to
+    -- please the termination checker.)
+
+    precs : (ts : List (⊤ × PrecedenceTree n)) ->
+            Parser Token NT (false , precs-corners ts) Expr
+    precs []       = fail
+    precs (t ∷ ts) = prec t ∣ precs ts
+
+    -- Operator applications where the outermost operator has the given
+    -- precedence.
+
+    prec : (t : ⊤ × PrecedenceTree n) ->
+           Parser Token NT (false , prec-corners t) Expr
+    prec (_ ⊗ G.node (p ⊗ ops) ts) =
+        flip (foldr app) <$> int prefx + ⊛ tighter
+      ∣ foldl (flip app) <$> tighter ⊛ int postfx +
+      ∣ flip app <$> tighter ⊛ int (infx non) ⊛ tighter
+      ∣ chain≥ 1 left  tighter (app <$> int (infx left))
+      ∣ chain≥ 1 right tighter (app <$> int (infx right))
+      where
+      int = internal g p
+
+      -- Atoms, parenthesised expressions, and operator applications
+      -- where the outermost operator binds tighter than the current
+      -- precedence level.
+      tighter = precs⁺ ts
+
+open Dummy public
+
+-- The grammar.
+
+grammar : Grammar Token NT
+grammar (lib p)  = library p
+grammar (expr g) =
+  precs⁺ g (Vec.toList $ Vec.map ,_ $ G.toForest $ G.number g)
