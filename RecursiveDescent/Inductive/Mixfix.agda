@@ -11,7 +11,7 @@ import Data.List as List
 open List using ([]; _∷_; foldr; foldl) renaming ([_] to List)
 import Data.Vec1 as Vec1
 open Vec1 using (Vec₁)
-open import Data.Product renaming (_,_ to _⊗_)
+open import Data.Product renaming (_,_ to pair)
 open import Data.Product.Record using (_,_)
 open import Data.Bool
 open import Data.Unit
@@ -27,7 +27,6 @@ open import RecursiveDescent.Inductive.SimpleLib
 import RecursiveDescent.Inductive.Lib as Lib
 import RecursiveDescent.Inductive.Token as Tok
 open Tok String.decSetoid
-open import Utilities
 
 -- Nonterminals.
 
@@ -74,7 +73,7 @@ module Dummy {n} (g : PrecedenceGraph n) where
   precs-corners (t ∷ ts) = _
 
   prec-corners : ⊤ × PrecedenceTree n -> Corners
-  prec-corners (_ ⊗ G.node (p ⊗ ops) ts) = _
+  prec-corners (pair _ (G.node (pair p ops) ts)) = _
 
   mutual
 
@@ -92,19 +91,22 @@ module Dummy {n} (g : PrecedenceGraph n) where
 
     prec : (t : ⊤ × PrecedenceTree n) ->
            Parser NamePart NT (false , prec-corners t) Expr
-    prec (_ ⊗ G.node (p ⊗ ops) ts) =
-        app <$> int closed
-      ∣ flip (foldr app) <$> int prefx + ⊛ tighter
-      ∣ foldl (flip app) <$> tighter ⊛ int postfx +
-      ∣ flip app <$> tighter ⊛ int (infx non) ⊛ tighter
-      ∣ chain≥ 1 left  tighter (app <$> int (infx left))
-      ∣ chain≥ 1 right tighter (app <$> int (infx right))
+    prec (pair _ (G.node (pair p ops) ts)) =
+        app               <$> int closed
+      ∣ flip (foldr app)  <$> int prefx + ⊛ ↑
+      ∣ foldl (flip app)  <$> ↑ ⊛ int postfx +
+      ∣ flip app          <$> ↑ ⊛ int (infx non) ⊛ ↑
+      ∣ foldl appl        <$> ↑ ⊛ (int (infx left) ⊗ ↑) +
+      ∣ flip (foldr appr) <$> (↑ ⊗ int (infx right)) + ⊛ ↑
       where
       int = internal g p
 
       -- Operator applications where the outermost operator binds
       -- tighter than the current precedence level.
-      tighter = precs ts
+      ↑ = precs ts
+
+      appl = \e₁ ope₂ -> app (proj₁ ope₂) e₁ (proj₂ ope₂)
+      appr = \e₁op e₂ -> app (proj₂ e₁op) (proj₁ e₁op) e₂
 
 open Dummy public
 
