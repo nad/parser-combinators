@@ -17,42 +17,43 @@ open import Data.Bool
 open import Data.Unit
 open import Data.Nat
 open import Data.Function
+import Data.String as String
 
-open import RecursiveDescent.Inductive.Mixfix.Token
 open import RecursiveDescent.Inductive.Mixfix.FA
 open import RecursiveDescent.Inductive.Mixfix.Expr
 open import RecursiveDescent.Index
 open import RecursiveDescent.Inductive
 open import RecursiveDescent.Inductive.SimpleLib
 import RecursiveDescent.Inductive.Lib as Lib
-import RecursiveDescent.Inductive.Token as Tok; open Tok tokenSetoid
+import RecursiveDescent.Inductive.Token as Tok
+open Tok String.decSetoid
 open import Utilities
 
 -- Nonterminals.
 
 data NT : ParserType where
-  lib : forall {i r} (p : Lib.Nonterminal Token NT i r) -> NT _ r
+  lib : forall {i r} (p : Lib.Nonterminal NamePart NT i r) -> NT _ r
 
   -- Expressions.
   expr : forall {n} (g : PrecedenceGraph n) -> NT _ Expr
 
-open Lib.Combinators Token lib
+open Lib.Combinators NamePart lib
 
 -- A vector containing parsers recognising the name parts of the
 -- operator.
 
 nameParts : forall {fa m} -> Operator fa m ->
-            Vec₁ (Parser Token NT _ Token) (1 + m)
-nameParts (oper ns) = Vec1.map₀₁ (\n -> sym (namePart n)) ns
+            Vec₁ (Parser NamePart NT _ NamePart) (1 + m)
+nameParts (oper ns) = Vec1.map₀₁ sym ns
 
 -- Internal parts (all name parts plus internal expressions) of
 -- operators of the given precedence, fixity and associativity.
 
 internal : forall {n} (g : PrecedenceGraph n)
            (p : Precedence n) (fa : FA) ->
-           Parser Token NT _ (∃ (OpApp fa))
+           Parser NamePart NT _ (∃ (OpApp fa))
 internal g p fa =
-  choiceMap (\op -> (\args -> , (proj₂ op ∙ args)) <$>
+  choiceMap (\op -> (\args -> , (proj₂ op ⟨ args ⟩)) <$>
                       (! expr g between nameParts (proj₂ op))) ops
   where
   -- All matching operators.
@@ -77,21 +78,12 @@ module Dummy {n} (g : PrecedenceGraph n) where
 
   mutual
 
-    -- Atoms, parenthesised expressions, and operator applications
-    -- where the outermost operator has one of the given precedences.
-
-    precs⁺ : (ts : List (⊤ × PrecedenceTree n)) ->
-             Parser Token NT _ Expr
-    precs⁺ ts = atom <$  sym atom
-              ∣ ⟨_⟩  <$> (sym ⟨ ⊛> ! expr g <⊛ sym ⟩)
-              ∣ precs ts
-
     -- Operator applications where the outermost operator has one of
     -- the given precedences. (Reason for not using choiceMap: to
     -- please the termination checker.)
 
     precs : (ts : List (⊤ × PrecedenceTree n)) ->
-            Parser Token NT (false , precs-corners ts) Expr
+            Parser NamePart NT (false , precs-corners ts) Expr
     precs []       = fail
     precs (t ∷ ts) = prec t ∣ precs ts
 
@@ -99,9 +91,10 @@ module Dummy {n} (g : PrecedenceGraph n) where
     -- precedence.
 
     prec : (t : ⊤ × PrecedenceTree n) ->
-           Parser Token NT (false , prec-corners t) Expr
+           Parser NamePart NT (false , prec-corners t) Expr
     prec (_ ⊗ G.node (p ⊗ ops) ts) =
-        flip (foldr app) <$> int prefx + ⊛ tighter
+        app <$> int closed
+      ∣ flip (foldr app) <$> int prefx + ⊛ tighter
       ∣ foldl (flip app) <$> tighter ⊛ int postfx +
       ∣ flip app <$> tighter ⊛ int (infx non) ⊛ tighter
       ∣ chain≥ 1 left  tighter (app <$> int (infx left))
@@ -109,16 +102,15 @@ module Dummy {n} (g : PrecedenceGraph n) where
       where
       int = internal g p
 
-      -- Atoms, parenthesised expressions, and operator applications
-      -- where the outermost operator binds tighter than the current
-      -- precedence level.
-      tighter = precs⁺ ts
+      -- Operator applications where the outermost operator binds
+      -- tighter than the current precedence level.
+      tighter = precs ts
 
 open Dummy public
 
 -- The grammar.
 
-grammar : Grammar Token NT
+grammar : Grammar NamePart NT
 grammar (lib p)  = library p
 grammar (expr g) =
-  precs⁺ g (Vec.toList $ Vec.map ,_ $ G.toForest $ G.number g)
+  precs g (Vec.toList $ Vec.map ,_ $ G.toForest $ G.number g)

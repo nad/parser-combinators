@@ -12,17 +12,23 @@ open import Data.Maybe
 open import Data.Graph.Acyclic
 open import Data.Unit
 open import Data.Fin using (Fin)
+open import Data.String using (String)
 open import Relation.Nullary
 open import Relation.Binary.PropositionalEquality
 
 open import RecursiveDescent.Inductive.Mixfix.FA
-open import RecursiveDescent.Inductive.Mixfix.Token
 
--- Operators.
+-- Name parts.
 
-data Operator (fa : FA) noParts-1 : Set where
-  oper : (nameParts : Vec NamePart (1 + noParts-1)) ->
-         Operator fa noParts-1
+NamePart : Set
+NamePart = String
+
+-- Operators. arity is the internal arity of the operator, i.e. the
+-- number of arguments taken between the first and last name parts.
+
+data Operator (fa : FA) arity : Set where
+  oper : (nameParts : Vec NamePart (1 + arity)) ->
+         Operator fa arity
 
 -- Precedence graphs.
 
@@ -42,46 +48,54 @@ hasFA fa (fa' , op) with fa ≟ fa'
 hasFA fa (.fa , op) | yes ≡-refl = just op
 hasFA fa (fa' , op) | _          = nothing
 
--- arity fix n is the arity of operators with fixity fix and 1 + n
--- name parts.
+-- HasLeft/Right fix A evaluates to A if operators of fixity fix have
+-- an external left/right argument.
 
-arity : Fixity -> ℕ -> ℕ
-arity prefx  n = 1 + n
-arity infx   n = 2 + n
-arity postfx n = 1 + n
+HasLeft : Fixity -> Set -> Set
+HasLeft prefx  _ = ⊤
+HasLeft infx   A = A
+HasLeft postfx A = A
+HasLeft closed _ = ⊤
+
+HasRight : Fixity -> Set -> Set
+HasRight infx   A = A
+HasRight prefx  A = A
+HasRight postfx _ = ⊤
+HasRight closed _ = ⊤
 
 -- Concrete syntax. TODO: Ensure that expressions are precedence
 -- correct by parameterising the expression type on a precedence graph
 -- and indexing on precedences.
 
-infixl 4 _∙_
+mutual
 
-data Expr : Set where
-  -- Atom.
-  atom : Expr
+  infixl 4 _⟨_⟩_
+  infix  4 _⟨_⟩
 
-  -- Parenthesised expression.
-  ⟨_⟩  : (e : Expr) -> Expr
+  data Expr : Set where
+    -- Operator application.
+    _⟨_⟩_  : forall {fa arity}
+             (l  : HasLeft (fixity fa) Expr)
+             (op : OpApp fa arity)
+             (r  : HasRight (fixity fa) Expr) ->
+             Expr
 
-  -- Operator application.
-  _∙_  : forall {fa noParts-1}
-         (op : Operator fa noParts-1)
-         (args : Vec Expr (arity (fixity fa) noParts-1)) ->
-         Expr
+  -- Application of an operator to all its internal arguments.
 
--- Application of an operator to all its internal arguments.
-
-data OpApp fa noParts-1 : Set where
-  _∙_ : (op : Operator fa noParts-1) (args : Vec Expr noParts-1) ->
-        OpApp fa noParts-1
+  data OpApp fa arity : Set where
+    _⟨_⟩ : (op : Operator fa arity) (args : Vec Expr arity) ->
+           OpApp fa arity
 
 -- Applies an OpApp to all remaining (outer) arguments.
 
 AppType : Fixity -> Set
-AppType infx = Expr -> Expr -> Expr
-AppType _    = Expr -> Expr
+AppType postfx = Expr -> Expr
+AppType infx   = Expr -> Expr -> Expr
+AppType prefx  = Expr -> Expr
+AppType closed = Expr
 
 app : forall {fa} -> ∃ (OpApp fa) -> AppType (fixity fa)
-app {prefx}  (_ , (op ∙ args)) = \e     -> op ∙ args ∷ʳ e
-app {infx _} (_ , (op ∙ args)) = \e₁ e₂ -> op ∙ e₁ ∷ args ∷ʳ e₂
-app {postfx} (_ , (op ∙ args)) = \e     -> op ∙ e ∷ args
+app {prefx}  (_ , op) = \e     -> _  ⟨ op ⟩ e
+app {infx _} (_ , op) = \e₁ e₂ -> e₁ ⟨ op ⟩ e₂
+app {postfx} (_ , op) = \e     -> e  ⟨ op ⟩ _
+app {closed} (_ , op) =           _  ⟨ op ⟩ _
