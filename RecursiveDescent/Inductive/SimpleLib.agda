@@ -16,7 +16,8 @@ open import Data.Vec hiding (_⊛_; _>>=_)
 open import Data.Vec1 using (Vec₁; []; _∷_)
 open import Data.List using ([_]; []; _∷_)
 open import Relation.Nullary
-open import Data.Product.Record
+open import Data.Product.Record hiding (_×_)
+open import Data.Product using (_×_) renaming (_,_ to pair)
 open import Data.Bool
 open import Data.Function
 open import Data.Maybe
@@ -32,7 +33,7 @@ open import Relation.Binary.PropositionalEquality
 
 -- We could get these for free with better library support.
 
-infixl 50 _⊛_ _<⊛_ _⊛>_ _<$>_ _<$_
+infixl 50 _⊛_ _⊛!_ _<⊛_ _⊛>_ _<$>_ _<$_ _⊗_ _⊗!_
 
 _⊛_ : forall {tok nt i₁ i₂ r₁ r₂} ->
       Parser tok nt i₁ (r₁ -> r₂) ->
@@ -75,6 +76,16 @@ _<$_ : forall {tok nt i r₁ r₂} ->
        Parser tok nt i r₂ ->
        Parser tok nt _ r₁
 x <$ y = const x <$> y
+
+_⊗_ : forall {tok nt i₁ i₂ r₁ r₂} ->
+      Parser tok nt i₁ r₁ -> Parser tok nt i₂ r₂ ->
+      Parser tok nt _ (r₁ × r₂)
+p₁ ⊗ p₂ = pair <$> p₁ ⊛ p₂
+
+_⊗!_ : forall {tok nt i₁ c₂ r₁ r₂} ->
+      Parser tok nt i₁ r₁ -> Parser tok nt (false , c₂) r₂ ->
+      Parser tok nt (false , _) (r₁ × r₂)
+p₁ ⊗! p₂ = pair <$> p₁ ⊛! p₂
 
 ------------------------------------------------------------------------
 -- Parsing sequences
