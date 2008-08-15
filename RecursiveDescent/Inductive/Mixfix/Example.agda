@@ -58,17 +58,17 @@ comma = oper ("," ∷ [])
 _,_ : Expr -> Expr -> Expr
 e₁ , e₂ = e₁ ⟨ comma ⟨ [] ⟩ ⟩ e₂
 
-isType : Operator postfx 1
-isType = oper ("⊢" ∷ "∶" ∷ [])
+wellTyped : Operator postfx 1
+wellTyped = oper ("⊢" ∷ "∶" ∷ [])
 
 _⊢_∶ : Expr -> Expr -> Expr
-e₁ ⊢ e₂ ∶ = e₁ ⟨ isType ⟨ [ e₂ ] ⟩ ⟩ _
+e₁ ⊢ e₂ ∶ = e₁ ⟨ wellTyped ⟨ [ e₂ ] ⟩ ⟩ _
 
 ------------------------------------------------------------------------
 -- Precedence graph
 
 g : PrecedenceGraph 5
-g = context ((, , isType) ∷ [])              ((, # 0) ∷ (, # 3) ∷ [])           &
+g = context ((, , wellTyped) ∷ [])           ((, # 0) ∷ (, # 3) ∷ [])           &
     context ((, , comma) ∷ [])               ((, # 0) ∷ (, # 1) ∷ (, # 2) ∷ []) &
     context ((, , plus) ∷ (, , minus) ∷ [])  ((, # 0) ∷ (, # 1) ∷ [])           &
     context ((, , times) ∷ [])               ((, # 0) ∷ [])                     &
