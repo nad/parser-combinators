@@ -137,9 +137,6 @@ private
 -- 1) The upper bound of the length of the input string.
 -- 2) The parser's proper left corner tree.
 
--- The pattern matching on {e = ...} in parse is only there to work
--- around a bug in Agda's coverage checker.
-
 mutual
   parse : forall {tok nt} -> Grammar tok nt ->
           forall n {e c r} ->
@@ -155,8 +152,8 @@ mutual
   parse g zero    (bind₁      p₁ p₂) = ∅
   parse g (suc n) (bind₁      p₁ p₂) = parse  g (suc n) p₁ >>= parse↑ g n ∘′ p₂
   parse g n       (alt₀       p₁ p₂) = parse  g  n      p₁ ∣   parse↑ g n    p₂
-  parse g n {e = true}  (alt₁ .true  p₁ p₂) = parse↑ g  n      p₁ ∣   parse  g n    p₂
-  parse g n {e = false} (alt₁ .false p₁ p₂) = parse  g  n      p₁ ∣   parse  g n    p₂
+  parse g n       (alt₁ true  p₁ p₂) = parse↑ g  n      p₁ ∣   parse  g n    p₂
+  parse g n       (alt₁ false p₁ p₂) = parse  g  n      p₁ ∣   parse  g n    p₂
 
   parse↑ : forall {tok nt} -> Grammar tok nt ->
            forall n {e c r} -> Parser tok nt (e , c) r -> P tok n n r

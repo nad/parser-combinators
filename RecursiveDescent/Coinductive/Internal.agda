@@ -75,9 +75,6 @@ private
 
 mutual
 
-  -- The pattern matching on {e = ...} in parse is only there to work
-  -- around a bug in Agda's coverage checker.
-
   parse : forall n {tok e c r} ->
           Parser tok (e , c) r ->
           P tok n (if e then n else pred n) r
@@ -89,8 +86,8 @@ mutual
   parse zero    (bind₁      p₁ p₂) = ∅
   parse (suc n) (bind₁      p₁ p₂) = parse (suc n) p₁ >>= parse↑ n ∘′ p₂
   parse n       (alt₀       p₁ p₂) = parse  n      p₁ ∣   parse↑ n    p₂
-  parse n {e = true}  (alt₁ .true  p₁ p₂) = parse↑ n      p₁ ∣   parse  n    p₂
-  parse n {e = false} (alt₁ .false p₁ p₂) = parse  n      p₁ ∣   parse  n    p₂
+  parse n       (alt₁ true  p₁ p₂) = parse↑ n      p₁ ∣   parse  n    p₂
+  parse n       (alt₁ false p₁ p₂) = parse  n      p₁ ∣   parse  n    p₂
 
   parse↑ : forall n {e tok c r} -> Parser tok (e , c) r -> P tok n n r
   parse↑ n       {true}  p = parse n p

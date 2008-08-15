@@ -87,9 +87,6 @@ private
 
  module Dummy {tok nt} (g : Grammar tok nt) where
 
-  -- The pattern matching on {e = ...} in parse is only there to work
-  -- around a bug in Agda's coverage checker.
-
   mutual
     parse : forall n {e c r} ->
             Parser tok nt (e , c) r ->
@@ -103,8 +100,8 @@ private
     parse zero    (bind₁      p₁ p₂) = ∅
     parse (suc n) (bind₁      p₁ p₂) = parse (suc n) p₁ >>= parse↑ n ∘′ p₂
     parse n       (alt₀       p₁ p₂) = parse  n      p₁ ∣   parse↑ n    p₂
-    parse n {e = true}  (alt₁ .true  p₁ p₂) = parse↑ n      p₁ ∣   parse  n    p₂
-    parse n {e = false} (alt₁ .false p₁ p₂) = parse  n      p₁ ∣   parse  n    p₂
+    parse n       (alt₁ true  p₁ p₂) = parse↑ n      p₁ ∣   parse  n    p₂
+    parse n       (alt₁ false p₁ p₂) = parse  n      p₁ ∣   parse  n    p₂
 
     parse↑ : forall n {e c r} -> Parser tok nt (e , c) r -> P tok n n r
     parse↑ n       {true}  p = parse n p
