@@ -6,7 +6,7 @@ module RecursiveDescent.Inductive.Mixfix.Expr where
 
 open import Data.Nat hiding (_≟_)
 open import Data.Vec
-open import Data.List using ([_])
+open import Data.List using (List)
 open import Data.Product
 open import Data.Maybe
 open import Data.Graph.Acyclic
@@ -33,7 +33,7 @@ data Operator (fa : FA) arity : Set where
 -- Precedence graphs.
 
 PrecedenceGraph : ℕ -> Set
-PrecedenceGraph = Graph [ ∃₂ Operator ] ⊤
+PrecedenceGraph = Graph (List (∃₂ Operator)) ⊤
 
 -- Precedences (graph nodes).
 

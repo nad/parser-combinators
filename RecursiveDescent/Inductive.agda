@@ -22,7 +22,7 @@ open import Relation.Binary.PropositionalEquality
 
 parse :  forall {tok nt i r}
       -> Parser tok nt i r -> Grammar tok nt
-      -> [ tok ] -> [ Prod._×_ r [ tok ] ]
+      -> List tok -> List (Prod._×_ r (List tok))
 parse p g s = map (Prod.map-× id BVec.toList)
                   (P.parse g _ p (BVec.fromList s))
 
@@ -30,7 +30,7 @@ parse p g s = map (Prod.map-× id BVec.toList)
 
 parse-complete :  forall {tok nt i r}
                -> Parser tok nt i r -> Grammar tok nt
-               -> [ tok ] -> [ r ]
+               -> List tok -> List r
 parse-complete p g s =
   map Prod.proj₁ (filter (null ∘ Prod.proj₂) (parse p g s))
 

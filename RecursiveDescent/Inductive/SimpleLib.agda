@@ -14,7 +14,7 @@ open import RecursiveDescent.Index
 open import Data.Nat
 open import Data.Vec hiding (_⊛_; _>>=_)
 open import Data.Vec1 using (Vec₁; []; _∷_)
-open import Data.List using ([_]; []; _∷_)
+open import Data.List using (List; []; _∷_)
 open import Relation.Nullary
 open import Data.Product.Record hiding (_×_)
 open import Data.Product using (_×_) renaming (_,_ to pair)
@@ -102,7 +102,7 @@ private
              Parser tok nt (false , c) r ->
              Parser tok nt (false , exactly'-corners c n)
                            (Vec r (suc n))
-  exactly' zero    p = singleton <$> p
+  exactly' zero    p = [_] <$> p
   exactly' (suc n) p = _∷_ <$> p ⊛ exactly' n p
 
 -- ...so we might as well generalise the function a little.
@@ -158,13 +158,13 @@ choice (p ∷ ps) = p ∣ choice ps
 -- choiceMap f xs ≈ choice (map f xs), but avoids use of Vec₁ and
 -- fromList.
 
-choiceMap-corners : forall {a} -> (a -> Corners) -> [ a ] -> Corners
+choiceMap-corners : forall {a} -> (a -> Corners) -> List a -> Corners
 choiceMap-corners c []       = _
 choiceMap-corners c (x ∷ xs) = _
 
 choiceMap : forall {tok nt r a} {c : a -> Corners} ->
             ((x : a) -> Parser tok nt (false , c x) r) ->
-            (xs : [ a ]) ->
+            (xs : List a) ->
             Parser tok nt (false , choiceMap-corners c xs) r
 choiceMap f []       = fail
 choiceMap f (x ∷ xs) = f x ∣ choiceMap f xs

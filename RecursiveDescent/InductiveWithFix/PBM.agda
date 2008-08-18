@@ -14,7 +14,7 @@
 module RecursiveDescent.InductiveWithFix.PBM where
 
 import Data.Vec as Vec
-open Vec using (Vec; _++_)
+open Vec using (Vec; _++_; [_])
 import Data.List as List
 open import Data.Nat
 import Data.String as String
@@ -71,8 +71,7 @@ show i = "P1 # Generated using Agda.\n" <+>
   showMatrix = String.fromList ∘
                Vec.toList ∘
                Vec.concat ∘
-               Vec.map ((\xs -> xs ++ Vec.singleton '\n') ∘
-                        Vec.map showColour)
+               Vec.map ((\xs -> xs ++ [ '\n' ]) ∘ Vec.map showColour)
 
 ------------------------------------------------------------------------
 -- Parsing PBM images
@@ -107,5 +106,5 @@ module Example where
                    (black ∷ black ∷ []) ∷ [])
 
   ex₁ : parse-complete (! pbm) grammar (String.toList (show image)) ≡
-        List.singleton image
+        List.[_] image
   ex₁ = ≡-refl

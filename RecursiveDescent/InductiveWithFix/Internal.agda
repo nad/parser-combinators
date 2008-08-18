@@ -114,7 +114,7 @@ _▷_ : forall {tok nt i r} ->
 -- Parser monad.
 
 P : Set -> IFun ℕ
-P tok = IStateT (BoundedVec tok) L.[_]
+P tok = IStateT (BoundedVec tok) L.List
 
 PIMonadPlus : (tok : Set) -> RawIMonadPlus (P tok)
 PIMonadPlus tok = StateTIMonadPlus (BoundedVec tok) L.ListMonadPlus

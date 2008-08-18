@@ -23,7 +23,7 @@ import RecursiveDescent.Inductive.Token as Tok; open Tok C.decSetoid
 -- A function used to simplify the examples a little.
 
 _∈?_/_ :  forall {nt i r}
-       -> String -> Parser Char nt i r -> Grammar Char nt -> [ r ]
+       -> String -> Parser Char nt i r -> Grammar Char nt -> List r
 s ∈? p / g = parse-complete p g (S.toList s)
 
 module Ex₁ where

@@ -36,13 +36,13 @@ private
   data NT (nt : ParserType) : ParserType where
     many     : forall {c r} ->
                Parser tok nt (false , c) r ->
-               NT nt _ [ r ]
+               NT nt _ (List r)
     many₁    : forall {c r} ->
                Parser tok nt (false , c) r ->
-               NT nt _ [ r ]
+               NT nt _ (List r)
     atLeast' : forall {c r} (n : ℕ) ->
                Parser tok nt (false , c) r ->
-               NT nt (atLeast-index c n) [ r ]
+               NT nt (atLeast-index c n) (List r)
     chain≥'  : forall {c₁ i₂ r} (n : ℕ) ->
                Assoc ->
                Parser tok nt (false , c₁) r ->
@@ -60,19 +60,19 @@ module Combinators
 
   _⋆ : forall {c r} ->
        Parser tok nt (false , c) r ->
-       Parser tok nt _ [ r ]
+       Parser tok nt _ (List r)
   p ⋆ = ! lib (many p)
 
   _+ : forall {c r} ->
        Parser tok nt (false , c) r ->
-       Parser tok nt _ [ r ]
+       Parser tok nt _ (List r)
   p + = ! lib (many₁ p)
 
   -- At least n occurrences of p.
 
   atLeast : forall {c r} (n : ℕ) ->
             Parser tok nt (false , c) r ->
-            Parser tok nt _ [ r ]
+            Parser tok nt _ (List r)
   atLeast n p = ! lib (atLeast' n p)
 
   -- Chains at least n occurrences of op, in an a-associative

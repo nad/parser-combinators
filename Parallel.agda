@@ -14,7 +14,7 @@ open import Data.Bool
 open import Data.Nat
 open import Data.Product.Record using (_,_)
 import Data.List as List
-open List using ([_]; []; _∷_; _++_)
+open List using (List; []; _∷_; _++_)
 import Data.Vec as Vec
 open Vec using (Vec; []; _∷_) renaming (_++_ to _<+>_)
 open import Category.Monad.State
@@ -26,7 +26,7 @@ open import Relation.Binary.PropositionalEquality
 -- Parser monad
 
 P : Set -> (Set -> Set)
-P tok = StateT [ tok ] [_]
+P tok = StateT (List tok) List
 
 ------------------------------------------------------------------------
 -- Basic parsers (no CPS)
@@ -57,7 +57,7 @@ private
   -- has a more suitable type, though.
 
   return : forall {tok r} -> r -> Parser tok r (true , 1)
-  return x = returnPlus (Vec.singleton x) fail
+  return x = returnPlus (Vec.[_] x) fail
 
   cast : forall {tok i₁ i₂ r} ->
          i₁ ≡ i₂ -> Parser tok r i₁ -> Parser tok r i₂
@@ -237,6 +237,6 @@ parse (parser p) = Base.parse (p Base.return)
 -- A variant which only returns parses which leave no remaining input.
 
 parse-complete : forall {tok r i} ->
-                 Parser tok i r -> [ tok ] -> [ r ]
+                 Parser tok i r -> List tok -> List r
 parse-complete p s =
   List.map proj₁ (List.filter (List.null ∘ proj₂) (parse p s))

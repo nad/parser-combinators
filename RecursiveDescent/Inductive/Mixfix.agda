@@ -8,7 +8,7 @@ import Data.Graph.Acyclic as G
 open G using (_[_])
 import Data.Vec as Vec
 import Data.List as List
-open List using ([]; _∷_; foldr; foldl) renaming ([_] to List)
+open List using (List; []; _∷_; foldr; foldl)
 import Data.Vec1 as Vec1
 open Vec1 using (Vec₁)
 open import Data.Product renaming (_,_ to pair)

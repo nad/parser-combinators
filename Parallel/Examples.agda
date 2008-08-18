@@ -21,7 +21,7 @@ open Sym C.decSetoid
 
 -- A function used to simplify the examples a little.
 
-_∈?_ : forall {i r} -> String -> Parser Char i r -> [ r ]
+_∈?_ : forall {i r} -> String -> Parser Char i r -> List r
 s ∈? p = parse-complete p (S.toList s)
 
 module Ex₀ where

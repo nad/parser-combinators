@@ -20,14 +20,14 @@ import Data.BoundedVec.Inefficient as BVec
 -- Run function for the parsers
 
 parse : forall {tok i r} ->
-        Parser tok i r -> [ tok ] -> [ Prod._×_ r [ tok ] ]
+        Parser tok i r -> List tok -> List (Prod._×_ r (List tok))
 parse p s = map (Prod.map-× id BVec.toList)
                 (P.parse _ p (BVec.fromList s))
 
 -- A variant which only returns parses which leave no remaining input.
 
 parse-complete : forall {tok i r} ->
-                 Parser tok i r -> [ tok ] -> [ r ]
+                 Parser tok i r -> List tok -> List r
 parse-complete p s =
   map Prod.proj₁ (filter (null ∘ Prod.proj₂) (parse p s))
 

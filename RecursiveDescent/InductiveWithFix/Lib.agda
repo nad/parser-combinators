@@ -20,7 +20,7 @@ open import Utilities
 open import Data.Nat hiding (_≟_)
 import Data.Vec  as V;  open V  using (Vec)
 import Data.Vec1 as V₁; open V₁ using (Vec₁)
-import Data.List as L ; open L  using ([_])
+import Data.List as L ; open L  using (List)
 open import Relation.Nullary
 open import Data.Product.Record
 open import Data.Product renaming (_,_ to pair)
@@ -73,12 +73,12 @@ infix 55 _⋆ _+
 
 _⋆ : forall {tok nt c r} ->
      Parser tok nt (false , c) r ->
-     Parser tok nt _ [ r ]
+     Parser tok nt _ (List r)
 p ⋆ = fix (return L.[] ∣ L._∷_ <$> lift p ⊛ ! fresh)
 
 _+ : forall {tok nt c r} ->
      Parser tok nt (false , c) r ->
-     Parser tok nt _ [ r ]
+     Parser tok nt _ (List r)
 p + = L._∷_ <$> p ⊛ p ⋆
 
 chain₁ :  forall {tok nt c₁ i₂ r}
@@ -108,7 +108,7 @@ private
              Parser tok nt (false , c) r ->
              Parser tok nt (false , exactly'-corners c n)
                            (Vec r (suc n))
-  exactly' zero    p = V.singleton <$> p
+  exactly' zero    p = V.[_] <$> p
   exactly' (suc n) p = V._∷_ <$> p ⊛ exactly' n p
 
 -- ...so we might as well generalise the function a little.

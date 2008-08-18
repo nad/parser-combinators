@@ -20,15 +20,15 @@ infix 3 _∈⟦_⟧_
 mutual
 
   _∈⟦_⟧_ : forall {tok nt i r} ->
-           [ tok ] -> Parser tok nt i r -> Grammar tok nt -> Set1
+           List tok -> Parser tok nt i r -> Grammar tok nt -> Set1
   s ∈⟦ p ⟧ g = Semantics g s p
 
   data Semantics {tok : Set} {nt : ParserType} (g : Grammar tok nt)
                  : forall {i r} ->
-                   [ tok ] -> Parser tok nt i r -> Set1 where
+                   List tok -> Parser tok nt i r -> Set1 where
     !-sem      : forall {e c r} s (x : nt (e , c) r) ->
                  s ∈⟦ g x ⟧ g -> s ∈⟦ ! x ⟧ g
-    symbol-sem : forall c -> singleton c ∈⟦ symbol ⟧ g
+    symbol-sem : forall c -> [ c ] ∈⟦ symbol ⟧ g
     return-sem : forall {r} (x : r) -> [] ∈⟦ return x ⟧ g
     -- The following rule should really describe the intended
     -- semantics of _>>=_, not _⊛_. _!>>=_ should also get a rule.
@@ -48,10 +48,10 @@ mutual
 ------------------------------------------------------------------------
 -- Soundness of recognition
 
-data NonEmpty {a : Set} : [ a ] -> Set where
+data NonEmpty {a : Set} : List a -> Set where
   nonEmpty : forall x xs -> NonEmpty (x ∷ xs)
 
 postulate
   sound : forall {tok nt i r}
-          (p : Parser tok nt i r) (g : Grammar tok nt) (s : [ tok ]) ->
+          (p : Parser tok nt i r) (g : Grammar tok nt) (s : List tok) ->
           NonEmpty (parse-complete p g s) -> s ∈⟦ p ⟧ g

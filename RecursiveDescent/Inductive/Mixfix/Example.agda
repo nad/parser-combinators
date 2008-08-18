@@ -5,8 +5,8 @@
 module RecursiveDescent.Inductive.Mixfix.Example where
 
 open import Data.Graph.Acyclic hiding (map)
-open import Data.Vec using ([]; _∷_) renaming (singleton to [_])
-open import Data.List renaming ([_] to List; singleton to L[_])
+open import Data.Vec using ([]; _∷_; [_])
+open import Data.List renaming ([_] to L[_])
 open import Data.Product using (,_)
 open import Data.Nat using (zero; suc)
 open import Data.Fin using (#_)

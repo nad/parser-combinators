@@ -61,12 +61,12 @@ mutual
 
   _⋆ : forall {tok r d} ->
        Parser tok (false , d) r     ->
-       Parser tok _           [ r ]
+       Parser tok _           (List r)
   p ⋆ ~ return [] ∣ p +
 
   _+ : forall {tok r d} ->
        Parser tok (false , d) r     ->
-       Parser tok (false , d) [ r ]
+       Parser tok (false , d) (List r)
   p + ~ _∷_ <$> p ⊛ p ⋆
 
   -- Are these definitions productive? _∣_ and _⊛_ are not
@@ -130,7 +130,7 @@ mutual
 
 _sepBy_ : forall {tok r r' i d} ->
           Parser tok i r -> Parser tok (false , d) r' ->
-          Parser tok _ [ r ]
+          Parser tok _ (List r)
 p sepBy sep = _∷_ <$> p ⊛ (sep ⊛> p) ⋆
 
 chain₁ :  forall {tok d₁ i₂ r}

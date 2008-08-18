@@ -31,7 +31,7 @@ appˡ x (_•_ , y) = x • y
 
 -- Shifting. See Examples below for an illuminating example.
 
-shiftˡ : forall {a b} -> [ a × b ] -> a -> a × [ b × a ]
+shiftˡ : forall {a b} -> List (a × b) -> a -> a × List (b × a)
 shiftˡ []                x  = (x , [])
 shiftˡ ((x₁ , x₂) ∷ xs₃) x₄ = (x₁ , (x₂ , proj₁ x₃xs₄) ∷ proj₂ x₃xs₄)
   where x₃xs₄ = shiftˡ xs₃ x₄
@@ -39,18 +39,20 @@ shiftˡ ((x₁ , x₂) ∷ xs₃) x₄ = (x₁ , (x₂ , proj₁ x₃xs₄) ∷ 
 -- The post-processing function. See Examples below for some
 -- illuminating examples.
 
-chain₁-combine : forall {r} -> Assoc -> [ r × (r -> r -> r) ] -> r -> r
+chain₁-combine : forall {r} ->
+                 Assoc -> List (r × (r -> r -> r)) -> r -> r
 chain₁-combine right xs y = foldr appʳ y xs
 chain₁-combine left  xs y = uncurry (foldl appˡ) (shiftˡ xs y)
 
 -- Variants.
 
-shiftʳ : forall {a b} -> a -> [ b × a ] -> [ a × b ] × a
+shiftʳ : forall {a b} -> a -> List (b × a) -> List (a × b) × a
 shiftʳ x  []                = ([] , x)
 shiftʳ x₁ ((x₂ , x₃) ∷ xs₄) = ((x₁ , x₂) ∷ proj₁ xs₃x₄ , proj₂ xs₃x₄)
   where xs₃x₄ = shiftʳ x₃ xs₄
 
-chain≥-combine : forall {r} -> Assoc -> r -> [ (r -> r -> r) × r ] -> r
+chain≥-combine : forall {r} ->
+                 Assoc -> r -> List ((r -> r -> r) × r) -> r
 chain≥-combine right x ys = uncurry (flip (foldr appʳ)) (shiftʳ x ys)
 chain≥-combine left  x ys = foldl appˡ x ys
 
