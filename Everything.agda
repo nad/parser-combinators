@@ -22,7 +22,6 @@ import RecursiveDescent.Inductive.Mixfix
 import RecursiveDescent.Inductive.Mixfix.Example
 import RecursiveDescent.Inductive.Mixfix.Expr
 import RecursiveDescent.Inductive.Mixfix.FA
-import RecursiveDescent.Inductive.Mixfix.Token
 import RecursiveDescent.Inductive.PBM
 import RecursiveDescent.Inductive.Semantics
 import RecursiveDescent.Inductive.SimpleLib
