@@ -10,15 +10,6 @@ open import Relation.Nullary
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
 
-------------------------------------------------------------------------
--- Fixities
-
-data Fixity : Set where
-  prefx  : Fixity
-  infx   : Fixity -- infix is a reserved word.
-  postfx : Fixity
-  closed : Fixity
-
 data Associativity : Set where
   left  : Associativity
   right : Associativity
@@ -27,26 +18,22 @@ data Associativity : Set where
 -- A combination of fixity and associativity. Only infix operators
 -- have associativity.
 
-data FA : Set where
-  prefx  : FA
-  infx   : (assoc : Associativity) -> FA
-  postfx : FA
-  closed : FA
+-- Note that infix is a reserved word.
 
-fixity : FA -> Fixity
-fixity prefx    = prefx
-fixity (infx _) = infx
-fixity postfx   = postfx
-fixity closed   = closed
+data Fixity : Set where
+  prefx  : Fixity
+  infx   : (assoc : Associativity) -> Fixity
+  postfx : Fixity
+  closed : Fixity
 
-FA-is-finite : LeftInverse FA (Fin 6)
-FA-is-finite = record
+Fixity-is-finite : LeftInverse Fixity (Fin 6)
+Fixity-is-finite = record
   { from         = from
   ; to           = to
   ; left-inverse = left-inverse
   }
   where
-  to : FA -> Fin 6
+  to : Fixity -> Fin 6
   to prefx        = # 0
   to (infx left)  = # 1
   to (infx right) = # 2
@@ -54,7 +41,7 @@ FA-is-finite = record
   to postfx       = # 4
   to closed       = # 5
 
-  from : Fin 6 -> FA
+  from : Fin 6 -> Fixity
   from zero                                   = prefx
   from (suc zero)                             = infx left
   from (suc (suc zero))                       = infx right
@@ -71,6 +58,6 @@ FA-is-finite = record
   left-inverse postfx       = ≡-refl
   left-inverse closed       = ≡-refl
 
-_≟_ : Decidable (_≡_ {FA})
+_≟_ : Decidable (_≡_ {Fixity})
 _≟_ = eq? injection
-  where open LeftInverse FA-is-finite
+  where open LeftInverse Fixity-is-finite

@@ -41,7 +41,7 @@ open Lib.Combinators NamePart lib
 -- A vector containing parsers recognising the name parts of the
 -- operator.
 
-nameParts : forall {fa m} -> Operator fa m ->
+nameParts : forall {fix m} -> Operator fix m ->
             Vec₁ (Parser NamePart NT _ NamePart) (1 + m)
 nameParts (oper ns) = Vec1.map₀₁ sym ns
 
@@ -49,14 +49,14 @@ nameParts (oper ns) = Vec1.map₀₁ sym ns
 -- operators of the given precedence, fixity and associativity.
 
 internal : forall {n} (g : PrecedenceGraph n)
-           (p : Precedence n) (fa : FA) ->
-           Parser NamePart NT _ (∃ (OpApp fa))
-internal g p fa =
+           (p : Precedence n) (fix : Fixity) ->
+           Parser NamePart NT _ (∃ (OpApp fix))
+internal g p fix =
   choiceMap (\op -> (\args -> , (proj₂ op ⟨ args ⟩)) <$>
                       (! expr g between nameParts (proj₂ op))) ops
   where
   -- All matching operators.
-  ops = List.gfilter (hasFA fa) (G.label $ G.head $ g [ p ])
+  ops = List.gfilter (hasFixity fix) (G.label $ G.head $ g [ p ])
 
 -- The code below represents precedences using trees where the root is
 -- a precedence level and the children contain all higher precedence
@@ -99,8 +99,8 @@ module Dummy {n} (g : PrecedenceGraph n) where
       ∣ flip (foldr appr)  <$>  (↑ ⊗ ⟦ infx right ⟧) + ⊛ ↑
       ∣ foldl appl         <$>  ↑ ⊛ (⟦ infx left ⟧ ⊗ ↑) +
       where
-      -- ⟦ fa ⟧ parses the internal parts of operators with the
-      -- current precedence level and fixity/associativity fa.
+      -- ⟦ fix ⟧ parses the internal parts of operators with the
+      -- current precedence level and fixity fix.
       ⟦_⟧ = internal g p
 
       -- Operator applications where the outermost operator binds
