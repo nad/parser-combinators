@@ -16,7 +16,7 @@ open import Data.Product.Record using (_,_)
 open import Data.Bool
 open import Data.Unit
 open import Data.Nat
-open import Data.Function
+open import Data.Function hiding (_⟨_⟩_)
 import Data.String as String
 
 open import RecursiveDescent.Inductive.Mixfix.FA
@@ -43,16 +43,16 @@ open Lib.Combinators NamePart lib
 
 nameParts : forall {fix m} -> Operator fix m ->
             Vec₁ (Parser NamePart NT _ NamePart) (1 + m)
-nameParts (oper ns) = Vec1.map₀₁ sym ns
+nameParts (operator ns) = Vec1.map₀₁ sym ns
 
 -- Internal parts (all name parts plus internal expressions) of
 -- operators of the given precedence, fixity and associativity.
 
 internal : forall {n} (g : PrecedenceGraph n)
            (p : Precedence n) (fix : Fixity) ->
-           Parser NamePart NT _ (∃ (OpApp fix))
+           Parser NamePart NT _ (Internal fix)
 internal g p fix =
-  choiceMap (\op -> (\args -> , (proj₂ op ⟨ args ⟩)) <$>
+  choiceMap (\op -> (\args -> proj₂ op ∙ args) <$>
                       (! expr g between nameParts (proj₂ op))) ops
   where
   -- All matching operators.
@@ -92,13 +92,15 @@ module Dummy {n} (g : PrecedenceGraph n) where
     prec : (t : ⊤ × PrecedenceTree n) ->
            Parser NamePart NT (false , prec-corners t) Expr
     prec (pair _ (G.node (pair p ops) ts)) =
-        app                <$>  ⟦ closed ⟧
-      ∣ flip (foldr app)   <$>  ⟦ prefx ⟧ + ⊛ ↑
-      ∣ foldl (flip app)   <$>  ↑ ⊛ ⟦ postfx ⟧ +
-      ∣ flip app           <$>  ↑ ⊛ ⟦ infx non ⟧ ⊛ ↑
-      ∣ flip (foldr appr)  <$>  (↑ ⊗ ⟦ infx right ⟧) + ⊛ ↑
-      ∣ foldl appl         <$>  ↑ ⊛ (⟦ infx left ⟧ ⊗ ↑) +
+        ⟪_⟫                <$>  ⟦ closed ⟧
+      ∣ flip (foldr ⟪_⟩_)  <$>  ⟦ prefx ⟧ + ⊛ ↑
+      ∣ foldl _⟨_⟫         <$>  ↑ ⊛ ⟦ postfx ⟧ +
+      ∣ _⟨_⟩_              <$>  ↑ ⊛ ⟦ infx non ⟧ ⊛ ↑
+      ∣ flip (foldr _$_)   <$>  (_⟨_⟩_ <$> ↑ ⊛ ⟦ infx right ⟧) + ⊛ ↑
+      ∣ foldl (flip _$_)   <$>  ↑ ⊛ (⟨_⟩_,_ <$> ⟦ infx left ⟧ ⊛ ↑) +
       where
+      ⟨_⟩_,_ = \op e₂ e₁ -> e₁ ⟨ op ⟩ e₂
+
       -- ⟦ fix ⟧ parses the internal parts of operators with the
       -- current precedence level and fixity fix.
       ⟦_⟧ = internal g p
@@ -106,9 +108,6 @@ module Dummy {n} (g : PrecedenceGraph n) where
       -- Operator applications where the outermost operator binds
       -- tighter than the current precedence level.
       ↑ = precs ts
-
-      appl = \e₁ ope₂ -> app (proj₁ ope₂) e₁ (proj₂ ope₂)
-      appr = \e₁op e₂ -> app (proj₂ e₁op) (proj₁ e₁op) e₂
 
 open Dummy public
 

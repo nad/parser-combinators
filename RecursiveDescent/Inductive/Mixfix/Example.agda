@@ -23,46 +23,46 @@ open import RecursiveDescent.Inductive
 -- Operators
 
 atom : Operator closed 0
-atom = oper ("•" ∷ [])
+atom = operator ("•" ∷ [])
 
 • : Expr
-• = _ ⟨ atom ⟨ [] ⟩ ⟩ _
+• = ⟪ atom ∙ [] ⟫
 
 parens : Operator closed 1
-parens = oper ("(" ∷ ")" ∷ [])
+parens = operator ("(" ∷ ")" ∷ [])
 
 ⟦_⟧ : Expr -> Expr
-⟦ e ⟧ = _ ⟨ parens ⟨ [ e ] ⟩ ⟩ _
+⟦ e ⟧ = ⟪ parens ∙ [ e ] ⟫
 
 plus : Operator (infx left) 0
-plus = oper ("+" ∷ [])
+plus = operator ("+" ∷ [])
 
 _+_ : Expr -> Expr -> Expr
-e₁ + e₂ = e₁ ⟨ plus ⟨ [] ⟩ ⟩ e₂
+e₁ + e₂ = e₁ ⟨ plus ∙ [] ⟩ e₂
 
 minus : Operator (infx left) 0
-minus = oper ("-" ∷ [])
+minus = operator ("-" ∷ [])
 
 _-_ : Expr -> Expr -> Expr
-e₁ - e₂ = e₁ ⟨ minus ⟨ [] ⟩ ⟩ e₂
+e₁ - e₂ = e₁ ⟨ minus ∙ [] ⟩ e₂
 
 times : Operator (infx left) 0
-times = oper ("*" ∷ [])
+times = operator ("*" ∷ [])
 
 _*_ : Expr -> Expr -> Expr
-e₁ * e₂ = e₁ ⟨ times ⟨ [] ⟩ ⟩ e₂
+e₁ * e₂ = e₁ ⟨ times ∙ [] ⟩ e₂
 
 comma : Operator (infx left) 0
-comma = oper ("," ∷ [])
+comma = operator ("," ∷ [])
 
 _,_ : Expr -> Expr -> Expr
-e₁ , e₂ = e₁ ⟨ comma ⟨ [] ⟩ ⟩ e₂
+e₁ , e₂ = e₁ ⟨ comma ∙ [] ⟩ e₂
 
 wellTyped : Operator postfx 1
-wellTyped = oper ("⊢" ∷ "∶" ∷ [])
+wellTyped = operator ("⊢" ∷ "∶" ∷ [])
 
 _⊢_∶ : Expr -> Expr -> Expr
-e₁ ⊢ e₂ ∶ = e₁ ⟨ wellTyped ⟨ [ e₂ ] ⟩ ⟩ _
+e₁ ⊢ e₂ ∶ = e₁ ⟨ wellTyped ∙ [ e₂ ] ⟫
 
 ------------------------------------------------------------------------
 -- Precedence graph
