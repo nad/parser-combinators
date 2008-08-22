@@ -4,8 +4,6 @@
 
 module RecursiveDescent.Inductive.Mixfix where
 
-import Data.Graph.Acyclic as G
-open G using (_[_])
 import Data.Vec as Vec
 import Data.List as List
 open List using (List; []; _∷_; foldr; foldl)
@@ -34,46 +32,37 @@ data NT : ParserType where
   lib : forall {i r} (p : Lib.Nonterminal NamePart NT i r) -> NT _ r
 
   -- Expressions.
-  expr : forall {n} (g : PrecedenceGraph n) -> NT _ Expr
+  expr : (g : PrecedenceGraph) -> NT _ Expr
 
 open Lib.Combinators NamePart lib
 
 -- A vector containing parsers recognising the name parts of the
 -- operator.
 
-nameParts : forall {fix m} -> Operator fix m ->
-            Vec₁ (Parser NamePart NT _ NamePart) (1 + m)
+nameParts : forall {fix arity} -> Operator fix arity ->
+            Vec₁ (Parser NamePart NT _ NamePart) (1 + arity)
 nameParts (operator ns) = Vec1.map₀₁ sym ns
 
 -- Internal parts (all name parts plus internal expressions) of
 -- operators of the given precedence, fixity and associativity.
 
-internal : forall {n} (g : PrecedenceGraph n)
-           (p : Precedence n) (fix : Fixity) ->
+internal : (g : PrecedenceGraph)
+           (ops : List (∃₂ Operator))
+           (fix : Fixity) ->
            Parser NamePart NT _ (Internal fix)
-internal g p fix =
+internal g ops fix =
   choiceMap (\op -> (\args -> proj₂ op ∙ args) <$>
-                      (! expr g between nameParts (proj₂ op))) ops
-  where
-  -- All matching operators.
-  ops = List.gfilter (hasFixity fix) (G.label $ G.head $ g [ p ])
+                      (! expr g between nameParts (proj₂ op)))
+            (List.gfilter (hasFixity fix) ops)
 
--- The code below represents precedences using trees where the root is
--- a precedence level and the children contain all higher precedence
--- levels. This representation ensures that the code is structurally
--- recursive.
+module Dummy (g : PrecedenceGraph) where
 
-PrecedenceTree : ℕ -> Set
-PrecedenceTree n = G.Tree (Precedence n × List (∃₂ Operator)) ⊤
-
-module Dummy {n} (g : PrecedenceGraph n) where
-
-  precs-corners : List (⊤ × PrecedenceTree n) -> Corners
+  precs-corners : PrecedenceGraph -> Corners
   precs-corners []       = _
   precs-corners (t ∷ ts) = _
 
-  prec-corners : ⊤ × PrecedenceTree n -> Corners
-  prec-corners (pair _ (G.node (pair p ops) ts)) = _
+  prec-corners : PrecedenceTree -> Corners
+  prec-corners (node ops ts) = _
 
   mutual
 
@@ -81,7 +70,7 @@ module Dummy {n} (g : PrecedenceGraph n) where
     -- the given precedences. (Reason for not using choiceMap: to
     -- please the termination checker.)
 
-    precs : (ts : List (⊤ × PrecedenceTree n)) ->
+    precs : (ts : PrecedenceGraph) ->
             Parser NamePart NT (false , precs-corners ts) Expr
     precs []       = fail
     precs (t ∷ ts) = prec t ∣ precs ts
@@ -89,9 +78,9 @@ module Dummy {n} (g : PrecedenceGraph n) where
     -- Operator applications where the outermost operator has the given
     -- precedence.
 
-    prec : (t : ⊤ × PrecedenceTree n) ->
+    prec : (t : PrecedenceTree) ->
            Parser NamePart NT (false , prec-corners t) Expr
-    prec (pair _ (G.node (pair p ops) ts)) =
+    prec (node ops ts) =
         ⟪_⟫                <$>  ⟦ closed ⟧
       ∣ flip (foldr ⟪_⟩_)  <$>  ⟦ prefx ⟧ + ⊛ ↑
       ∣ foldl _⟨_⟫         <$>  ↑ ⊛ ⟦ postfx ⟧ +
@@ -103,7 +92,7 @@ module Dummy {n} (g : PrecedenceGraph n) where
 
       -- ⟦ fix ⟧ parses the internal parts of operators with the
       -- current precedence level and fixity fix.
-      ⟦_⟧ = internal g p
+      ⟦_⟧ = internal g ops
 
       -- Operator applications where the outermost operator binds
       -- tighter than the current precedence level.
@@ -115,5 +104,4 @@ open Dummy public
 
 grammar : Grammar NamePart NT
 grammar (lib p)  = library p
-grammar (expr g) =
-  precs g (Vec.toList $ Vec.map ,_ $ G.toForest $ G.number g)
+grammar (expr g) = precs g g

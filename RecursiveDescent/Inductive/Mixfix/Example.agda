@@ -67,13 +67,14 @@ e₁ ⊢ e₂ ∶ = e₁ ⟨ wellTyped ∙ [ e₂ ] ⟫
 ------------------------------------------------------------------------
 -- Precedence graph
 
-g : PrecedenceGraph 5
-g = context ((, , wellTyped) ∷ [])           ((, # 0) ∷ (, # 3) ∷ [])           &
-    context ((, , comma) ∷ [])               ((, # 0) ∷ (, # 1) ∷ (, # 2) ∷ []) &
-    context ((, , plus) ∷ (, , minus) ∷ [])  ((, # 0) ∷ (, # 1) ∷ [])           &
-    context ((, , times) ∷ [])               ((, # 0) ∷ [])                     &
-    context ((, , atom) ∷ (, , parens) ∷ []) []                                 &
-    ∅
+g : PrecedenceGraph
+g = wt ∷ c ∷ pm ∷ t ∷ ap ∷ []
+  where
+  ap = node ((, , atom) ∷ (, , parens) ∷ []) []
+  t  = node ((, , times) ∷ [])               (ap ∷ [])
+  pm = node ((, , plus) ∷ (, , minus) ∷ [])  (t ∷ ap ∷ [])
+  c  = node ((, , comma) ∷ [])               (pm ∷ t ∷ ap ∷ [])
+  wt = node ((, , wellTyped) ∷ [])           (c ∷ ap ∷ [])
 
 ------------------------------------------------------------------------
 -- Some tests

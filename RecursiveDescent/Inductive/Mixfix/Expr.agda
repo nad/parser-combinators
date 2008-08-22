@@ -9,7 +9,6 @@ open import Data.Vec
 open import Data.List using (List)
 open import Data.Product
 open import Data.Maybe
-open import Data.Graph.Acyclic
 open import Data.Unit
 open import Data.Fin using (Fin)
 open import Data.String using (String)
@@ -30,15 +29,19 @@ data Operator (fix : Fixity) (arity : ℕ) : Set where
   operator : (nameParts : Vec NamePart (1 + arity)) ->
              Operator fix arity
 
--- Precedence graphs.
+-- Precedence graphs are represented by their unfoldings as forests
+-- (one tree for every node in the graph). This does not take into
+-- account the sharing of the precedence graphs, but this program is
+-- not aimed at efficiency.
 
-PrecedenceGraph : ℕ -> Set
-PrecedenceGraph = Graph (List (∃₂ Operator)) ⊤
+mutual
 
--- Precedences (graph nodes).
+  PrecedenceGraph : Set
+  PrecedenceGraph = List PrecedenceTree
 
-Precedence : ℕ -> Set
-Precedence = Fin
+  data PrecedenceTree : Set where
+    node : (label : List (∃₂ Operator))
+           (successors : PrecedenceGraph) -> PrecedenceTree
 
 -- Predicate filtering out operators of the given fixity and
 -- associativity.
