@@ -35,12 +35,12 @@ open Tok String.decSetoid
 -- is that this would lead to a definition of node-corners which
 -- was not structurally recursive.
 
-nodes-corners : PrecedenceGraph -> PrecedenceGraph -> Corners
-nodes-corners g []       = _
-nodes-corners g (p ∷ ps) = _
+nodes-corners : PrecedenceGraph -> Corners
+nodes-corners []       = _
+nodes-corners (p ∷ ps) = _
 
-node-corners : PrecedenceGraph -> PrecedenceTree -> Corners
-node-corners g (precedence ops ps) = _
+node-corners : PrecedenceTree -> Corners
+node-corners (precedence ops ps) = _
 
 -- Nonterminals.
 
@@ -55,13 +55,13 @@ data NT : ParserType where
   -- of the precedences ps. The graph g is used for internal
   -- expressions.
   nodes : (g ps : PrecedenceGraph) ->
-          NT (false , nodes-corners g ps) Expr
+          NT (false , nodes-corners ps) Expr
 
   -- Expressions corresponding to one node in the precedence graph:
   -- operator applications where the outermost operator has
   -- precedence p. The graph g is used for internal expressions.
   node : (g : PrecedenceGraph) (p : PrecedenceTree) ->
-         NT (false , node-corners g p) Expr
+         NT (false , node-corners p) Expr
 
 open Lib.Combinators NamePart lib
 
@@ -80,7 +80,7 @@ nameParts (operator ns) = Vec1.map₀₁ sym ns
 -- Internal parts (all name parts plus internal expressions) of
 -- operators of the given precedence and fixity.
 
-internal : forall (g : PrecedenceGraph) {fix}
+internal : forall {fix} -> PrecedenceGraph ->
            (ops : List (∃ (Operator fix))) -> P _ (Internal fix)
 internal g =
   choiceMap (\op' -> let op = proj₂ op' in
