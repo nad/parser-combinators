@@ -30,17 +30,17 @@ open Tok String.decSetoid
 -- functions are (mutually). Fortunately the recursion is structural,
 -- though. Note also that the reason for not using the implementation
 --
---   grammar (precs g ts) = choiceMap (\t -> ! prec g t) ts
+--   grammar (nodes g ts) = choiceMap (\t -> ! node g t) ts
 --
--- is that this would lead to a definition of prec-corners which
+-- is that this would lead to a definition of node-corners which
 -- was not structurally recursive.
 
-precs-corners : PrecedenceGraph -> PrecedenceGraph -> Corners
-precs-corners g []       = _
-precs-corners g (p ∷ ps) = _
+nodes-corners : PrecedenceGraph -> PrecedenceGraph -> Corners
+nodes-corners g []       = _
+nodes-corners g (p ∷ ps) = _
 
-prec-corners : PrecedenceGraph -> PrecedenceTree -> Corners
-prec-corners g (node ops ps) = _
+node-corners : PrecedenceGraph -> PrecedenceTree -> Corners
+node-corners g (precedence ops ps) = _
 
 -- Nonterminals.
 
@@ -50,15 +50,18 @@ data NT : ParserType where
   -- Expressions.
   expr : (g : PrecedenceGraph) -> NT _ Expr
 
-  -- Operator applications where the outermost operator has one of the
-  -- precedences ps (and the overall precedence graph is g).
-  precs : (g ps : PrecedenceGraph) ->
-          NT (false , precs-corners g ps) Expr
+  -- Expressions corresponding to zero or more nodes in the precedence
+  -- graph: operator applications where the outermost operator has one
+  -- of the precedences ps. The graph g is used for internal
+  -- expressions.
+  nodes : (g ps : PrecedenceGraph) ->
+          NT (false , nodes-corners g ps) Expr
 
-  -- Operator applications where the outermost operator has
-  -- precedence p (and the overall precedence graph is g).
-  prec : (g : PrecedenceGraph) (p : PrecedenceTree) ->
-         NT (false , prec-corners g p) Expr
+  -- Expressions corresponding to one node in the precedence graph:
+  -- operator applications where the outermost operator has
+  -- precedence p. The graph g is used for internal expressions.
+  node : (g : PrecedenceGraph) (p : PrecedenceTree) ->
+         NT (false , node-corners g p) Expr
 
 open Lib.Combinators NamePart lib
 
@@ -86,11 +89,11 @@ internal g =
 -- The grammar.
 
 grammar : Grammar NamePart NT
-grammar (lib p)                 = library p
-grammar (expr g)                = ! precs g g
-grammar (precs g [])            = fail
-grammar (precs g (p ∷ ps))      = ! prec g p ∣ ! precs g ps
-grammar (prec  g (node ops ps)) =
+grammar (lib p)                      = library p
+grammar (expr g)                     = ! nodes g g
+grammar (nodes g [])                 = fail
+grammar (nodes g (p ∷ ps))           = ! node g p ∣ ! nodes g ps
+grammar (node g (precedence ops ps)) =
     ⟪_⟫                <$>  ⟦ closed ⟧
   ∣ _⟨_⟩_              <$>  ↑ ⊛ ⟦ infx non ⟧ ⊛ ↑
   ∣ flip (foldr ⟪_⟩_)  <$>  ⟦ prefx ⟧ + ⊛ ↑
@@ -106,4 +109,4 @@ grammar (prec  g (node ops ps)) =
 
   -- Operator applications where the outermost operator binds
   -- tighter than the current precedence level.
-  ↑ = ! precs g ps
+  ↑ = ! nodes g ps

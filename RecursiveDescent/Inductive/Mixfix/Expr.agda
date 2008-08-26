@@ -46,9 +46,9 @@ mutual
   PrecedenceGraph = List PrecedenceTree
 
   data PrecedenceTree : Set where
-    node : (ops : (fix : Fixity) -> List (∃ (Operator fix)))
-           (successors : PrecedenceGraph) ->
-           PrecedenceTree
+    precedence : (ops : (fix : Fixity) -> List (∃ (Operator fix)))
+                 (successors : PrecedenceGraph) ->
+                 PrecedenceTree
 
 -- Concrete syntax. TODO: Ensure that expressions are precedence
 -- correct by parameterising the expression type on a precedence graph

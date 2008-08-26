@@ -67,17 +67,17 @@ e₁ ⊢ e₂ ∶ = e₁ ⟨ wellTyped ∙ [ e₂ ] ⟫
 ------------------------------------------------------------------------
 -- Precedence graph
 
-node' : List (∃₂ Operator) -> PrecedenceGraph -> PrecedenceTree
-node' ops = node (\fix -> gfilter (hasFixity fix) ops)
+prec : List (∃₂ Operator) -> PrecedenceGraph -> PrecedenceTree
+prec ops = precedence (\fix -> gfilter (hasFixity fix) ops)
 
 g : PrecedenceGraph
 g = wt ∷ c ∷ pm ∷ t ∷ ap ∷ []
   where
-  ap = node' ((, , atom) ∷ (, , parens) ∷ []) []
-  t  = node' ((, , times) ∷ [])               (ap ∷ [])
-  pm = node' ((, , plus) ∷ (, , minus) ∷ [])  (t ∷ ap ∷ [])
-  c  = node' ((, , comma) ∷ [])               (pm ∷ t ∷ ap ∷ [])
-  wt = node' ((, , wellTyped) ∷ [])           (c ∷ ap ∷ [])
+  ap = prec ((, , atom) ∷ (, , parens) ∷ []) []
+  t  = prec ((, , times) ∷ [])               (ap ∷ [])
+  pm = prec ((, , plus) ∷ (, , minus) ∷ [])  (t ∷ ap ∷ [])
+  c  = prec ((, , comma) ∷ [])               (pm ∷ t ∷ ap ∷ [])
+  wt = prec ((, , wellTyped) ∷ [])           (c ∷ ap ∷ [])
 
 ------------------------------------------------------------------------
 -- Some tests
