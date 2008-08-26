@@ -94,15 +94,11 @@ grammar (expr g)                     = ! nodes g g
 grammar (nodes g [])                 = fail
 grammar (nodes g (p ∷ ps))           = ! node g p ∣ ! nodes g ps
 grammar (node g (precedence ops ps)) =
-    ⟪_⟫                <$>  ⟦ closed ⟧
-  ∣ _⟨_⟩_              <$>  ↑ ⊛ ⟦ infx non ⟧ ⊛ ↑
-  ∣ flip (foldr ⟪_⟩_)  <$>  ⟦ prefx ⟧ + ⊛ ↑
-  ∣ flip (foldr _$_)   <$>  (_⟨_⟩_ <$> ↑ ⊛ ⟦ infx right ⟧) + ⊛ ↑
-  ∣ foldl _⟨_⟫         <$>  ↑ ⊛ ⟦ postfx ⟧ +
-  ∣ foldl (flip _$_)   <$>  ↑ ⊛ (⟨_⟩_,_ <$> ⟦ infx left ⟧ ⊛ ↑) +
+     ⟪_⟫              <$>      ⟦ closed   ⟧
+  ∣ _⟨_⟩_             <$>  ↑ ⊛ ⟦ infx non ⟧ ⊛ ↑
+  ∣ flip (foldr _$_)  <$>      rightish +   ⊛ ↑
+  ∣ foldl (flip _$_)  <$>  ↑ ⊛ leftish  +
   where
-  ⟨_⟩_,_ = \op e₂ e₁ -> e₁ ⟨ op ⟩ e₂
-
   -- ⟦ fix ⟧ parses the internal parts of operators with the
   -- current precedence level and fixity fix.
   ⟦_⟧ = \fix -> internal g (ops fix)
@@ -110,3 +106,11 @@ grammar (node g (precedence ops ps)) =
   -- Operator applications where the outermost operator binds
   -- tighter than the current precedence level.
   ↑ = ! nodes g ps
+
+  -- Right associative and prefix operators.
+  rightish =  ⟪_⟩_ <$> ⟦ prefx ⟧
+           ∣ _⟨_⟩_ <$> ↑ ⊛ ⟦ infx right ⟧
+
+  -- Left associative and postfix operators.
+  leftish = flip _⟨_⟫                   <$> ⟦ postfx ⟧
+          ∣ (\op e₂ e₁ -> e₁ ⟨ op ⟩ e₂) <$> ⟦ infx left ⟧ ⊛ ↑
