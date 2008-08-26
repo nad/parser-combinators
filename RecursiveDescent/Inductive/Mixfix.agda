@@ -48,57 +48,55 @@ nameParts : forall {fix arity} -> Operator fix arity ->
             Vec₁ (P _ NamePart) (1 + arity)
 nameParts (operator ns) = Vec1.map₀₁ sym ns
 
-module Dummy (g : PrecedenceGraph) where
+-- Internal parts (all name parts plus internal expressions) of
+-- operators of the given precedence, fixity and associativity.
 
-  precs-corners : PrecedenceGraph -> Corners
-  precs-corners []       = _
-  precs-corners (t ∷ ts) = _
+internal : forall (g : PrecedenceGraph) {fix}
+           (ops : List (∃ (Operator fix))) -> P _ (Internal fix)
+internal g =
+  choiceMap (\op' -> let op = proj₂ op' in
+                     _∙_ op <$> (! expr g between nameParts op))
 
-  prec-corners : PrecedenceTree -> Corners
-  prec-corners (node ops ts) = _
+precs-corners : PrecedenceGraph -> PrecedenceGraph -> Corners
+precs-corners g []       = _
+precs-corners g (t ∷ ts) = _
 
-  -- Internal parts (all name parts plus internal expressions) of
-  -- operators of the given precedence, fixity and associativity.
+prec-corners : PrecedenceGraph -> PrecedenceTree -> Corners
+prec-corners g (node ops ts) = _
 
-  internal : forall {fix} (ops : List (∃ (Operator fix))) ->
-             P _ (Internal fix)
-  internal =
-    choiceMap (\op' -> let op = proj₂ op' in
-                       _∙_ op <$> (! expr g between nameParts op))
+mutual
 
-  mutual
+  -- Operator applications where the outermost operator has one of
+  -- the given precedences. (Reason for not using choiceMap: to
+  -- please the termination checker.)
 
-    -- Operator applications where the outermost operator has one of
-    -- the given precedences. (Reason for not using choiceMap: to
-    -- please the termination checker.)
+  precs : (g ts : PrecedenceGraph) ->
+          P (false , precs-corners g ts) Expr
+  precs g []       = fail
+  precs g (t ∷ ts) = prec g t ∣ precs g ts
 
-    precs : (ts : PrecedenceGraph) -> P (false , precs-corners ts) Expr
-    precs []       = fail
-    precs (t ∷ ts) = prec t ∣ precs ts
+  -- Operator applications where the outermost operator has the given
+  -- precedence.
 
-    -- Operator applications where the outermost operator has the given
-    -- precedence.
+  prec : (g : PrecedenceGraph) (t : PrecedenceTree) ->
+         P (false , prec-corners g t) Expr
+  prec g (node ops ts) =
+      ⟪_⟫                <$>  ⟦ closed ⟧
+    ∣ flip (foldr ⟪_⟩_)  <$>  ⟦ prefx ⟧ + ⊛ ↑
+    ∣ foldl _⟨_⟫         <$>  ↑ ⊛ ⟦ postfx ⟧ +
+    ∣ _⟨_⟩_              <$>  ↑ ⊛ ⟦ infx non ⟧ ⊛ ↑
+    ∣ flip (foldr _$_)   <$>  (_⟨_⟩_ <$> ↑ ⊛ ⟦ infx right ⟧) + ⊛ ↑
+    ∣ foldl (flip _$_)   <$>  ↑ ⊛ (⟨_⟩_,_ <$> ⟦ infx left ⟧ ⊛ ↑) +
+    where
+    ⟨_⟩_,_ = \op e₂ e₁ -> e₁ ⟨ op ⟩ e₂
 
-    prec : (t : PrecedenceTree) -> P (false , prec-corners t) Expr
-    prec (node ops ts) =
-        ⟪_⟫                <$>  ⟦ closed ⟧
-      ∣ flip (foldr ⟪_⟩_)  <$>  ⟦ prefx ⟧ + ⊛ ↑
-      ∣ foldl _⟨_⟫         <$>  ↑ ⊛ ⟦ postfx ⟧ +
-      ∣ _⟨_⟩_              <$>  ↑ ⊛ ⟦ infx non ⟧ ⊛ ↑
-      ∣ flip (foldr _$_)   <$>  (_⟨_⟩_ <$> ↑ ⊛ ⟦ infx right ⟧) + ⊛ ↑
-      ∣ foldl (flip _$_)   <$>  ↑ ⊛ (⟨_⟩_,_ <$> ⟦ infx left ⟧ ⊛ ↑) +
-      where
-      ⟨_⟩_,_ = \op e₂ e₁ -> e₁ ⟨ op ⟩ e₂
+    -- ⟦ fix ⟧ parses the internal parts of operators with the
+    -- current precedence level and fixity fix.
+    ⟦_⟧ = \fix -> internal g (ops fix)
 
-      -- ⟦ fix ⟧ parses the internal parts of operators with the
-      -- current precedence level and fixity fix.
-      ⟦_⟧ = \fix -> internal (ops fix)
-
-      -- Operator applications where the outermost operator binds
-      -- tighter than the current precedence level.
-      ↑ = precs ts
-
-open Dummy public
+    -- Operator applications where the outermost operator binds
+    -- tighter than the current precedence level.
+    ↑ = precs g ts
 
 -- The grammar.
 
