@@ -43,18 +43,6 @@ nameParts : forall {fix arity} -> Operator fix arity ->
             Vec₁ (Parser NamePart NT _ NamePart) (1 + arity)
 nameParts (operator ns) = Vec1.map₀₁ sym ns
 
--- Internal parts (all name parts plus internal expressions) of
--- operators of the given precedence, fixity and associativity.
-
-internal : (g : PrecedenceGraph)
-           (ops : List (∃₂ Operator))
-           (fix : Fixity) ->
-           Parser NamePart NT _ (Internal fix)
-internal g ops fix =
-  choiceMap (\op -> (\args -> proj₂ op ∙ args) <$>
-                      (! expr g between nameParts (proj₂ op)))
-            (List.gfilter (hasFixity fix) ops)
-
 module Dummy (g : PrecedenceGraph) where
 
   precs-corners : PrecedenceGraph -> Corners
@@ -63,6 +51,15 @@ module Dummy (g : PrecedenceGraph) where
 
   prec-corners : PrecedenceTree -> Corners
   prec-corners (node ops ts) = _
+
+  -- Internal parts (all name parts plus internal expressions) of
+  -- operators of the given precedence, fixity and associativity.
+
+  internal : forall {fix} (ops : List (∃ (Operator fix))) ->
+             Parser NamePart NT _ (Internal fix)
+  internal =
+    choiceMap (\op' -> let op = proj₂ op' in
+                       _∙_ op <$> (! expr g between nameParts op))
 
   mutual
 
@@ -92,7 +89,7 @@ module Dummy (g : PrecedenceGraph) where
 
       -- ⟦ fix ⟧ parses the internal parts of operators with the
       -- current precedence level and fixity fix.
-      ⟦_⟧ = internal g ops
+      ⟦_⟧ = \fix -> internal (ops fix)
 
       -- Operator applications where the outermost operator binds
       -- tighter than the current precedence level.

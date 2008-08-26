@@ -7,7 +7,7 @@ module RecursiveDescent.Inductive.Mixfix.Example where
 open import Data.Graph.Acyclic hiding (map)
 open import Data.Vec using ([]; _∷_; [_])
 open import Data.List renaming ([_] to L[_])
-open import Data.Product using (,_)
+open import Data.Product using (∃₂; ,_)
 open import Data.Nat using (zero; suc)
 open import Data.Fin using (#_)
 open import Data.String
@@ -67,14 +67,17 @@ e₁ ⊢ e₂ ∶ = e₁ ⟨ wellTyped ∙ [ e₂ ] ⟫
 ------------------------------------------------------------------------
 -- Precedence graph
 
+node' : List (∃₂ Operator) -> PrecedenceGraph -> PrecedenceTree
+node' ops = node (\fix -> gfilter (hasFixity fix) ops)
+
 g : PrecedenceGraph
 g = wt ∷ c ∷ pm ∷ t ∷ ap ∷ []
   where
-  ap = node ((, , atom) ∷ (, , parens) ∷ []) []
-  t  = node ((, , times) ∷ [])               (ap ∷ [])
-  pm = node ((, , plus) ∷ (, , minus) ∷ [])  (t ∷ ap ∷ [])
-  c  = node ((, , comma) ∷ [])               (pm ∷ t ∷ ap ∷ [])
-  wt = node ((, , wellTyped) ∷ [])           (c ∷ ap ∷ [])
+  ap = node' ((, , atom) ∷ (, , parens) ∷ []) []
+  t  = node' ((, , times) ∷ [])               (ap ∷ [])
+  pm = node' ((, , plus) ∷ (, , minus) ∷ [])  (t ∷ ap ∷ [])
+  c  = node' ((, , comma) ∷ [])               (pm ∷ t ∷ ap ∷ [])
+  wt = node' ((, , wellTyped) ∷ [])           (c ∷ ap ∷ [])
 
 ------------------------------------------------------------------------
 -- Some tests

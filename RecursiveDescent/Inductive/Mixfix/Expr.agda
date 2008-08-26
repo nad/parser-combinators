@@ -9,8 +9,6 @@ open import Data.Vec
 open import Data.List using (List)
 open import Data.Product
 open import Data.Maybe
-open import Data.Unit
-open import Data.Fin using (Fin)
 open import Data.String using (String)
 open import Relation.Nullary
 open import Relation.Binary.PropositionalEquality
@@ -29,6 +27,14 @@ data Operator (fix : Fixity) (arity : ℕ) : Set where
   operator : (nameParts : Vec NamePart (1 + arity)) ->
              Operator fix arity
 
+-- Predicate filtering out operators of the given fixity and
+-- associativity.
+
+hasFixity : forall fix -> ∃₂ Operator -> Maybe (∃ (Operator fix))
+hasFixity fix (fix' , op) with fix ≟ fix'
+hasFixity fix (.fix , op) | yes ≡-refl = just op
+hasFixity fix (fix' , op) | _          = nothing
+
 -- Precedence graphs are represented by their unfoldings as forests
 -- (one tree for every node in the graph). This does not take into
 -- account the sharing of the precedence graphs, but this program is
@@ -40,16 +46,9 @@ mutual
   PrecedenceGraph = List PrecedenceTree
 
   data PrecedenceTree : Set where
-    node : (label : List (∃₂ Operator))
-           (successors : PrecedenceGraph) -> PrecedenceTree
-
--- Predicate filtering out operators of the given fixity and
--- associativity.
-
-hasFixity : forall fix -> ∃₂ Operator -> Maybe (∃ (Operator fix))
-hasFixity fix (fix' , op) with fix ≟ fix'
-hasFixity fix (.fix , op) | yes ≡-refl = just op
-hasFixity fix (fix' , op) | _          = nothing
+    node : (ops : (fix : Fixity) -> List (∃ (Operator fix)))
+           (successors : PrecedenceGraph) ->
+           PrecedenceTree
 
 -- Concrete syntax. TODO: Ensure that expressions are precedence
 -- correct by parameterising the expression type on a precedence graph
