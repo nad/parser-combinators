@@ -26,6 +26,22 @@ import RecursiveDescent.Inductive.Lib as Lib
 import RecursiveDescent.Inductive.Token as Tok
 open Tok String.decSetoid
 
+-- Note that, even though grammar below is not recursive, these
+-- functions are (mutually). Fortunately the recursion is structural,
+-- though. Note also that the reason for not using the implementation
+--
+--   grammar (precs g ts) = choiceMap (\t -> ! prec g t) ts
+--
+-- is that this would lead to a definition of prec-corners which
+-- was not structurally recursive.
+
+precs-corners : PrecedenceGraph -> PrecedenceGraph -> Corners
+precs-corners g []       = _
+precs-corners g (p ∷ ps) = _
+
+prec-corners : PrecedenceGraph -> PrecedenceTree -> Corners
+prec-corners g (node ops ps) = _
+
 -- Nonterminals.
 
 data NT : ParserType where
@@ -33,6 +49,16 @@ data NT : ParserType where
 
   -- Expressions.
   expr : (g : PrecedenceGraph) -> NT _ Expr
+
+  -- Operator applications where the outermost operator has one of the
+  -- precedences ps (and the overall precedence graph is g).
+  precs : (g ps : PrecedenceGraph) ->
+          NT (false , precs-corners g ps) Expr
+
+  -- Operator applications where the outermost operator has
+  -- precedence p (and the overall precedence graph is g).
+  prec : (g : PrecedenceGraph) (p : PrecedenceTree) ->
+         NT (false , prec-corners g p) Expr
 
 open Lib.Combinators NamePart lib
 
@@ -49,7 +75,7 @@ nameParts : forall {fix arity} -> Operator fix arity ->
 nameParts (operator ns) = Vec1.map₀₁ sym ns
 
 -- Internal parts (all name parts plus internal expressions) of
--- operators of the given precedence, fixity and associativity.
+-- operators of the given precedence and fixity.
 
 internal : forall (g : PrecedenceGraph) {fix}
            (ops : List (∃ (Operator fix))) -> P _ (Internal fix)
@@ -57,49 +83,27 @@ internal g =
   choiceMap (\op' -> let op = proj₂ op' in
                      _∙_ op <$> (! expr g between nameParts op))
 
-precs-corners : PrecedenceGraph -> PrecedenceGraph -> Corners
-precs-corners g []       = _
-precs-corners g (t ∷ ts) = _
-
-prec-corners : PrecedenceGraph -> PrecedenceTree -> Corners
-prec-corners g (node ops ts) = _
-
-mutual
-
-  -- Operator applications where the outermost operator has one of
-  -- the given precedences. (Reason for not using choiceMap: to
-  -- please the termination checker.)
-
-  precs : (g ts : PrecedenceGraph) ->
-          P (false , precs-corners g ts) Expr
-  precs g []       = fail
-  precs g (t ∷ ts) = prec g t ∣ precs g ts
-
-  -- Operator applications where the outermost operator has the given
-  -- precedence.
-
-  prec : (g : PrecedenceGraph) (t : PrecedenceTree) ->
-         P (false , prec-corners g t) Expr
-  prec g (node ops ts) =
-      ⟪_⟫                <$>  ⟦ closed ⟧
-    ∣ flip (foldr ⟪_⟩_)  <$>  ⟦ prefx ⟧ + ⊛ ↑
-    ∣ foldl _⟨_⟫         <$>  ↑ ⊛ ⟦ postfx ⟧ +
-    ∣ _⟨_⟩_              <$>  ↑ ⊛ ⟦ infx non ⟧ ⊛ ↑
-    ∣ flip (foldr _$_)   <$>  (_⟨_⟩_ <$> ↑ ⊛ ⟦ infx right ⟧) + ⊛ ↑
-    ∣ foldl (flip _$_)   <$>  ↑ ⊛ (⟨_⟩_,_ <$> ⟦ infx left ⟧ ⊛ ↑) +
-    where
-    ⟨_⟩_,_ = \op e₂ e₁ -> e₁ ⟨ op ⟩ e₂
-
-    -- ⟦ fix ⟧ parses the internal parts of operators with the
-    -- current precedence level and fixity fix.
-    ⟦_⟧ = \fix -> internal g (ops fix)
-
-    -- Operator applications where the outermost operator binds
-    -- tighter than the current precedence level.
-    ↑ = precs g ts
-
 -- The grammar.
 
 grammar : Grammar NamePart NT
-grammar (lib p)  = library p
-grammar (expr g) = precs g g
+grammar (lib p)                 = library p
+grammar (expr g)                = ! precs g g
+grammar (precs g [])            = fail
+grammar (precs g (p ∷ ps))      = ! prec g p ∣ ! precs g ps
+grammar (prec  g (node ops ps)) =
+    ⟪_⟫                <$>  ⟦ closed ⟧
+  ∣ _⟨_⟩_              <$>  ↑ ⊛ ⟦ infx non ⟧ ⊛ ↑
+  ∣ flip (foldr ⟪_⟩_)  <$>  ⟦ prefx ⟧ + ⊛ ↑
+  ∣ flip (foldr _$_)   <$>  (_⟨_⟩_ <$> ↑ ⊛ ⟦ infx right ⟧) + ⊛ ↑
+  ∣ foldl _⟨_⟫         <$>  ↑ ⊛ ⟦ postfx ⟧ +
+  ∣ foldl (flip _$_)   <$>  ↑ ⊛ (⟨_⟩_,_ <$> ⟦ infx left ⟧ ⊛ ↑) +
+  where
+  ⟨_⟩_,_ = \op e₂ e₁ -> e₁ ⟨ op ⟩ e₂
+
+  -- ⟦ fix ⟧ parses the internal parts of operators with the
+  -- current precedence level and fixity fix.
+  ⟦_⟧ = \fix -> internal g (ops fix)
+
+  -- Operator applications where the outermost operator binds
+  -- tighter than the current precedence level.
+  ↑ = ! precs g ps
