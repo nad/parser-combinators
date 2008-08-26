@@ -36,11 +36,16 @@ data NT : ParserType where
 
 open Lib.Combinators NamePart lib
 
+-- The parser type used in this module.
+
+P : Index -> Set -> Set1
+P = Parser NamePart NT
+
 -- A vector containing parsers recognising the name parts of the
 -- operator.
 
 nameParts : forall {fix arity} -> Operator fix arity ->
-            Vec₁ (Parser NamePart NT _ NamePart) (1 + arity)
+            Vec₁ (P _ NamePart) (1 + arity)
 nameParts (operator ns) = Vec1.map₀₁ sym ns
 
 module Dummy (g : PrecedenceGraph) where
@@ -56,7 +61,7 @@ module Dummy (g : PrecedenceGraph) where
   -- operators of the given precedence, fixity and associativity.
 
   internal : forall {fix} (ops : List (∃ (Operator fix))) ->
-             Parser NamePart NT _ (Internal fix)
+             P _ (Internal fix)
   internal =
     choiceMap (\op' -> let op = proj₂ op' in
                        _∙_ op <$> (! expr g between nameParts op))
@@ -67,16 +72,14 @@ module Dummy (g : PrecedenceGraph) where
     -- the given precedences. (Reason for not using choiceMap: to
     -- please the termination checker.)
 
-    precs : (ts : PrecedenceGraph) ->
-            Parser NamePart NT (false , precs-corners ts) Expr
+    precs : (ts : PrecedenceGraph) -> P (false , precs-corners ts) Expr
     precs []       = fail
     precs (t ∷ ts) = prec t ∣ precs ts
 
     -- Operator applications where the outermost operator has the given
     -- precedence.
 
-    prec : (t : PrecedenceTree) ->
-           Parser NamePart NT (false , prec-corners t) Expr
+    prec : (t : PrecedenceTree) -> P (false , prec-corners t) Expr
     prec (node ops ts) =
         ⟪_⟫                <$>  ⟦ closed ⟧
       ∣ flip (foldr ⟪_⟩_)  <$>  ⟦ prefx ⟧ + ⊛ ↑
