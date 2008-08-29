@@ -6,6 +6,7 @@ module RecursiveDescent.Coinductive.Lib where
 
 open import Utilities
 open import RecursiveDescent.Coinductive
+import RecursiveDescent.Coinductive.Internal as Internal
 open import RecursiveDescent.Index
 
 open import Data.Bool
@@ -54,29 +55,37 @@ x <$ y = const x <$> y
 
 infix 60 _⋆ _+
 
+-- Not accepted by the productivity checker:
+
+-- mutual
+
+--   _⋆ : forall {tok r d} ->
+--        Parser tok (false , d) r     ->
+--        Parser tok _           (List r)
+--   p ⋆ ~ return [] ∣ p +
+
+--   _+ : forall {tok r d} ->
+--        Parser tok (false , d) r     ->
+--        Parser tok _           (List r)
+--   p + ~ _∷_ <$> p ⊛ p ⋆
+
+-- By inlining some definitions we can show that the definitions are
+-- productive, though. The following definitions have also been
+-- simplified:
+
 mutual
 
   _⋆ : forall {tok r d} ->
        Parser tok (false , d) r     ->
        Parser tok _           (List r)
-  p ⋆ ~ return [] ∣ p +
+  p ⋆ ~ Internal.alt₀ (return []) (p +)
 
   _+ : forall {tok r d} ->
        Parser tok (false , d) r     ->
        Parser tok _           (List r)
-  p + ~ _∷_ <$> p ⊛ p ⋆
-
-  -- Are these definitions productive? _∣_ and _⊛_ are not
-  -- constructors... Unfolding we get (unless I've made some mistake)
-  --
-  --   p ⋆ ~ alt₁ false (ret []) (p +)
-  --
-  -- and
-  --
-  --   p + ~ bind₁ (bind₀ (ret _∷_) (\f -> bind₁ p (\x -> ret (f x))))
-  --               (\f -> bind₀ (p ⋆) (\x -> ret (f x)))
-  --
-  -- These definitions are guarded.
+  p + ~ Internal.bind₁ p     \x  ->
+        Internal.bind₀ (p ⋆) \xs ->
+        return (x ∷ xs)
 
 -- p sepBy sep parses one or more ps separated by seps.
 
