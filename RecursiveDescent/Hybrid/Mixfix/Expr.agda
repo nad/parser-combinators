@@ -13,7 +13,7 @@ open import Data.String using (String)
 open import Relation.Nullary
 open import Relation.Binary.PropositionalEquality
 
-open import RecursiveDescent.Hybrid.Mixfix.FA
+open import RecursiveDescent.Hybrid.Mixfix.Fixity
 
 -- Name parts.
 

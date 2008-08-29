@@ -2,7 +2,7 @@
 -- Fixity and associativity
 ------------------------------------------------------------------------
 
-module RecursiveDescent.Hybrid.Mixfix.FA where
+module RecursiveDescent.Hybrid.Mixfix.Fixity where
 
 open import Data.Fin using (Fin; zero; suc; #_)
 open import Data.Fin.Props using (eq?)

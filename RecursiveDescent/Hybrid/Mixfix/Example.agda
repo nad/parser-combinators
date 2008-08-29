@@ -14,7 +14,7 @@ open import Data.Function using (_∘_)
 open import Relation.Binary.PropositionalEquality
 
 open import RecursiveDescent.Hybrid.Mixfix.Expr
-open import RecursiveDescent.Hybrid.Mixfix.FA
+open import RecursiveDescent.Hybrid.Mixfix.Fixity
 open import RecursiveDescent.Hybrid.Mixfix
 open import RecursiveDescent.Hybrid
 open import RecursiveDescent.Hybrid.Simple

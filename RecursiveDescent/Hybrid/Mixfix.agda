@@ -17,7 +17,7 @@ open import Data.Nat
 open import Data.Function hiding (_⟨_⟩_)
 import Data.String as String
 
-open import RecursiveDescent.Hybrid.Mixfix.FA
+open import RecursiveDescent.Hybrid.Mixfix.Fixity
 open import RecursiveDescent.Hybrid.Mixfix.Expr
 open import RecursiveDescent.Index
 open import RecursiveDescent.Hybrid
