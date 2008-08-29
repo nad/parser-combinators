@@ -2,7 +2,7 @@
 -- Concrete syntax used by the mixfix operator parser
 ------------------------------------------------------------------------
 
-module RecursiveDescent.Inductive.Mixfix.Expr where
+module RecursiveDescent.Hybrid.Mixfix.Expr where
 
 open import Data.Nat hiding (_≟_)
 open import Data.Vec
@@ -13,7 +13,7 @@ open import Data.String using (String)
 open import Relation.Nullary
 open import Relation.Binary.PropositionalEquality
 
-open import RecursiveDescent.Inductive.Mixfix.FA
+open import RecursiveDescent.Hybrid.Mixfix.FA
 
 -- Name parts.
 

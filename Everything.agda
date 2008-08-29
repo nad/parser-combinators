@@ -2,6 +2,11 @@
 -- Imports every module so that it is easy to see if everything builds
 ------------------------------------------------------------------------
 
+-- Note that this repository contains a number of different
+-- implementations of parser combinators (including lots of code
+-- overlap). This is mostly for historical reasons. My favourite
+-- implementation is currently the one in RecursiveDescent.Hybrid.
+
 module Everything where
 
 import Parallel
@@ -12,17 +17,21 @@ import RecursiveDescent.Coinductive
 import RecursiveDescent.Coinductive.Examples
 import RecursiveDescent.Coinductive.Internal
 import RecursiveDescent.Coinductive.Lib
+import RecursiveDescent.Hybrid
+import RecursiveDescent.Hybrid.Examples
+import RecursiveDescent.Hybrid.Internal
+import RecursiveDescent.Hybrid.Lib
+import RecursiveDescent.Hybrid.Mixfix
+import RecursiveDescent.Hybrid.Mixfix.Example
+import RecursiveDescent.Hybrid.Mixfix.Expr
+import RecursiveDescent.Hybrid.Mixfix.FA
+import RecursiveDescent.Hybrid.PBM
 import RecursiveDescent.Index
 import RecursiveDescent.Inductive
 import RecursiveDescent.Inductive.Char
 import RecursiveDescent.Inductive.Examples
 import RecursiveDescent.Inductive.Internal
 import RecursiveDescent.Inductive.Lib
-import RecursiveDescent.Inductive.Mixfix
-import RecursiveDescent.Inductive.Mixfix.Example
-import RecursiveDescent.Inductive.Mixfix.Expr
-import RecursiveDescent.Inductive.Mixfix.FA
-import RecursiveDescent.Inductive.PBM
 import RecursiveDescent.Inductive.Semantics
 import RecursiveDescent.Inductive.SimpleLib
 import RecursiveDescent.Inductive.Token

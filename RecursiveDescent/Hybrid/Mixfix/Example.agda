@@ -2,7 +2,7 @@
 -- An example
 ------------------------------------------------------------------------
 
-module RecursiveDescent.Inductive.Mixfix.Example where
+module RecursiveDescent.Hybrid.Mixfix.Example where
 
 open import Data.Graph.Acyclic hiding (map)
 open import Data.Vec using ([]; _∷_; [_])
@@ -14,10 +14,10 @@ open import Data.String
 open import Data.Function using (_∘_)
 open import Relation.Binary.PropositionalEquality
 
-open import RecursiveDescent.Inductive.Mixfix.Expr
-open import RecursiveDescent.Inductive.Mixfix.FA
-open import RecursiveDescent.Inductive.Mixfix
-open import RecursiveDescent.Inductive
+open import RecursiveDescent.Hybrid.Mixfix.Expr
+open import RecursiveDescent.Hybrid.Mixfix.FA
+open import RecursiveDescent.Hybrid.Mixfix
+open import RecursiveDescent.Hybrid
 
 ------------------------------------------------------------------------
 -- Operators

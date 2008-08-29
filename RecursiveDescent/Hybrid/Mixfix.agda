@@ -2,7 +2,7 @@
 -- Parsing of mixfix operators
 ------------------------------------------------------------------------
 
-module RecursiveDescent.Inductive.Mixfix where
+module RecursiveDescent.Hybrid.Mixfix where
 
 import Data.Vec as Vec
 import Data.List as List
@@ -17,14 +17,12 @@ open import Data.Nat
 open import Data.Function hiding (_⟨_⟩_)
 import Data.String as String
 
-open import RecursiveDescent.Inductive.Mixfix.FA
-open import RecursiveDescent.Inductive.Mixfix.Expr
+open import RecursiveDescent.Hybrid.Mixfix.FA
+open import RecursiveDescent.Hybrid.Mixfix.Expr
 open import RecursiveDescent.Index
-open import RecursiveDescent.Inductive
-open import RecursiveDescent.Inductive.SimpleLib
-import RecursiveDescent.Inductive.Lib as Lib
-import RecursiveDescent.Inductive.Token as Tok
-open Tok String.decSetoid
+open import RecursiveDescent.Hybrid
+open import RecursiveDescent.Hybrid.Lib
+open Token String.decSetoid
 
 -- Note that, even though grammar below is not recursive, these
 -- functions are (mutually). Fortunately the recursion is structural,
@@ -45,8 +43,6 @@ node-corners (precedence ops ps) = _
 -- Nonterminals.
 
 data NT : ParserType where
-  lib : forall {i r} (p : Lib.Nonterminal NamePart NT i r) -> NT _ r
-
   -- Expressions.
   expr : (g : PrecedenceGraph) -> NT _ Expr
 
@@ -62,8 +58,6 @@ data NT : ParserType where
   -- precedence p. The graph g is used for internal expressions.
   node : (g : PrecedenceGraph) (p : PrecedenceTree) ->
          NT (false , node-corners p) Expr
-
-open Lib.Combinators NamePart lib
 
 -- The parser type used in this module.
 
@@ -89,7 +83,6 @@ internal g =
 -- The grammar.
 
 grammar : Grammar NamePart NT
-grammar (lib p)                      = library p
 grammar (expr g)                     = ! nodes g g
 grammar (nodes g [])                 = fail
 grammar (nodes g (p ∷ ps))           = ! node g p ∣ ! nodes g ps

@@ -11,7 +11,7 @@
 -- The idea to write this particular parser was taken from "The Power
 -- of Pi" by Oury and Swierstra.
 
-module RecursiveDescent.Inductive.PBM where
+module RecursiveDescent.Hybrid.PBM where
 
 import Data.Vec as Vec
 open Vec using (Vec; _++_; [_])
@@ -31,12 +31,9 @@ open import Relation.Nullary
 open import Relation.Binary.PropositionalEquality
 
 open import RecursiveDescent.Index
-open import RecursiveDescent.Inductive
-open import RecursiveDescent.Inductive.SimpleLib
-import RecursiveDescent.Inductive.Token as Tok; open Tok Char.decSetoid
-import RecursiveDescent.Inductive.Lib as Lib
-module L = Lib Char
-import RecursiveDescent.Inductive.Char as CharLib
+open import RecursiveDescent.Hybrid
+open import RecursiveDescent.Hybrid.Lib
+open Token Char.decSetoid
 
 ------------------------------------------------------------------------
 -- The PBM type
@@ -80,18 +77,11 @@ show i = "P1 # Generated using Agda.\n" <+>
 -- Parsing PBM images
 
 data NT : ParserType where
-  lib     : forall {i r} -> L.Nonterminal       NT i r -> NT _ r
-  cLib    : forall {i r} -> CharLib.Nonterminal NT i r -> NT _ r
   comment : NT _ ⊤
   colour  : NT _ Colour
   pbm     : NT _ PBM
 
-open Lib.Combinators Char lib
-open CharLib.Combinators cLib
-
 grammar : Grammar Char NT
-grammar (lib p)  = library p
-grammar (cLib p) = charLib p
 grammar comment  = tt <$ sym '#' <⊛ sat' (not ∘ _==_ '\n') ⋆ <⊛ sym '\n'
 grammar colour   = white <$ sym '0'
                  ∣ black <$ sym '1'
