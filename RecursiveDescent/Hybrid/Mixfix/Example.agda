@@ -4,7 +4,6 @@
 
 module RecursiveDescent.Hybrid.Mixfix.Example where
 
-open import Data.Graph.Acyclic hiding (map)
 open import Data.Vec using ([]; _∷_; [_])
 open import Data.List renaming ([_] to L[_])
 open import Data.Product using (∃₂; ,_)
