@@ -19,13 +19,14 @@ import RecursiveDescent.Coinductive.Internal
 import RecursiveDescent.Coinductive.Lib
 import RecursiveDescent.Hybrid
 import RecursiveDescent.Hybrid.Examples
-import RecursiveDescent.Hybrid.Internal
 import RecursiveDescent.Hybrid.Lib
 import RecursiveDescent.Hybrid.Mixfix
 import RecursiveDescent.Hybrid.Mixfix.Example
 import RecursiveDescent.Hybrid.Mixfix.Expr
 import RecursiveDescent.Hybrid.Mixfix.FA
 import RecursiveDescent.Hybrid.PBM
+import RecursiveDescent.Hybrid.Simple
+import RecursiveDescent.Hybrid.Type
 import RecursiveDescent.Index
 import RecursiveDescent.Inductive
 import RecursiveDescent.Inductive.Char

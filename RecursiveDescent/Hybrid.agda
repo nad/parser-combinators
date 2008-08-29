@@ -2,37 +2,17 @@
 -- Terminating parser "combinator" interface
 ------------------------------------------------------------------------
 
+-- Use RecursiveDescent.Hybrid.Simple to actually run the parsers.
+
 module RecursiveDescent.Hybrid where
 
 open import RecursiveDescent.Index
-import RecursiveDescent.Hybrid.Internal as P
+import RecursiveDescent.Hybrid.Type as P
 open P public using (Parser; Grammar)
 
-open import Data.List
 open import Data.Bool
-open import Data.Maybe
 open import Data.Product.Record
-import Data.Product as Prod
-open import Data.Function
-import Data.BoundedVec.Inefficient as BVec
 open import Relation.Binary.PropositionalEquality
-
-------------------------------------------------------------------------
--- Run function for the parsers
-
-parse :  forall {tok nt i r}
-      -> Parser tok nt i r -> Grammar tok nt
-      -> List tok -> List (Prod._×_ r (List tok))
-parse p g s = map (Prod.map-× id BVec.toList)
-                  (P.parse g _ p (BVec.fromList s))
-
--- A variant which only returns parses which leave no remaining input.
-
-parse-complete :  forall {tok nt i r}
-               -> Parser tok nt i r -> Grammar tok nt
-               -> List tok -> List r
-parse-complete p g s =
-  map Prod.proj₁ (filter (null ∘ Prod.proj₂) (parse p g s))
 
 ------------------------------------------------------------------------
 -- Exported combinators

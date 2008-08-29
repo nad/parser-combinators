@@ -1,75 +1,44 @@
 ------------------------------------------------------------------------
--- A terminating parser data type and the accompanying interpreter
+-- A simple backend
 ------------------------------------------------------------------------
 
--- This hybrid variant is coinductive /and/ includes !_.
-
-module RecursiveDescent.Hybrid.Internal where
+module RecursiveDescent.Hybrid.Simple where
 
 open import Data.Bool
 open import Data.Product.Record
+import Data.Product as Prod
 open import Data.Maybe
 open import Data.BoundedVec.Inefficient
 import Data.List as L
 open import Data.Nat
+open import Data.Function using (id; _∘_)
 open import Category.Applicative.Indexed
 open import Category.Monad.Indexed
 open import Category.Monad.State
 
-open import RecursiveDescent.Index
+open import RecursiveDescent.Hybrid.Type
 open import Utilities
 
 ------------------------------------------------------------------------
--- Parser data type
-
--- A type for parsers which can be implemented using recursive
--- descent. The types used ensure that the implementation below is
--- structurally recursive.
-
--- The parsers are indexed on a type of nonterminals.
-
-codata Parser (tok : Set) (nt : ParserType) : ParserType where
-  !_     :  forall {e c r}
-         -> nt (e , c) r -> Parser tok nt (e , step c) r
-  symbol :  Parser tok nt (false , leaf) tok
-  ret    :  forall {r} -> r -> Parser tok nt (true , leaf) r
-  fail   :  forall {r} -> Parser tok nt (false , leaf) r
-  bind₁  :  forall {c₁ e₂ c₂ r₁ r₂}
-         -> Parser tok nt (true , c₁) r₁
-         -> (r₁ -> Parser tok nt (e₂ , c₂) r₂)
-         -> Parser tok nt (e₂ , node c₁ c₂) r₂
-  bind₂  :  forall {c₁ r₁ r₂} {i₂ : r₁ -> Index}
-         -> Parser tok nt (false , c₁) r₁
-         -> ((x : r₁) -> Parser tok nt (i₂ x) r₂)
-         -> Parser tok nt (false , step c₁) r₂
-  alt    :  forall e₁ e₂ {c₁ c₂ r}
-         -> Parser tok nt (e₁      , c₁)         r
-         -> Parser tok nt (e₂      , c₂)         r
-         -> Parser tok nt (e₁ ∨ e₂ , node c₁ c₂) r
-
-------------------------------------------------------------------------
--- Run function for the parsers
-
--- Grammars.
-
-Grammar : Set -> ParserType -> Set1
-Grammar tok nt = forall {i r} -> nt i r -> Parser tok nt i r
-
--- Parser monad.
-
-P : Set -> IFun ℕ
-P tok = IStateT (BoundedVec tok) L.List
-
-PIMonadPlus : (tok : Set) -> RawIMonadPlus (P tok)
-PIMonadPlus tok = StateTIMonadPlus (BoundedVec tok) L.ListMonadPlus
-
-PIMonadState : (tok : Set) -> RawIMonadState (BoundedVec tok) (P tok)
-PIMonadState tok = StateTIMonadState (BoundedVec tok) L.ListMonad
+-- Parser monad
 
 private
+
+  P : Set -> IFun ℕ
+  P tok = IStateT (BoundedVec tok) L.List
+
+  PIMonadPlus : (tok : Set) -> RawIMonadPlus (P tok)
+  PIMonadPlus tok = StateTIMonadPlus (BoundedVec tok) L.ListMonadPlus
+
+  PIMonadState : (tok : Set) -> RawIMonadState (BoundedVec tok) (P tok)
+  PIMonadState tok = StateTIMonadState (BoundedVec tok) L.ListMonad
+
   open module LM {tok} = RawIMonadPlus  (PIMonadPlus  tok)
   open module SM {tok} = RawIMonadState (PIMonadState tok)
                            using (get; put; modify)
+
+------------------------------------------------------------------------
+-- Run function for the parsers
 
 -- For every successful parse the run function returns the remaining
 -- string. (Since there can be several successful parses a list of
@@ -112,4 +81,18 @@ private
     eat []      = ∅
     eat (c ∷ s) = put s >> return c
 
-open Dummy public
+-- Exported run function.
+
+parse :  forall {tok nt i r}
+      -> Parser tok nt i r -> Grammar tok nt
+      -> L.List tok -> L.List (Prod._×_ r (L.List tok))
+parse p g s = L.map (Prod.map-× id toList)
+                    (Dummy.parse g _ p (fromList s))
+
+-- A variant which only returns parses which leave no remaining input.
+
+parse-complete :  forall {tok nt i r}
+               -> Parser tok nt i r -> Grammar tok nt
+               -> L.List tok -> L.List r
+parse-complete p g s =
+  L.map Prod.proj₁ (L.filter (L.null ∘ Prod.proj₂) (parse p g s))

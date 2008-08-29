@@ -18,6 +18,7 @@ open import RecursiveDescent.Hybrid.Mixfix.Expr
 open import RecursiveDescent.Hybrid.Mixfix.FA
 open import RecursiveDescent.Hybrid.Mixfix
 open import RecursiveDescent.Hybrid
+open import RecursiveDescent.Hybrid.Simple
 
 ------------------------------------------------------------------------
 -- Operators

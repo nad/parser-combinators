@@ -8,7 +8,7 @@
 module RecursiveDescent.Hybrid.Lib where
 
 open import RecursiveDescent.Hybrid
-import RecursiveDescent.Hybrid.Internal as Internal
+import RecursiveDescent.Hybrid.Type as Type
 open import RecursiveDescent.Index
 open import Utilities
 
@@ -119,13 +119,13 @@ mutual
   _⋆ : forall {tok nt r d} ->
        Parser tok nt (false , d) r     ->
        Parser tok nt _           (List r)
-  p ⋆ ~ Internal.alt _ _ (return []) (p +)
+  p ⋆ ~ Type.alt _ _ (return []) (p +)
 
   _+ : forall {tok nt r d} ->
        Parser tok nt (false , d) r     ->
        Parser tok nt _           (List r)
-  p + ~ Internal.bind₂ p     \x  ->
-        Internal.bind₁ (p ⋆) \xs ->
+  p + ~ Type.bind₂ p     \x  ->
+        Type.bind₁ (p ⋆) \xs ->
         return (x ∷ xs)
 
 -- p sepBy sep parses one or more ps separated by seps.

@@ -34,6 +34,7 @@ open import RecursiveDescent.Index
 open import RecursiveDescent.Hybrid
 open import RecursiveDescent.Hybrid.Lib
 open Token Char.decSetoid
+open import RecursiveDescent.Hybrid.Simple
 
 ------------------------------------------------------------------------
 -- The PBM type

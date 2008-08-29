@@ -17,6 +17,7 @@ open import RecursiveDescent.Index
 open import RecursiveDescent.Hybrid
 open import RecursiveDescent.Hybrid.Lib
 open Token C.decSetoid
+open import RecursiveDescent.Hybrid.Simple
 
 -- A function used to simplify the examples a little.
 
