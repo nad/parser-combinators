@@ -18,8 +18,8 @@ import Algebra.Props.BooleanAlgebra as BAlg
 import Algebra.Props.DistributiveLattice as DL
 private
   module NR = CommutativeSemiringWithoutOne
-                ℕ-⊔-⊓-0-commutativeSemiringWithoutOne
-  module NL = DL ℕ-distributiveLattice
+                ⊔-⊓-0-commutativeSemiringWithoutOne
+  module NL = DL distributiveLattice
   module BR = CommutativeSemiring Bool-commutativeSemiring-∨-∧
   module BA = BAlg Bool-booleanAlgebra
 
