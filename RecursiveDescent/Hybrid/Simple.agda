@@ -4,7 +4,7 @@
 
 module RecursiveDescent.Hybrid.Simple where
 
-open import Data.Bool
+open import Data.Bool renaming (true to ⊤; false to ⊥)
 open import Data.Product.Record
 import Data.Product as Prod
 open import Data.Maybe
@@ -27,16 +27,13 @@ private
   P : Set -> IFun ℕ
   P tok = IStateT (BoundedVec tok) L.List
 
-  PIMonadPlus : (tok : Set) -> RawIMonadPlus (P tok)
-  PIMonadPlus tok = StateTIMonadPlus (BoundedVec tok) L.ListMonadPlus
+  open module M₁ {tok} =
+    RawIMonadPlus (StateTIMonadPlus (BoundedVec tok) L.ListMonadPlus)
+    renaming (return to ret)
 
-  PIMonadState : (tok : Set) -> RawIMonadState (BoundedVec tok) (P tok)
-  PIMonadState tok = StateTIMonadState (BoundedVec tok) L.ListMonad
-
-  open module LM {tok} = RawIMonadPlus  (PIMonadPlus  tok)
-                           renaming (return to ret)
-  open module SM {tok} = RawIMonadState (PIMonadState tok)
-                           using (get; put; modify)
+  open module M₂ {tok} =
+    RawIMonadState (StateTIMonadState (BoundedVec tok) L.ListMonad)
+    using (get; put; modify)
 
 ------------------------------------------------------------------------
 -- Run function for the parsers
@@ -59,24 +56,24 @@ private
     parse : forall n {e c r} ->
             Parser tok nt (e , c) r ->
             P tok n (if e then n else pred n) r
-    parse n       (! x)                   = parse n (g x)
-    parse zero    symbol                  = ∅
-    parse (suc n) symbol                  = eat =<< get
-    parse n       (return x)              = ret x
-    parse n       fail                    = ∅
-    parse n       (p₁ ?>>= p₂)            = parse  n      p₁ >>= parse  n ∘′ p₂
-    parse zero    (p₁ !>>= p₂)            = ∅
-    parse (suc n) (p₁ !>>= p₂)            = parse (suc n) p₁ >>= parse↑ n ∘′ p₂
-    parse n       (alt true  _     p₁ p₂) = parse  n      p₁ ∣   parse↑ n    p₂
-    parse n       (alt false true  p₁ p₂) = parse↑ n      p₁ ∣   parse  n    p₂
-    parse n       (alt false false p₁ p₂) = parse  n      p₁ ∣   parse  n    p₂
+    parse n       (! x)           = parse n (g x)
+    parse zero    symbol          = ∅
+    parse (suc n) symbol          = eat =<< get
+    parse n       (return x)      = ret x
+    parse n       fail            = ∅
+    parse n       (p₁ ?>>= p₂)    = parse  n      p₁ >>= parse  n ∘′ p₂
+    parse zero    (p₁ !>>= p₂)    = ∅
+    parse (suc n) (p₁ !>>= p₂)    = parse (suc n) p₁ >>= parse↑ n ∘′ p₂
+    parse n       (alt ⊤ _ p₁ p₂) = parse  n      p₁ ∣   parse↑ n    p₂
+    parse n       (alt ⊥ ⊤ p₁ p₂) = parse↑ n      p₁ ∣   parse  n    p₂
+    parse n       (alt ⊥ ⊥ p₁ p₂) = parse  n      p₁ ∣   parse  n    p₂
 
     parse↑ : forall n {e c r} -> Parser tok nt (e , c) r -> P tok n n r
-    parse↑ n       {true}  p = parse n p
-    parse↑ zero    {false} p = ∅
-    parse↑ (suc n) {false} p = parse (suc n) p >>= \r ->
-                               modify ↑ >>
-                               ret r
+    parse↑ n       {⊤} p = parse n p
+    parse↑ zero    {⊥} p = ∅
+    parse↑ (suc n) {⊥} p = parse (suc n) p >>= \r ->
+                           modify ↑ >>
+                           ret r
 
     eat : forall {n} -> BoundedVec tok (suc n) -> P tok (suc n) n tok
     eat []      = ∅
