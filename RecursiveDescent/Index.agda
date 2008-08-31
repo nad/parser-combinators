@@ -32,8 +32,11 @@ Index = Empty × Corners
 
 -- The parser type signature. The second argument is the result type.
 
-ParserType : Set2
-ParserType = Index -> Set -> Set1
+ParserType : Set1
+ParserType = Index -> Set -> Set
+
+ParserType₁ : Set2
+ParserType₁ = Index -> Set -> Set1
 
 ------------------------------------------------------------------------
 -- Operations on indices

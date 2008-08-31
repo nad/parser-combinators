@@ -76,7 +76,7 @@ show i = "P1 # Generated using Agda.\n" <+>
 ------------------------------------------------------------------------
 -- Parsing PBM images
 
-data NT : ParserType where
+data NT : ParserType₁ where
   comment : NT _ ⊤
   colour  : NT _ Colour
   pbm     : NT _ PBM

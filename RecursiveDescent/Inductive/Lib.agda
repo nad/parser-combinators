@@ -33,7 +33,7 @@ private
 
   -- Note that the parsers are parameterised on other parsers.
 
-  data NT (nt : ParserType) : ParserType where
+  data NT (nt : ParserType₁) : ParserType₁ where
     many     : forall {c r} ->
                Parser tok nt (false , c) r ->
                NT nt _ (List r)
@@ -49,7 +49,7 @@ private
                Parser tok nt i₂ (r -> r -> r) ->
                NT nt _ r
 
-Nonterminal : ParserType -> ParserType
+Nonterminal : ParserType₁ -> ParserType₁
 Nonterminal = NT
 
 module Combinators

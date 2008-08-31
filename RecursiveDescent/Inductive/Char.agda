@@ -26,13 +26,13 @@ private
 -- Some parameterised parsers.
 
 private
-  data NT (nt : ParserType) : ParserType where
+  data NT (nt : ParserType₁) : ParserType₁ where
     lib'        : forall {i r} -> L.Nonterminal nt i r -> NT nt i r
     digit'      : NT nt _ ℕ
     number'     : NT nt _ ℕ
     whitespace' : NT nt _ ⊤
 
-Nonterminal : ParserType -> ParserType
+Nonterminal : ParserType₁ -> ParserType₁
 Nonterminal = NT
 
 module Combinators

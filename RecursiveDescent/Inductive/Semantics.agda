@@ -23,7 +23,7 @@ mutual
            List tok -> Parser tok nt i r -> Grammar tok nt -> Set1
   s ∈⟦ p ⟧ g = Semantics g s p
 
-  data Semantics {tok : Set} {nt : ParserType} (g : Grammar tok nt)
+  data Semantics {tok : Set} {nt : ParserType₁} (g : Grammar tok nt)
                  : forall {i r} ->
                    List tok -> Parser tok nt i r -> Set1 where
     !-sem      : forall {e c r} s (x : nt (e , c) r) ->

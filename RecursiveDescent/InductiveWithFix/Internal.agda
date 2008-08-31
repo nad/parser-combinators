@@ -22,7 +22,7 @@ open import Utilities
 
 -- Extends a non-terminal type with a fresh non-terminal.
 
-data Lift (i : Index) (r : Set) (nt : ParserType) : ParserType where
+data Lift (i : Index) (r : Set) (nt : ParserType₁) : ParserType₁ where
   fresh : Lift i r nt i r
   ↟     : forall {i' r'} -> nt i' r' -> Lift i r nt i' r'
 
@@ -35,7 +35,7 @@ data Lift (i : Index) (r : Set) (nt : ParserType) : ParserType where
 
 -- The parsers are indexed on a type of nonterminals.
 
-data Parser (tok : Set) (nt : ParserType) : ParserType where
+data Parser (tok : Set) (nt : ParserType₁) : ParserType₁ where
   !_     :  forall {e c r}
          -> nt (e , c) r -> Parser tok nt (e , step c) r
   fix    :  forall {e c r}
@@ -64,17 +64,17 @@ data Parser (tok : Set) (nt : ParserType) : ParserType where
 ------------------------------------------------------------------------
 -- Lifting parsers
 
-Map : (ParserType -> ParserType) -> Set2
+Map : (ParserType₁ -> ParserType₁) -> Set2
 Map F = forall {nt nt' i r} ->
         (nt i r -> nt' i r) -> (F nt i r -> F nt' i r)
 
-liftMap : forall (F : ParserType -> ParserType) {i' r'} ->
+liftMap : forall (F : ParserType₁ -> ParserType₁) {i' r'} ->
           Map F -> Map (Lift i' r' ∘₂ F)
 liftMap F map g fresh = fresh
 liftMap F map g (↟ x) = ↟ (map g x)
 
 lift' : forall {tok nt i r i' r'}
-        (F : ParserType -> ParserType) -> Map F ->
+        (F : ParserType₁ -> ParserType₁) -> Map F ->
         Parser tok (F nt) i r -> Parser tok (F (Lift i' r' nt)) i r
 lift' F map (! x)               ~ ! (map ↟ x)
 lift' F map (fix {e} {c} {r} p) ~ fix (lift' (Lift (e , step c) r ∘₂ F)
@@ -100,7 +100,7 @@ lift p = lift' (\nt -> nt) (\f -> f) p
 
 -- Grammars.
 
-Grammar : Set -> ParserType -> Set1
+Grammar : Set -> ParserType₁ -> Set1
 Grammar tok nt = forall {i r} -> nt i r -> Parser tok nt i r
 
 -- Extends a grammar with a case for a fresh non-terminal.

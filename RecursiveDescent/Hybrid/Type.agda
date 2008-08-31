@@ -17,7 +17,7 @@ open import RecursiveDescent.Index
 
 -- The parsers are indexed on a type of nonterminals.
 
-codata Parser (tok : Set) (nt : ParserType) : ParserType where
+codata Parser (tok : Set) (nt : ParserType) : ParserType₁ where
   !_     :  forall {e c r}
          -> nt (e , c) r -> Parser tok nt (e , step c) r
   symbol :  Parser tok nt (false , leaf) tok

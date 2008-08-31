@@ -26,7 +26,7 @@ open import Utilities
 
 -- The parsers are indexed on a type of nonterminals.
 
-data Parser (tok : Set) (nt : ParserType) : ParserType where
+data Parser (tok : Set) (nt : ParserType₁) : ParserType₁ where
   !_     :  forall {e c r}
          -> nt (e , c) r -> Parser tok nt (e , step c) r
   symbol :  Parser tok nt (false , leaf) tok
@@ -50,7 +50,7 @@ data Parser (tok : Set) (nt : ParserType) : ParserType where
 
 -- Grammars.
 
-Grammar : Set -> ParserType -> Set1
+Grammar : Set -> ParserType₁ -> Set1
 Grammar tok nt = forall {i r} -> nt i r -> Parser tok nt i r
 
 -- Parser monad.

@@ -23,7 +23,7 @@ open import Utilities
 -- descent. The types used ensure that the implementation below is
 -- structurally recursive.
 
-codata Parser (tok : Set) : ParserType where
+codata Parser (tok : Set) : ParserType₁ where
   symbol :  Parser tok (false , leaf) tok
   ret    :  forall {r} -> r -> Parser tok (true , leaf) r
   fail   :  forall {r} -> Parser tok (false , leaf) r
