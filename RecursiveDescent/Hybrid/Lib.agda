@@ -124,8 +124,8 @@ mutual
   _+ : forall {tok nt r d} ->
        Parser tok nt (false , d) r     ->
        Parser tok nt _           (List r)
-  p + ~ Type.bind₂ p     \x  ->
-        Type.bind₁ (p ⋆) \xs ->
+  p + ~ Type._!>>=_ p     \x  ->
+        Type._?>>=_ (p ⋆) \xs ->
         return (x ∷ xs)
 
 -- p sepBy sep parses one or more ps separated by seps.

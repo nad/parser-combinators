@@ -21,13 +21,13 @@ codata Parser (tok : Set) (nt : ParserType) : ParserType where
   !_     :  forall {e c r}
          -> nt (e , c) r -> Parser tok nt (e , step c) r
   symbol :  Parser tok nt (false , leaf) tok
-  ret    :  forall {r} -> r -> Parser tok nt (true , leaf) r
+  return :  forall {r} -> r -> Parser tok nt (true , leaf) r
   fail   :  forall {r} -> Parser tok nt (false , leaf) r
-  bind₁  :  forall {c₁ e₂ c₂ r₁ r₂}
+  _?>>=_ :  forall {c₁ e₂ c₂ r₁ r₂}
          -> Parser tok nt (true , c₁) r₁
          -> (r₁ -> Parser tok nt (e₂ , c₂) r₂)
          -> Parser tok nt (e₂ , node c₁ c₂) r₂
-  bind₂  :  forall {c₁ r₁ r₂} {i₂ : r₁ -> Index}
+  _!>>=_ :  forall {c₁ r₁ r₂} {i₂ : r₁ -> Index}
          -> Parser tok nt (false , c₁) r₁
          -> ((x : r₁) -> Parser tok nt (i₂ x) r₂)
          -> Parser tok nt (false , step c₁) r₂

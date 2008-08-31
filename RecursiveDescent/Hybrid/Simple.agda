@@ -34,6 +34,7 @@ private
   PIMonadState tok = StateTIMonadState (BoundedVec tok) L.ListMonad
 
   open module LM {tok} = RawIMonadPlus  (PIMonadPlus  tok)
+                           renaming (return to ret)
   open module SM {tok} = RawIMonadState (PIMonadState tok)
                            using (get; put; modify)
 
@@ -61,11 +62,11 @@ private
     parse n       (! x)                   = parse n (g x)
     parse zero    symbol                  = ∅
     parse (suc n) symbol                  = eat =<< get
-    parse n       (ret x)                 = return x
+    parse n       (return x)              = ret x
     parse n       fail                    = ∅
-    parse n       (bind₁           p₁ p₂) = parse  n      p₁ >>= parse  n ∘′ p₂
-    parse zero    (bind₂           p₁ p₂) = ∅
-    parse (suc n) (bind₂           p₁ p₂) = parse (suc n) p₁ >>= parse↑ n ∘′ p₂
+    parse n       (p₁ ?>>= p₂)            = parse  n      p₁ >>= parse  n ∘′ p₂
+    parse zero    (p₁ !>>= p₂)            = ∅
+    parse (suc n) (p₁ !>>= p₂)            = parse (suc n) p₁ >>= parse↑ n ∘′ p₂
     parse n       (alt true  _     p₁ p₂) = parse  n      p₁ ∣   parse↑ n    p₂
     parse n       (alt false true  p₁ p₂) = parse↑ n      p₁ ∣   parse  n    p₂
     parse n       (alt false false p₁ p₂) = parse  n      p₁ ∣   parse  n    p₂
@@ -75,11 +76,11 @@ private
     parse↑ zero    {false} p = ∅
     parse↑ (suc n) {false} p = parse (suc n) p >>= \r ->
                                modify ↑ >>
-                               return r
+                               ret r
 
     eat : forall {n} -> BoundedVec tok (suc n) -> P tok (suc n) n tok
     eat []      = ∅
-    eat (c ∷ s) = put s >> return c
+    eat (c ∷ s) = put s >> ret c
 
 -- Exported run function.
 
