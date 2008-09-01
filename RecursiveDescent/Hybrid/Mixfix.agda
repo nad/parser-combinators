@@ -24,6 +24,7 @@ import Data.String as String
 open import RecursiveDescent.Hybrid.Mixfix.Fixity
 open import RecursiveDescent.Index
 open import RecursiveDescent.Hybrid
+open import RecursiveDescent.Hybrid.Simple
 open import RecursiveDescent.Hybrid.Lib
 open Token String.decSetoid
 
@@ -108,3 +109,8 @@ grammar (node (precedence ops ps)) =
   -- Left associative and postfix operators.
   postLeft = flip _⟨_⟫                   <$> ⟦ postfx ⟧
            ∣ (\op e₂ e₁ -> e₁ ⟨ op ⟩ e₂) <$> ⟦ infx left ⟧ ⊛ ↑
+
+-- An expression parser.
+
+parseExpr : List NamePart -> List Expr
+parseExpr = parse-complete (! expr) grammar
