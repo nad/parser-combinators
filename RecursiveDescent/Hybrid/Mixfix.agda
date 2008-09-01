@@ -2,7 +2,11 @@
 -- Parsing of mixfix operators
 ------------------------------------------------------------------------
 
-module RecursiveDescent.Hybrid.Mixfix where
+-- This module defines a grammar for the precedence graph g.
+
+open import RecursiveDescent.Hybrid.Mixfix.Expr
+
+module RecursiveDescent.Hybrid.Mixfix (g : PrecedenceGraph) where
 
 import Data.Vec as Vec
 import Data.List as List
@@ -18,7 +22,6 @@ open import Data.Function hiding (_⟨_⟩_)
 import Data.String as String
 
 open import RecursiveDescent.Hybrid.Mixfix.Fixity
-open import RecursiveDescent.Hybrid.Mixfix.Expr
 open import RecursiveDescent.Index
 open import RecursiveDescent.Hybrid
 open import RecursiveDescent.Hybrid.Lib
@@ -28,7 +31,7 @@ open Token String.decSetoid
 -- functions are (mutually). Fortunately the recursion is structural,
 -- though. Note also that the reason for not using the implementation
 --
---   grammar (nodes g ts) = choiceMap (\t -> ! node g t) ts
+--   grammar (nodes ts) = choiceMap (\t -> ! node t) ts
 --
 -- is that this would lead to a definition of node-corners which
 -- was not structurally recursive.
@@ -44,20 +47,18 @@ node-corners (precedence ops ps) = _
 
 data NT : ParserType where
   -- Expressions.
-  expr : (g : PrecedenceGraph) -> NT _ Expr
+  expr : NT _ Expr
 
   -- Expressions corresponding to zero or more nodes in the precedence
   -- graph: operator applications where the outermost operator has one
   -- of the precedences ps. The graph g is used for internal
   -- expressions.
-  nodes : (g ps : PrecedenceGraph) ->
-          NT (false , nodes-corners ps) Expr
+  nodes : (ps : PrecedenceGraph) -> NT (false , nodes-corners ps) Expr
 
   -- Expressions corresponding to one node in the precedence graph:
   -- operator applications where the outermost operator has
   -- precedence p. The graph g is used for internal expressions.
-  node : (g : PrecedenceGraph) (p : PrecedenceTree) ->
-         NT (false , node-corners p) Expr
+  node : (p : PrecedenceTree) -> NT (false , node-corners p) Expr
 
 -- The parser type used in this module.
 
@@ -74,19 +75,19 @@ nameParts (operator ns) = Vec1.map₀₁ sym ns
 -- Internal parts (all name parts plus internal expressions) of
 -- operators of the given precedence and fixity.
 
-internal : forall {fix} -> PrecedenceGraph ->
+internal : forall {fix}
            (ops : List (∃ (Operator fix))) -> P _ (Internal fix)
-internal g =
+internal =
   choiceMap (\op' -> let op = proj₂ op' in
-                     _∙_ op <$> (! expr g between nameParts op))
+                     _∙_ op <$> (! expr between nameParts op))
 
 -- The grammar.
 
 grammar : Grammar NamePart NT
-grammar (expr g)                     = ! nodes g g
-grammar (nodes g [])                 = fail
-grammar (nodes g (p ∷ ps))           = ! node g p ∣ ! nodes g ps
-grammar (node g (precedence ops ps)) =
+grammar expr                       = ! nodes g
+grammar (nodes [])                 = fail
+grammar (nodes (p ∷ ps))           = ! node p ∣ ! nodes ps
+grammar (node (precedence ops ps)) =
      ⟪_⟫              <$>      ⟦ closed   ⟧
   ∣ _⟨_⟩_             <$>  ↑ ⊛ ⟦ infx non ⟧ ⊛ ↑
   ∣ flip (foldr _$_)  <$>      rightish +   ⊛ ↑
@@ -94,11 +95,11 @@ grammar (node g (precedence ops ps)) =
   where
   -- ⟦ fix ⟧ parses the internal parts of operators with the
   -- current precedence level and fixity fix.
-  ⟦_⟧ = \fix -> internal g (ops fix)
+  ⟦_⟧ = \fix -> internal (ops fix)
 
   -- Operator applications where the outermost operator binds
   -- tighter than the current precedence level.
-  ↑ = ! nodes g ps
+  ↑ = ! nodes ps
 
   -- Right associative and prefix operators.
   rightish =  ⟪_⟩_ <$> ⟦ prefx ⟧

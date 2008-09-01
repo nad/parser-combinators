@@ -15,7 +15,7 @@ open import Relation.Binary.PropositionalEquality
 
 open import RecursiveDescent.Hybrid.Mixfix.Expr
 open import RecursiveDescent.Hybrid.Mixfix.Fixity
-open import RecursiveDescent.Hybrid.Mixfix
+import RecursiveDescent.Hybrid.Mixfix as Mixfix
 open import RecursiveDescent.Hybrid
 open import RecursiveDescent.Hybrid.Simple
 
@@ -79,11 +79,13 @@ g = wt ∷ c ∷ pm ∷ t ∷ ap ∷ []
   c  = prec ((, , comma) ∷ [])               (pm ∷ t ∷ ap ∷ [])
   wt = prec ((, , wellTyped) ∷ [])           (c ∷ ap ∷ [])
 
+open Mixfix g
+
 ------------------------------------------------------------------------
 -- Some tests
 
 test : String -> List Expr
-test s = parse-complete (! expr g) grammar
+test s = parse-complete (! expr) grammar
                         (map (fromList ∘ L[_]) (toList s))
 
 -- Using an unoptimised type checker to run an inefficient parser can
