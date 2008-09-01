@@ -90,8 +90,8 @@ grammar (nodes (p ∷ ps))           = ! node p ∣ ! nodes ps
 grammar (node (precedence ops ps)) =
      ⟪_⟫              <$>      ⟦ closed   ⟧
   ∣ _⟨_⟩_             <$>  ↑ ⊛ ⟦ infx non ⟧ ⊛ ↑
-  ∣ flip (foldr _$_)  <$>      rightish +   ⊛ ↑
-  ∣ foldl (flip _$_)  <$>  ↑ ⊛ leftish  +
+  ∣ flip (foldr _$_)  <$>      preRight +   ⊛ ↑
+  ∣ foldl (flip _$_)  <$>  ↑ ⊛ postLeft +
   where
   -- ⟦ fix ⟧ parses the internal parts of operators with the
   -- current precedence level and fixity fix.
@@ -102,9 +102,9 @@ grammar (node (precedence ops ps)) =
   ↑ = ! nodes ps
 
   -- Right associative and prefix operators.
-  rightish =  ⟪_⟩_ <$> ⟦ prefx ⟧
+  preRight =  ⟪_⟩_ <$> ⟦ prefx ⟧
            ∣ _⟨_⟩_ <$> ↑ ⊛ ⟦ infx right ⟧
 
   -- Left associative and postfix operators.
-  leftish = flip _⟨_⟫                   <$> ⟦ postfx ⟧
-          ∣ (\op e₂ e₁ -> e₁ ⟨ op ⟩ e₂) <$> ⟦ infx left ⟧ ⊛ ↑
+  postLeft = flip _⟨_⟫                   <$> ⟦ postfx ⟧
+           ∣ (\op e₂ e₁ -> e₁ ⟨ op ⟩ e₂) <$> ⟦ infx left ⟧ ⊛ ↑
