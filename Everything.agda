@@ -21,6 +21,7 @@ import RecursiveDescent.Hybrid
 import RecursiveDescent.Hybrid.Examples
 import RecursiveDescent.Hybrid.Lib
 import RecursiveDescent.Hybrid.Mixfix
+  hiding (module Expr)
 import RecursiveDescent.Hybrid.Mixfix.Example
 import RecursiveDescent.Hybrid.Mixfix.Expr
 import RecursiveDescent.Hybrid.Mixfix.Fixity
