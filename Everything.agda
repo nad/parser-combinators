@@ -20,6 +20,8 @@ import RecursiveDescent.Coinductive.Lib
 import RecursiveDescent.Hybrid
 import RecursiveDescent.Hybrid.Examples
 import RecursiveDescent.Hybrid.Lib
+import RecursiveDescent.Hybrid.Memoised
+import RecursiveDescent.Hybrid.Memoised.Monad
 import RecursiveDescent.Hybrid.Mixfix
   hiding (module Expr)
 import RecursiveDescent.Hybrid.Mixfix.Example
