@@ -77,15 +77,6 @@ private
                node c₁ c₂ ≡ node c₃ c₄ -> c₂ ≡ c₄
   drop-node₂ ≡-refl = ≡-refl
 
-  leaf≢step : forall {c} -> leaf ≢ step c
-  leaf≢step ()
-
-  leaf≢node : forall {c₁ c₂} -> leaf ≢ node c₁ c₂
-  leaf≢node ()
-
-  step≢node : forall {c₁ c₂ c₃} -> step c₁ ≢ node c₂ c₃
-  step≢node ()
-
 _Corners-≟_ : Decidable {Corners} _≡_
 leaf       Corners-≟ leaf         = yes ≡-refl
 step c₁    Corners-≟ step  c₂     with c₁ Corners-≟ c₂
@@ -95,12 +86,12 @@ node c₁ c₂ Corners-≟ node  c₃  c₄ with c₁ Corners-≟ c₃ | c₂ Co
 node c₁ c₂ Corners-≟ node .c₁ .c₂ | yes ≡-refl | yes ≡-refl = yes ≡-refl
 node c₁ c₂ Corners-≟ node  c₃  c₄ | no  ¬c₁≡c₂ | _          = no (¬c₁≡c₂ ∘ drop-node₁)
 node c₁ c₂ Corners-≟ node  c₃  c₄ | _          | no  ¬c₁≡c₂ = no (¬c₁≡c₂ ∘ drop-node₂)
-leaf       Corners-≟ step _       = no leaf≢step
-leaf       Corners-≟ node _ _     = no leaf≢node
-step _     Corners-≟ leaf         = no (leaf≢step ∘ ≡-sym)
-step _     Corners-≟ node _ _     = no step≢node
-node _ _   Corners-≟ leaf         = no (leaf≢node ∘ ≡-sym)
-node _ _   Corners-≟ step _       = no (step≢node ∘ ≡-sym)
+leaf       Corners-≟ step _       = no \()
+leaf       Corners-≟ node _ _     = no \()
+step _     Corners-≟ leaf         = no \()
+step _     Corners-≟ node _ _     = no \()
+node _ _   Corners-≟ leaf         = no \()
+node _ _   Corners-≟ step _       = no \()
 
 _Index-≟_ : Decidable {Index} _≡_
 i₁ Index-≟ i₂ with proj₁ i₁ Bool-≟ proj₁ i₂
