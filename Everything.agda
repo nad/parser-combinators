@@ -15,7 +15,7 @@ import RecursiveDescent.Coinductive.Lib
 import RecursiveDescent.Hybrid
 import RecursiveDescent.Hybrid.Examples
 import RecursiveDescent.Hybrid.Lib
-import RecursiveDescent.Hybrid.Memoised
+-- import RecursiveDescent.Hybrid.Memoised  -- Agda is too slow...
 import RecursiveDescent.Hybrid.Memoised.Monad
 import RecursiveDescent.Hybrid.Mixfix
   hiding (module Expr)  -- Necessary due to an Agda bug.
