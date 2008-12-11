@@ -1,0 +1,6 @@
+Note that this repository contains a number of different
+implementations of parser combinators (including lots of code overlap,
+and some modules in which the termination checker has been switched
+off). This is mostly for historical reasons. The modules which we
+recommend you to take a look at if you are interested in this work are
+all listed in Recommended.agda.

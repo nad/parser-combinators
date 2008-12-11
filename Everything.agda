@@ -2,11 +2,6 @@
 -- Imports every module so that it is easy to see if everything builds
 ------------------------------------------------------------------------
 
--- Note that this repository contains a number of different
--- implementations of parser combinators (including lots of code
--- overlap). This is mostly for historical reasons. My favourite
--- implementation is currently the one in RecursiveDescent.Hybrid.
-
 module Everything where
 
 import Parallel
@@ -23,7 +18,7 @@ import RecursiveDescent.Hybrid.Lib
 import RecursiveDescent.Hybrid.Memoised
 import RecursiveDescent.Hybrid.Memoised.Monad
 import RecursiveDescent.Hybrid.Mixfix
-  hiding (module Expr)
+  hiding (module Expr)  -- Necessary due to an Agda bug.
 import RecursiveDescent.Hybrid.Mixfix.Example
 import RecursiveDescent.Hybrid.Mixfix.Expr
 import RecursiveDescent.Hybrid.Mixfix.Fixity
