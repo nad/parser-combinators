@@ -96,7 +96,7 @@ grammar (node (precedence ops ps)) =
   where
   -- ⟦ fix ⟧ parses the internal parts of operators with the
   -- current precedence level and fixity fix.
-  ⟦_⟧ = \fix -> internal (ops fix)
+  ⟦_⟧ = \(fix : Fixity) -> internal (ops fix)
 
   -- Operator applications where the outermost operator binds
   -- tighter than the current precedence level.

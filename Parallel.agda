@@ -1,3 +1,6 @@
+{-# OPTIONS --no-termination-check
+  #-}
+
 ------------------------------------------------------------------------
 -- A terminating parser data type and the accompanying interpreter
 ------------------------------------------------------------------------
