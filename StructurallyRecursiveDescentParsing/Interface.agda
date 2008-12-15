@@ -25,8 +25,8 @@ infixl 10 _>>=_ _!>>=_
      NT (e ◇ c) R -> Parser Tok NT (e ◇ step c) R
 !_ = P.!_
 
-symbol : forall {Tok NT} -> Parser Tok NT 0I Tok
-symbol = P.symbol
+token : forall {Tok NT} -> Parser Tok NT 0I Tok
+token = P.token
 
 return : forall {Tok NT R} -> R -> Parser Tok NT 1I R
 return = P.return

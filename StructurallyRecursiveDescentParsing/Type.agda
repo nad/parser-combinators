@@ -17,7 +17,7 @@ open import StructurallyRecursiveDescentParsing.Index
 codata Parser (Tok : Set) (NT : ParserType) : ParserType₁ where
   !_     : forall {e c R} ->
            NT (e ◇ c) R -> Parser Tok NT (e ◇ step c) R
-  symbol : Parser Tok NT (false ◇ leaf) Tok
+  token  : Parser Tok NT (false ◇ leaf) Tok
   return : forall {R} -> R -> Parser Tok NT (true ◇ leaf) R
   fail   : forall {R} -> Parser Tok NT (false ◇ leaf) R
   _?>>=_ : forall {c₁ e₂ c₂ R₁ R₂} ->

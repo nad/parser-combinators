@@ -72,7 +72,7 @@ P = Parser NamePart NT
 
 nameParts : forall {fix arity} -> Operator fix arity ->
             Vec₁ (P _ NamePart) (1 + arity)
-nameParts (operator ns) = Vec1.map₀₁ sym ns
+nameParts (operator ns) = Vec1.map₀₁ theToken ns
 
 -- Internal parts (all name parts plus internal expressions) of
 -- operators of the given precedence and fixity.

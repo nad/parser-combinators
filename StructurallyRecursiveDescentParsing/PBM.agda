@@ -82,12 +82,14 @@ data NT : ParserType where
   pbm     : NT _ PBM
 
 grammar : Grammar Char NT
-grammar comment  = tt <$ sym '#' <⊛ sat' (not ∘ _==_ '\n') ⋆ <⊛ sym '\n'
-grammar colour   = white <$ sym '0'
-                 ∣ black <$ sym '1'
+grammar comment  = tt <$ theToken '#'
+                      <⊛ sat' (not ∘ _==_ '\n') ⋆
+                      <⊛ theToken '\n'
+grammar colour   = white <$ theToken '0'
+                 ∣ black <$ theToken '1'
 grammar pbm      =
   w∣c ⋆ ⊛>
-  string (String.toVec "P1") ⊛>
+  theString (String.toVec "P1") ⊛>
   w∣c ⋆ ⊛>
   number !>>= \cols ->  -- _>>=_ works just as well.
   w∣c + ⊛>

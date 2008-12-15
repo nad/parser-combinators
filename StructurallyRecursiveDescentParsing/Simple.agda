@@ -57,8 +57,8 @@ private
             Parser Tok NT (e ◇ c) R ->
             P Tok n (if e then n else pred n) R
     parse n       (! x)           = parse n (g x)
-    parse zero    symbol          = ∅
-    parse (suc n) symbol          = eat =<< get
+    parse zero    token           = ∅
+    parse (suc n) token           = eat =<< get
     parse n       (return x)      = ret x
     parse n       fail            = ∅
     parse n       (p₁ ?>>= p₂)    = parse  n      p₁ >>= parse  n ∘′ p₂

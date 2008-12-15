@@ -188,7 +188,7 @@ private
             Parser Tok LargeNT (e ◇ c) R ->
             P n (if e then idM else predM) R
     parse n       (! x)           = memoParse n x
-    parse n       symbol          = fromJust =<< gmodify predM eat
+    parse n       token           = fromJust =<< gmodify predM eat
     parse n       (ret x)         = return x
     parse n       fail            = ∅
     parse n       (p₁ ?>>= p₂)    = parse  n      p₁ >>= parse  n ∘′ p₂

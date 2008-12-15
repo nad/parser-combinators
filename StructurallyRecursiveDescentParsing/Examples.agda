@@ -32,8 +32,8 @@ module Ex₁ where
     e : Nonterminal _ Char
 
   grammar : Grammar Char Nonterminal
-  grammar e = sym '0' ⊛> sym '+' ⊛> ! e
-            ∣ sym '0'
+  grammar e = theToken '0' ⊛> theToken '+' ⊛> ! e
+            ∣ theToken '0'
 
   ex₁ : "0+0" ∈? (! e) / grammar ≡ '0' ∷ []
   ex₁ = ≡-refl
@@ -48,11 +48,11 @@ module Ex₂ where
     factor : Nonterminal _ Char
 
   grammar : Grammar Char Nonterminal
-  grammar expr   = ! factor ⊛> sym '+' ⊛> ! expr
+  grammar expr   = ! factor ⊛> theToken '+' ⊛> ! expr
                  ∣ ! factor
-  grammar factor = sym '0'
-                 ∣ sym '0' ⊛> sym '*' ⊛> ! factor
-                 ∣ sym '(' ⊛> ! expr <⊛ sym ')'
+  grammar factor = theToken '0'
+                 ∣ theToken '0' ⊛> theToken '*' ⊛> ! factor
+                 ∣ theToken '(' ⊛> ! expr <⊛ theToken ')'
 
   ex₁ : "(0*)" ∈? (! expr) / grammar ≡ []
   ex₁ = ≡-refl
@@ -73,11 +73,11 @@ module Ex₃ where
     factor : Nonterminal _ Char
 
   grammar : Grammar Char Nonterminal
-  grammar expr   = ! factor ⊛> sym '+' ⊛> ! expr
+  grammar expr   = ! factor ⊛> theToken '+' ⊛> ! expr
                  ∣ ! factor
-  grammar factor = sym '0'
-                 ∣ ! factor ⊛> sym '*' ⊛> sym '0'
-                 ∣ sym '(' ⊛> ! expr <⊛ sym ')'
+  grammar factor = theToken '0'
+                 ∣ ! factor ⊛> theToken '*' ⊛> theToken '0'
+                 ∣ theToken '(' ⊛> ! expr <⊛ theToken ')'
 -}
 
 module Ex₄ where
@@ -93,12 +93,12 @@ module Ex₄ where
 
   grammar : Grammar Char NT
   grammar top             = return 0 ∣ ! as zero
-  grammar (as n)          = suc <$ sym 'a' ⊛
+  grammar (as n)          = suc <$ theToken 'a' ⊛
                             ( ! as (suc n)
                             ∣ _+_ <$> ! bcs 'b' n ⊛ ! bcs 'c' n
                             )
-  grammar (bcs c zero)    = sym c ⊛> return 0
-  grammar (bcs c (suc n)) = sym c ⊛> ! bcs c n
+  grammar (bcs c zero)    = theToken c ⊛> return 0
+  grammar (bcs c (suc n)) = theToken c ⊛> ! bcs c n
 
   ex₁ : "aaabbbccc" ∈? (! top) / grammar ≡ 3 ∷ []
   ex₁ = ≡-refl
@@ -115,7 +115,7 @@ module Ex₅ where
     as : NT _ ℕ
 
   grammar : Grammar Char NT
-  grammar a  = sym 'a'
+  grammar a  = theToken 'a'
   grammar as = length <$> ! a ⋆
 
   ex₁ : "aaaaa" ∈? (! as) / grammar ≡ 5 ∷ []
@@ -130,9 +130,9 @@ module Ex₆ where
     expr : Assoc -> NT _ ℕ
 
   grammar : Grammar Char NT
-  grammar op       = _+_ <$ sym '+'
-                   ∣ _*_ <$ sym '*'
-                   ∣ _∸_ <$ sym '∸'
+  grammar op       = _+_ <$ theToken '+'
+                   ∣ _*_ <$ theToken '*'
+                   ∣ _∸_ <$ theToken '∸'
   grammar (expr a) = chain≥ 0 a number (! op)
 
   ex₁ : "12345" ∈? number / grammar ≡ 12345 ∷ []
@@ -158,11 +158,11 @@ module Ex₇ where
   grammar : Grammar Char NT
   grammar expr   = chain≥ 0 left (! term)   (! addOp)
   grammar term   = chain≥ 0 left (! factor) (! mulOp)
-  grammar factor = sym '(' ⊛> ! expr <⊛ sym ')'
+  grammar factor = theToken '(' ⊛> ! expr <⊛ theToken ')'
                  ∣ number
-  grammar addOp  = _+_ <$ sym '+'
-                 ∣ _∸_ <$ sym '∸'
-  grammar mulOp  = _*_ <$ sym '*'
+  grammar addOp  = _+_ <$ theToken '+'
+                 ∣ _∸_ <$ theToken '∸'
+  grammar mulOp  = _*_ <$ theToken '*'
 
   ex₁ : "1+5*2∸3" ∈? (! expr) / grammar ≡ 8 ∷ []
   ex₁ = ≡-refl

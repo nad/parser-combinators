@@ -274,7 +274,7 @@ choiceMap f (x ∷ xs) = f x ∣ choiceMap f xs
 
 sat : forall {Tok NT R} ->
       (Tok -> Maybe R) -> Parser Tok NT (0I ·I 1I) R
-sat {Tok} {NT} {R} p = symbol !>>= \c -> ok (p c)
+sat {Tok} {NT} {R} p = token !>>= \c -> ok (p c)
   where
   okIndex : Maybe R -> Index
   okIndex nothing  = _
@@ -300,33 +300,33 @@ module Token (A : DecSetoid) where
   -- Parses a given token (or, really, a given equivalence class of
   -- tokens).
 
-  sym : forall {NT} -> Tok -> Parser Tok NT _ Tok
-  sym x = sat p
+  theToken : forall {NT} -> Tok -> Parser Tok NT _ Tok
+  theToken tok = sat p
     where
     p : Tok -> Maybe Tok
-    p y with x ≟ y
-    ... | yes _ = just y
+    p tok′ with tok ≟ tok′
+    ... | yes _ = just tok′
     ... | no  _ = nothing
 
   -- Parses a sequence of tokens.
 
-  string : forall {NT n} -> Vec Tok n -> Parser Tok NT _ (Vec Tok n)
-  string cs = sequence (map₀₁ sym cs)
+  theString : forall {NT n} -> Vec Tok n -> Parser Tok NT _ (Vec Tok n)
+  theString cs = sequence (map₀₁ theToken cs)
 
 ------------------------------------------------------------------------
 -- Character parsers
 
 digit : forall {NT} -> Parser Char NT _ ℕ
-digit = 0 <$ sym '0'
-      ∣ 1 <$ sym '1'
-      ∣ 2 <$ sym '2'
-      ∣ 3 <$ sym '3'
-      ∣ 4 <$ sym '4'
-      ∣ 5 <$ sym '5'
-      ∣ 6 <$ sym '6'
-      ∣ 7 <$ sym '7'
-      ∣ 8 <$ sym '8'
-      ∣ 9 <$ sym '9'
+digit = 0 <$ theToken '0'
+      ∣ 1 <$ theToken '1'
+      ∣ 2 <$ theToken '2'
+      ∣ 3 <$ theToken '3'
+      ∣ 4 <$ theToken '4'
+      ∣ 5 <$ theToken '5'
+      ∣ 6 <$ theToken '6'
+      ∣ 7 <$ theToken '7'
+      ∣ 8 <$ theToken '8'
+      ∣ 9 <$ theToken '9'
   where open Token Char.decSetoid
 
 number : forall {NT} -> Parser Char NT _ ℕ
