@@ -5,7 +5,6 @@
 module StructurallyRecursiveDescentParsing.Index where
 
 open import Data.Bool
-open import Data.Product.Record
 open import Relation.Nullary
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
@@ -27,8 +26,19 @@ data Corners : Set where
   step : Corners -> Corners
   node : Corners -> Corners -> Corners
 
-Index : Set
-Index = Empty × Corners
+-- The index type.
+
+record Index : Set where
+  field
+    empty   : Empty
+    corners : Corners
+
+open Index public
+
+infix 4 _◇_
+
+_◇_ : Empty -> Corners -> Index
+e ◇ c = record { empty = e; corners = c }
 
 -- The parser type signature. The second argument is the result type.
 
@@ -45,19 +55,19 @@ infixr 50 _·I_
 infixr 40 _∣I_
 
 0I : Index
-0I = (false , leaf)
+0I = false ◇ leaf
 
 1I : Index
-1I = (true , leaf)
+1I = true ◇ leaf
 
 _∣I_ : Index -> Index -> Index
-i₁ ∣I i₂ = (proj₁ i₁ ∨ proj₁ i₂ , node (proj₂ i₁) (proj₂ i₂))
+i₁ ∣I i₂ = empty i₁ ∨ empty i₂ ◇ node (corners i₁) (corners i₂)
 
 _·I_ : Index -> Index -> Index
-i₁ ·I i₂ = ( proj₁ i₁ ∧ proj₁ i₂
-           , (if proj₁ i₁ then node (proj₂ i₁) (proj₂ i₂)
-                          else step (proj₂ i₁))
-           )
+i₁ ·I i₂ = empty i₁ ∧ empty i₂
+           ◇
+           (if empty i₁ then node (corners i₁) (corners i₂)
+                        else step (corners i₁))
 
 ------------------------------------------------------------------------
 -- Testing indices for equality
@@ -94,8 +104,8 @@ node _ _   Corners-≟ leaf         = no \()
 node _ _   Corners-≟ step _       = no \()
 
 _Index-≟_ : Decidable {Index} _≡_
-i₁ Index-≟ i₂ with proj₁ i₁ Bool-≟ proj₁ i₂
-                 | proj₂ i₁ Corners-≟ proj₂ i₂
-... | yes e₁≡e₂ | yes c₁≡c₂ = yes (≡-cong₂ (_,_) e₁≡e₂ c₁≡c₂)
-... | no ¬e₁≡e₂ | _         = no (¬e₁≡e₂ ∘ ≡-cong proj₁)
-... | _         | no ¬c₁≡c₂ = no (¬c₁≡c₂ ∘ ≡-cong proj₂)
+i₁ Index-≟ i₂ with empty i₁ Bool-≟ empty i₂
+                 | corners i₁ Corners-≟ corners i₂
+... | yes e₁≡e₂ | yes c₁≡c₂ = yes (≡-cong₂ _◇_ e₁≡e₂ c₁≡c₂)
+... | no ¬e₁≡e₂ | _         = no (¬e₁≡e₂ ∘ ≡-cong empty)
+... | _         | no ¬c₁≡c₂ = no (¬c₁≡c₂ ∘ ≡-cong corners)

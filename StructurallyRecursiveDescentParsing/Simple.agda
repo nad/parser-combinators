@@ -5,8 +5,7 @@
 module StructurallyRecursiveDescentParsing.Simple where
 
 open import Data.Bool renaming (true to ⊤; false to ⊥)
-open import Data.Product.Record
-import Data.Product as Prod
+open import Data.Product
 open import Data.Maybe
 open import Data.BoundedVec.Inefficient
 import Data.List as L
@@ -16,6 +15,7 @@ open import Category.Applicative.Indexed
 open import Category.Monad.Indexed
 open import Category.Monad.State
 
+open import StructurallyRecursiveDescentParsing.Index
 open import StructurallyRecursiveDescentParsing.Type
 open import StructurallyRecursiveDescentParsing.Utilities
 
@@ -54,7 +54,7 @@ private
 
   mutual
     parse : forall n {e c r} ->
-            Parser tok nt (e , c) r ->
+            Parser tok nt (e ◇ c) r ->
             P tok n (if e then n else pred n) r
     parse n       (! x)           = parse n (g x)
     parse zero    symbol          = ∅
@@ -68,7 +68,7 @@ private
     parse n       (alt ⊥ ⊤ p₁ p₂) = parse↑ n      p₁ ∣   parse  n    p₂
     parse n       (alt ⊥ ⊥ p₁ p₂) = parse  n      p₁ ∣   parse  n    p₂
 
-    parse↑ : forall n {e c r} -> Parser tok nt (e , c) r -> P tok n n r
+    parse↑ : forall n {e c r} -> Parser tok nt (e ◇ c) r -> P tok n n r
     parse↑ n       {⊤} p = parse n p
     parse↑ zero    {⊥} p = ∅
     parse↑ (suc n) {⊥} p = parse (suc n) p >>= \r ->
@@ -83,8 +83,8 @@ private
 
 parse :  forall {tok nt i r}
       -> Parser tok nt i r -> Grammar tok nt
-      -> L.List tok -> L.List (Prod._×_ r (L.List tok))
-parse p g s = L.map (Prod.map-× id toList)
+      -> L.List tok -> L.List (r × L.List tok)
+parse p g s = L.map (map-× id toList)
                     (Dummy.parse g _ p (fromList s))
 
 -- A variant which only returns parses which leave no remaining input.
@@ -93,4 +93,4 @@ parse-complete :  forall {tok nt i r}
                -> Parser tok nt i r -> Grammar tok nt
                -> L.List tok -> L.List r
 parse-complete p g s =
-  L.map Prod.proj₁ (L.filter (L.null ∘ Prod.proj₂) (parse p g s))
+  L.map proj₁ (L.filter (L.null ∘ proj₂) (parse p g s))

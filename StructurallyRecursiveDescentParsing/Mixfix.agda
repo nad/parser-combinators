@@ -15,8 +15,7 @@ import Data.List as List
 open List using (List; []; _∷_; foldr; foldl)
 import Data.Vec1 as Vec1
 open Vec1 using (Vec₁)
-open import Data.Product renaming (_,_ to pair)
-open import Data.Product.Record using (_,_)
+open import Data.Product
 open import Data.Bool
 open import Data.Unit
 open import Data.Nat
@@ -56,12 +55,12 @@ data NT : ParserType where
   -- graph: operator applications where the outermost operator has one
   -- of the precedences ps. The graph g is used for internal
   -- expressions.
-  nodes : (ps : PrecedenceGraph) -> NT (false , nodes-corners ps) Expr
+  nodes : (ps : PrecedenceGraph) -> NT (false ◇ nodes-corners ps) Expr
 
   -- Expressions corresponding to one node in the precedence graph:
   -- operator applications where the outermost operator has
   -- precedence p. The graph g is used for internal expressions.
-  node : (p : PrecedenceTree) -> NT (false , node-corners p) Expr
+  node : (p : PrecedenceTree) -> NT (false ◇ node-corners p) Expr
 
 -- The parser type used in this module.
 

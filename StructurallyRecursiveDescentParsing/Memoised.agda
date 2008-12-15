@@ -55,8 +55,6 @@ import Data.Nat as Nat
 open Nat using (ℕ; zero; suc; pred; z≤n; s≤s)
 import Data.Nat.Properties as NatProp
 open import Data.Function hiding (_∘′_)
-import Data.Product.Record as PR
-open PR using () renaming (_,_ to _◇_)
 import Data.Vec  as Vec;  open Vec  using (Vec;  []; _∷_)
 import Data.List as List; open List using (List; []; _∷_)
 open import Data.Sum
@@ -129,7 +127,7 @@ ordered = On.isStrictTotalOrder shuffle ntOrdered
 
 funsEqual : _≈K_ =[ proj₁ ]⇒ _≡_
 funsEqual {(._ , _ , key _)} {(._ , _ , key _)} eq =
-  ≡-cong (maybePredM ∘ PR.proj₁ ∘ proj₁) (indicesEqual eq)
+  ≡-cong (maybePredM ∘ empty ∘ proj₁) (indicesEqual eq)
 
 resultsEqual : _≈K_ =[ (\rfk -> proj₁ (proj₂ rfk)) ]⇒ _≡_
 resultsEqual {(._ , _ , key _)} {(._ , _ , key _)} eq =

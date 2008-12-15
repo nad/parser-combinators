@@ -15,9 +15,7 @@ open import Data.Nat hiding (_≟_)
 open import Data.Vec  using (Vec;  []; _∷_)
 open import Data.Vec1 using (Vec₁; []; _∷_; map₀₁)
 open import Data.List using (List; []; _∷_; foldr; foldl; reverse)
-import Data.Product.Record as Prod
-open Prod using (_,_)
-open import Data.Product renaming (_,_ to _⋈_)
+open import Data.Product
 open import Data.Bool
 open import Data.Function
 open import Data.Maybe
@@ -52,9 +50,9 @@ p₁ ⊛ p₂ = p₁ >>= \f -> p₂ >>= \x -> return (f x)
 
 _⊛!_ : forall {tok nt i₁ c₂ r₁ r₂} ->
        Parser tok nt i₁ (r₁ -> r₂) ->
-       Parser tok nt (false , c₂) r₁ ->
-       Parser tok nt (false , _)  r₂
-_⊛!_ {i₁ = i₁} p₁ p₂ = cast (BCS.*-comm (Prod.proj₁ i₁) false) ≡-refl
+       Parser tok nt (false ◇ c₂) r₁ ->
+       Parser tok nt (false ◇ _)  r₂
+_⊛!_ {i₁ = i₁} p₁ p₂ = cast (BCS.*-comm (empty i₁) false) ≡-refl
                             (p₁ ⊛ p₂)
 
 _<$>_ : forall {tok nt i r₁ r₂} ->
@@ -84,12 +82,12 @@ x <$ y = const x <$> y
 _⊗_ : forall {tok nt i₁ i₂ r₁ r₂} ->
       Parser tok nt i₁ r₁ -> Parser tok nt i₂ r₂ ->
       Parser tok nt _ (r₁ × r₂)
-p₁ ⊗ p₂ = _⋈_ <$> p₁ ⊛ p₂
+p₁ ⊗ p₂ = (_,_) <$> p₁ ⊛ p₂
 
 _⊗!_ : forall {tok nt i₁ c₂ r₁ r₂} ->
-      Parser tok nt i₁ r₁ -> Parser tok nt (false , c₂) r₂ ->
-      Parser tok nt (false , _) (r₁ × r₂)
-p₁ ⊗! p₂ = _⋈_ <$> p₁ ⊛! p₂
+      Parser tok nt i₁ r₁ -> Parser tok nt (false ◇ c₂) r₂ ->
+      Parser tok nt (false ◇ _) (r₁ × r₂)
+p₁ ⊗! p₂ = (_,_) <$> p₁ ⊛! p₂
 
 ------------------------------------------------------------------------
 -- Parsing sequences
@@ -101,12 +99,12 @@ infix 55 _⋆ _+
 -- mutual
 
 --   _⋆ : forall {tok r d} ->
---        Parser tok (false , d) r     ->
+--        Parser tok (false ◇ d) r     ->
 --        Parser tok _           (List r)
 --   p ⋆ ~ return [] ∣ p +
 
 --   _+ : forall {tok r d} ->
---        Parser tok (false , d) r     ->
+--        Parser tok (false ◇ d) r     ->
 --        Parser tok _           (List r)
 --   p + ~ _∷_ <$> p ⊛ p ⋆
 
@@ -117,12 +115,12 @@ infix 55 _⋆ _+
 mutual
 
   _⋆ : forall {tok nt r d} ->
-       Parser tok nt (false , d) r     ->
+       Parser tok nt (false ◇ d) r     ->
        Parser tok nt _           (List r)
   p ⋆ ~ Type.alt _ _ (return []) (p +)
 
   _+ : forall {tok nt r d} ->
-       Parser tok nt (false , d) r     ->
+       Parser tok nt (false ◇ d) r     ->
        Parser tok nt _           (List r)
   p + ~ Type._!>>=_ p     \x  ->
         Type._?>>=_ (p ⋆) \xs ->
@@ -131,7 +129,7 @@ mutual
 -- p sepBy sep parses one or more ps separated by seps.
 
 _sepBy_ : forall {tok nt r r' i d} ->
-          Parser tok nt i r -> Parser tok nt (false , d) r' ->
+          Parser tok nt i r -> Parser tok nt (false ◇ d) r' ->
           Parser tok nt _ (List r)
 p sepBy sep = _∷_ <$> p ⊛ (sep ⊛> p) ⋆
 
@@ -145,7 +143,7 @@ atLeast-index c (suc n) = _
 -- At least n occurrences of p.
 
 atLeast : forall {tok nt c r} (n : ℕ) ->
-          Parser tok nt (false , c) r ->
+          Parser tok nt (false ◇ c) r ->
           Parser tok nt (atLeast-index c n) (List r)
 atLeast zero    p = p ⋆
 atLeast (suc n) p = _∷_ <$> p ⊛ atLeast n p
@@ -179,8 +177,8 @@ between-corners c′ (suc n) = _
 
 _between_ : forall {tok nt i r c′ r′ n} ->
             Parser tok nt i r ->
-            Vec₁ (Parser tok nt (false , c′) r′) (suc n) ->
-            Parser tok nt (false , between-corners c′ n) (Vec r n)
+            Vec₁ (Parser tok nt (false ◇ c′) r′) (suc n) ->
+            Parser tok nt (false ◇ between-corners c′ n) (Vec r n)
 p between (x ∷ [])     = [] <$ x
 p between (x ∷ y ∷ xs) = _∷_ <$> (x ⊛> p) ⊛ (p between (y ∷ xs))
 
@@ -197,16 +195,16 @@ data Assoc : Set where
 -- Application.
 
 appʳ : forall {r} -> r × (r -> r -> r) -> r -> r
-appʳ (x ⋈ _•_) y = x • y
+appʳ (x , _•_) y = x • y
 
 appˡ : forall {r} -> r -> (r -> r -> r) × r -> r
-appˡ x (_•_ ⋈ y) = x • y
+appˡ x (_•_ , y) = x • y
 
 -- Shifting. See Examples below for an illuminating example.
 
 shiftʳ : forall {a b} -> a -> List (b × a) -> List (a × b) × a
-shiftʳ x  []                = ([] ⋈ x)
-shiftʳ x₁ ((x₂ ⋈ x₃) ∷ xs₄) = ((x₁ ⋈ x₂) ∷ proj₁ xs₃x₄ ⋈ proj₂ xs₃x₄)
+shiftʳ x  []                = ([] , x)
+shiftʳ x₁ ((x₂ , x₃) ∷ xs₄) = ((x₁ , x₂) ∷ proj₁ xs₃x₄ , proj₂ xs₃x₄)
   where xs₃x₄ = shiftʳ x₃ xs₄
 
 -- Post-processing for the chain≥ parser.
@@ -221,7 +219,7 @@ chain≥-combine left  x ys = foldl appˡ x ys
 
 chain≥ : forall {tok nt c₁ i₂ r} (n : ℕ) ->
          Assoc ->
-         Parser tok nt (false , c₁) r ->
+         Parser tok nt (false ◇ c₁) r ->
          Parser tok nt i₂ (r -> r -> r) ->
          Parser tok nt _ r
 chain≥ n a p op = chain≥-combine a <$> p ⊛ atLeast n (op ⊗! p)
@@ -233,13 +231,13 @@ private
                  (_+_ _*_ : r -> r -> r)
                  where
 
-  ex : shiftʳ x ((A ⋈ y) ∷ (B ⋈ z) ∷ []) ≡ ((x ⋈ A) ∷ (y ⋈ B) ∷ [] ⋈ z)
+  ex : shiftʳ x ((A , y) ∷ (B , z) ∷ []) ≡ ((x , A) ∷ (y , B) ∷ [] , z)
   ex = ≡-refl
 
-  exʳ : chain≥-combine right x ((_+_ ⋈ y) ∷ (_*_ ⋈ z) ∷ []) ≡ x + (y * z)
+  exʳ : chain≥-combine right x ((_+_ , y) ∷ (_*_ , z) ∷ []) ≡ x + (y * z)
   exʳ = ≡-refl
 
-  exˡ : chain≥-combine left  x ((_+_ ⋈ y) ∷ (_*_ ⋈ z) ∷ []) ≡ (x + y) * z
+  exˡ : chain≥-combine left  x ((_+_ , y) ∷ (_*_ , z) ∷ []) ≡ (x + y) * z
   exˡ = ≡-refl
 
 ------------------------------------------------------------------------
@@ -252,8 +250,8 @@ choice-corners c zero    = _
 choice-corners c (suc n) = _
 
 choice : forall {tok nt c r n} ->
-         Vec₁ (Parser tok nt (false , c) r) n ->
-         Parser tok nt (false , choice-corners c n) r
+         Vec₁ (Parser tok nt (false ◇ c) r) n ->
+         Parser tok nt (false ◇ choice-corners c n) r
 choice []       = fail
 choice (p ∷ ps) = p ∣ choice ps
 
@@ -265,9 +263,9 @@ choiceMap-corners c []       = _
 choiceMap-corners c (x ∷ xs) = _
 
 choiceMap : forall {tok nt r a} {c : a -> Corners} ->
-            ((x : a) -> Parser tok nt (false , c x) r) ->
+            ((x : a) -> Parser tok nt (false ◇ c x) r) ->
             (xs : List a) ->
-            Parser tok nt (false , choiceMap-corners c xs) r
+            Parser tok nt (false ◇ choiceMap-corners c xs) r
 choiceMap f []       = fail
 choiceMap f (x ∷ xs) = f x ∣ choiceMap f xs
 
