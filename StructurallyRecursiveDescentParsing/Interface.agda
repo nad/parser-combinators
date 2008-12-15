@@ -21,43 +21,43 @@ infix  60 !_
 infixl 40 _∣_
 infixl 10 _>>=_ _!>>=_
 
-!_ : forall {tok nt e c r} ->
-     nt (e ◇ c) r -> Parser tok nt (e ◇ step c) r
+!_ : forall {Tok NT e c R} ->
+     NT (e ◇ c) R -> Parser Tok NT (e ◇ step c) R
 !_ = P.!_
 
-symbol : forall {tok nt} -> Parser tok nt 0I tok
+symbol : forall {Tok NT} -> Parser Tok NT 0I Tok
 symbol = P.symbol
 
-return : forall {tok nt r} -> r -> Parser tok nt 1I r
+return : forall {Tok NT R} -> R -> Parser Tok NT 1I R
 return = P.return
 
-fail : forall {tok nt r} -> Parser tok nt 0I r
+fail : forall {Tok NT R} -> Parser Tok NT 0I R
 fail = P.fail
 
-_>>=_ : forall {tok nt e₁ c₁ i₂ r₁ r₂} -> let i₁ = (e₁ ◇ c₁) in
-        Parser tok nt i₁ r₁ ->
-        (r₁ -> Parser tok nt i₂ r₂) ->
-        Parser tok nt (i₁ ·I i₂) r₂
+_>>=_ : forall {Tok NT e₁ c₁ i₂ R₁ R₂} -> let i₁ = (e₁ ◇ c₁) in
+        Parser Tok NT i₁ R₁ ->
+        (R₁ -> Parser Tok NT i₂ R₂) ->
+        Parser Tok NT (i₁ ·I i₂) R₂
 _>>=_ {e₁ = true } = P._?>>=_
 _>>=_ {e₁ = false} = P._!>>=_
 
 -- If the first parser is guaranteed to consume something, then the
 -- second parser's index can depend on the result of the first parser.
 
-_!>>=_ : forall {tok nt c₁ r₁ r₂} {i₂ : r₁ -> Index} ->
+_!>>=_ : forall {Tok NT c₁ R₁ R₂} {i₂ : R₁ -> Index} ->
          let i₁ = (false ◇ c₁) in
-         Parser tok nt i₁ r₁ ->
-         ((x : r₁) -> Parser tok nt (i₂ x) r₂) ->
-         Parser tok nt (i₁ ·I 1I) r₂
+         Parser Tok NT i₁ R₁ ->
+         ((x : R₁) -> Parser Tok NT (i₂ x) R₂) ->
+         Parser Tok NT (i₁ ·I 1I) R₂
 _!>>=_ = P._!>>=_
 
-_∣_ : forall {tok nt e₁ c₁ i₂ r} -> let i₁ = (e₁ ◇ c₁) in
-      Parser tok nt i₁ r ->
-      Parser tok nt i₂ r ->
-      Parser tok nt (i₁ ∣I i₂) r
+_∣_ : forall {Tok NT e₁ c₁ i₂ R} -> let i₁ = (e₁ ◇ c₁) in
+      Parser Tok NT i₁ R ->
+      Parser Tok NT i₂ R ->
+      Parser Tok NT (i₁ ∣I i₂) R
 _∣_ = P.alt _ _
 
-cast : forall {tok nt e₁ e₂ c₁ c₂ r} ->
+cast : forall {Tok NT e₁ e₂ c₁ c₂ R} ->
        e₁ ≡ e₂ -> c₁ ≡ c₂ ->
-       Parser tok nt (e₁ ◇ c₁) r -> Parser tok nt (e₂ ◇ c₂) r
+       Parser Tok NT (e₁ ◇ c₁) R -> Parser Tok NT (e₂ ◇ c₂) R
 cast ≡-refl ≡-refl p = p

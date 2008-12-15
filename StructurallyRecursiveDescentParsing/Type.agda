@@ -14,26 +14,26 @@ open import StructurallyRecursiveDescentParsing.Index
 
 -- The parsers are indexed on a type of nonterminals.
 
-codata Parser (tok : Set) (nt : ParserType) : ParserType₁ where
-  !_     :  forall {e c r}
-         -> nt (e ◇ c) r -> Parser tok nt (e ◇ step c) r
-  symbol :  Parser tok nt (false ◇ leaf) tok
-  return :  forall {r} -> r -> Parser tok nt (true ◇ leaf) r
-  fail   :  forall {r} -> Parser tok nt (false ◇ leaf) r
-  _?>>=_ :  forall {c₁ e₂ c₂ r₁ r₂}
-         -> Parser tok nt (true ◇ c₁) r₁
-         -> (r₁ -> Parser tok nt (e₂ ◇ c₂) r₂)
-         -> Parser tok nt (e₂ ◇ node c₁ c₂) r₂
-  _!>>=_ :  forall {c₁ r₁ r₂} {i₂ : r₁ -> Index}
-         -> Parser tok nt (false ◇ c₁) r₁
-         -> ((x : r₁) -> Parser tok nt (i₂ x) r₂)
-         -> Parser tok nt (false ◇ step c₁) r₂
-  alt    :  forall e₁ e₂ {c₁ c₂ r}
-         -> Parser tok nt (e₁      ◇ c₁)         r
-         -> Parser tok nt (e₂      ◇ c₂)         r
-         -> Parser tok nt (e₁ ∨ e₂ ◇ node c₁ c₂) r
+codata Parser (Tok : Set) (NT : ParserType) : ParserType₁ where
+  !_     : forall {e c R} ->
+           NT (e ◇ c) R -> Parser Tok NT (e ◇ step c) R
+  symbol : Parser Tok NT (false ◇ leaf) Tok
+  return : forall {R} -> R -> Parser Tok NT (true ◇ leaf) R
+  fail   : forall {R} -> Parser Tok NT (false ◇ leaf) R
+  _?>>=_ : forall {c₁ e₂ c₂ R₁ R₂} ->
+           Parser Tok NT (true ◇ c₁) R₁ ->
+           (R₁ -> Parser Tok NT (e₂ ◇ c₂) R₂) ->
+           Parser Tok NT (e₂ ◇ node c₁ c₂) R₂
+  _!>>=_ : forall {c₁ R₁ R₂} {i₂ : R₁ -> Index} ->
+           Parser Tok NT (false ◇ c₁) R₁ ->
+           ((x : R₁) -> Parser Tok NT (i₂ x) R₂) ->
+           Parser Tok NT (false ◇ step c₁) R₂
+  alt    : forall e₁ e₂ {c₁ c₂ R} ->
+           Parser Tok NT (e₁      ◇ c₁)         R ->
+           Parser Tok NT (e₂      ◇ c₂)         R ->
+           Parser Tok NT (e₁ ∨ e₂ ◇ node c₁ c₂) R
 
 -- Grammars.
 
 Grammar : Set -> ParserType -> Set1
-Grammar tok nt = forall {i r} -> nt i r -> Parser tok nt i r
+Grammar Tok NT = forall {i R} -> NT i R -> Parser Tok NT i R

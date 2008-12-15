@@ -25,14 +25,14 @@ open import StructurallyRecursiveDescentParsing.Utilities
 private
 
   P : Set -> IFun ℕ
-  P tok = IStateT (BoundedVec tok) L.List
+  P Tok = IStateT (BoundedVec Tok) L.List
 
-  open module M₁ {tok} =
-    RawIMonadPlus (StateTIMonadPlus (BoundedVec tok) L.ListMonadPlus)
+  open module M₁ {Tok} =
+    RawIMonadPlus (StateTIMonadPlus (BoundedVec Tok) L.ListMonadPlus)
     renaming (return to ret)
 
-  open module M₂ {tok} =
-    RawIMonadState (StateTIMonadState (BoundedVec tok) L.ListMonad)
+  open module M₂ {Tok} =
+    RawIMonadState (StateTIMonadState (BoundedVec Tok) L.ListMonad)
     using (get; put; modify)
 
 ------------------------------------------------------------------------
@@ -50,12 +50,12 @@ private
 
 private
 
- module Dummy {tok nt} (g : Grammar tok nt) where
+ module Dummy {Tok NT} (g : Grammar Tok NT) where
 
   mutual
-    parse : forall n {e c r} ->
-            Parser tok nt (e ◇ c) r ->
-            P tok n (if e then n else pred n) r
+    parse : forall n {e c R} ->
+            Parser Tok NT (e ◇ c) R ->
+            P Tok n (if e then n else pred n) R
     parse n       (! x)           = parse n (g x)
     parse zero    symbol          = ∅
     parse (suc n) symbol          = eat =<< get
@@ -68,29 +68,29 @@ private
     parse n       (alt ⊥ ⊤ p₁ p₂) = parse↑ n      p₁ ∣   parse  n    p₂
     parse n       (alt ⊥ ⊥ p₁ p₂) = parse  n      p₁ ∣   parse  n    p₂
 
-    parse↑ : forall n {e c r} -> Parser tok nt (e ◇ c) r -> P tok n n r
+    parse↑ : forall n {e c R} -> Parser Tok NT (e ◇ c) R -> P Tok n n R
     parse↑ n       {⊤} p = parse n p
     parse↑ zero    {⊥} p = ∅
     parse↑ (suc n) {⊥} p = parse (suc n) p >>= \r ->
                            modify ↑ >>
                            ret r
 
-    eat : forall {n} -> BoundedVec tok (suc n) -> P tok (suc n) n tok
+    eat : forall {n} -> BoundedVec Tok (suc n) -> P Tok (suc n) n Tok
     eat []      = ∅
     eat (c ∷ s) = put s >> ret c
 
 -- Exported run function.
 
-parse :  forall {tok nt i r}
-      -> Parser tok nt i r -> Grammar tok nt
-      -> L.List tok -> L.List (r × L.List tok)
+parse : forall {Tok NT i R} ->
+        Parser Tok NT i R -> Grammar Tok NT ->
+        L.List Tok -> L.List (R × L.List Tok)
 parse p g s = L.map (map-× id toList)
                     (Dummy.parse g _ p (fromList s))
 
 -- A variant which only returns parses which leave no remaining input.
 
-parse-complete :  forall {tok nt i r}
-               -> Parser tok nt i r -> Grammar tok nt
-               -> L.List tok -> L.List r
+parse-complete : forall {Tok NT i R} ->
+                 Parser Tok NT i R -> Grammar Tok NT ->
+                 L.List Tok -> L.List R
 parse-complete p g s =
   L.map proj₁ (L.filter (L.null ∘ proj₂) (parse p g s))

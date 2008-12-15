@@ -184,9 +184,9 @@ private
  module Dummy (g : Grammar Tok LargeNT) where
 
   mutual
-    parse : forall n {e c r} ->
-            Parser Tok LargeNT (e ◇ c) r ->
-            P n (if e then idM else predM) r
+    parse : forall n {e c R} ->
+            Parser Tok LargeNT (e ◇ c) R ->
+            P n (if e then idM else predM) R
     parse n       (! x)           = memoParse n x
     parse n       symbol          = fromJust =<< gmodify predM eat
     parse n       (ret x)         = return x
@@ -198,12 +198,12 @@ private
     parse n       (alt ⊥ ⊤ p₁ p₂) = parse↑ n      p₁ ∣   parse  n    p₂
     parse n       (alt ⊥ ⊥ p₁ p₂) = parse  n      p₁ ∣   parse  n    p₂
 
-    parse↑ : forall n {e c r} ->
-             Parser Tok LargeNT (e ◇ c) r -> P n idM r
+    parse↑ : forall n {e c R} ->
+             Parser Tok LargeNT (e ◇ c) R -> P n idM R
     parse↑ n {e} p = adjustBound (lemma e) (parse n p)
 
-    memoParse : forall n {r e c} -> LargeNT (e ◇ c) r ->
-                P n (if e then idM else predM) r
+    memoParse : forall n {R e c} -> LargeNT (e ◇ c) R ->
+                P n (if e then idM else predM) R
     memoParse n x = cast₁ (memoise k (cast₂ (parse n (g x))))
       where
       k     = key (notTooLarge x)
@@ -212,17 +212,17 @@ private
 
 -- Exported run function.
 
-parse : forall {i r} ->
-        Parser Tok LargeNT i r -> Grammar Tok LargeNT ->
-        List Tok -> List (r × List Tok)
+parse : forall {i R} ->
+        Parser Tok LargeNT i R -> Grammar Tok LargeNT ->
+        List Tok -> List (R × List Tok)
 parse p g toks =
   List.map (map-× id (\xs -> Vec.toList (string xs))) $
   run (Vec.fromList toks) (Dummy.parse g _ p)
 
 -- A variant which only returns parses which leave no remaining input.
 
-parse-complete : forall {i r} ->
-                 Parser Tok LargeNT i r -> Grammar Tok LargeNT ->
-                 List Tok -> List r
+parse-complete : forall {i R} ->
+                 Parser Tok LargeNT i R -> Grammar Tok LargeNT ->
+                 List Tok -> List R
 parse-complete p g s =
   List.map proj₁ (List.filter (List.null ∘ proj₂) (parse p g s))

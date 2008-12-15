@@ -43,7 +43,7 @@ data Colour : Set where
   black : Colour
 
 Matrix : Set -> ℕ -> ℕ -> Set
-Matrix a rows cols = Vec (Vec a cols) rows
+Matrix A rows cols = Vec (Vec A cols) rows
 
 record PBM : Set where
   field

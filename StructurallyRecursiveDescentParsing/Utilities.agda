@@ -9,6 +9,6 @@ module StructurallyRecursiveDescentParsing.Utilities where
 
 infixr 9 _∘′_
 
-_∘′_ : {a c : Set} {b : a -> Set1} ->
-       (forall {x} -> b x -> c) -> ((x : a) -> b x) -> (a -> c)
+_∘′_ : {A C : Set} {B : A -> Set1} ->
+       (forall {x} -> B x -> C) -> ((x : A) -> B x) -> (A -> C)
 f ∘′ g = \x -> f (g x)

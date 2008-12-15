@@ -20,8 +20,8 @@ open import StructurallyRecursiveDescentParsing.Simple
 
 -- A function used to simplify the examples a little.
 
-_∈?_/_ :  forall {nt i r}
-       -> String -> Parser Char nt i r -> Grammar Char nt -> List r
+_∈?_/_ : forall {NT i R} ->
+         String -> Parser Char NT i R -> Grammar Char NT -> List R
 s ∈? p / g = parse-complete p g (S.toList s)
 
 module Ex₁ where
