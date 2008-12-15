@@ -37,7 +37,7 @@ infixl 10 _>>=_
 _>>=_ : forall {Tok NT e₁ c₁ i₂ R₁ R₂} -> let i₁ = e₁ ◇ c₁ in
         Parser Tok NT i₁ R₁ ->
         (R₁ -> Parser Tok NT i₂ R₂) ->
-        Parser Tok NT (i₁ ·I i₂) R₂
+        Parser Tok NT (i₁ · i₂) R₂
 _>>=_ {e₁ = true } = _?>>=_
 _>>=_ {e₁ = false} = _!>>=_
 
@@ -288,7 +288,7 @@ choiceMap f (x ∷ xs) = f x ∣ choiceMap f xs
 -- sat and friends
 
 sat : forall {Tok NT R} ->
-      (Tok -> Maybe R) -> Parser Tok NT (0I ·I 1I) R
+      (Tok -> Maybe R) -> Parser Tok NT (0I · 1I) R
 sat {Tok} {NT} {R} p = token !>>= \c -> ok (p c)
   where
   okIndex : Maybe R -> Index

@@ -51,8 +51,8 @@ ParserType₁ = Index -> Set -> Set1
 ------------------------------------------------------------------------
 -- Operations on indices
 
-infixr 50 _·I_
-infixr 40 _∣I_
+infixr 50 _·_
+infixr 40 _∥_
 
 0I : Index
 0I = false ◇ leaf
@@ -60,14 +60,14 @@ infixr 40 _∣I_
 1I : Index
 1I = true ◇ leaf
 
-_∣I_ : Index -> Index -> Index
-i₁ ∣I i₂ = empty i₁ ∨ empty i₂ ◇ node (corners i₁) (corners i₂)
+_∥_ : Index -> Index -> Index
+i₁ ∥ i₂ = empty i₁ ∨ empty i₂ ◇ node (corners i₁) (corners i₂)
 
-_·I_ : Index -> Index -> Index
-i₁ ·I i₂ = empty i₁ ∧ empty i₂
-           ◇
-           (if empty i₁ then node (corners i₁) (corners i₂)
-                        else step (corners i₁))
+_·_ : Index -> Index -> Index
+i₁ · i₂ = (empty i₁ ∧ empty i₂)
+          ◇
+          (if empty i₁ then node (corners i₁) (corners i₂)
+                       else step (corners i₁))
 
 ------------------------------------------------------------------------
 -- Testing indices for equality
