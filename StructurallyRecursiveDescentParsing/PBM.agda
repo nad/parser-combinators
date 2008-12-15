@@ -8,8 +8,8 @@
 --   "Programs that read this format should be as lenient as possible,
 --   accepting anything that looks remotely like a bitmap."
 
--- The idea to write this particular parser was taken from "The Power
--- of Pi" by Oury and Swierstra.
+-- I got the idea to write this particular parser from "The Power of
+-- Pi" by Oury and Swierstra.
 
 module StructurallyRecursiveDescentParsing.PBM where
 
