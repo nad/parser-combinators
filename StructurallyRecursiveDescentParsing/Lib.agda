@@ -41,14 +41,6 @@ _>>=_ : forall {Tok NT e₁ c₁ i₂ R₁ R₂} -> let i₁ = e₁ ◇ c₁ in
 _>>=_ {e₁ = true } = _?>>=_
 _>>=_ {e₁ = false} = _!>>=_
 
-infixl 40 _∣_
-
-_∣_ : forall {Tok NT e₁ c₁ i₂ R} -> let i₁ = e₁ ◇ c₁ in
-      Parser Tok NT i₁ R ->
-      Parser Tok NT i₂ R ->
-      Parser Tok NT (i₁ ∣I i₂) R
-_∣_ = alt _ _
-
 cast : forall {Tok NT e₁ e₂ c₁ c₂ R} ->
        e₁ ≡ e₂ -> c₁ ≡ c₂ ->
        Parser Tok NT (e₁ ◇ c₁) R -> Parser Tok NT (e₂ ◇ c₂) R
@@ -132,19 +124,18 @@ infix 55 _⋆ _+
 --        Parser Tok _           (List R)
 --   p + ~ _∷_ <$> p ⊛ p ⋆
 
--- By inlining some definitions we can show that the definitions are
--- productive, though. The following definitions have also been
--- simplified:
+-- By using the constructors of the Parser type directly we can show
+-- that the definitions are productive, though:
 
 mutual
 
   _⋆ : forall {Tok NT R d} ->
-       Parser Tok NT (false ◇ d) R     ->
+       Parser Tok NT (false ◇ d) R        ->
        Parser Tok NT _           (List R)
-  p ⋆ ~ alt _ _ (return []) (p +)
+  p ⋆ ~ return [] ∣ p +
 
   _+ : forall {Tok NT R d} ->
-       Parser Tok NT (false ◇ d) R     ->
+       Parser Tok NT (false ◇ d) R        ->
        Parser Tok NT _           (List R)
   p + ~ p   !>>= \x  ->
         p ⋆ ?>>= \xs ->

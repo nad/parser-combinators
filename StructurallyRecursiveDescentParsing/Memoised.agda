@@ -67,7 +67,6 @@ open STOProps NatProp.strictTotalOrder
 
 import StructurallyRecursiveDescentParsing.Memoised.Monad as Monad
 open import StructurallyRecursiveDescentParsing.Type
-  renaming (return to ret)
 open import StructurallyRecursiveDescentParsing.Utilities
 
 ------------------------------------------------------------------------
@@ -141,6 +140,12 @@ open Monad
        (\{k₁} {k₂} -> funsEqual    {k₁} {k₂})
        (\{k₁} {k₂} -> resultsEqual {k₁} {k₂})
 open PM
+  renaming ( return to return′
+           ; _>>=_  to _>>=′_
+           ; _=<<_  to _=<<′_
+           ; ∅      to fail′
+           ; _∣_    to _∣′_
+           )
 
 cast : forall {bnd f A₁ A₂} -> A₁ ≡₁ A₂ -> P bnd f A₁ -> P bnd f A₂
 cast ≡₁-refl p = p
@@ -166,8 +171,8 @@ private
   -- Fails if it encounters nothing.
 
   fromJust : forall {bnd} -> Maybe Tok -> P bnd idM Tok
-  fromJust nothing  = ∅
-  fromJust (just c) = return c
+  fromJust nothing  = fail′
+  fromJust (just c) = return′ c
 
 -- For every successful parse the run function returns the remaining
 -- string. (Since there can be several successful parses a list of
@@ -187,16 +192,16 @@ private
     parse : forall n {e c R} ->
             Parser Tok LargeNT (e ◇ c) R ->
             P n (if e then idM else predM) R
-    parse n       (ret x)         = return x
-    parse n       (p₁ ?>>= p₂)    = parse  n      p₁ >>= parse  n ∘′ p₂
-    parse zero    (p₁ !>>= p₂)    = ∅
-    parse (suc n) (p₁ !>>= p₂)    = parse (suc n) p₁ >>= parse↑ n ∘′ p₂
-    parse n       fail            = ∅
-    parse n       (alt ⊤ _ p₁ p₂) = parse  n      p₁ ∣   parse↑ n    p₂
-    parse n       (alt ⊥ ⊤ p₁ p₂) = parse↑ n      p₁ ∣   parse  n    p₂
-    parse n       (alt ⊥ ⊥ p₁ p₂) = parse  n      p₁ ∣   parse  n    p₂
-    parse n       token           = fromJust =<< gmodify predM eat
-    parse n       (! x)           = memoParse n x
+    parse n       (return x)          = return′ x
+    parse n       (_∣_ {⊤}     p₁ p₂) = parse  n      p₁   ∣′ parse↑ n    p₂
+    parse n       (_∣_ {⊥} {⊤} p₁ p₂) = parse↑ n      p₁   ∣′ parse  n    p₂
+    parse n       (_∣_ {⊥} {⊥} p₁ p₂) = parse  n      p₁   ∣′ parse  n    p₂
+    parse n       (p₁ ?>>= p₂)        = parse  n      p₁ >>=′ parse  n ∘′ p₂
+    parse (suc n) (p₁ !>>= p₂)        = parse (suc n) p₁ >>=′ parse↑ n ∘′ p₂
+    parse zero    (p₁ !>>= p₂)        = fail′
+    parse n       fail                = fail′
+    parse n       token               = fromJust =<<′ gmodify predM eat
+    parse n       (! x)               = memoParse n x
 
     parse↑ : forall n {e c R} ->
              Parser Tok LargeNT (e ◇ c) R -> P n idM R

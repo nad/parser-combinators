@@ -29,11 +29,22 @@ private
 
   open module M₁ {Tok} =
     RawIMonadPlus (StateTIMonadPlus (BoundedVec Tok) L.ListMonadPlus)
-    renaming (return to ret)
+    using ()
+    renaming ( return to return′
+             ; _>>=_  to _>>=′_
+             ; _=<<_  to _=<<′_
+             ; _>>_   to _>>′_
+             ; ∅      to fail′
+             ; _∣_    to _∣′_
+             )
 
   open module M₂ {Tok} =
     RawIMonadState (StateTIMonadState (BoundedVec Tok) L.ListMonad)
-    using (get; put; modify)
+    using ()
+    renaming ( get    to get′
+             ; put    to put′
+             ; modify to modify′
+             )
 
 ------------------------------------------------------------------------
 -- Run function for the parsers
@@ -56,28 +67,28 @@ private
     parse : forall n {e c R} ->
             Parser Tok NT (e ◇ c) R ->
             P Tok n (if e then n else pred n) R
-    parse n       (return x)      = ret x
-    parse n       (p₁ ?>>= p₂)    = parse  n      p₁ >>= parse  n ∘′ p₂
-    parse zero    (p₁ !>>= p₂)    = ∅
-    parse (suc n) (p₁ !>>= p₂)    = parse (suc n) p₁ >>= parse↑ n ∘′ p₂
-    parse n       fail            = ∅
-    parse n       (alt ⊤ _ p₁ p₂) = parse  n      p₁ ∣   parse↑ n    p₂
-    parse n       (alt ⊥ ⊤ p₁ p₂) = parse↑ n      p₁ ∣   parse  n    p₂
-    parse n       (alt ⊥ ⊥ p₁ p₂) = parse  n      p₁ ∣   parse  n    p₂
-    parse zero    token           = ∅
-    parse (suc n) token           = eat =<< get
-    parse n       (! x)           = parse n (g x)
+    parse n       (return x)          = return′ x
+    parse n       (_∣_ {⊤}     p₁ p₂) = parse  n      p₁   ∣′ parse↑ n    p₂
+    parse n       (_∣_ {⊥} {⊤} p₁ p₂) = parse↑ n      p₁   ∣′ parse  n    p₂
+    parse n       (_∣_ {⊥} {⊥} p₁ p₂) = parse  n      p₁   ∣′ parse  n    p₂
+    parse n       (p₁ ?>>= p₂)        = parse  n      p₁ >>=′ parse  n ∘′ p₂
+    parse (suc n) (p₁ !>>= p₂)        = parse (suc n) p₁ >>=′ parse↑ n ∘′ p₂
+    parse zero    (p₁ !>>= p₂)        = fail′
+    parse n       fail                = fail′
+    parse zero    token               = fail′
+    parse (suc n) token               = eat =<<′ get′
+    parse n       (! x)               = parse n (g x)
 
     parse↑ : forall n {e c R} -> Parser Tok NT (e ◇ c) R -> P Tok n n R
     parse↑ n       {⊤} p = parse n p
-    parse↑ zero    {⊥} p = ∅
-    parse↑ (suc n) {⊥} p = parse (suc n) p >>= \r ->
-                           modify ↑ >>
-                           ret r
+    parse↑ zero    {⊥} p = fail′
+    parse↑ (suc n) {⊥} p = parse (suc n) p >>=′ \r ->
+                           modify′ ↑       >>′
+                           return′ r
 
     eat : forall {n} -> BoundedVec Tok (suc n) -> P Tok (suc n) n Tok
-    eat []      = ∅
-    eat (c ∷ s) = put s >> ret c
+    eat []      = fail′
+    eat (c ∷ s) = put′ s >>′ return′ c
 
 -- Exported run function.
 
