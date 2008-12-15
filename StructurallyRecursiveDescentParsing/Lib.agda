@@ -7,8 +7,7 @@
 
 module StructurallyRecursiveDescentParsing.Lib where
 
-open import StructurallyRecursiveDescentParsing.Interface
-import StructurallyRecursiveDescentParsing.Type as Type
+open import StructurallyRecursiveDescentParsing.Type
 open import StructurallyRecursiveDescentParsing.Index
 
 open import Data.Nat hiding (_≟_)
@@ -29,6 +28,31 @@ private
 open import Relation.Nullary
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
+
+------------------------------------------------------------------------
+-- Some important derived combinators
+
+infixl 10 _>>=_
+
+_>>=_ : forall {Tok NT e₁ c₁ i₂ R₁ R₂} -> let i₁ = e₁ ◇ c₁ in
+        Parser Tok NT i₁ R₁ ->
+        (R₁ -> Parser Tok NT i₂ R₂) ->
+        Parser Tok NT (i₁ ·I i₂) R₂
+_>>=_ {e₁ = true } = _?>>=_
+_>>=_ {e₁ = false} = _!>>=_
+
+infixl 40 _∣_
+
+_∣_ : forall {Tok NT e₁ c₁ i₂ R} -> let i₁ = e₁ ◇ c₁ in
+      Parser Tok NT i₁ R ->
+      Parser Tok NT i₂ R ->
+      Parser Tok NT (i₁ ∣I i₂) R
+_∣_ = alt _ _
+
+cast : forall {Tok NT e₁ e₂ c₁ c₂ R} ->
+       e₁ ≡ e₂ -> c₁ ≡ c₂ ->
+       Parser Tok NT (e₁ ◇ c₁) R -> Parser Tok NT (e₂ ◇ c₂) R
+cast ≡-refl ≡-refl p = p
 
 ------------------------------------------------------------------------
 -- Applicative functor parsers
@@ -117,13 +141,13 @@ mutual
   _⋆ : forall {Tok NT R d} ->
        Parser Tok NT (false ◇ d) R     ->
        Parser Tok NT _           (List R)
-  p ⋆ ~ Type.alt _ _ (return []) (p +)
+  p ⋆ ~ alt _ _ (return []) (p +)
 
   _+ : forall {Tok NT R d} ->
        Parser Tok NT (false ◇ d) R     ->
        Parser Tok NT _           (List R)
-  p + ~ Type._!>>=_ p     \x  ->
-        Type._?>>=_ (p ⋆) \xs ->
+  p + ~ p   !>>= \x  ->
+        p ⋆ ?>>= \xs ->
         return (x ∷ xs)
 
 -- p sepBy sep parses one or more ps separated by seps.

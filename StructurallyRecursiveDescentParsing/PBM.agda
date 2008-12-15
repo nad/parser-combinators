@@ -29,11 +29,8 @@ import Data.Nat.Show as N
 open import Relation.Nullary
 open import Relation.Binary.PropositionalEquality
 
-open import StructurallyRecursiveDescentParsing.Index
-open import StructurallyRecursiveDescentParsing.Interface
-open import StructurallyRecursiveDescentParsing.Lib
+open import StructurallyRecursiveDescentParsing
 open Token Char.decSetoid
-open import StructurallyRecursiveDescentParsing.Simple
 
 ------------------------------------------------------------------------
 -- The PBM type

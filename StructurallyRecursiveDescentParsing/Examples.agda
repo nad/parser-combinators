@@ -12,11 +12,8 @@ open C using (Char)
 open S using (String)
 open import Relation.Binary.PropositionalEquality
 
-open import StructurallyRecursiveDescentParsing.Index
-open import StructurallyRecursiveDescentParsing.Interface
-open import StructurallyRecursiveDescentParsing.Lib
+open import StructurallyRecursiveDescentParsing
 open Token C.decSetoid
-open import StructurallyRecursiveDescentParsing.Simple
 
 -- A function used to simplify the examples a little.
 

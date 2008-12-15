@@ -1,52 +1,25 @@
 ------------------------------------------------------------------------
--- Imports all modules, so that it is easy to check if everything type
--- checks
+-- A total parser combinator library
 ------------------------------------------------------------------------
+
+-- This module just reexports some other modules, to make them easier
+-- to use. See Everything.agda for an overview of the different
+-- modules.
 
 module StructurallyRecursiveDescentParsing where
 
--- The parser type indices.
+-- Parser indices.
 
-import StructurallyRecursiveDescentParsing.Index
+open import StructurallyRecursiveDescentParsing.Index  public
 
--- The parser data type.
+-- The parser type.
 
-import StructurallyRecursiveDescentParsing.Type
+open import StructurallyRecursiveDescentParsing.Type   public
 
--- The parser combinator interface.
+-- Derived parser combinators.
 
-import StructurallyRecursiveDescentParsing.Interface
+open import StructurallyRecursiveDescentParsing.Lib    public
 
--- A simple backend.
+-- The simple parser backend.
 
-import StructurallyRecursiveDescentParsing.Simple
-
--- An optimised backend. Unfortunately Agda is currently too slow to
--- be able to comfortably type check these modules (at least on my
--- machine).
-
--- import StructurallyRecursiveDescentParsing.Memoised
--- import StructurallyRecursiveDescentParsing.Memoised.Monad
-
--- A library of derived parser combinators.
-
-import StructurallyRecursiveDescentParsing.Lib
-
--- Some small examples.
-
-import StructurallyRecursiveDescentParsing.Examples
-
--- An example: parsing of PBM image files.
-
-import StructurallyRecursiveDescentParsing.PBM
-
--- An extended example: mixfix operator parsing.
-
-import StructurallyRecursiveDescentParsing.Mixfix.Fixity
-import StructurallyRecursiveDescentParsing.Mixfix.Expr
-import StructurallyRecursiveDescentParsing.Mixfix
-import StructurallyRecursiveDescentParsing.Mixfix.Example
-
--- Less interesting modules.
-
-import StructurallyRecursiveDescentParsing.Utilities
+open import StructurallyRecursiveDescentParsing.Simple public

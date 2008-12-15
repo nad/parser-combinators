@@ -23,10 +23,7 @@ open import Data.Function hiding (_⟨_⟩_)
 import Data.String as String
 
 open import StructurallyRecursiveDescentParsing.Mixfix.Fixity
-open import StructurallyRecursiveDescentParsing.Index
-open import StructurallyRecursiveDescentParsing.Interface
-open import StructurallyRecursiveDescentParsing.Simple
-open import StructurallyRecursiveDescentParsing.Lib
+open import StructurallyRecursiveDescentParsing
 open Token String.decSetoid
 
 -- Note that, even though grammar below is not recursive, these
