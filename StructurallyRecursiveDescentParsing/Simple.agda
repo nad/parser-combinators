@@ -56,17 +56,17 @@ private
     parse : forall n {e c R} ->
             Parser Tok NT (e ◇ c) R ->
             P Tok n (if e then n else pred n) R
-    parse n       (! x)           = parse n (g x)
-    parse zero    token           = ∅
-    parse (suc n) token           = eat =<< get
     parse n       (return x)      = ret x
-    parse n       fail            = ∅
     parse n       (p₁ ?>>= p₂)    = parse  n      p₁ >>= parse  n ∘′ p₂
     parse zero    (p₁ !>>= p₂)    = ∅
     parse (suc n) (p₁ !>>= p₂)    = parse (suc n) p₁ >>= parse↑ n ∘′ p₂
+    parse n       fail            = ∅
     parse n       (alt ⊤ _ p₁ p₂) = parse  n      p₁ ∣   parse↑ n    p₂
     parse n       (alt ⊥ ⊤ p₁ p₂) = parse↑ n      p₁ ∣   parse  n    p₂
     parse n       (alt ⊥ ⊥ p₁ p₂) = parse  n      p₁ ∣   parse  n    p₂
+    parse zero    token           = ∅
+    parse (suc n) token           = eat =<< get
+    parse n       (! x)           = parse n (g x)
 
     parse↑ : forall n {e c R} -> Parser Tok NT (e ◇ c) R -> P Tok n n R
     parse↑ n       {⊤} p = parse n p
