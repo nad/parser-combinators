@@ -19,6 +19,7 @@ open import Data.Bool
 open import Data.Function
 open import Data.Maybe
 open import Data.Unit
+open import Data.Empty
 import Data.Char as Char
 open Char using (Char; _==_)
 open import Algebra
@@ -355,3 +356,9 @@ whitespace = sat' isSpace
   where
   isSpace = λ c →
     (c == ' ') ∨ (c == '\t') ∨ (c == '\n') ∨ (c == '\r')
+
+------------------------------------------------------------------------
+-- An empty grammar
+
+empty-grammar : ∀ {Tok} -> Grammar Tok (λ _ _ → ⊥)
+empty-grammar ()
