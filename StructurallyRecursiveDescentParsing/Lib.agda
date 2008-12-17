@@ -360,5 +360,8 @@ whitespace = sat' isSpace
 ------------------------------------------------------------------------
 -- An empty grammar
 
-empty-grammar : ∀ {Tok} -> Grammar Tok (λ _ _ → ⊥)
+EmptyNT : ParserType
+EmptyNT _ _ = ⊥
+
+empty-grammar : ∀ {Tok} -> Grammar Tok EmptyNT
 empty-grammar ()
