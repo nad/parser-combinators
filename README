@@ -1,3 +1,8 @@
 A total implementation of parser combinators, as documented in the
-paper Structurally Recursive Descent Parsing by Nils Anders Danielsson
-and Ulf Norell.
+(forthcoming) paper Structurally Recursive Descent Parsing by Nils
+Anders Danielsson and Ulf Norell.
+
+This code depends on the Agda standard library. Note that you have to
+use library code from a suitable date to make things work. (If you use
+only the patches originating before the creation date of the last
+patch in this repository then things usually work.)
