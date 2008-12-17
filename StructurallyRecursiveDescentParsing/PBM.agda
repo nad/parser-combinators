@@ -73,18 +73,14 @@ show i = "P1 # Generated using Agda.\n" <+>
 ------------------------------------------------------------------------
 -- Parsing PBM images
 
-data NT : ParserType where
-  comment : NT _ ⊤
-  colour  : NT _ Colour
-  pbm     : NT _ PBM
+comment = tt <$ theToken '#'
+             <⊛ sat' (not ∘ _==_ '\n') ⋆
+             <⊛ theToken '\n'
 
-grammar : Grammar Char NT
-grammar comment  = tt <$ theToken '#'
-                      <⊛ sat' (not ∘ _==_ '\n') ⋆
-                      <⊛ theToken '\n'
-grammar colour   = white <$ theToken '0'
-                 ∣ black <$ theToken '1'
-grammar pbm      =
+colour = white <$ theToken '0'
+       ∣ black <$ theToken '1'
+
+pbm =
   w∣c ⋆ ⊛>
   theString (String.toVec "P1") ⊛>
   w∣c ⋆ ⊛>
@@ -92,9 +88,9 @@ grammar pbm      =
   w∣c + ⊛>
   number >>=  λ rows →  -- _!>>=_ works just as well.
   w∣c ⊛>
-  (makePBM <$> exactly rows (exactly cols (w∣c ⋆ ⊛> ! colour))) <⊛
+  (makePBM <$> exactly rows (exactly cols (w∣c ⋆ ⊛> colour))) <⊛
   any ⋆
-  where w∣c = whitespace ∣ ! comment
+  where w∣c = whitespace ∣ comment
 
 module Example where
 
@@ -104,6 +100,6 @@ module Example where
                    (black ∷ white ∷ []) ∷
                    (black ∷ black ∷ []) ∷ [])
 
-  ex₁ : parse-complete (! pbm) grammar (String.toList (show image)) ≡
+  ex₁ : parse-complete pbm empty-grammar (String.toList (show image)) ≡
         List.[_] image
   ex₁ = ≡-refl
