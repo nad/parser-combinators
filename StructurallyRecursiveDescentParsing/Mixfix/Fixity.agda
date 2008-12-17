@@ -22,7 +22,7 @@ data Associativity : Set where
 
 data Fixity : Set where
   prefx  : Fixity
-  infx   : (assoc : Associativity) -> Fixity
+  infx   : (assoc : Associativity) → Fixity
   postfx : Fixity
   closed : Fixity
 
@@ -33,7 +33,7 @@ Fixity-is-finite = record
   ; left-inverse = left-inverse
   }
   where
-  to : Fixity -> Fin 6
+  to : Fixity → Fin 6
   to prefx        = # 0
   to (infx left)  = # 1
   to (infx right) = # 2
@@ -41,7 +41,7 @@ Fixity-is-finite = record
   to postfx       = # 4
   to closed       = # 5
 
-  from : Fin 6 -> Fixity
+  from : Fin 6 → Fixity
   from zero                                   = prefx
   from (suc zero)                             = infx left
   from (suc (suc zero))                       = infx right

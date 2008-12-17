@@ -39,7 +39,7 @@ data Colour : Set where
   white : Colour
   black : Colour
 
-Matrix : Set -> ℕ -> ℕ -> Set
+Matrix : Set → ℕ → ℕ → Set
 Matrix A rows cols = Vec (Vec A cols) rows
 
 record PBM : Set where
@@ -50,17 +50,17 @@ record PBM : Set where
 
 open PBM
 
-makePBM : forall {rows cols} -> Matrix Colour rows cols -> PBM
+makePBM : ∀ {rows cols} → Matrix Colour rows cols → PBM
 makePBM m = record { rows = _; cols = _; matrix = m }
 
 ------------------------------------------------------------------------
 -- Showing PBM images
 
-showColour : Colour -> Char
+showColour : Colour → Char
 showColour white = '0'
 showColour black = '1'
 
-show : PBM -> String
+show : PBM → String
 show i = "P1 # Generated using Agda.\n" <+>
          N.show (cols i) <+> " " <+> N.show (rows i) <+> "\n" <+>
          showMatrix (matrix i)
@@ -68,7 +68,7 @@ show i = "P1 # Generated using Agda.\n" <+>
   showMatrix = String.fromList ∘
                Vec.toList ∘
                Vec.concat ∘
-               Vec.map ((\xs -> xs ++ [ '\n' ]) ∘ Vec.map showColour)
+               Vec.map ((λ xs → xs ++ [ '\n' ]) ∘ Vec.map showColour)
 
 ------------------------------------------------------------------------
 -- Parsing PBM images
@@ -88,9 +88,9 @@ grammar pbm      =
   w∣c ⋆ ⊛>
   theString (String.toVec "P1") ⊛>
   w∣c ⋆ ⊛>
-  number !>>= \cols ->  -- _>>=_ works just as well.
+  number !>>= λ cols →  -- _>>=_ works just as well.
   w∣c + ⊛>
-  number >>=  \rows ->  -- _!>>=_ works just as well.
+  number >>=  λ rows →  -- _!>>=_ works just as well.
   w∣c ⊛>
   (makePBM <$> exactly rows (exactly cols (w∣c ⋆ ⊛> ! colour))) <⊛
   any ⋆

@@ -23,8 +23,8 @@ Empty = Bool
 
 data Corners : Set where
   leaf : Corners
-  step : Corners -> Corners
-  node : Corners -> Corners -> Corners
+  step : Corners → Corners
+  node : Corners → Corners → Corners
 
 -- The index type.
 
@@ -37,16 +37,16 @@ open Index public
 
 infix 4 _◇_
 
-_◇_ : Empty -> Corners -> Index
+_◇_ : Empty → Corners → Index
 e ◇ c = record { empty = e; corners = c }
 
 -- The parser type signature. The second argument is the result type.
 
 ParserType : Set1
-ParserType = Index -> Set -> Set
+ParserType = Index → Set → Set
 
 ParserType₁ : Set2
-ParserType₁ = Index -> Set -> Set1
+ParserType₁ = Index → Set → Set1
 
 ------------------------------------------------------------------------
 -- Operations on indices
@@ -60,10 +60,10 @@ infixr 40 _∥_
 1I : Index
 1I = true ◇ leaf
 
-_∥_ : Index -> Index -> Index
+_∥_ : Index → Index → Index
 i₁ ∥ i₂ = empty i₁ ∨ empty i₂ ◇ node (corners i₁) (corners i₂)
 
-_·_ : Index -> Index -> Index
+_·_ : Index → Index → Index
 i₁ · i₂ = (empty i₁ ∧ empty i₂)
           ◇
           (if empty i₁ then node (corners i₁) (corners i₂)
@@ -76,15 +76,15 @@ infix 15 _Index-≟_ _Corners-≟_
 
 private
 
-  drop-step : forall {c₁ c₂} -> step c₁ ≡ step c₂ -> c₁ ≡ c₂
+  drop-step : ∀ {c₁ c₂} → step c₁ ≡ step c₂ → c₁ ≡ c₂
   drop-step ≡-refl = ≡-refl
 
-  drop-node₁ : forall {c₁ c₂ c₃ c₄} ->
-               node c₁ c₂ ≡ node c₃ c₄ -> c₁ ≡ c₃
+  drop-node₁ : ∀ {c₁ c₂ c₃ c₄} →
+               node c₁ c₂ ≡ node c₃ c₄ → c₁ ≡ c₃
   drop-node₁ ≡-refl = ≡-refl
 
-  drop-node₂ : forall {c₁ c₂ c₃ c₄} ->
-               node c₁ c₂ ≡ node c₃ c₄ -> c₂ ≡ c₄
+  drop-node₂ : ∀ {c₁ c₂ c₃ c₄} →
+               node c₁ c₂ ≡ node c₃ c₄ → c₂ ≡ c₄
   drop-node₂ ≡-refl = ≡-refl
 
 _Corners-≟_ : Decidable {Corners} _≡_
@@ -96,12 +96,12 @@ node c₁ c₂ Corners-≟ node  c₃  c₄ with c₁ Corners-≟ c₃ | c₂ Co
 node c₁ c₂ Corners-≟ node .c₁ .c₂ | yes ≡-refl | yes ≡-refl = yes ≡-refl
 node c₁ c₂ Corners-≟ node  c₃  c₄ | no  ¬c₁≡c₂ | _          = no (¬c₁≡c₂ ∘ drop-node₁)
 node c₁ c₂ Corners-≟ node  c₃  c₄ | _          | no  ¬c₁≡c₂ = no (¬c₁≡c₂ ∘ drop-node₂)
-leaf       Corners-≟ step _       = no \()
-leaf       Corners-≟ node _ _     = no \()
-step _     Corners-≟ leaf         = no \()
-step _     Corners-≟ node _ _     = no \()
-node _ _   Corners-≟ leaf         = no \()
-node _ _   Corners-≟ step _       = no \()
+leaf       Corners-≟ step _       = no λ()
+leaf       Corners-≟ node _ _     = no λ()
+step _     Corners-≟ leaf         = no λ()
+step _     Corners-≟ node _ _     = no λ()
+node _ _   Corners-≟ leaf         = no λ()
+node _ _   Corners-≟ step _       = no λ()
 
 _Index-≟_ : Decidable {Index} _≡_
 i₁ Index-≟ i₂ with empty i₁ Bool-≟ empty i₂

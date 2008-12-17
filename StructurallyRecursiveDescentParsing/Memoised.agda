@@ -22,16 +22,15 @@ module StructurallyRecursiveDescentParsing.Memoised
   -- having to lift the table code to Set1) the result types have to
   -- come from the following universe:
 
-  {Result : Set} (⟦_⟧ : Result -> Set)
+  {Result : Set} (⟦_⟧ : Result → Set)
 
   -- Nonterminals also have to be small enough:
 
-  {NT : Index -> Result -> Set} {LargeNT : ParserType}
-  (resultType : forall {i r} -> LargeNT i r -> Result)
-  (resultTypeCorrect : forall {i r}
-                       (x : LargeNT i r) -> ⟦ resultType x ⟧ ≡₁ r)
-  (notTooLarge : forall {i r}
-                 (x : LargeNT i r) -> NT i (resultType x))
+  {NT : Index → Result → Set} {LargeNT : ParserType}
+  (resultType : ∀ {i r} → LargeNT i r → Result)
+  (resultTypeCorrect : ∀ {i r} (x : LargeNT i r) →
+                       ⟦ resultType x ⟧ ≡₁ r)
+  (notTooLarge : ∀ {i r} (x : LargeNT i r) → NT i (resultType x))
 
   -- Furthermore nonterminals need to be ordered, so that they can be
   -- used as memo table keys:
@@ -41,7 +40,7 @@ module StructurallyRecursiveDescentParsing.Memoised
 
   -- And the underlying equality needs to be strong enough:
 
-  (indicesEqual : _≈_ =[ (\irx -> (proj₁ irx , proj₁ (proj₂ irx))) ]⇒
+  (indicesEqual : _≈_ =[ (λ irx → (proj₁ irx , proj₁ (proj₂ irx))) ]⇒
                   _≡_ {Index × Result})
 
   -- Token type:
@@ -97,10 +96,10 @@ predM = record
   ; monotone = pred-mono
   }
 
-maybePredM : Empty -> MonoFun
+maybePredM : Empty → MonoFun
 maybePredM e = if e then idM else predM
 
-lemma : forall e pos -> fun (maybePredM e) pos ≤ pos
+lemma : ∀ e pos → fun (maybePredM e) pos ≤ pos
 lemma ⊤ pos       = refl
 lemma ⊥ zero      = refl
 lemma ⊥ (suc pos) = inj₁ (Poset.refl Nat.poset)
@@ -108,11 +107,10 @@ lemma ⊥ (suc pos) = inj₁ (Poset.refl Nat.poset)
 ------------------------------------------------------------------------
 -- Parser monad
 
-data Key : MonoFun -> Result -> Set where
-  key : forall {e c r} (nt : NT (e ◇ c) r) ->
-        Key (maybePredM e) r
+data Key : MonoFun → Result → Set where
+  key : ∀ {e c r} (nt : NT (e ◇ c) r) → Key (maybePredM e) r
 
-shuffle : ∃₂ Key -> ∃₂ NT
+shuffle : ∃₂ Key → ∃₂ NT
 shuffle (._ , _ , key x) = (, , x)
 
 _≈K_ : Rel (∃₂ Key)
@@ -128,7 +126,7 @@ funsEqual : _≈K_ =[ proj₁ ]⇒ _≡_
 funsEqual {(._ , _ , key _)} {(._ , _ , key _)} eq =
   ≡-cong (maybePredM ∘ empty ∘ proj₁) (indicesEqual eq)
 
-resultsEqual : _≈K_ =[ (\rfk -> proj₁ (proj₂ rfk)) ]⇒ _≡_
+resultsEqual : _≈K_ =[ (λ rfk → proj₁ (proj₂ rfk)) ]⇒ _≡_
 resultsEqual {(._ , _ , key _)} {(._ , _ , key _)} eq =
   ≡-cong proj₂ (indicesEqual eq)
 
@@ -137,8 +135,8 @@ open Monad
        (Vec Tok)
        ⟦_⟧
        ordered
-       (\{k₁} {k₂} -> funsEqual    {k₁} {k₂})
-       (\{k₁} {k₂} -> resultsEqual {k₁} {k₂})
+       (λ {k₁} {k₂} → funsEqual    {k₁} {k₂})
+       (λ {k₁} {k₂} → resultsEqual {k₁} {k₂})
 open PM
   renaming ( return to return′
            ; _>>=_  to _>>=′_
@@ -147,7 +145,7 @@ open PM
            ; _∣_    to _∣′_
            )
 
-cast : forall {bnd f A₁ A₂} -> A₁ ≡₁ A₂ -> P bnd f A₁ -> P bnd f A₂
+cast : ∀ {bnd f A₁ A₂} → A₁ ≡₁ A₂ → P bnd f A₁ → P bnd f A₂
 cast ≡₁-refl p = p
 
 ------------------------------------------------------------------------
@@ -159,18 +157,18 @@ private
 
   -- Extracts the first element from the input, if any.
 
-  eat : forall {bnd}
-        (inp : Input≤ bnd) -> Maybe Tok × Input≤ (pred (position inp))
+  eat : ∀ {bnd} (inp : Input≤ bnd) →
+        Maybe Tok × Input≤ (pred (position inp))
   eat {bnd} xs = helper (bounded xs) (string xs)
     where
-    helper : forall {pos} ->
-             pos ≤ bnd -> Vec Tok pos -> Maybe Tok × Input≤ (pred pos)
+    helper : ∀ {pos} → pos ≤ bnd → Vec Tok pos →
+             Maybe Tok × Input≤ (pred pos)
     helper _  []       = (nothing , [] isBounded∶ refl)
     helper le (c ∷ cs) = (just c  , cs isBounded∶ refl)
 
   -- Fails if it encounters nothing.
 
-  fromJust : forall {bnd} -> Maybe Tok -> P bnd idM Tok
+  fromJust : ∀ {bnd} → Maybe Tok → P bnd idM Tok
   fromJust nothing  = fail′
   fromJust (just c) = return′ c
 
@@ -189,8 +187,8 @@ private
  module Dummy (g : Grammar Tok LargeNT) where
 
   mutual
-    parse : forall n {e c R} ->
-            Parser Tok LargeNT (e ◇ c) R ->
+    parse : ∀ n {e c R} →
+            Parser Tok LargeNT (e ◇ c) R →
             P n (if e then idM else predM) R
     parse n       (return x)          = return′ x
     parse n       (_∣_ {⊤}     p₁ p₂) = parse  n      p₁   ∣′ parse↑ n    p₂
@@ -203,11 +201,10 @@ private
     parse n       token               = fromJust =<<′ gmodify predM eat
     parse n       (! x)               = memoParse n x
 
-    parse↑ : forall n {e c R} ->
-             Parser Tok LargeNT (e ◇ c) R -> P n idM R
+    parse↑ : ∀ n {e c R} → Parser Tok LargeNT (e ◇ c) R → P n idM R
     parse↑ n {e} p = adjustBound (lemma e) (parse n p)
 
-    memoParse : forall n {R e c} -> LargeNT (e ◇ c) R ->
+    memoParse : ∀ n {R e c} → LargeNT (e ◇ c) R →
                 P n (if e then idM else predM) R
     memoParse n x = cast₁ (memoise k (cast₂ (parse n (g x))))
       where
@@ -217,17 +214,17 @@ private
 
 -- Exported run function.
 
-parse : forall {i R} ->
-        Parser Tok LargeNT i R -> Grammar Tok LargeNT ->
-        List Tok -> List (R × List Tok)
+parse : ∀ {i R} →
+        Parser Tok LargeNT i R → Grammar Tok LargeNT →
+        List Tok → List (R × List Tok)
 parse p g toks =
-  List.map (map-× id (\xs -> Vec.toList (string xs))) $
+  List.map (map-× id (λ xs → Vec.toList (string xs))) $
   run (Vec.fromList toks) (Dummy.parse g _ p)
 
 -- A variant which only returns parses which leave no remaining input.
 
-parse-complete : forall {i R} ->
-                 Parser Tok LargeNT i R -> Grammar Tok LargeNT ->
-                 List Tok -> List R
+parse-complete : ∀ {i R} →
+                 Parser Tok LargeNT i R → Grammar Tok LargeNT →
+                 List Tok → List R
 parse-complete p g s =
   List.map proj₁ (List.filter (List.null ∘ proj₂) (parse p g s))

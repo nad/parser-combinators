@@ -29,44 +29,44 @@ atom = operator ("•" ∷ [])
 parens : Operator closed 1
 parens = operator ("(" ∷ ")" ∷ [])
 
-⟦_⟧ : Expr -> Expr
+⟦_⟧ : Expr → Expr
 ⟦ e ⟧ = ⟪ parens ∙ [ e ] ⟫
 
 plus : Operator (infx left) 0
 plus = operator ("+" ∷ [])
 
-_+_ : Expr -> Expr -> Expr
+_+_ : Expr → Expr → Expr
 e₁ + e₂ = e₁ ⟨ plus ∙ [] ⟩ e₂
 
 minus : Operator (infx left) 0
 minus = operator ("-" ∷ [])
 
-_-_ : Expr -> Expr -> Expr
+_-_ : Expr → Expr → Expr
 e₁ - e₂ = e₁ ⟨ minus ∙ [] ⟩ e₂
 
 times : Operator (infx left) 0
 times = operator ("*" ∷ [])
 
-_*_ : Expr -> Expr -> Expr
+_*_ : Expr → Expr → Expr
 e₁ * e₂ = e₁ ⟨ times ∙ [] ⟩ e₂
 
 comma : Operator (infx left) 0
 comma = operator ("," ∷ [])
 
-_,_ : Expr -> Expr -> Expr
+_,_ : Expr → Expr → Expr
 e₁ , e₂ = e₁ ⟨ comma ∙ [] ⟩ e₂
 
 wellTyped : Operator postfx 1
 wellTyped = operator ("⊢" ∷ "∶" ∷ [])
 
-_⊢_∶ : Expr -> Expr -> Expr
+_⊢_∶ : Expr → Expr → Expr
 e₁ ⊢ e₂ ∶ = e₁ ⟨ wellTyped ∙ [ e₂ ] ⟫
 
 ------------------------------------------------------------------------
 -- Precedence graph
 
-prec : List (∃₂ Operator) -> PrecedenceGraph -> PrecedenceTree
-prec ops = precedence (\fix -> gfilter (hasFixity fix) ops)
+prec : List (∃₂ Operator) → PrecedenceGraph → PrecedenceTree
+prec ops = precedence (λ fix → gfilter (hasFixity fix) ops)
 
 g : PrecedenceGraph
 g = wt ∷ c ∷ pm ∷ t ∷ ap ∷ []
@@ -80,7 +80,7 @@ g = wt ∷ c ∷ pm ∷ t ∷ ap ∷ []
 ------------------------------------------------------------------------
 -- Some tests
 
-test : String -> List Expr
+test : String → List Expr
 test s = Mixfix.parseExpr g (map (fromList ∘ L[_]) (toList s))
 
 -- Using an unoptimised type checker to run an inefficient parser can

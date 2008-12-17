@@ -24,13 +24,13 @@ NamePart = String
 -- number of arguments taken between the first and last name parts.
 
 data Operator (fix : Fixity) (arity : ℕ) : Set where
-  operator : (nameParts : Vec NamePart (1 + arity)) ->
+  operator : (nameParts : Vec NamePart (1 + arity)) →
              Operator fix arity
 
 -- Predicate filtering out operators of the given fixity and
 -- associativity.
 
-hasFixity : forall fix -> ∃₂ Operator -> Maybe (∃ (Operator fix))
+hasFixity : ∀ fix → ∃₂ Operator → Maybe (∃ (Operator fix))
 hasFixity fix (fix' , op) with fix ≟ fix'
 hasFixity fix (.fix , op) | yes ≡-refl = just op
 hasFixity fix (fix' , op) | _          = nothing
@@ -46,8 +46,8 @@ mutual
   PrecedenceGraph = List PrecedenceTree
 
   data PrecedenceTree : Set where
-    precedence : (ops : (fix : Fixity) -> List (∃ (Operator fix)))
-                 (successors : PrecedenceGraph) ->
+    precedence : (ops : (fix : Fixity) → List (∃ (Operator fix)))
+                 (successors : PrecedenceGraph) →
                  PrecedenceTree
 
 -- Concrete syntax. TODO: Ensure that expressions are precedence
@@ -60,15 +60,14 @@ mutual
   infix  4 _⟨_⟫ ⟪_⟩_
 
   data Expr : Set where
-    _⟨_⟩_ : forall {assoc}
-            (l : Expr) (op : Internal (infx assoc)) (r : Expr) -> Expr
-    _⟨_⟫  : (l : Expr) (op : Internal postfx)                  -> Expr
-    ⟪_⟩_  :            (op : Internal prefx)        (r : Expr) -> Expr
-    ⟪_⟫   :            (op : Internal closed)                  -> Expr
+    _⟨_⟩_ : ∀ {assoc}
+            (l : Expr) (op : Internal (infx assoc)) (r : Expr) → Expr
+    _⟨_⟫  : (l : Expr) (op : Internal postfx)                  → Expr
+    ⟪_⟩_  :            (op : Internal prefx)        (r : Expr) → Expr
+    ⟪_⟫   :            (op : Internal closed)                  → Expr
 
   -- Application of an operator to all its internal arguments.
 
   data Internal (fix : Fixity) : Set where
-    _∙_ : forall {arity}
-          (op : Operator fix arity) (args : Vec Expr arity) ->
+    _∙_ : ∀ {arity} (op : Operator fix arity) (args : Vec Expr arity) →
           Internal fix

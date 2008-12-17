@@ -30,16 +30,16 @@ open Token String.decSetoid
 -- functions are (mutually). Fortunately the recursion is structural,
 -- though. Note also that the reason for not using the implementation
 --
---   grammar (nodes ts) = choiceMap (\t -> ! node t) ts
+--   grammar (nodes ts) = choiceMap (λ t → ! node t) ts
 --
 -- is that this would lead to a definition of node-corners which
 -- was not structurally recursive.
 
-nodes-corners : PrecedenceGraph -> Corners
+nodes-corners : PrecedenceGraph → Corners
 nodes-corners []       = _
 nodes-corners (p ∷ ps) = _
 
-node-corners : PrecedenceTree -> Corners
+node-corners : PrecedenceTree → Corners
 node-corners (precedence ops ps) = _
 
 -- Nonterminals.
@@ -52,32 +52,31 @@ data NT : ParserType where
   -- graph: operator applications where the outermost operator has one
   -- of the precedences ps. The graph g is used for internal
   -- expressions.
-  nodes : (ps : PrecedenceGraph) -> NT (false ◇ nodes-corners ps) Expr
+  nodes : (ps : PrecedenceGraph) → NT (false ◇ nodes-corners ps) Expr
 
   -- Expressions corresponding to one node in the precedence graph:
   -- operator applications where the outermost operator has
   -- precedence p. The graph g is used for internal expressions.
-  node : (p : PrecedenceTree) -> NT (false ◇ node-corners p) Expr
+  node : (p : PrecedenceTree) → NT (false ◇ node-corners p) Expr
 
 -- The parser type used in this module.
 
-P : Index -> Set -> Set1
+P : Index → Set → Set1
 P = Parser NamePart NT
 
 -- A vector containing parsers recognising the name parts of the
 -- operator.
 
-nameParts : forall {fix arity} -> Operator fix arity ->
+nameParts : ∀ {fix arity} → Operator fix arity →
             Vec₁ (P _ NamePart) (1 + arity)
 nameParts (operator ns) = Vec1.map₀₁ theToken ns
 
 -- Internal parts (all name parts plus internal expressions) of
 -- operators of the given precedence and fixity.
 
-internal : forall {fix}
-           (ops : List (∃ (Operator fix))) -> P _ (Internal fix)
+internal : ∀ {fix} (ops : List (∃ (Operator fix))) → P _ (Internal fix)
 internal =
-  choiceMap (\op' -> let op = proj₂ op' in
+  choiceMap (λ op' → let op = proj₂ op' in
                      _∙_ op <$> (! expr between nameParts op))
 
 -- The grammar.
@@ -94,7 +93,7 @@ grammar (node (precedence ops ps)) =
   where
   -- ⟦ fix ⟧ parses the internal parts of operators with the
   -- current precedence level and fixity fix.
-  ⟦_⟧ = \(fix : Fixity) -> internal (ops fix)
+  ⟦_⟧ = λ (fix : Fixity) → internal (ops fix)
 
   -- Operator applications where the outermost operator binds
   -- tighter than the current precedence level.
@@ -106,9 +105,9 @@ grammar (node (precedence ops ps)) =
 
   -- Left associative and postfix operators.
   postLeft = flip _⟨_⟫                   <$> ⟦ postfx ⟧
-           ∣ (\op e₂ e₁ -> e₁ ⟨ op ⟩ e₂) <$> ⟦ infx left ⟧ ⊛ ↑
+           ∣ (λ op e₂ e₁ → e₁ ⟨ op ⟩ e₂) <$> ⟦ infx left ⟧ ⊛ ↑
 
 -- An expression parser.
 
-parseExpr : List NamePart -> List Expr
+parseExpr : List NamePart → List Expr
 parseExpr = parse-complete (! expr) grammar

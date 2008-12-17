@@ -17,8 +17,8 @@ open Token C.decSetoid
 
 -- A function used to simplify the examples a little.
 
-_∈?_/_ : forall {NT i R} ->
-         String -> Parser Char NT i R -> Grammar Char NT -> List R
+_∈?_/_ : ∀ {NT i R} →
+         String → Parser Char NT i R → Grammar Char NT → List R
 s ∈? p / g = parse-complete p g (S.toList s)
 
 module Ex₁ where
@@ -84,9 +84,9 @@ module Ex₄ where
   -- The non-terminal top returns the number of 'a' characters parsed.
 
   data NT : ParserType where
-    top :              NT _ ℕ  -- top     ∷= aⁿbⁿcⁿ
-    as  :         ℕ -> NT _ ℕ  -- as n    ∷= aˡ⁺¹bⁿ⁺ˡ⁺¹cⁿ⁺ˡ⁺¹
-    bcs : Char -> ℕ -> NT _ ℕ  -- bcs x n ∷= xⁿ⁺¹
+    top :            NT _ ℕ  -- top     ∷= aⁿbⁿcⁿ
+    as  :        ℕ → NT _ ℕ  -- as n    ∷= aˡ⁺¹bⁿ⁺ˡ⁺¹cⁿ⁺ˡ⁺¹
+    bcs : Char → ℕ → NT _ ℕ  -- bcs x n ∷= xⁿ⁺¹
 
   grammar : Grammar Char NT
   grammar top             = return 0 ∣ ! as zero
@@ -123,8 +123,8 @@ module Ex₆ where
   -- A grammar which uses the chain≥ combinator.
 
   data NT : ParserType where
-    op   : NT _ (ℕ -> ℕ -> ℕ)
-    expr : Assoc -> NT _ ℕ
+    op   : NT _ (ℕ → ℕ → ℕ)
+    expr : Assoc → NT _ ℕ
 
   grammar : Grammar Char NT
   grammar op       = _+_ <$ theToken '+'
@@ -149,8 +149,8 @@ module Ex₇ where
     expr   : NT _ ℕ
     term   : NT _ ℕ
     factor : NT _ ℕ
-    addOp  : NT _ (ℕ -> ℕ -> ℕ)
-    mulOp  : NT _ (ℕ -> ℕ -> ℕ)
+    addOp  : NT _ (ℕ → ℕ → ℕ)
+    mulOp  : NT _ (ℕ → ℕ → ℕ)
 
   grammar : Grammar Char NT
   grammar expr   = chain≥ 0 left (! term)   (! addOp)

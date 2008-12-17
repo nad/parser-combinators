@@ -17,13 +17,13 @@ module StructurallyRecursiveDescentParsing.Memoised.Monad
 
   -- Input strings.
 
-  (Input : Position -> Set)
+  (Input : Position → Set)
 
   -- In order to be able to store results in a memo table (and avoid
   -- having to lift the table code to Set1) the result types have to
   -- come from the following universe:
 
-  {Result : Set} (⟦_⟧ : Result -> Set)
+  {Result : Set} (⟦_⟧ : Result → Set)
 
   -- Memoisation keys. These keys must uniquely identify the
   -- computation that they are associated with, when paired up with
@@ -33,14 +33,14 @@ module StructurallyRecursiveDescentParsing.Memoised.Monad
                           (record { carrier = _ ; _≈_ = _; _<_ = _
                                   ; isStrictTotalOrder = posOrdered })
              MonoFun = PosPoset ⇒-Poset PosPoset in
-         MonoFun -> Result -> Set}
+         MonoFun → Result → Set}
   {_≈_ _<_ : Rel (∃₂ Key)}
   (keyOrdered : IsStrictTotalOrder _≈_ _<_)
 
   -- Furthermore the underlying equality needs to be strong enough.
 
   (funsEqual    : _≈_ =[ proj₁ ]⇒ _≡_)
-  (resultsEqual : _≈_ =[ (\rfk -> proj₁ (proj₂ rfk)) ]⇒ _≡_)
+  (resultsEqual : _≈_ =[ (λ rfk → proj₁ (proj₂ rfk)) ]⇒ _≡_)
 
   where
 
@@ -73,8 +73,8 @@ MonoFun = poset ⇒-Poset poset
 Index : Set
 Index = Position × MonoFun × Result
 
-data MemoTableKey : Index -> Set where
-  key : forall {f r} (key : Key f r) pos -> MemoTableKey (pos , f , r)
+data MemoTableKey : Index → Set where
+  key : ∀ {f r} (key : Key f r) pos → MemoTableKey (pos , f , r)
 
 -- Input strings of a certain maximum length.
 
@@ -86,12 +86,12 @@ record Input≤ (bnd : Position) : Set where
 
 open Input≤ public
 
-_isBounded∶_ : forall {bnd pos} -> Input pos -> pos ≤ bnd -> Input≤ bnd
+_isBounded∶_ : ∀ {bnd pos} → Input pos → pos ≤ bnd → Input≤ bnd
 xs isBounded∶ le = record { position = _; bounded = le; string = xs }
 
 -- Memo table values.
 
-Value : Index -> Set
+Value : Index → Set
 Value (pos , f , r) = List (⟦ r ⟧ × Input≤ (fun f pos))
 
 ------------------------------------------------------------------------
@@ -104,10 +104,9 @@ private
  module Dummy
         (MemoTable : Set)
         (empty  : MemoTable)
-        (insert : forall {i} ->
-                  MemoTableKey i -> Value i -> MemoTable -> MemoTable)
-        (lookup : forall {i} ->
-                  MemoTableKey i -> MemoTable -> Maybe (Value i))
+        (insert : ∀ {i} → MemoTableKey i → Value i →
+                                           MemoTable → MemoTable)
+        (lookup : ∀ {i} → MemoTableKey i → MemoTable → Maybe (Value i))
         where
 
   -- The parser monad is built upon a list monad, for backtracking, and
@@ -127,19 +126,19 @@ private
 
   module IM where
 
-    Inner : Set -> Set
+    Inner : Set → Set
     Inner R = State MemoTable (List R)
 
     InnerMonadPlus : RawMonadPlus Inner
     InnerMonadPlus = record
       { monadZero = record
         { monad = record
-          { return = \x -> return (List.return x)
-          ; _>>=_  = \m f -> List.concat <$> (List.mapM monad f =<< m)
+          { return = λ x → return (List.return x)
+          ; _>>=_  = λ m f → List.concat <$> (List.mapM monad f =<< m)
           }
         ; ∅ = return List.∅
         }
-      ; _∣_ = \m₁ m₂ -> List._∣_ <$> m₁ ⊛ m₂
+      ; _∣_ = λ m₁ m₂ → List._∣_ <$> m₁ ⊛ m₂
       }
       where open MemoState
 
@@ -147,7 +146,7 @@ private
     InnerMonadState = record
       { monad = RawMonadPlus.monad InnerMonadPlus
       ; get   = List.return <$> get
-      ; put   = \s -> List.return <$> put s
+      ; put   = λ s → List.return <$> put s
       }
       where open MemoState
 
@@ -170,25 +169,23 @@ private
     -- • A:   Result type.
 
     data P (bnd : Position) (f : MonoFun) (A : Set) : Set where
-      pm : (im : (inp : Input≤ bnd) ->
-                 IM.Inner (A × Input≤ (fun f (position inp)))) ->
+      pm : (im : (inp : Input≤ bnd) →
+                 IM.Inner (A × Input≤ (fun f (position inp)))) →
            P bnd f A
 
     private
 
-      unPM : forall {bnd f A} ->
-             P bnd f A -> (inp : Input≤ bnd) ->
+      unPM : ∀ {bnd f A} → P bnd f A → (inp : Input≤ bnd) →
              IM.Inner (A × Input≤ (fun f (position inp)))
       unPM (pm m) = m
 
     -- Memoises the computation, assuming that the key is sufficiently
     -- unique.
 
-    memoise : forall {bnd f r} ->
-              Key f r -> P bnd f ⟦ r ⟧ -> P bnd f ⟦ r ⟧
+    memoise : ∀ {bnd f r} → Key f r → P bnd f ⟦ r ⟧ → P bnd f ⟦ r ⟧
     memoise {bnd} {f} {r} k (pm p) = pm helper₁
       where
-      helper₁ : (inp : Input≤ bnd) ->
+      helper₁ : (inp : Input≤ bnd) →
                 IM.Inner (⟦ r ⟧ × Input≤ (fun f (position inp)))
       helper₁ xs = let open IM in
                    helper₂ =<< lookup k′ <$> get
@@ -198,80 +195,79 @@ private
         k′ : MemoTableKey i
         k′ = key k (position xs)
 
-        helper₂ : Maybe (Value i) -> State MemoTable (Value i)
+        helper₂ : Maybe (Value i) → State MemoTable (Value i)
         helper₂ (just v) = return v  where open MemoState
-        helper₂ nothing  = p xs                 >>= \v ->
+        helper₂ nothing  = p xs                 >>= λ v →
                            modify (insert k′ v) >>
                            return v
           where open MemoState
 
     -- Other monadic operations.
 
-    return : forall {bnd A} -> A -> P bnd idM A
-    return a = pm \xs -> IM.return (a , string xs isBounded∶ refl)
+    return : ∀ {bnd A} → A → P bnd idM A
+    return a = pm λ xs → IM.return (a , string xs isBounded∶ refl)
 
-    _>>=_ : forall {bnd A B f g} ->
-            P bnd f A -> (A -> P (fun f bnd) g B) -> P bnd (g ∘M f) B
-    _>>=_ {f = f} {g} (pm m₁) m₂ = pm \xs ->
-      m₁ xs ⟨ IM._>>=_ ⟩ \ays ->
+    _>>=_ : ∀ {bnd A B f g} →
+            P bnd f A → (A → P (fun f bnd) g B) → P bnd (g ∘M f) B
+    _>>=_ {f = f} {g} (pm m₁) m₂ = pm λ xs →
+      m₁ xs ⟨ IM._>>=_ ⟩ λ ays →
       let a = proj₁ ays; ys = proj₂ ays in
       fix (bounded ys) ⟨ IM._<$>_ ⟩
         unPM (m₂ a) (string ys isBounded∶
                        lemma f (bounded xs) (bounded ys))
       where
-      lemma : forall f {i j k} -> j ≤ k -> i ≤ fun f j -> i ≤ fun f k
+      lemma : ∀ f {i j k} → j ≤ k → i ≤ fun f j → i ≤ fun f k
       lemma f j≤k i≤gj = trans i≤gj (monotone f j≤k)
 
-      fix : forall {A i j} -> i ≤ j ->
-            A × Input≤ (fun g i) ->
+      fix : ∀ {A i j} → i ≤ j →
+            A × Input≤ (fun g i) →
             A × Input≤ (fun g j)
       fix le (a , xs) =
         (a , string xs isBounded∶ lemma g le (bounded xs))
 
-    _>>_ : forall {bnd A B f g} ->
-           P bnd f A -> P (fun f bnd) g B -> P bnd (g ∘M f) B
-    m₁ >> m₂ = m₁ >>= \_ -> m₂
+    _>>_ : ∀ {bnd A B f g} →
+           P bnd f A → P (fun f bnd) g B → P bnd (g ∘M f) B
+    m₁ >> m₂ = m₁ >>= λ _ → m₂
 
-    _=<<_ : forall {bnd A B f g} ->
-            (A -> P (fun f bnd) g B) -> P bnd f A -> P bnd (g ∘M f) B
+    _=<<_ : ∀ {bnd A B f g} →
+            (A → P (fun f bnd) g B) → P bnd f A → P bnd (g ∘M f) B
     m₂ =<< m₁ = m₁ >>= m₂
 
-    ∅ : forall {bnd f A} -> P bnd f A
-    ∅ = pm (\_ -> IM.∅)
+    ∅ : ∀ {bnd f A} → P bnd f A
+    ∅ = pm (λ _ → IM.∅)
 
-    _∣_ : forall {bnd f A} -> P bnd f A -> P bnd f A -> P bnd f A
-    pm m₁ ∣ pm m₂ = pm \xs -> IM._∣_ (m₁ xs) (m₂ xs)
+    _∣_ : ∀ {bnd f A} → P bnd f A → P bnd f A → P bnd f A
+    pm m₁ ∣ pm m₂ = pm λ xs → IM._∣_ (m₁ xs) (m₂ xs)
 
-    get : forall {bnd} -> P bnd idM (Input≤ bnd)
-    get = pm \xs -> IM.return (xs , string xs isBounded∶ refl)
+    get : ∀ {bnd} → P bnd idM (Input≤ bnd)
+    get = pm λ xs → IM.return (xs , string xs isBounded∶ refl)
 
-    put : forall {bnd bnd′} -> Input≤ bnd′ -> P bnd (constM bnd′) ⊤
-    put xs = pm \_ -> IM.return (_ , xs)
+    put : ∀ {bnd bnd′} → Input≤ bnd′ → P bnd (constM bnd′) ⊤
+    put xs = pm λ _ → IM.return (_ , xs)
 
     -- A generalised variant of modify.
 
-    gmodify : forall {bnd A} f ->
-              ((inp : Input≤ bnd) -> A × Input≤ (fun f (position inp))) ->
+    gmodify : ∀ {bnd A} f →
+              ((inp : Input≤ bnd) → A × Input≤ (fun f (position inp))) →
               P bnd f A
-    gmodify f g = pm \xs -> IM.return (g xs)
+    gmodify f g = pm λ xs → IM.return (g xs)
 
-    modify : forall {bnd} f ->
-             ((inp : Input≤ bnd) -> Input≤ (fun f (position inp))) ->
+    modify : ∀ {bnd} f →
+             ((inp : Input≤ bnd) → Input≤ (fun f (position inp))) →
              P bnd f ⊤
-    modify f g = gmodify f (\xs -> (_ , g xs))
+    modify f g = gmodify f (λ xs → (_ , g xs))
 
-    adjustBound : forall {bnd f g A} ->
-                  (forall p -> fun f p ≤ fun g p) ->
-                  P bnd f A -> P bnd g A
+    adjustBound : ∀ {bnd f g A} →
+                  (∀ p → fun f p ≤ fun g p) → P bnd f A → P bnd g A
     adjustBound hyp (pm m) =
-      pm \xs ->
-        let le = \(ys : _) -> trans (bounded ys) (hyp (position xs)) in
-        map-× id (\ys -> string ys isBounded∶ le ys)
+      pm λ xs →
+        let le = λ (ys : _) → trans (bounded ys) (hyp (position xs)) in
+        map-× id (λ ys → string ys isBounded∶ le ys)
           ⟨ IM._<$>_ ⟩
         m xs
 
-    run : forall {A f pos} ->
-          Input pos -> P pos f A -> List (A × Input≤ (fun f pos))
+    run : ∀ {A f pos} →
+          Input pos → P pos f A → List (A × Input≤ (fun f pos))
     run xs (pm m) = proj₁ (m (xs isBounded∶ refl) empty)
 
 ------------------------------------------------------------------------
@@ -280,7 +276,7 @@ private
 -- Shuffles the elements to simplify defining equality and order
 -- relations for the keys.
 
-shuffle : ∃ MemoTableKey -> Position × ∃₂ Key
+shuffle : ∃ MemoTableKey → Position × ∃₂ Key
 shuffle ((pos , f , r) , key k .pos) = (pos , f , r , k)
 
 -- Equality and ordering.
@@ -300,7 +296,7 @@ indicesEqual′ {((_ , _ , _) , key _ ._)}
               {((_ , _ , _) , key _ ._)} (eq₁ , eq₂) =
   ≡-cong₂ _,_ eq₁ (≡-cong₂ _,_ (funsEqual eq₂) (resultsEqual eq₂))
 
-open Map isOrdered (\{k₁} {k₂} -> indicesEqual′ {k₁} {k₂}) Value
+open Map isOrdered (λ {k₁} {k₂} → indicesEqual′ {k₁} {k₂}) Value
 
 -- Instantiation of the Dummy module above.
 

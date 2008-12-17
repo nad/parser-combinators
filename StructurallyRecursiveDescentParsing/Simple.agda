@@ -24,7 +24,7 @@ open import StructurallyRecursiveDescentParsing.Utilities
 
 private
 
-  P : Set -> IFun ℕ
+  P : Set → IFun ℕ
   P Tok = IStateT (BoundedVec Tok) L.List
 
   open module M₁ {Tok} =
@@ -64,8 +64,7 @@ private
  module Dummy {Tok NT} (g : Grammar Tok NT) where
 
   mutual
-    parse : forall n {e c R} ->
-            Parser Tok NT (e ◇ c) R ->
+    parse : ∀ n {e c R} → Parser Tok NT (e ◇ c) R →
             P Tok n (if e then n else pred n) R
     parse n       (return x)          = return′ x
     parse n       (_∣_ {⊤}     p₁ p₂) = parse  n      p₁   ∣′ parse↑ n    p₂
@@ -79,29 +78,29 @@ private
     parse (suc n) token               = eat =<<′ get′
     parse n       (! x)               = parse n (g x)
 
-    parse↑ : forall n {e c R} -> Parser Tok NT (e ◇ c) R -> P Tok n n R
+    parse↑ : ∀ n {e c R} → Parser Tok NT (e ◇ c) R → P Tok n n R
     parse↑ n       {⊤} p = parse n p
     parse↑ zero    {⊥} p = fail′
-    parse↑ (suc n) {⊥} p = parse (suc n) p >>=′ \r ->
+    parse↑ (suc n) {⊥} p = parse (suc n) p >>=′ λ r →
                            modify′ ↑       >>′
                            return′ r
 
-    eat : forall {n} -> BoundedVec Tok (suc n) -> P Tok (suc n) n Tok
+    eat : ∀ {n} → BoundedVec Tok (suc n) → P Tok (suc n) n Tok
     eat []      = fail′
     eat (c ∷ s) = put′ s >>′ return′ c
 
 -- Exported run function.
 
-parse : forall {Tok NT i R} ->
-        Parser Tok NT i R -> Grammar Tok NT ->
-        L.List Tok -> L.List (R × L.List Tok)
+parse : ∀ {Tok NT i R} →
+        Parser Tok NT i R → Grammar Tok NT →
+        L.List Tok → L.List (R × L.List Tok)
 parse p g s = L.map (map-× id toList)
                     (Dummy.parse g _ p (fromList s))
 
 -- A variant which only returns parses which leave no remaining input.
 
-parse-complete : forall {Tok NT i R} ->
-                 Parser Tok NT i R -> Grammar Tok NT ->
-                 L.List Tok -> L.List R
+parse-complete : ∀ {Tok NT i R} →
+                 Parser Tok NT i R → Grammar Tok NT →
+                 L.List Tok → L.List R
 parse-complete p g s =
   L.map proj₁ (L.filter (L.null ∘ proj₂) (parse p g s))
