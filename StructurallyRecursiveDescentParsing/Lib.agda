@@ -115,13 +115,13 @@ infix 55 _⋆ _+
 
 -- mutual
 
---   _⋆ : ∀ {Tok R d} →
---        Parser Tok (false ◇ d) R     →
+--   _⋆ : ∀ {Tok R c} →
+--        Parser Tok (false ◇ c) R     →
 --        Parser Tok _           (List R)
 --   p ⋆ ~ return [] ∣ p +
 
---   _+ : ∀ {Tok R d} →
---        Parser Tok (false ◇ d) R     →
+--   _+ : ∀ {Tok R c} →
+--        Parser Tok (false ◇ c) R     →
 --        Parser Tok _           (List R)
 --   p + ~ _∷_ <$> p ⊛ p ⋆
 
@@ -130,13 +130,13 @@ infix 55 _⋆ _+
 
 mutual
 
-  _⋆ : ∀ {Tok NT R d} →
-       Parser Tok NT (false ◇ d) R        →
+  _⋆ : ∀ {Tok NT R c} →
+       Parser Tok NT (false ◇ c) R        →
        Parser Tok NT _           (List R)
   p ⋆ ~ return [] ∣ p +
 
-  _+ : ∀ {Tok NT R d} →
-       Parser Tok NT (false ◇ d) R        →
+  _+ : ∀ {Tok NT R c} →
+       Parser Tok NT (false ◇ c) R        →
        Parser Tok NT _           (List R)
   p + ~ p   !>>= λ x  →
         p ⋆ ?>>= λ xs →
@@ -144,8 +144,8 @@ mutual
 
 -- p sepBy sep parses one or more ps separated by seps.
 
-_sepBy_ : ∀ {Tok NT R R′ i d} →
-          Parser Tok NT i R → Parser Tok NT (false ◇ d) R′ →
+_sepBy_ : ∀ {Tok NT R R′ i c} →
+          Parser Tok NT i R → Parser Tok NT (false ◇ c) R′ →
           Parser Tok NT _ (List R)
 p sepBy sep = _∷_ <$> p ⊛ (sep ⊛> p) ⋆
 

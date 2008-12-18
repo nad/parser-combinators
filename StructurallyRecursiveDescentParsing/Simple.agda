@@ -4,7 +4,7 @@
 
 module StructurallyRecursiveDescentParsing.Simple where
 
-open import Data.Bool renaming (true to ⊤; false to ⊥)
+open import Data.Bool
 open import Data.Product
 open import Data.Maybe
 open import Data.BoundedVec.Inefficient
@@ -32,7 +32,6 @@ private
     using ()
     renaming ( return to return′
              ; _>>=_  to _>>=′_
-             ; _=<<_  to _=<<′_
              ; _>>_   to _>>′_
              ; ∅      to fail′
              ; _∣_    to _∣′_
@@ -64,30 +63,29 @@ private
  module Dummy {Tok NT} (g : Grammar Tok NT) where
 
   mutual
-    parse : ∀ n {e c R} → Parser Tok NT (e ◇ c) R →
+    parse : ∀ {e c R} n → Parser Tok NT (e ◇ c) R →
             P Tok n (if e then n else pred n) R
-    parse n       (return x)          = return′ x
-    parse n       (_∣_ {⊤}     p₁ p₂) = parse  n      p₁   ∣′ parse↑ n    p₂
-    parse n       (_∣_ {⊥} {⊤} p₁ p₂) = parse↑ n      p₁   ∣′ parse  n    p₂
-    parse n       (_∣_ {⊥} {⊥} p₁ p₂) = parse  n      p₁   ∣′ parse  n    p₂
-    parse n       (p₁ ?>>= p₂)        = parse  n      p₁ >>=′ parse  n ∘′ p₂
-    parse (suc n) (p₁ !>>= p₂)        = parse (suc n) p₁ >>=′ parse↑ n ∘′ p₂
-    parse zero    (p₁ !>>= p₂)        = fail′
-    parse n       fail                = fail′
-    parse zero    token               = fail′
-    parse (suc n) token               = eat =<<′ get′
-    parse n       (! x)               = parse n (g x)
+    parse n       (return x)                  = return′ x
+    parse n       fail                        = fail′
+    parse n       (_∣_ {true}          p₁ p₂) = parse  n      p₁   ∣′ parse↑ n    p₂
+    parse n       (_∣_ {false} {true}  p₁ p₂) = parse↑ n      p₁   ∣′ parse  n    p₂
+    parse n       (_∣_ {false} {false} p₁ p₂) = parse  n      p₁   ∣′ parse  n    p₂
+    parse n       (p₁ ?>>= p₂)                = parse  n      p₁ >>=′ parse  n ∘′ p₂
+    parse zero    (p₁ !>>= p₂)                = fail′
+    parse (suc n) (p₁ !>>= p₂)                = parse (suc n) p₁ >>=′ parse↑ n ∘′ p₂
+    parse n       (! x)                       = parse n (g x)
+    parse n       token                       = get′ >>=′ eat
+      where
+      eat : ∀ {n} → BoundedVec Tok n → P Tok n (pred n) Tok
+      eat []      = fail′
+      eat (c ∷ s) = put′ s >>′ return′ c
 
-    parse↑ : ∀ n {e c R} → Parser Tok NT (e ◇ c) R → P Tok n n R
-    parse↑ n       {⊤} p = parse n p
-    parse↑ zero    {⊥} p = fail′
-    parse↑ (suc n) {⊥} p = parse (suc n) p >>=′ λ r →
-                           modify′ ↑       >>′
-                           return′ r
-
-    eat : ∀ {n} → BoundedVec Tok (suc n) → P Tok (suc n) n Tok
-    eat []      = fail′
-    eat (c ∷ s) = put′ s >>′ return′ c
+    parse↑ : ∀ {e c R} n → Parser Tok NT (e ◇ c) R → P Tok n n R
+    parse↑ {true}  n       p = parse n p
+    parse↑ {false} zero    p = fail′
+    parse↑ {false} (suc n) p = parse (suc n) p >>=′ λ r →
+                               modify′ ↑       >>′
+                               return′ r
 
 -- Exported run function.
 
