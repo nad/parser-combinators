@@ -19,7 +19,8 @@ infixl 10 _!>>=_ _?>>=_
 
 -- The parsers are indexed on a type of nonterminals.
 
-codata Parser (Tok : Set) (NT : ParserType) : ParserType₁ where
+codata Parser (Tok : Set) (NT : NonTerminalType) :
+              NonTerminalType₁ where
   return : ∀ {R} → R → Parser Tok NT (true ◇ leaf) R
 
   fail   : ∀ {R} → Parser Tok NT (false ◇ leaf) R
@@ -48,5 +49,5 @@ codata Parser (Tok : Set) (NT : ParserType) : ParserType₁ where
 
 -- Grammars.
 
-Grammar : Set → ParserType → Set1
+Grammar : Set → NonTerminalType → Set1
 Grammar Tok NT = ∀ {i R} → NT i R → Parser Tok NT i R

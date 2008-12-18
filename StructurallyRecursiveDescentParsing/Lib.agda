@@ -360,7 +360,7 @@ whitespace = sat' isSpace
 ------------------------------------------------------------------------
 -- An empty grammar
 
-EmptyNT : ParserType
+EmptyNT : NonTerminalType
 EmptyNT _ _ = ⊥
 
 empty-grammar : ∀ {Tok} -> Grammar Tok EmptyNT

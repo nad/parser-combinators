@@ -44,7 +44,7 @@ node-corners (precedence ops ps) = _
 
 -- Nonterminals.
 
-data NT : ParserType where
+data NT : NonTerminalType where
   -- Expressions.
   expr : NT _ Expr
 

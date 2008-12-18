@@ -40,13 +40,14 @@ infix 4 _◇_
 _◇_ : Empty → Corners → Index
 e ◇ c = record { empty = e; corners = c }
 
--- The parser type signature. The second argument is the result type.
+-- Type signature for non-terminals. The second argument is the result
+-- type.
 
-ParserType : Set1
-ParserType = Index → Set → Set
+NonTerminalType : Set1
+NonTerminalType = Index → Set → Set
 
-ParserType₁ : Set2
-ParserType₁ = Index → Set → Set1
+NonTerminalType₁ : Set2
+NonTerminalType₁ = Index → Set → Set1
 
 ------------------------------------------------------------------------
 -- Operations on indices

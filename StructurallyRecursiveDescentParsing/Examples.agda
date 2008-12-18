@@ -30,7 +30,7 @@ module Ex₁ where
 
   -- e ∷= 0 + e | 0
 
-  data Nonterminal : ParserType where
+  data Nonterminal : NonTerminalType where
     e : Nonterminal _ Char
 
   grammar : Grammar Char Nonterminal
@@ -45,7 +45,7 @@ module Ex₂ where
   -- e ∷= f + e | f
   -- f ∷= 0 | 0 * f | ( e )
 
-  data Nonterminal : ParserType where
+  data Nonterminal : NonTerminalType where
     expr   : Nonterminal _ Char
     factor : Nonterminal _ Char
 
@@ -70,7 +70,7 @@ module Ex₃ where
   -- e ∷= f + e | f
   -- f ∷= 0 | f * 0 | ( e )
 
-  data Nonterminal : ParserType where
+  data Nonterminal : NonTerminalType where
     expr   : Nonterminal _ Char
     factor : Nonterminal _ Char
 
@@ -88,7 +88,7 @@ module Ex₄ where
 
   -- The non-terminal top returns the number of 'a' characters parsed.
 
-  data NT : ParserType where
+  data NT : NonTerminalType where
     top :            NT _ ℕ  -- top     ∷= aⁿbⁿcⁿ
     as  :        ℕ → NT _ ℕ  -- as n    ∷= aˡ⁺¹bⁿ⁺ˡ⁺¹cⁿ⁺ˡ⁺¹
     bcs : Char → ℕ → NT _ ℕ  -- bcs x n ∷= xⁿ⁺¹
@@ -129,7 +129,7 @@ module Ex₅ where
 
   -- A grammar making use of a parameterised parser from the library.
 
-  data NT : ParserType where
+  data NT : NonTerminalType where
     a  : NT _ Char
     as : NT _ ℕ
 
@@ -144,7 +144,7 @@ module Ex₆ where
 
   -- A grammar which uses the chain≥ combinator.
 
-  data NT : ParserType where
+  data NT : NonTerminalType where
     op   : NT _ (ℕ → ℕ → ℕ)
     expr : Assoc → NT _ ℕ
 
@@ -167,7 +167,7 @@ module Ex₇ where
 
   -- A proper expression example.
 
-  data NT : ParserType where
+  data NT : NonTerminalType where
     expr   : NT _ ℕ
     term   : NT _ ℕ
     factor : NT _ ℕ
