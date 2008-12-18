@@ -5,6 +5,7 @@
 module StructurallyRecursiveDescentParsing.Examples where
 
 open import Data.List
+open import Data.Vec using ([]; _∷_)
 open import Data.Nat
 import Data.Char as C
 import Data.String as S
@@ -15,11 +16,15 @@ open import Relation.Binary.PropositionalEquality
 open import StructurallyRecursiveDescentParsing
 open Token C.decSetoid
 
--- A function used to simplify the examples a little.
+-- Some functions used to simplify the examples a little.
 
 _∈?_/_ : ∀ {NT i R} →
          String → Parser Char NT i R → Grammar Char NT → List R
 s ∈? p / g = parse-complete p g (S.toList s)
+
+_∈?_ : ∀ {i R} →
+       String → Parser Char EmptyNT i R → List R
+s ∈? p = s ∈? p / empty-grammar
 
 module Ex₁ where
 
@@ -101,6 +106,23 @@ module Ex₄ where
   ex₁ = ≡-refl
 
   ex₂ : "aaabbccc" ∈? (! top) / grammar ≡ []
+  ex₂ = ≡-refl
+
+module Ex₄′ where
+
+  -- A monadic variant of Ex₄.
+
+  aⁿbⁿcⁿ = return 0
+         ∣ (theToken 'a' +           !>>= λ as →
+            let n = length as in
+            exactly n (theToken 'b') ⊛>
+            exactly n (theToken 'c') ⊛>
+            return n)
+
+  ex₁ : "aaabbbccc" ∈? aⁿbⁿcⁿ ≡ 3 ∷ []
+  ex₁ = ≡-refl
+
+  ex₂ : "aaabbccc" ∈? aⁿbⁿcⁿ ≡ []
   ex₂ = ≡-refl
 
 module Ex₅ where
