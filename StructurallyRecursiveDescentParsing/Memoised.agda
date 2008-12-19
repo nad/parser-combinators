@@ -26,7 +26,7 @@ module StructurallyRecursiveDescentParsing.Memoised
 
   -- Nonterminals also have to be small enough:
 
-  {NT : Index → Result → Set} {LargeNT : ParserType}
+  {NT : Index → Result → Set} {LargeNT : NonTerminalType}
   (resultType : ∀ {i r} → LargeNT i r → Result)
   (resultTypeCorrect : ∀ {i r} (x : LargeNT i r) →
                        ⟦ resultType x ⟧ ≡₁ r)

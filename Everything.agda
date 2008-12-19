@@ -19,7 +19,7 @@ import StructurallyRecursiveDescentParsing.Simple
 
 -- An optimised backend. Unfortunately Agda is currently too slow to
 -- be able to comfortably type check these modules (at least on my
--- machine).
+-- machine). There is a risk that the code has bitrotted.
 
 -- import StructurallyRecursiveDescentParsing.Memoised
 -- import StructurallyRecursiveDescentParsing.Memoised.Monad
