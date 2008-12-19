@@ -19,7 +19,7 @@ open import Data.Bool
 open import Data.Function
 open import Data.Maybe
 open import Data.Unit
-open import Data.Empty
+open import Data.Empty1
 import Data.Char as Char
 open Char using (Char; _==_)
 open import Algebra
@@ -361,7 +361,7 @@ whitespace = sat' isSpace
 -- An empty grammar
 
 EmptyNT : NonTerminalType
-EmptyNT _ _ = ⊥
+EmptyNT _ _ = ⊥₁
 
 empty-grammar : ∀ {Tok} -> Grammar Tok EmptyNT
 empty-grammar ()

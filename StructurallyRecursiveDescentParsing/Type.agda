@@ -20,7 +20,7 @@ infixl 10 _!>>=_ _?>>=_
 -- The parsers are indexed on a type of nonterminals.
 
 codata Parser (Tok : Set) (NT : NonTerminalType) :
-              NonTerminalType₁ where
+              NonTerminalType where
   return : ∀ {R} (x : R) → Parser Tok NT (true ◇ leaf) R
 
   fail   : ∀ {R} → Parser Tok NT (false ◇ leaf) R
@@ -51,3 +51,16 @@ codata Parser (Tok : Set) (NT : NonTerminalType) :
 
 Grammar : Set → NonTerminalType → Set1
 Grammar Tok NT = ∀ {i R} → NT i R → Parser Tok NT i R
+
+-- A map function which is useful when combining grammars.
+
+mapNT : ∀ {Tok NT₁ NT₂ i R} →
+        (∀ {i R} → NT₁ i R → NT₂ i R) →
+        Parser Tok NT₁ i R → Parser Tok NT₂ i R
+mapNT f (return x)   ~ return x
+mapNT f fail         ~ fail
+mapNT f token        ~ token
+mapNT f (p₁ ∣ p₂)    ~ mapNT f p₁ ∣ mapNT f p₂
+mapNT f (p₁ ?>>= p₂) ~ mapNT f p₁ ?>>= λ x → mapNT f (p₂ x)
+mapNT f (p₁ !>>= p₂) ~ mapNT f p₁ !>>= λ x → mapNT f (p₂ x)
+mapNT f (! nt)       ~ ! f nt

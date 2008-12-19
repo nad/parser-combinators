@@ -43,11 +43,8 @@ e ◇ c = record { empty = e; corners = c }
 -- Type signature for non-terminals. The second argument is the result
 -- type.
 
-NonTerminalType : Set1
-NonTerminalType = Index → Set → Set
-
-NonTerminalType₁ : Set2
-NonTerminalType₁ = Index → Set → Set1
+NonTerminalType : Set2
+NonTerminalType = Index → Set → Set1
 
 ------------------------------------------------------------------------
 -- Operations on indices

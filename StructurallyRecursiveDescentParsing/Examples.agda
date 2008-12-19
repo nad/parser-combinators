@@ -7,6 +7,7 @@ module StructurallyRecursiveDescentParsing.Examples where
 open import Data.List
 open import Data.Vec using ([]; _∷_)
 open import Data.Nat
+open import Data.Bool
 import Data.Char as C
 import Data.String as S
 open C using (Char)
@@ -191,3 +192,50 @@ module Ex₇ where
 
   ex₂ : "1+5*(2∸3)" ∈? (! expr) / grammar ≡ 1 ∷ []
   ex₂ = ≡-refl
+
+module Ex₈ where
+
+  -- An example of using one grammar within another.
+
+  data NT : NonTerminalType where
+    lib   : ∀ {i R} (nt : Ex₇.NT i R) → NT i R
+    exprs : NT _ (List ℕ)
+
+  expr = lib Ex₇.expr
+
+  grammar : Grammar Char NT
+  grammar (lib nt) = mapNT lib (Ex₇.grammar nt)
+  grammar exprs    = ! expr sepBy theToken ','
+
+  ex₁ : "1,2∸1" ∈? (! exprs) / grammar ≡ (1 ∷ 1 ∷ []) ∷ []
+  ex₁ = ≡-refl
+
+module Ex₉ where
+
+  -- An example of using one grammar within another when the inner
+  -- grammar contains non-terminals parameterised on parsers.
+
+  infix 55 _★ _∔
+
+  data LibNT (Tok : Set) : NonTerminalType where
+    _★ : ∀ {c R} → Parser Tok (LibNT Tok) (false ◇ c) R →
+         LibNT Tok _ (List R)
+    _∔ : ∀ {c R} → Parser Tok (LibNT Tok) (false ◇ c) R →
+         LibNT Tok _ (List R)
+
+  library : ∀ {Tok} → Grammar Tok (LibNT Tok)
+  library (p ★) = return [] ∣ ! (p ∔)
+  library (p ∔) = p       >>= λ x  →
+                  ! (p ★) >>= λ xs →
+                  return (x ∷ xs)
+
+  data NT : NonTerminalType where
+    lib : ∀ {i R} → LibNT Char i R → NT i R
+    as  : NT _ (List Char)
+
+  grammar : Grammar Char NT
+  grammar (lib nt) = mapNT lib (library nt)
+  grammar as       = ! lib (theToken 'a' ★)
+
+  ex₁ : "aa" ∈? (! as) / grammar ≡ ('a' ∷ 'a' ∷ []) ∷ []
+  ex₁ = ≡-refl
