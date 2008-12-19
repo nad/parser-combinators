@@ -32,7 +32,7 @@ import StructurallyRecursiveDescentParsing.Lib
 
 import StructurallyRecursiveDescentParsing.Examples
 
--- An example: parsing of PBM image files.
+-- An example: parsing PBM image files.
 
 import StructurallyRecursiveDescentParsing.PBM
 
