@@ -88,6 +88,9 @@ module Ex₄ where
 
   -- The non-terminal top returns the number of 'a' characters parsed.
 
+  -- Note: It is important that the ℕ argument to bcs is not named,
+  -- because if it is Agda cannot infer the index.
+
   data NT : NonTerminalType where
     top :            NT _ ℕ  -- top     ∷= aⁿbⁿcⁿ
     as  :        ℕ → NT _ ℕ  -- as n    ∷= aˡ⁺¹bⁿ⁺ˡ⁺¹cⁿ⁺ˡ⁺¹
@@ -146,7 +149,7 @@ module Ex₆ where
 
   data NT : NonTerminalType where
     op   : NT _ (ℕ → ℕ → ℕ)
-    expr : Assoc → NT _ ℕ
+    expr : (a : Assoc) → NT _ ℕ
 
   grammar : Grammar Char NT
   grammar op       = _+_ <$ theToken '+'

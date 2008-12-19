@@ -23,8 +23,8 @@ Empty = Bool
 
 data Corners : Set where
   leaf : Corners
-  step : Corners → Corners
-  node : Corners → Corners → Corners
+  step : (c : Corners) → Corners
+  node : (c₁ c₂ : Corners) → Corners
 
 -- The index type.
 

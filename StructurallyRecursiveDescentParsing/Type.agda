@@ -21,31 +21,31 @@ infixl 10 _!>>=_ _?>>=_
 
 codata Parser (Tok : Set) (NT : NonTerminalType) :
               NonTerminalType₁ where
-  return : ∀ {R} → R → Parser Tok NT (true ◇ leaf) R
+  return : ∀ {R} (x : R) → Parser Tok NT (true ◇ leaf) R
 
   fail   : ∀ {R} → Parser Tok NT (false ◇ leaf) R
 
   token  : Parser Tok NT (false ◇ leaf) Tok
 
-  _∣_    : ∀ {e₁ e₂ c₁ c₂ R} →
-           Parser Tok NT (e₁      ◇ c₁)         R →
-           Parser Tok NT (e₂      ◇ c₂)         R →
-           Parser Tok NT (e₁ ∨ e₂ ◇ node c₁ c₂) R
+  _∣_    : ∀ {e₁ e₂ c₁ c₂ R}
+           (p₁ : Parser Tok NT (e₁      ◇ c₁)         R)
+           (p₂ : Parser Tok NT (e₂      ◇ c₂)         R) →
+                 Parser Tok NT (e₁ ∨ e₂ ◇ node c₁ c₂) R
 
-  _?>>=_ : ∀ {c₁ e₂ c₂ R₁ R₂} →
-           Parser Tok NT (true ◇ c₁) R₁ →
-           (R₁ → Parser Tok NT (e₂ ◇ c₂) R₂) →
+  _?>>=_ : ∀ {c₁ e₂ c₂ R₁ R₂}
+           (p₁ : Parser Tok NT (true ◇ c₁) R₁)
+           (p₂ : R₁ → Parser Tok NT (e₂ ◇ c₂) R₂) →
            Parser Tok NT (e₂ ◇ node c₁ c₂) R₂
 
   -- If the first parser is guaranteed to consume something, then the
   -- second parser's index can depend on the result of the first
   -- parser.
-  _!>>=_ : ∀ {c₁ R₁ R₂} {i₂ : R₁ → Index} →
-           Parser Tok NT (false ◇ c₁) R₁ →
-           ((x : R₁) → Parser Tok NT (i₂ x) R₂) →
+  _!>>=_ : ∀ {c₁ R₁ R₂} {i₂ : R₁ → Index}
+           (p₁ : Parser Tok NT (false ◇ c₁) R₁)
+           (p₂ : (x : R₁) → Parser Tok NT (i₂ x) R₂) →
            Parser Tok NT (false ◇ step c₁) R₂
 
-  !_     : ∀ {e c R} → NT (e ◇ c) R → Parser Tok NT (e ◇ step c) R
+  !_     : ∀ {e c R} (nt : NT (e ◇ c) R) → Parser Tok NT (e ◇ step c) R
 
 -- Grammars.
 
