@@ -63,28 +63,28 @@ private
  module Dummy {Tok NT} (g : Grammar Tok NT) where
 
   mutual
-    parse : ∀ {e c R} n → Parser Tok NT (e ◇ c) R →
-            P Tok n (if e then n else pred n) R
-    parse n       (return x)                  = return′ x
-    parse n       fail                        = fail′
-    parse n       (_∣_ {true}          p₁ p₂) = parse  n      p₁   ∣′ parse↑ n    p₂
-    parse n       (_∣_ {false} {true}  p₁ p₂) = parse↑ n      p₁   ∣′ parse  n    p₂
-    parse n       (_∣_ {false} {false} p₁ p₂) = parse  n      p₁   ∣′ parse  n    p₂
-    parse n       (p₁ ?>>= p₂)                = parse  n      p₁ >>=′ parse  n ∘′ p₂
-    parse zero    (p₁ !>>= p₂)                = fail′
-    parse (suc n) (p₁ !>>= p₂)                = parse (suc n) p₁ >>=′ parse↑ n ∘′ p₂
-    parse n       (! x)                       = parse n (g x)
-    parse n       token                       = get′ >>=′ eat
+    parse↓ : ∀ {e c R} n → Parser Tok NT (e ◇ c) R →
+             P Tok n (if e then n else pred n) R
+    parse↓ n       (return x)                  = return′ x
+    parse↓ n       fail                        = fail′
+    parse↓ n       (_∣_ {true}          p₁ p₂) = parse↓ n       p₁   ∣′ parse↑ n    p₂
+    parse↓ n       (_∣_ {false} {true}  p₁ p₂) = parse↑ n       p₁   ∣′ parse↓ n    p₂
+    parse↓ n       (_∣_ {false} {false} p₁ p₂) = parse↓ n       p₁   ∣′ parse↓ n    p₂
+    parse↓ n       (p₁ ?>>= p₂)                = parse↓ n       p₁ >>=′ parse↓ n ∘′ p₂
+    parse↓ zero    (p₁ !>>= p₂)                = fail′
+    parse↓ (suc n) (p₁ !>>= p₂)                = parse↓ (suc n) p₁ >>=′ parse↑ n ∘′ p₂
+    parse↓ n       (! x)                       = parse↓ n (g x)
+    parse↓ n       token                       = get′ >>=′ eat
       where
       eat : ∀ {n} → BoundedVec Tok n → P Tok n (pred n) Tok
       eat []      = fail′
       eat (c ∷ s) = put′ s >>′ return′ c
 
     parse↑ : ∀ {e c R} n → Parser Tok NT (e ◇ c) R → P Tok n n R
-    parse↑ {true}  n       p = parse n p
+    parse↑ {true}  n       p = parse↓ n p
     parse↑ {false} zero    p = fail′
-    parse↑ {false} (suc n) p = parse (suc n) p >>=′ λ r →
-                               modify′ ↑       >>′
+    parse↑ {false} (suc n) p = parse↓ (suc n) p >>=′ λ r →
+                               modify′ ↑        >>′
                                return′ r
 
 -- Exported run function.
@@ -93,7 +93,7 @@ parse : ∀ {Tok NT i R} →
         Parser Tok NT i R → Grammar Tok NT →
         L.List Tok → L.List (R × L.List Tok)
 parse p g s = L.map (map-× id toList)
-                    (Dummy.parse g _ p (fromList s))
+                    (Dummy.parse↓ g _ p (fromList s))
 
 -- A variant which only returns parses which leave no remaining input.
 
