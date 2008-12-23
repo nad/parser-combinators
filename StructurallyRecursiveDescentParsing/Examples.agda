@@ -239,3 +239,38 @@ module Ex₉ where
 
   ex₁ : "aa" ∈? (! as) / grammar ≡ ('a' ∷ 'a' ∷ []) ∷ []
   ex₁ = ≡-refl
+
+module Ex₁₀ where
+
+  -- An example of using one grammar within another when the inner
+  -- grammar contains non-terminals parameterised on parsers, and the
+  -- outer grammar instantiates one of these parsers with an outer
+  -- non-terminal.
+
+  infix 55 _★ _∔
+
+  data LibNT (Tok : Set) (NT : NonTerminalType) : NonTerminalType where
+    _★ : ∀ {c R} → Parser Tok NT (false ◇ c) R →
+         LibNT Tok NT _ (List R)
+    _∔ : ∀ {c R} → Parser Tok NT (false ◇ c) R →
+         LibNT Tok NT _ (List R)
+
+  library : ∀ {Tok NT} → (∀ {i R} → LibNT Tok NT i R → NT i R) →
+            ∀ {i R} → LibNT Tok NT i R → Parser Tok NT i R
+  library lift (p ★) = return [] ∣ ! lift (p ∔)
+  library lift (p ∔) = p            >>= λ x  →
+                       ! lift (p ★) >>= λ xs →
+                       return (x ∷ xs)
+
+  data NT : NonTerminalType where
+    lib : ∀ {i R} → LibNT Char NT i R → NT i R
+    a   : NT _ Char
+    as  : NT _ (List Char)
+
+  grammar : Grammar Char NT
+  grammar (lib nt) = library lib nt
+  grammar a        = theToken 'a'
+  grammar as       = ! lib (! a ★)
+
+  ex₁ : "aa" ∈? (! as) / grammar ≡ ('a' ∷ 'a' ∷ []) ∷ []
+  ex₁ = ≡-refl
