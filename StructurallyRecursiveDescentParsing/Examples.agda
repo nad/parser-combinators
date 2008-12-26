@@ -117,11 +117,11 @@ module Ex₄′ where
   -- A monadic variant of Ex₄.
 
   aⁿbⁿcⁿ = return 0
-         ∣ (theToken 'a' +           !>>= λ as →
-            let n = length as in
-            exactly n (theToken 'b') ⊛>
-            exactly n (theToken 'c') ⊛>
-            return n)
+         ∣ theToken 'a' +           !>>= λ as →
+           let n = length as in
+           exactly n (theToken 'b') ⊛>
+           exactly n (theToken 'c') ⊛>
+           return n
 
   ex₁ : "aaabbbccc" ∈? aⁿbⁿcⁿ ≡ 3 ∷ []
   ex₁ = ≡-refl

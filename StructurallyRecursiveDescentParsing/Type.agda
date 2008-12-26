@@ -10,8 +10,8 @@ open import Relation.Binary.PropositionalEquality
 open import StructurallyRecursiveDescentParsing.Index
 
 infix  60 !_
-infixl 40 _∣_
 infixl 10 _!>>=_ _?>>=_
+infixl  5 _∣_
 
 -- A type for parsers which can be implemented using recursive
 -- descent. The types used ensure that the implemented backends are
