@@ -37,7 +37,7 @@ module Ex₁ where
   grammar e = theToken '0' ⊛> theToken '+' ⊛> ! e
             ∣ theToken '0'
 
-  ex₁ : "0+0" ∈? (! e) / grammar ≡ '0' ∷ []
+  ex₁ : "0+0" ∈? (! e) / grammar ≡ [ '0' ]
   ex₁ = ≡-refl
 
 module Ex₂ where
@@ -59,7 +59,7 @@ module Ex₂ where
   ex₁ : "(0*)" ∈? (! expr) / grammar ≡ []
   ex₁ = ≡-refl
 
-  ex₂ : "0*(0+0)" ∈? (! expr) / grammar ≡ '0' ∷ []
+  ex₂ : "0*(0+0)" ∈? (! expr) / grammar ≡ [ '0' ]
   ex₂ = ≡-refl
 
 {-
@@ -105,7 +105,7 @@ module Ex₄ where
   grammar (bcs c zero)    = theToken c ⊛> return 0
   grammar (bcs c (suc n)) = theToken c ⊛> ! bcs c n
 
-  ex₁ : "aaabbbccc" ∈? (! top) / grammar ≡ 3 ∷ []
+  ex₁ : "aaabbbccc" ∈? (! top) / grammar ≡ [ 3 ]
   ex₁ = ≡-refl
 
   ex₂ : "aaabbccc" ∈? (! top) / grammar ≡ []
@@ -122,7 +122,7 @@ module Ex₄′ where
            exactly n (theToken 'c') ⊛>
            return n
 
-  ex₁ : "aaabbbccc" ∈? aⁿbⁿcⁿ ≡ 3 ∷ []
+  ex₁ : "aaabbbccc" ∈? aⁿbⁿcⁿ ≡ [ 3 ]
   ex₁ = ≡-refl
 
   ex₂ : "aaabbccc" ∈? aⁿbⁿcⁿ ≡ []
@@ -140,7 +140,7 @@ module Ex₅ where
   grammar a  = theToken 'a'
   grammar as = length <$> ! a ⋆
 
-  ex₁ : "aaaaa" ∈? (! as) / grammar ≡ 5 ∷ []
+  ex₁ : "aaaaa" ∈? (! as) / grammar ≡ [ 5 ]
   ex₁ = ≡-refl
 
 module Ex₆ where
@@ -157,13 +157,13 @@ module Ex₆ where
                    ∣ _∸_ <$ theToken '∸'
   grammar (expr a) = chain≥ 0 a number (! op)
 
-  ex₁ : "12345" ∈? number / grammar ≡ 12345 ∷ []
+  ex₁ : "12345" ∈? number / grammar ≡ [ 12345 ]
   ex₁ = ≡-refl
 
-  ex₂ : "1+5*2∸3" ∈? (! expr left) / grammar ≡ 9 ∷ []
+  ex₂ : "1+5*2∸3" ∈? (! expr left) / grammar ≡ [ 9 ]
   ex₂ = ≡-refl
 
-  ex₃ : "1+5*2∸3" ∈? (! expr right) / grammar ≡ 1 ∷ []
+  ex₃ : "1+5*2∸3" ∈? (! expr right) / grammar ≡ [ 1 ]
   ex₃ = ≡-refl
 
 module Ex₇ where
@@ -186,10 +186,10 @@ module Ex₇ where
                  ∣ _∸_ <$ theToken '∸'
   grammar mulOp  = _*_ <$ theToken '*'
 
-  ex₁ : "1+5*2∸3" ∈? (! expr) / grammar ≡ 8 ∷ []
+  ex₁ : "1+5*2∸3" ∈? (! expr) / grammar ≡ [ 8 ]
   ex₁ = ≡-refl
 
-  ex₂ : "1+5*(2∸3)" ∈? (! expr) / grammar ≡ 1 ∷ []
+  ex₂ : "1+5*(2∸3)" ∈? (! expr) / grammar ≡ [ 1 ]
   ex₂ = ≡-refl
 
 module Ex₈ where
@@ -206,7 +206,7 @@ module Ex₈ where
   grammar (lib nt) = mapNT lib (Ex₇.grammar nt)
   grammar exprs    = ! expr sepBy theToken ','
 
-  ex₁ : "1,2∸1" ∈? (! exprs) / grammar ≡ (1 ∷ 1 ∷ []) ∷ []
+  ex₁ : "1,2∸1" ∈? (! exprs) / grammar ≡ [ 1 ∷ 1 ∷ [] ]
   ex₁ = ≡-refl
 
 module Ex₈′ where
@@ -221,7 +221,7 @@ module Ex₈′ where
   grammar : Grammar NT Char
   grammar exprs = expr sepBy theToken ','
 
-  ex₁ : "1,2∸1" ∈? (! exprs) / grammar ≡ (1 ∷ 1 ∷ []) ∷ []
+  ex₁ : "1,2∸1" ∈? (! exprs) / grammar ≡ [ 1 ∷ 1 ∷ [] ]
   ex₁ = ≡-refl
 
 module Ex₈″ where
@@ -230,7 +230,7 @@ module Ex₈″ where
 
   expr = ⟦ ! Ex₇.expr ⟧ Ex₇.grammar
 
-  ex₁ : "1,2∸1" ∈? (expr sepBy theToken ',') ≡ (1 ∷ 1 ∷ []) ∷ []
+  ex₁ : "1,2∸1" ∈? (expr sepBy theToken ',') ≡ [ 1 ∷ 1 ∷ [] ]
   ex₁ = ≡-refl
 
 module Ex₉ where
@@ -266,5 +266,5 @@ module Ex₉ where
   grammar a        = theToken 'a'
   grammar as       = ! lib (! a ★)
 
-  ex₁ : "aa" ∈? (! as) / grammar ≡ ('a' ∷ 'a' ∷ []) ∷ []
+  ex₁ : "aa" ∈? (! as) / grammar ≡ [ 'a' ∷ 'a' ∷ [] ]
   ex₁ = ≡-refl
