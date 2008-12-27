@@ -18,6 +18,7 @@ open import Category.Monad.State
 open import StructurallyRecursiveDescentParsing.Index
 open import StructurallyRecursiveDescentParsing.Type
 open import StructurallyRecursiveDescentParsing.Utilities
+  renaming (_∘_ to _∘′_)
 
 ------------------------------------------------------------------------
 -- Parser monad
