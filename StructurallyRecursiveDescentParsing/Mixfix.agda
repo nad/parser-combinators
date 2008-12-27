@@ -82,9 +82,9 @@ internal =
 -- The grammar.
 
 grammar : Grammar NT NamePart
-grammar expr                       = ! nodes g
+grammar expr                       = ! (nodes g)
 grammar (nodes [])                 = fail
-grammar (nodes (p ∷ ps))           = ! node p ∣ ! nodes ps
+grammar (nodes (p ∷ ps))           = ! (node p) ∣ ! (nodes ps)
 grammar (node (precedence ops ps)) =
      ⟪_⟫              <$>      [ closed   ]
   ∣ _⟨_⟩_             <$>  ↑ ⊛ [ infx non ] ⊛ ↑
@@ -97,7 +97,7 @@ grammar (node (precedence ops ps)) =
 
   -- Operator applications where the outermost operator binds
   -- tighter than the current precedence level.
-  ↑ = ! nodes ps
+  ↑ = ! (nodes ps)
 
   -- Right associative and prefix operators.
   preRight =  ⟪_⟩_ <$> [ prefx ]

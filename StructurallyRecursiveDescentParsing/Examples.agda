@@ -37,7 +37,7 @@ module Ex₁ where
   grammar e = theToken '0' ⊛> theToken '+' ⊛> ! e
             ∣ theToken '0'
 
-  ex₁ : "0+0" ∈? (! e) / grammar ≡ [ '0' ]
+  ex₁ : "0+0" ∈? ! e / grammar ≡ [ '0' ]
   ex₁ = ≡-refl
 
 module Ex₂ where
@@ -56,10 +56,10 @@ module Ex₂ where
                  ∣ theToken '0' ⊛> theToken '*' ⊛> ! factor
                  ∣ theToken '(' ⊛> ! expr <⊛ theToken ')'
 
-  ex₁ : "(0*)" ∈? (! expr) / grammar ≡ []
+  ex₁ : "(0*)" ∈? ! expr / grammar ≡ []
   ex₁ = ≡-refl
 
-  ex₂ : "0*(0+0)" ∈? (! expr) / grammar ≡ [ '0' ]
+  ex₂ : "0*(0+0)" ∈? ! expr / grammar ≡ [ '0' ]
   ex₂ = ≡-refl
 
 {-
@@ -97,18 +97,18 @@ module Ex₄ where
     bcs : Char → ℕ → NT _ ℕ  -- bcs x n ∷= xⁿ⁺¹
 
   grammar : Grammar NT Char
-  grammar top             = return 0 ∣ ! as zero
+  grammar top             = return 0 ∣ ! (as zero)
   grammar (as n)          = suc <$ theToken 'a' ⊛
-                            ( ! as (suc n)
-                            ∣ _+_ <$> ! bcs 'b' n ⊛ ! bcs 'c' n
+                            ( ! (as (suc n))
+                            ∣ _+_ <$> ! (bcs 'b' n) ⊛ ! (bcs 'c' n)
                             )
   grammar (bcs c zero)    = theToken c ⊛> return 0
-  grammar (bcs c (suc n)) = theToken c ⊛> ! bcs c n
+  grammar (bcs c (suc n)) = theToken c ⊛> ! (bcs c n)
 
-  ex₁ : "aaabbbccc" ∈? (! top) / grammar ≡ [ 3 ]
+  ex₁ : "aaabbbccc" ∈? ! top / grammar ≡ [ 3 ]
   ex₁ = ≡-refl
 
-  ex₂ : "aaabbccc" ∈? (! top) / grammar ≡ []
+  ex₂ : "aaabbccc" ∈? ! top / grammar ≡ []
   ex₂ = ≡-refl
 
 module Ex₄′ where
@@ -140,7 +140,7 @@ module Ex₅ where
   grammar a  = theToken 'a'
   grammar as = length <$> ! a ⋆
 
-  ex₁ : "aaaaa" ∈? (! as) / grammar ≡ [ 5 ]
+  ex₁ : "aaaaa" ∈? ! as / grammar ≡ [ 5 ]
   ex₁ = ≡-refl
 
 module Ex₆ where
@@ -160,10 +160,10 @@ module Ex₆ where
   ex₁ : "12345" ∈? number / grammar ≡ [ 12345 ]
   ex₁ = ≡-refl
 
-  ex₂ : "1+5*2∸3" ∈? (! expr left) / grammar ≡ [ 9 ]
+  ex₂ : "1+5*2∸3" ∈? ! (expr left) / grammar ≡ [ 9 ]
   ex₂ = ≡-refl
 
-  ex₃ : "1+5*2∸3" ∈? (! expr right) / grammar ≡ [ 1 ]
+  ex₃ : "1+5*2∸3" ∈? ! (expr right) / grammar ≡ [ 1 ]
   ex₃ = ≡-refl
 
 module Ex₇ where
@@ -186,10 +186,10 @@ module Ex₇ where
                  ∣ _∸_ <$ theToken '∸'
   grammar mulOp  = _*_ <$ theToken '*'
 
-  ex₁ : "1+5*2∸3" ∈? (! expr) / grammar ≡ [ 8 ]
+  ex₁ : "1+5*2∸3" ∈? ! expr / grammar ≡ [ 8 ]
   ex₁ = ≡-refl
 
-  ex₂ : "1+5*(2∸3)" ∈? (! expr) / grammar ≡ [ 1 ]
+  ex₂ : "1+5*(2∸3)" ∈? ! expr / grammar ≡ [ 1 ]
   ex₂ = ≡-refl
 
 module Ex₈ where
@@ -206,7 +206,7 @@ module Ex₈ where
   grammar (lib nt) = mapNT lib (Ex₇.grammar nt)
   grammar exprs    = ! expr sepBy theToken ','
 
-  ex₁ : "1,2∸1" ∈? (! exprs) / grammar ≡ [ 1 ∷ 1 ∷ [] ]
+  ex₁ : "1,2∸1" ∈? ! exprs / grammar ≡ [ 1 ∷ 1 ∷ [] ]
   ex₁ = ≡-refl
 
 module Ex₈′ where
@@ -221,7 +221,7 @@ module Ex₈′ where
   grammar : Grammar NT Char
   grammar exprs = expr sepBy theToken ','
 
-  ex₁ : "1,2∸1" ∈? (! exprs) / grammar ≡ [ 1 ∷ 1 ∷ [] ]
+  ex₁ : "1,2∸1" ∈? ! exprs / grammar ≡ [ 1 ∷ 1 ∷ [] ]
   ex₁ = ≡-refl
 
 module Ex₈″ where
@@ -251,9 +251,9 @@ module Ex₉ where
 
   library : ∀ {NT Tok} → (∀ {i R} → LibraryNT NT Tok i R → NT i R) →
             ∀ {i R} → LibraryNT NT Tok i R → Parser NT Tok i R
-  library lift (p ★) = return [] ∣ ! lift (p ∔)
-  library lift (p ∔) = p            >>= λ x  →
-                       ! lift (p ★) >>= λ xs →
+  library lift (p ★) = return [] ∣ ! (lift (p ∔))
+  library lift (p ∔) = p              >>= λ x  →
+                       ! (lift (p ★)) >>= λ xs →
                        return (x ∷ xs)
 
   data NT : NonTerminalType where
@@ -264,7 +264,7 @@ module Ex₉ where
   grammar : Grammar NT Char
   grammar (lib nt) = library lib nt
   grammar a        = theToken 'a'
-  grammar as       = ! lib (! a ★)
+  grammar as       = ! (lib (! a ★))
 
-  ex₁ : "aa" ∈? (! as) / grammar ≡ [ 'a' ∷ 'a' ∷ [] ]
+  ex₁ : "aa" ∈? ! as / grammar ≡ [ 'a' ∷ 'a' ∷ [] ]
   ex₁ = ≡-refl

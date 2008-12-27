@@ -10,7 +10,6 @@ open import Relation.Binary.PropositionalEquality
 
 open import StructurallyRecursiveDescentParsing.Index
 
-infix  60 !_
 infixl 10 _!>>=_ _?>>=_
 infixl  5 _∣_
 
@@ -46,7 +45,7 @@ codata Parser (NT : NonTerminalType) (Tok : Set) :
            (p₂ : (x : R₁) → Parser NT Tok (i₂ x)           R₂) →
                             Parser NT Tok (false ◇ c₁ ∪ ε) R₂
 
-  !_     : ∀ {e c R} (nt : NT (e ◇ c) R) → Parser NT Tok (e ◇ step c) R
+  !      : ∀ {e c R} (nt : NT (e ◇ c) R) → Parser NT Tok (e ◇ step c) R
 
 -- Grammars.
 
@@ -89,4 +88,4 @@ mapNT f token        ~ token
 mapNT f (p₁ ∣ p₂)    ~ mapNT f p₁ ∣ mapNT f p₂
 mapNT f (p₁ ?>>= p₂) ~ mapNT f p₁ ?>>= λ x → mapNT f (p₂ x)
 mapNT f (p₁ !>>= p₂) ~ mapNT f p₁ !>>= λ x → mapNT f (p₂ x)
-mapNT f (! nt)       ~ ! f nt
+mapNT f (! nt)       ~ ! (f nt)
