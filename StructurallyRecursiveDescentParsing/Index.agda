@@ -67,7 +67,12 @@ _·_ : Index → Index → Index
 i₁ · i₂ = (empty i₁ ∧ empty i₂)
           ◇
           (if empty i₁ then corners i₁ ∪ corners i₂
-                       else step (corners i₁))
+                       else corners i₁ ∪ ε)
+
+drop-steps : Corners → Corners
+drop-steps ε         = ε
+drop-steps (step c)  = drop-steps c
+drop-steps (c₁ ∪ c₂) = drop-steps c₁ ∪ drop-steps c₂
 
 ------------------------------------------------------------------------
 -- Testing indices for equality

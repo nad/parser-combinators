@@ -60,10 +60,10 @@ private
 
 private
 
- module Dummy {Tok NT} (g : Grammar Tok NT) where
+ module Dummy {NT Tok} (g : Grammar NT Tok) where
 
   mutual
-    parse↓ : ∀ {e c R} n → Parser Tok NT (e ◇ c) R →
+    parse↓ : ∀ {e c R} n → Parser NT Tok (e ◇ c) R →
              P Tok n (if e then n else pred n) R
     parse↓ n       (return x)                  = return′ x
     parse↓ n       fail                        = fail′
@@ -80,25 +80,26 @@ private
       eat []      = fail′
       eat (c ∷ s) = put′ s >>′ return′ c
 
-    parse↑ : ∀ {e c R} n → Parser Tok NT (e ◇ c) R → P Tok n n R
+    parse↑ : ∀ {e c R} n → Parser NT Tok (e ◇ c) R → P Tok n n R
     parse↑ {true}  n       p = parse↓ n p
     parse↑ {false} zero    p = fail′
     parse↑ {false} (suc n) p = parse↓ (suc n) p >>=′ λ r →
                                modify′ ↑        >>′
                                return′ r
 
+open Dummy public
+
 -- Exported run function.
 
-parse : ∀ {Tok NT i R} →
-        Parser Tok NT i R → Grammar Tok NT →
+parse : ∀ {NT Tok i R} →
+        Grammar NT Tok → Parser NT Tok i R →
         L.List Tok → L.List (R × L.List Tok)
-parse p g s = L.map (map-× id toList)
-                    (Dummy.parse↓ g _ p (fromList s))
+parse g p s = L.map (map-× id toList) (parse↓ g _ p (fromList s))
 
 -- A variant which only returns parses which leave no remaining input.
 
-parse-complete : ∀ {Tok NT i R} →
-                 Parser Tok NT i R → Grammar Tok NT →
-                 L.List Tok → L.List R
-parse-complete p g s =
-  L.map proj₁ (L.filter (L.null ∘ proj₂) (parse p g s))
+parseComplete : ∀ {NT Tok i R} →
+                Grammar NT Tok → Parser NT Tok i R →
+                L.List Tok → L.List R
+parseComplete g p s =
+  L.map proj₁ (L.filter (L.null ∘ proj₂) (parse g p s))

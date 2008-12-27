@@ -184,11 +184,11 @@ private
 
 private
 
- module Dummy (g : Grammar Tok LargeNT) where
+ module Dummy (g : Grammar LargeNT Tok) where
 
   mutual
     parse : ∀ n {e c R} →
-            Parser Tok LargeNT (e ◇ c) R →
+            Parser LargeNT Tok (e ◇ c) R →
             P n (if e then idM else predM) R
     parse n       (return x)          = return′ x
     parse n       (_∣_ {⊤}     p₁ p₂) = parse  n      p₁   ∣′ parse↑ n    p₂
@@ -201,7 +201,7 @@ private
     parse n       token               = fromJust =<<′ gmodify predM eat
     parse n       (! x)               = memoParse n x
 
-    parse↑ : ∀ n {e c R} → Parser Tok LargeNT (e ◇ c) R → P n idM R
+    parse↑ : ∀ n {e c R} → Parser LargeNT Tok (e ◇ c) R → P n idM R
     parse↑ n {e} p = adjustBound (lemma e) (parse n p)
 
     memoParse : ∀ n {R e c} → LargeNT (e ◇ c) R →
@@ -215,16 +215,16 @@ private
 -- Exported run function.
 
 parse : ∀ {i R} →
-        Parser Tok LargeNT i R → Grammar Tok LargeNT →
+        Grammar LargeNT Tok → Parser LargeNT Tok i R →
         List Tok → List (R × List Tok)
-parse p g toks =
+parse g p toks =
   List.map (map-× id (λ xs → Vec.toList (string xs))) $
   run (Vec.fromList toks) (Dummy.parse g _ p)
 
 -- A variant which only returns parses which leave no remaining input.
 
 parse-complete : ∀ {i R} →
-                 Parser Tok LargeNT i R → Grammar Tok LargeNT →
+                 Grammar Tok LargeNT → Parser Tok LargeNT i R →
                  List Tok → List R
-parse-complete p g s =
-  List.map proj₁ (List.filter (List.null ∘ proj₂) (parse p g s))
+parse-complete g p s =
+  List.map proj₁ (List.filter (List.null ∘ proj₂) (parse g p s))

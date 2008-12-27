@@ -62,7 +62,7 @@ data NT : NonTerminalType where
 -- The parser type used in this module.
 
 P : Index → Set → Set1
-P = Parser NamePart NT
+P = Parser NT NamePart
 
 -- A vector containing parsers recognising the name parts of the
 -- operator.
@@ -81,33 +81,36 @@ internal =
 
 -- The grammar.
 
-grammar : Grammar NamePart NT
+grammar : Grammar NT NamePart
 grammar expr                       = ! nodes g
 grammar (nodes [])                 = fail
 grammar (nodes (p ∷ ps))           = ! node p ∣ ! nodes ps
 grammar (node (precedence ops ps)) =
-     ⟪_⟫              <$>      ⟦ closed   ⟧
-  ∣ _⟨_⟩_             <$>  ↑ ⊛ ⟦ infx non ⟧ ⊛ ↑
+     ⟪_⟫              <$>      [ closed   ]
+  ∣ _⟨_⟩_             <$>  ↑ ⊛ [ infx non ] ⊛ ↑
   ∣ flip (foldr _$_)  <$>      preRight +   ⊛ ↑
   ∣ foldl (flip _$_)  <$>  ↑ ⊛ postLeft +
   where
-  -- ⟦ fix ⟧ parses the internal parts of operators with the
+  -- [ fix ] parses the internal parts of operators with the
   -- current precedence level and fixity fix.
-  ⟦_⟧ = λ (fix : Fixity) → internal (ops fix)
+  [_] = λ (fix : Fixity) → internal (ops fix)
 
   -- Operator applications where the outermost operator binds
   -- tighter than the current precedence level.
   ↑ = ! nodes ps
 
   -- Right associative and prefix operators.
-  preRight =  ⟪_⟩_ <$> ⟦ prefx ⟧
-           ∣ _⟨_⟩_ <$> ↑ ⊛ ⟦ infx right ⟧
+  preRight =  ⟪_⟩_ <$> [ prefx ]
+           ∣ _⟨_⟩_ <$> ↑ ⊛ [ infx right ]
 
   -- Left associative and postfix operators.
-  postLeft = flip _⟨_⟫                   <$> ⟦ postfx ⟧
-           ∣ (λ op e₂ e₁ → e₁ ⟨ op ⟩ e₂) <$> ⟦ infx left ⟧ ⊛ ↑
+  postLeft = flip _⟨_⟫                   <$> [ postfx ]
+           ∣ (λ op e₂ e₁ → e₁ ⟨ op ⟩ e₂) <$> [ infx left ] ⊛ ↑
 
--- An expression parser.
+-- Expression parsers.
+
+expression : ∀ {NT} → Parser NT NamePart _ Expr
+expression = ⟦ ! expr ⟧ grammar
 
 parseExpr : List NamePart → List Expr
-parseExpr = parse-complete (! expr) grammar
+parseExpr = parseComplete grammar (! expr)

@@ -20,12 +20,11 @@ open Token C.decSetoid
 -- Some functions used to simplify the examples a little.
 
 _∈?_/_ : ∀ {NT i R} →
-         String → Parser Char NT i R → Grammar Char NT → List R
-s ∈? p / g = parse-complete p g (S.toList s)
+         String → Parser NT Char i R → Grammar NT Char → List R
+s ∈? p / g = parseComplete g p (S.toList s)
 
-_∈?_ : ∀ {i R} →
-       String → Parser Char EmptyNT i R → List R
-s ∈? p = s ∈? p / empty-grammar
+_∈?_ : ∀ {i R} → String → Parser EmptyNT Char i R → List R
+s ∈? p = s ∈? p / emptyGrammar
 
 module Ex₁ where
 
@@ -34,7 +33,7 @@ module Ex₁ where
   data Nonterminal : NonTerminalType where
     e : Nonterminal _ Char
 
-  grammar : Grammar Char Nonterminal
+  grammar : Grammar Nonterminal Char
   grammar e = theToken '0' ⊛> theToken '+' ⊛> ! e
             ∣ theToken '0'
 
@@ -50,7 +49,7 @@ module Ex₂ where
     expr   : Nonterminal _ Char
     factor : Nonterminal _ Char
 
-  grammar : Grammar Char Nonterminal
+  grammar : Grammar Nonterminal Char
   grammar expr   = ! factor ⊛> theToken '+' ⊛> ! expr
                  ∣ ! factor
   grammar factor = theToken '0'
@@ -75,7 +74,7 @@ module Ex₃ where
     expr   : Nonterminal _ Char
     factor : Nonterminal _ Char
 
-  grammar : Grammar Char Nonterminal
+  grammar : Grammar Nonterminal Char
   grammar expr   = ! factor ⊛> theToken '+' ⊛> ! expr
                  ∣ ! factor
   grammar factor = theToken '0'
@@ -97,7 +96,7 @@ module Ex₄ where
     as  :        ℕ → NT _ ℕ  -- as n    ∷= aˡ⁺¹bⁿ⁺ˡ⁺¹cⁿ⁺ˡ⁺¹
     bcs : Char → ℕ → NT _ ℕ  -- bcs x n ∷= xⁿ⁺¹
 
-  grammar : Grammar Char NT
+  grammar : Grammar NT Char
   grammar top             = return 0 ∣ ! as zero
   grammar (as n)          = suc <$ theToken 'a' ⊛
                             ( ! as (suc n)
@@ -137,7 +136,7 @@ module Ex₅ where
     a  : NT _ Char
     as : NT _ ℕ
 
-  grammar : Grammar Char NT
+  grammar : Grammar NT Char
   grammar a  = theToken 'a'
   grammar as = length <$> ! a ⋆
 
@@ -152,7 +151,7 @@ module Ex₆ where
     op   : NT _ (ℕ → ℕ → ℕ)
     expr : (a : Assoc) → NT _ ℕ
 
-  grammar : Grammar Char NT
+  grammar : Grammar NT Char
   grammar op       = _+_ <$ theToken '+'
                    ∣ _*_ <$ theToken '*'
                    ∣ _∸_ <$ theToken '∸'
@@ -178,7 +177,7 @@ module Ex₇ where
     addOp  : NT _ (ℕ → ℕ → ℕ)
     mulOp  : NT _ (ℕ → ℕ → ℕ)
 
-  grammar : Grammar Char NT
+  grammar : Grammar NT Char
   grammar expr   = chain≥ 0 left (! term)   (! addOp)
   grammar term   = chain≥ 0 left (! factor) (! mulOp)
   grammar factor = theToken '(' ⊛> ! expr <⊛ theToken ')'
@@ -195,7 +194,7 @@ module Ex₇ where
 
 module Ex₈ where
 
-  -- An example of using one grammar within another.
+  -- An example illustrating the use of one grammar within another.
 
   data NT : NonTerminalType where
     lib   : ∀ {i R} (nt : Ex₇.NT i R) → NT i R
@@ -203,71 +202,66 @@ module Ex₈ where
 
   expr = lib Ex₇.expr
 
-  grammar : Grammar Char NT
+  grammar : Grammar NT Char
   grammar (lib nt) = mapNT lib (Ex₇.grammar nt)
   grammar exprs    = ! expr sepBy theToken ','
 
   ex₁ : "1,2∸1" ∈? (! exprs) / grammar ≡ (1 ∷ 1 ∷ []) ∷ []
   ex₁ = ≡-refl
 
-module Ex₉ where
+module Ex₈′ where
 
-  -- An example of using one grammar within another when the inner
-  -- grammar contains non-terminals parameterised on parsers.
-
-  infix 55 _★ _∔
-
-  data LibNT (Tok : Set) : NonTerminalType where
-    _★ : ∀ {c R} → Parser Tok (LibNT Tok) (false ◇ c) R →
-         LibNT Tok _ (List R)
-    _∔ : ∀ {c R} → Parser Tok (LibNT Tok) (false ◇ c) R →
-         LibNT Tok _ (List R)
-
-  library : ∀ {Tok} → Grammar Tok (LibNT Tok)
-  library (p ★) = return [] ∣ ! (p ∔)
-  library (p ∔) = p       >>= λ x  →
-                  ! (p ★) >>= λ xs →
-                  return (x ∷ xs)
+  -- A variant of Ex₈.
 
   data NT : NonTerminalType where
-    lib : ∀ {i R} → LibNT Char i R → NT i R
-    as  : NT _ (List Char)
+    exprs : NT _ (List ℕ)
 
-  grammar : Grammar Char NT
-  grammar (lib nt) = mapNT lib (library nt)
-  grammar as       = ! lib (theToken 'a' ★)
+  expr = ⟦ ! Ex₇.expr ⟧ Ex₇.grammar
 
-  ex₁ : "aa" ∈? (! as) / grammar ≡ ('a' ∷ 'a' ∷ []) ∷ []
+  grammar : Grammar NT Char
+  grammar exprs = expr sepBy theToken ','
+
+  ex₁ : "1,2∸1" ∈? (! exprs) / grammar ≡ (1 ∷ 1 ∷ []) ∷ []
   ex₁ = ≡-refl
 
-module Ex₁₀ where
+module Ex₈″ where
 
-  -- An example of using one grammar within another when the inner
-  -- grammar contains non-terminals parameterised on parsers, and the
-  -- outer grammar instantiates one of these parsers with an outer
-  -- non-terminal.
+  -- Another variant of Ex₈ (without the outer grammar).
+
+  expr = ⟦ ! Ex₇.expr ⟧ Ex₇.grammar
+
+  ex₁ : "1,2∸1" ∈? (expr sepBy theToken ',') ≡ (1 ∷ 1 ∷ []) ∷ []
+  ex₁ = ≡-refl
+
+module Ex₉ where
+
+  -- An example illustrating the use of one grammar within another
+  -- when the inner grammar contains non-terminals parameterised on
+  -- parsers, and the outer grammar instantiates one of these parsers
+  -- with an outer non-terminal.
 
   infix 55 _★ _∔
 
-  data LibNT (Tok : Set) (NT : NonTerminalType) : NonTerminalType where
-    _★ : ∀ {c R} → Parser Tok NT (false ◇ c) R →
-         LibNT Tok NT _ (List R)
-    _∔ : ∀ {c R} → Parser Tok NT (false ◇ c) R →
-         LibNT Tok NT _ (List R)
+  data LibraryNT (NT : NonTerminalType) (Tok : Set) :
+                 NonTerminalType where
+    _★ : ∀ {c R} → Parser NT Tok (false ◇ c) R →
+         LibraryNT NT Tok _ (List R)
+    _∔ : ∀ {c R} → Parser NT Tok (false ◇ c) R →
+         LibraryNT NT Tok _ (List R)
 
-  library : ∀ {Tok NT} → (∀ {i R} → LibNT Tok NT i R → NT i R) →
-            ∀ {i R} → LibNT Tok NT i R → Parser Tok NT i R
+  library : ∀ {NT Tok} → (∀ {i R} → LibraryNT NT Tok i R → NT i R) →
+            ∀ {i R} → LibraryNT NT Tok i R → Parser NT Tok i R
   library lift (p ★) = return [] ∣ ! lift (p ∔)
   library lift (p ∔) = p            >>= λ x  →
                        ! lift (p ★) >>= λ xs →
                        return (x ∷ xs)
 
   data NT : NonTerminalType where
-    lib : ∀ {i R} → LibNT Char NT i R → NT i R
+    lib : ∀ {i R} → LibraryNT NT Char i R → NT i R
     a   : NT _ Char
     as  : NT _ (List Char)
 
-  grammar : Grammar Char NT
+  grammar : Grammar NT Char
   grammar (lib nt) = library lib nt
   grammar a        = theToken 'a'
   grammar as       = ! lib (! a ★)

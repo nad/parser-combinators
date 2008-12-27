@@ -19,7 +19,6 @@ open import Data.Bool
 open import Data.Function
 open import Data.Maybe
 open import Data.Unit
-open import Data.Empty1
 import Data.Char as Char
 open Char using (Char; _==_)
 open import Algebra
@@ -35,16 +34,16 @@ open import Relation.Binary.PropositionalEquality
 
 infixl 10 _>>=_
 
-_>>=_ : ∀ {Tok NT e₁ c₁ i₂ R₁ R₂} → let i₁ = e₁ ◇ c₁ in
-        Parser Tok NT i₁ R₁ →
-        (R₁ → Parser Tok NT i₂ R₂) →
-        Parser Tok NT (i₁ · i₂) R₂
+_>>=_ : ∀ {NT Tok e₁ c₁ i₂ R₁ R₂} → let i₁ = e₁ ◇ c₁ in
+        Parser NT Tok i₁ R₁ →
+        (R₁ → Parser NT Tok i₂ R₂) →
+        Parser NT Tok (i₁ · i₂) R₂
 _>>=_ {e₁ = true } = _?>>=_
 _>>=_ {e₁ = false} = _!>>=_
 
-cast : ∀ {Tok NT e₁ e₂ c₁ c₂ R} →
+cast : ∀ {NT Tok e₁ e₂ c₁ c₂ R} →
        e₁ ≡ e₂ → c₁ ≡ c₂ →
-       Parser Tok NT (e₁ ◇ c₁) R → Parser Tok NT (e₂ ◇ c₂) R
+       Parser NT Tok (e₁ ◇ c₁) R → Parser NT Tok (e₂ ◇ c₂) R
 cast ≡-refl ≡-refl p = p
 
 ------------------------------------------------------------------------
@@ -54,10 +53,10 @@ cast ≡-refl ≡-refl p = p
 
 infixl 50 _⊛_ _⊛!_ _<⊛_ _⊛>_ _<$>_ _<$_ _⊗_ _⊗!_
 
-_⊛_ : ∀ {Tok NT i₁ i₂ R₁ R₂} →
-      Parser Tok NT i₁ (R₁ → R₂) →
-      Parser Tok NT i₂ R₁ →
-      Parser Tok NT _  R₂
+_⊛_ : ∀ {NT Tok i₁ i₂ R₁ R₂} →
+      Parser NT Tok i₁ (R₁ → R₂) →
+      Parser NT Tok i₂ R₁ →
+      Parser NT Tok _  R₂
 p₁ ⊛ p₂ = p₁ >>= λ f → p₂ >>= λ x → return (f x)
 
 -- A variant: If the second parser does not accept the empty string,
@@ -65,45 +64,45 @@ p₁ ⊛ p₂ = p₁ >>= λ f → p₂ >>= λ x → return (f x)
 -- parser, but for the second one a small lemma is needed, hence this
 -- variant.)
 
-_⊛!_ : ∀ {Tok NT i₁ c₂ R₁ R₂} →
-       Parser Tok NT i₁ (R₁ → R₂) →
-       Parser Tok NT (false ◇ c₂) R₁ →
-       Parser Tok NT (false ◇ _)  R₂
+_⊛!_ : ∀ {NT Tok i₁ c₂ R₁ R₂} →
+       Parser NT Tok i₁ (R₁ → R₂) →
+       Parser NT Tok (false ◇ c₂) R₁ →
+       Parser NT Tok (false ◇ _)  R₂
 _⊛!_ {i₁ = i₁} p₁ p₂ = cast (BCS.*-comm (empty i₁) false) ≡-refl
                             (p₁ ⊛ p₂)
 
-_<$>_ : ∀ {Tok NT i R₁ R₂} →
+_<$>_ : ∀ {NT Tok i R₁ R₂} →
         (R₁ → R₂) →
-        Parser Tok NT i R₁ →
-        Parser Tok NT _ R₂
+        Parser NT Tok i R₁ →
+        Parser NT Tok _ R₂
 f <$> x = return f ⊛ x
 
-_<⊛_ : ∀ {Tok NT i₁ i₂ R₁ R₂} →
-       Parser Tok NT i₁ R₁ →
-       Parser Tok NT i₂ R₂ →
-       Parser Tok NT _ R₁
+_<⊛_ : ∀ {NT Tok i₁ i₂ R₁ R₂} →
+       Parser NT Tok i₁ R₁ →
+       Parser NT Tok i₂ R₂ →
+       Parser NT Tok _ R₁
 x <⊛ y = const <$> x ⊛ y
 
-_⊛>_ : ∀ {Tok NT i₁ i₂ R₁ R₂} →
-       Parser Tok NT i₁ R₁ →
-       Parser Tok NT i₂ R₂ →
-       Parser Tok NT _ R₂
+_⊛>_ : ∀ {NT Tok i₁ i₂ R₁ R₂} →
+       Parser NT Tok i₁ R₁ →
+       Parser NT Tok i₂ R₂ →
+       Parser NT Tok _ R₂
 x ⊛> y = flip const <$> x ⊛ y
 
-_<$_ : ∀ {Tok NT i R₁ R₂} →
+_<$_ : ∀ {NT Tok i R₁ R₂} →
        R₁ →
-       Parser Tok NT i R₂ →
-       Parser Tok NT _ R₁
+       Parser NT Tok i R₂ →
+       Parser NT Tok _ R₁
 x <$ y = const x <$> y
 
-_⊗_ : ∀ {Tok NT i₁ i₂ R₁ R₂} →
-      Parser Tok NT i₁ R₁ → Parser Tok NT i₂ R₂ →
-      Parser Tok NT _ (R₁ × R₂)
+_⊗_ : ∀ {NT Tok i₁ i₂ R₁ R₂} →
+      Parser NT Tok i₁ R₁ → Parser NT Tok i₂ R₂ →
+      Parser NT Tok _ (R₁ × R₂)
 p₁ ⊗ p₂ = (_,_) <$> p₁ ⊛ p₂
 
-_⊗!_ : ∀ {Tok NT i₁ c₂ R₁ R₂} →
-       Parser Tok NT i₁ R₁ → Parser Tok NT (false ◇ c₂) R₂ →
-       Parser Tok NT (false ◇ _) (R₁ × R₂)
+_⊗!_ : ∀ {NT Tok i₁ c₂ R₁ R₂} →
+       Parser NT Tok i₁ R₁ → Parser NT Tok (false ◇ c₂) R₂ →
+       Parser NT Tok (false ◇ _) (R₁ × R₂)
 p₁ ⊗! p₂ = (_,_) <$> p₁ ⊛! p₂
 
 ------------------------------------------------------------------------
@@ -130,23 +129,23 @@ infix 55 _⋆ _+
 
 mutual
 
-  _⋆ : ∀ {Tok NT R c} →
-       Parser Tok NT (false ◇ c) R        →
-       Parser Tok NT _           (List R)
+  _⋆ : ∀ {NT Tok R c} →
+       Parser NT Tok (false ◇ c) R        →
+       Parser NT Tok _           (List R)
   p ⋆ ~ return [] ∣ p +
 
-  _+ : ∀ {Tok NT R c} →
-       Parser Tok NT (false ◇ c) R        →
-       Parser Tok NT _           (List R)
+  _+ : ∀ {NT Tok R c} →
+       Parser NT Tok (false ◇ c) R        →
+       Parser NT Tok _           (List R)
   p + ~ p   !>>= λ x  →
         p ⋆ ?>>= λ xs →
         return (x ∷ xs)
 
 -- p sepBy sep parses one or more ps separated by seps.
 
-_sepBy_ : ∀ {Tok NT R R′ i c} →
-          Parser Tok NT i R → Parser Tok NT (false ◇ c) R′ →
-          Parser Tok NT _ (List R)
+_sepBy_ : ∀ {NT Tok R R′ i c} →
+          Parser NT Tok i R → Parser NT Tok (false ◇ c) R′ →
+          Parser NT Tok _ (List R)
 p sepBy sep = _∷_ <$> p ⊛ (sep ⊛> p) ⋆
 
 -- Note that the index of atLeast is only partly inferred; the
@@ -158,9 +157,9 @@ atLeast-index c (suc n) = _
 
 -- At least n occurrences of p.
 
-atLeast : ∀ {Tok NT c R} (n : ℕ) →
-          Parser Tok NT (false ◇ c) R →
-          Parser Tok NT (atLeast-index c n) (List R)
+atLeast : ∀ {NT Tok c R} (n : ℕ) →
+          Parser NT Tok (false ◇ c) R →
+          Parser NT Tok (atLeast-index c n) (List R)
 atLeast zero    p = p ⋆
 atLeast (suc n) p = _∷_ <$> p ⊛ atLeast n p
 
@@ -170,17 +169,17 @@ exactly-index : Index → ℕ → Index
 exactly-index i zero    = _
 exactly-index i (suc n) = _
 
-exactly : ∀ {Tok NT i R} n →
-          Parser Tok NT i R →
-          Parser Tok NT (exactly-index i n) (Vec R n)
+exactly : ∀ {NT Tok i R} n →
+          Parser NT Tok i R →
+          Parser NT Tok (exactly-index i n) (Vec R n)
 exactly zero    p = return []
 exactly (suc n) p = _∷_ <$> p ⊛ exactly n p
 
 -- A function with a similar type:
 
-sequence : ∀ {Tok NT i R n} →
-           Vec₁ (Parser Tok NT i R) n →
-           Parser Tok NT (exactly-index i n) (Vec R n)
+sequence : ∀ {NT Tok i R n} →
+           Vec₁ (Parser NT Tok i R) n →
+           Parser NT Tok (exactly-index i n) (Vec R n)
 sequence []       = return []
 sequence (p ∷ ps) = _∷_ <$> p ⊛ sequence ps
 
@@ -191,10 +190,10 @@ between-corners : Corners → ℕ → Corners
 between-corners c′ zero    = _
 between-corners c′ (suc n) = _
 
-_between_ : ∀ {Tok NT i R c′ R′ n} →
-            Parser Tok NT i R →
-            Vec₁ (Parser Tok NT (false ◇ c′) R′) (suc n) →
-            Parser Tok NT (false ◇ between-corners c′ n) (Vec R n)
+_between_ : ∀ {NT Tok i R c′ R′ n} →
+            Parser NT Tok i R →
+            Vec₁ (Parser NT Tok (false ◇ c′) R′) (suc n) →
+            Parser NT Tok (false ◇ between-corners c′ n) (Vec R n)
 p between (x ∷ [])     = [] <$ x
 p between (x ∷ y ∷ xs) = _∷_ <$> (x ⊛> p) ⊛ (p between (y ∷ xs))
 
@@ -232,11 +231,11 @@ chain≥-combine left  x ys = foldl appˡ x ys
 -- Chains at least n occurrences of op, in an a-associative
 -- manner. The ops are surrounded by ps.
 
-chain≥ : ∀ {Tok NT c₁ i₂ R} (n : ℕ) →
+chain≥ : ∀ {NT Tok c₁ i₂ R} (n : ℕ) →
          Assoc →
-         Parser Tok NT (false ◇ c₁) R →
-         Parser Tok NT i₂ (R → R → R) →
-         Parser Tok NT _ R
+         Parser NT Tok (false ◇ c₁) R →
+         Parser NT Tok i₂ (R → R → R) →
+         Parser NT Tok _ R
 chain≥ n a p op = chain≥-combine a <$> p ⊛ atLeast n (op ⊗! p)
 
 private
@@ -264,9 +263,9 @@ choice-corners : Corners → ℕ → Corners
 choice-corners c zero    = _
 choice-corners c (suc n) = _
 
-choice : ∀ {Tok NT c R n} →
-         Vec₁ (Parser Tok NT (false ◇ c) R) n →
-         Parser Tok NT (false ◇ choice-corners c n) R
+choice : ∀ {NT Tok c R n} →
+         Vec₁ (Parser NT Tok (false ◇ c) R) n →
+         Parser NT Tok (false ◇ choice-corners c n) R
 choice []       = fail
 choice (p ∷ ps) = p ∣ choice ps
 
@@ -277,31 +276,31 @@ choiceMap-corners : ∀ {A} → (A → Corners) → List A → Corners
 choiceMap-corners c []       = _
 choiceMap-corners c (x ∷ xs) = _
 
-choiceMap : ∀ {Tok NT R A} {c : A → Corners} →
-            ((x : A) → Parser Tok NT (false ◇ c x) R) →
+choiceMap : ∀ {NT Tok R A} {c : A → Corners} →
+            ((x : A) → Parser NT Tok (false ◇ c x) R) →
             (xs : List A) →
-            Parser Tok NT (false ◇ choiceMap-corners c xs) R
+            Parser NT Tok (false ◇ choiceMap-corners c xs) R
 choiceMap f []       = fail
 choiceMap f (x ∷ xs) = f x ∣ choiceMap f xs
 
 ------------------------------------------------------------------------
 -- sat and friends
 
-sat : ∀ {Tok NT R} → (Tok → Maybe R) → Parser Tok NT (0I · 1I) R
-sat {Tok} {NT} {R} p = token !>>= λ c → ok (p c)
+sat : ∀ {NT Tok R} → (Tok → Maybe R) → Parser NT Tok (0I · 1I) R
+sat {NT} {Tok} {R} p = token !>>= λ c → ok (p c)
   where
   okIndex : Maybe R → Index
   okIndex nothing  = _
   okIndex (just _) = _
 
-  ok : (x : Maybe R) → Parser Tok NT (okIndex x) R
+  ok : (x : Maybe R) → Parser NT Tok (okIndex x) R
   ok nothing  = fail
   ok (just x) = return x
 
-sat' : ∀ {Tok NT} → (Tok → Bool) → Parser Tok NT _ ⊤
+sat' : ∀ {NT Tok} → (Tok → Bool) → Parser NT Tok _ ⊤
 sat' p = sat (boolToMaybe ∘ p)
 
-any : ∀ {Tok NT} → Parser Tok NT _ Tok
+any : ∀ {NT Tok} → Parser NT Tok _ Tok
 any = sat just
 
 ------------------------------------------------------------------------
@@ -314,7 +313,7 @@ module Token (A : DecSetoid) where
   -- Parses a given token (or, really, a given equivalence class of
   -- tokens).
 
-  theToken : ∀ {NT} → Tok → Parser Tok NT _ Tok
+  theToken : ∀ {NT} → Tok → Parser NT Tok _ Tok
   theToken tok = sat p
     where
     p : Tok → Maybe Tok
@@ -324,13 +323,13 @@ module Token (A : DecSetoid) where
 
   -- Parses a sequence of tokens.
 
-  theString : ∀ {NT n} → Vec Tok n → Parser Tok NT _ (Vec Tok n)
+  theString : ∀ {NT n} → Vec Tok n → Parser NT Tok _ (Vec Tok n)
   theString cs = sequence (map₀₁ theToken cs)
 
 ------------------------------------------------------------------------
 -- Character parsers
 
-digit : ∀ {NT} → Parser Char NT _ ℕ
+digit : ∀ {NT} → Parser NT Char _ ℕ
 digit = 0 <$ theToken '0'
       ∣ 1 <$ theToken '1'
       ∣ 2 <$ theToken '2'
@@ -343,7 +342,7 @@ digit = 0 <$ theToken '0'
       ∣ 9 <$ theToken '9'
   where open Token Char.decSetoid
 
-number : ∀ {NT} → Parser Char NT _ ℕ
+number : ∀ {NT} → Parser NT Char _ ℕ
 number = toNum <$> digit +
   where
   toNum = foldr (λ n x → 10 * x + n) 0 ∘ reverse
@@ -351,17 +350,8 @@ number = toNum <$> digit +
 -- whitespace recognises an incomplete but useful list of whitespace
 -- characters.
 
-whitespace : ∀ {NT} → Parser Char NT _ ⊤
+whitespace : ∀ {NT} → Parser NT Char _ ⊤
 whitespace = sat' isSpace
   where
   isSpace = λ c →
     (c == ' ') ∨ (c == '\t') ∨ (c == '\n') ∨ (c == '\r')
-
-------------------------------------------------------------------------
--- An empty grammar
-
-EmptyNT : NonTerminalType
-EmptyNT _ _ = ⊥₁
-
-empty-grammar : ∀ {Tok} -> Grammar Tok EmptyNT
-empty-grammar ()
