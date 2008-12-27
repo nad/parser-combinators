@@ -69,13 +69,13 @@ emptyGrammar ()
 ⟦_⟧ : ∀ {Tok NT₁ NT₂ e c R} →
       Parser NT₁ Tok (e ◇ c)            R → Grammar NT₁ Tok →
       Parser NT₂ Tok (e ◇ drop-steps c) R
-⟦ return x   ⟧ g ~ return x
-⟦ fail       ⟧ g ~ fail
-⟦ token      ⟧ g ~ token
-⟦ p₁ ∣ p₂    ⟧ g ~ ⟦ p₁ ⟧ g ∣ ⟦ p₂ ⟧ g
-⟦ p₁ ?>>= p₂ ⟧ g ~ ⟦ p₁ ⟧ g ?>>= λ x → ⟦ p₂ x ⟧ g
+⟦ return x   ⟧ g = return x
+⟦ fail       ⟧ g = fail
+⟦ token      ⟧ g = token
+⟦ p₁ ∣ p₂    ⟧ g = ⟦ p₁ ⟧ g ∣ ⟦ p₂ ⟧ g
+⟦ p₁ ?>>= p₂ ⟧ g = ⟦ p₁ ⟧ g ?>>= λ x → ⟦ p₂ x ⟧ g
 ⟦ p₁ !>>= p₂ ⟧ g ~ ⟦ p₁ ⟧ g !>>= λ x → ⟦ p₂ x ⟧ g
-⟦ ! nt       ⟧ g ~ ⟦ g nt ⟧ g
+⟦ ! nt       ⟧ g = ⟦ g nt ⟧ g
 
 -- A map function which can be useful when combining grammars.
 
