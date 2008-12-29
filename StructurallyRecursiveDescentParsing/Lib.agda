@@ -75,25 +75,25 @@ _<$>_ : ∀ {NT Tok i R₁ R₂} →
         (R₁ → R₂) →
         Parser NT Tok i R₁ →
         Parser NT Tok _ R₂
-f <$> x = return f ⊛ x
+f <$> p = return f ⊛ p
 
 _<⊛_ : ∀ {NT Tok i₁ i₂ R₁ R₂} →
        Parser NT Tok i₁ R₁ →
        Parser NT Tok i₂ R₂ →
        Parser NT Tok _ R₁
-x <⊛ y = const <$> x ⊛ y
+p₁ <⊛ p₂ = const <$> p₁ ⊛ p₂
 
 _⊛>_ : ∀ {NT Tok i₁ i₂ R₁ R₂} →
        Parser NT Tok i₁ R₁ →
        Parser NT Tok i₂ R₂ →
        Parser NT Tok _ R₂
-x ⊛> y = flip const <$> x ⊛ y
+p₁ ⊛> p₂ = flip const <$> p₁ ⊛ p₂
 
 _<$_ : ∀ {NT Tok i R₁ R₂} →
        R₁ →
        Parser NT Tok i R₂ →
        Parser NT Tok _ R₁
-x <$ y = const x <$> y
+x <$ p = const x <$> p
 
 _⊗_ : ∀ {NT Tok i₁ i₂ R₁ R₂} →
       Parser NT Tok i₁ R₁ → Parser NT Tok i₂ R₂ →
