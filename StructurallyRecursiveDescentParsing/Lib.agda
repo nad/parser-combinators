@@ -14,6 +14,7 @@ open import Data.Nat hiding (_≟_)
 open import Data.Vec  using (Vec;  []; _∷_)
 open import Data.Vec1 using (Vec₁; []; _∷_; map₀₁)
 open import Data.List using (List; []; _∷_; foldr; foldl; reverse)
+open import Data.Fin using (#_)
 open import Data.Product
 open import Data.Bool
 open import Data.Function
@@ -23,8 +24,7 @@ import Data.Char as Char
 open Char using (Char; _==_)
 open import Algebra
 open import Data.Bool.Properties
-private
-  module BCS = CommutativeSemiring Bool-commutativeSemiring-∨-∧
+open Bool-ringSolver hiding (op)
 open import Relation.Nullary
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
@@ -56,8 +56,14 @@ infixl 50 _⊛_ _⊛!_ _<⊛_ _⊛>_ _<$>_ _<$_ _⊗_ _⊗!_
 _⊛_ : ∀ {NT Tok i₁ i₂ R₁ R₂} →
       Parser NT Tok i₁ (R₁ → R₂) →
       Parser NT Tok i₂ R₁ →
-      Parser NT Tok _  R₂
-p₁ ⊛ p₂ = p₁ >>= λ f → p₂ >>= λ x → return (f x)
+      Parser NT Tok (empty i₁ ∧ empty i₂ ◇ _) R₂
+_⊛_ {i₁ = i₁} {i₂} p₁ p₂ =
+  cast lem ≡-refl
+       (p₁ >>= λ f → p₂ >>= λ x → return (f x))
+  where
+  lem = prove (empty i₁ ∷ empty i₂ ∷ [])
+              (I₁ :* (I₂ :* con true)) (I₁ :* I₂) ≡-refl
+    where I₁ = var (# 0); I₂ = var (# 1)
 
 -- A variant: If the second parser does not accept the empty string,
 -- then neither does the combination. (This is immediate for the first
@@ -68,8 +74,10 @@ _⊛!_ : ∀ {NT Tok i₁ c₂ R₁ R₂} →
        Parser NT Tok i₁ (R₁ → R₂) →
        Parser NT Tok (false ◇ c₂) R₁ →
        Parser NT Tok (false ◇ _)  R₂
-_⊛!_ {i₁ = i₁} p₁ p₂ = cast (BCS.*-comm (empty i₁) false) ≡-refl
-                            (p₁ ⊛ p₂)
+_⊛!_ {i₁ = i₁} p₁ p₂ = cast lem ≡-refl (p₁ ⊛ p₂)
+  where
+  lem = prove (empty i₁ ∷ []) (I₁ :* con false) (con false) ≡-refl
+    where I₁ = var (# 0)
 
 _<$>_ : ∀ {NT Tok i R₁ R₂} →
         (R₁ → R₂) →
@@ -143,10 +151,18 @@ mutual
 
 -- p sepBy sep parses one or more ps separated by seps.
 
-_sepBy_ : ∀ {NT Tok R R′ i c} →
+_sepBy⟨_⟩_ : ∀ {NT Tok i i′ R R′} →
+             Parser NT Tok i R →
+             empty i′ ∧ empty i ≡ false →
+             Parser NT Tok i′ R′ →
+             Parser NT Tok _ (List R)
+p sepBy⟨ nonEmpty ⟩ sep = _∷_ <$> p ⊛ cast₁ (sep ⊛> p) ⋆
+  where cast₁ = cast nonEmpty ≡-refl
+
+_sepBy_ : ∀ {NT Tok i c R R′} →
           Parser NT Tok i R → Parser NT Tok (false ◇ c) R′ →
           Parser NT Tok _ (List R)
-p sepBy sep = _∷_ <$> p ⊛ (sep ⊛> p) ⋆
+p sepBy sep = p sepBy⟨ ≡-refl ⟩ sep
 
 -- Note that the index of atLeast is only partly inferred; the
 -- recursive structure of atLeast-index is given manually.
