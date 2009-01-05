@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- A function used by several parser variants
+-- A function used by several backends
 ------------------------------------------------------------------------
 
 module StructurallyRecursiveDescentParsing.Utilities where

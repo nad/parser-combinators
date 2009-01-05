@@ -1,6 +1,5 @@
 ------------------------------------------------------------------------
--- Imports all modules, so that it is easy to check if everything type
--- checks
+-- A total parser combinator library
 ------------------------------------------------------------------------
 
 module Everything where
@@ -28,6 +27,10 @@ import StructurallyRecursiveDescentParsing.Simple
 
 import StructurallyRecursiveDescentParsing.Lib
 
+-- A module which reexports the modules above.
+
+import StructurallyRecursiveDescentParsing
+
 -- Some small examples.
 
 import StructurallyRecursiveDescentParsing.Examples
@@ -43,7 +46,6 @@ import StructurallyRecursiveDescentParsing.Mixfix.Expr
 import StructurallyRecursiveDescentParsing.Mixfix
 import StructurallyRecursiveDescentParsing.Mixfix.Example
 
--- Less interesting modules.
+-- Helper function(s).
 
-import StructurallyRecursiveDescentParsing
 import StructurallyRecursiveDescentParsing.Utilities
