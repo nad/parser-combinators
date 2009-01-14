@@ -38,7 +38,7 @@ module Ex₁ where
             ∣ theToken '0'
 
   ex₁ : "0+0" ∈? ! e / grammar ≡ [ '0' ]
-  ex₁ = ≡-refl
+  ex₁ = refl
 
 module Ex₂ where
 
@@ -57,10 +57,10 @@ module Ex₂ where
                  ∣ theToken '(' ⊛> ! expr <⊛ theToken ')'
 
   ex₁ : "(0*)" ∈? ! expr / grammar ≡ []
-  ex₁ = ≡-refl
+  ex₁ = refl
 
   ex₂ : "0*(0+0)" ∈? ! expr / grammar ≡ [ '0' ]
-  ex₂ = ≡-refl
+  ex₂ = refl
 
 {-
 module Ex₃ where
@@ -106,10 +106,10 @@ module Ex₄ where
   grammar (bcs c (suc n)) = theToken c ⊛> ! (bcs c n)
 
   ex₁ : "aaabbbccc" ∈? ! top / grammar ≡ [ 3 ]
-  ex₁ = ≡-refl
+  ex₁ = refl
 
   ex₂ : "aaabbccc" ∈? ! top / grammar ≡ []
-  ex₂ = ≡-refl
+  ex₂ = refl
 
 module Ex₄′ where
 
@@ -123,10 +123,10 @@ module Ex₄′ where
            return n
 
   ex₁ : "aaabbbccc" ∈? aⁿbⁿcⁿ ≡ [ 3 ]
-  ex₁ = ≡-refl
+  ex₁ = refl
 
   ex₂ : "aaabbccc" ∈? aⁿbⁿcⁿ ≡ []
-  ex₂ = ≡-refl
+  ex₂ = refl
 
 module Ex₅ where
 
@@ -141,7 +141,7 @@ module Ex₅ where
   grammar as = length <$> ! a ⋆
 
   ex₁ : "aaaaa" ∈? ! as / grammar ≡ [ 5 ]
-  ex₁ = ≡-refl
+  ex₁ = refl
 
 module Ex₆ where
 
@@ -158,13 +158,13 @@ module Ex₆ where
   grammar (expr a) = chain≥ 0 a number (! op)
 
   ex₁ : "12345" ∈? number / grammar ≡ [ 12345 ]
-  ex₁ = ≡-refl
+  ex₁ = refl
 
   ex₂ : "1+5*2∸3" ∈? ! (expr left) / grammar ≡ [ 9 ]
-  ex₂ = ≡-refl
+  ex₂ = refl
 
   ex₃ : "1+5*2∸3" ∈? ! (expr right) / grammar ≡ [ 1 ]
-  ex₃ = ≡-refl
+  ex₃ = refl
 
 module Ex₇ where
 
@@ -187,10 +187,10 @@ module Ex₇ where
   grammar mulOp  = _*_ <$ theToken '*'
 
   ex₁ : "1+5*2∸3" ∈? ! expr / grammar ≡ [ 8 ]
-  ex₁ = ≡-refl
+  ex₁ = refl
 
   ex₂ : "1+5*(2∸3)" ∈? ! expr / grammar ≡ [ 1 ]
-  ex₂ = ≡-refl
+  ex₂ = refl
 
 module Ex₈ where
 
@@ -207,7 +207,7 @@ module Ex₈ where
   grammar exprs    = ! expr sepBy theToken ','
 
   ex₁ : "1,2∸1" ∈? ! exprs / grammar ≡ [ 1 ∷ 1 ∷ [] ]
-  ex₁ = ≡-refl
+  ex₁ = refl
 
 module Ex₈′ where
 
@@ -222,7 +222,7 @@ module Ex₈′ where
   grammar exprs = expr sepBy theToken ','
 
   ex₁ : "1,2∸1" ∈? ! exprs / grammar ≡ [ 1 ∷ 1 ∷ [] ]
-  ex₁ = ≡-refl
+  ex₁ = refl
 
 module Ex₈″ where
 
@@ -231,7 +231,7 @@ module Ex₈″ where
   expr = ⟦ ! Ex₇.expr ⟧ Ex₇.grammar
 
   ex₁ : "1,2∸1" ∈? (expr sepBy theToken ',') ≡ [ 1 ∷ 1 ∷ [] ]
-  ex₁ = ≡-refl
+  ex₁ = refl
 
 module Ex₉ where
 
@@ -267,4 +267,4 @@ module Ex₉ where
   grammar as       = ! (lib (! a ★))
 
   ex₁ : "aa" ∈? ! as / grammar ≡ [ 'a' ∷ 'a' ∷ [] ]
-  ex₁ = ≡-refl
+  ex₁ = refl

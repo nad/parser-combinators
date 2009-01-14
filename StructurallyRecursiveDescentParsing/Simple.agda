@@ -29,7 +29,7 @@ private
   P Tok = IStateT (BoundedVec Tok) L.List
 
   open module M₁ {Tok} =
-    RawIMonadPlus (StateTIMonadPlus (BoundedVec Tok) L.ListMonadPlus)
+    RawIMonadPlus (StateTIMonadPlus (BoundedVec Tok) L.monadPlus)
     using ()
     renaming ( return to return′
              ; _>>=_  to _>>=′_
@@ -39,7 +39,7 @@ private
              )
 
   open module M₂ {Tok} =
-    RawIMonadState (StateTIMonadState (BoundedVec Tok) L.ListMonad)
+    RawIMonadState (StateTIMonadState (BoundedVec Tok) L.monad)
     using ()
     renaming ( get    to get′
              ; put    to put′
@@ -95,7 +95,7 @@ open Dummy public
 parse : ∀ {NT Tok i R} →
         Grammar NT Tok → Parser NT Tok i R →
         L.List Tok → L.List (R × L.List Tok)
-parse g p s = L.map (map-× id toList) (parse↓ g _ p (fromList s))
+parse g p s = L.map (map id toList) (parse↓ g _ p (fromList s))
 
 -- A variant which only returns parses which leave no remaining input.
 

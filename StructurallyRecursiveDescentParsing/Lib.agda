@@ -15,16 +15,16 @@ open import Data.Vec  using (Vec;  []; _∷_)
 open import Data.Vec1 using (Vec₁; []; _∷_; map₀₁)
 open import Data.List using (List; []; _∷_; foldr; foldl; reverse)
 open import Data.Product
-open import Data.Bool
+open import Data.Bool using (Bool; true; false; _∧_; _∨_)
 open import Data.Function
 open import Data.Maybe
-open import Data.Unit
+open import Data.Unit using (⊤)
 import Data.Char as Char
 open Char using (Char; _==_)
 open import Algebra
-open import Data.Bool.Properties
+import Data.Bool.Properties as Bool
 private
-  module BCS = CommutativeSemiring Bool-commutativeSemiring-∨-∧
+  module BCS = CommutativeSemiring Bool.commutativeSemiring-∨-∧
 open import Relation.Nullary
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
@@ -44,7 +44,7 @@ _>>=_ {e₁ = false} = _!>>=_
 cast : ∀ {NT Tok e₁ e₂ c₁ c₂ R} →
        e₁ ≡ e₂ → c₁ ≡ c₂ →
        Parser NT Tok (e₁ ◇ c₁) R → Parser NT Tok (e₂ ◇ c₂) R
-cast ≡-refl ≡-refl p = p
+cast refl refl p = p
 
 ------------------------------------------------------------------------
 -- Applicative functor parsers
@@ -68,7 +68,7 @@ _⊛!_ : ∀ {NT Tok i₁ c₂ R₁ R₂} →
        Parser NT Tok i₁ (R₁ → R₂) →
        Parser NT Tok (false ◇ c₂) R₁ →
        Parser NT Tok (false ◇ _)  R₂
-_⊛!_ {i₁ = i₁} p₁ p₂ = cast (BCS.*-comm (empty i₁) false) ≡-refl
+_⊛!_ {i₁ = i₁} p₁ p₂ = cast (BCS.*-comm (empty i₁) false) refl
                             (p₁ ⊛ p₂)
 
 _<$>_ : ∀ {NT Tok i R₁ R₂} →
@@ -150,7 +150,7 @@ _sepBy⟨_⟩_ : ∀ {NT Tok i i′ R R′} →
              Parser NT Tok i′ R′ →
              Parser NT Tok _ (List R)
 p sepBy⟨ nonEmpty ⟩ sep = _∷_ <$> p ⊛ cast₁ (sep ⊛> p) ⋆
-  where cast₁ = cast nonEmpty ≡-refl
+  where cast₁ = cast nonEmpty refl
 
 -- _sepBy_ could be implemented by using _sepBy⟨_⟩_, but the following
 -- definition is handled more efficiently by the current version of
@@ -238,8 +238,9 @@ shiftʳ x₁ ((x₂ , x₃) ∷ xs₄) = ((x₁ , x₂) ∷ proj₁ xs₃x₄ , 
 -- Post-processing for the chain≥ parser.
 
 chain≥-combine : ∀ {R} → Assoc → R → List ((R → R → R) × R) → R
-chain≥-combine right x ys = uncurry (flip (foldr appʳ)) (shiftʳ x ys)
 chain≥-combine left  x ys = foldl appˡ x ys
+chain≥-combine right x ys with shiftʳ x ys
+... | (xs , y) = foldr appʳ y xs
 
 -- Chains at least n occurrences of op, in an a-associative
 -- manner. The ops are surrounded by ps.
@@ -259,13 +260,13 @@ private
                  where
 
   ex : shiftʳ x ((a , y) ∷ (b , z) ∷ []) ≡ ((x , a) ∷ (y , b) ∷ [] , z)
-  ex = ≡-refl
+  ex = refl
 
   exʳ : chain≥-combine right x ((_+_ , y) ∷ (_*_ , z) ∷ []) ≡ x + (y * z)
-  exʳ = ≡-refl
+  exʳ = refl
 
   exˡ : chain≥-combine left  x ((_+_ , y) ∷ (_*_ , z) ∷ []) ≡ (x + y) * z
-  exˡ = ≡-refl
+  exˡ = refl
 
 ------------------------------------------------------------------------
 -- N-ary variants of _∣_

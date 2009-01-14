@@ -11,10 +11,12 @@
 -- (assuming that the nonterminal equality is strong enough).
 
 open import Relation.Binary
-open import Relation.Binary.PropositionalEquality
-open import Relation.Binary.PropositionalEquality1
+import Relation.Binary.PropositionalEquality  as PropEq
+import Relation.Binary.PropositionalEquality1 as PropEq1
+open PropEq  using (_≡_)
+open PropEq1 using (_≡₁_)
 open import StructurallyRecursiveDescentParsing.Index
-open import Data.Product
+open import Data.Product as Prod
 
 module StructurallyRecursiveDescentParsing.Memoised
 
@@ -53,12 +55,12 @@ open import Data.Bool renaming (true to ⊤; false to ⊥)
 import Data.Nat as Nat
 open Nat using (ℕ; zero; suc; pred; z≤n; s≤s)
 import Data.Nat.Properties as NatProp
-open import Data.Function hiding (_∘′_)
+open import Data.Function using (_∘_; _on₁_)
 import Data.Vec  as Vec;  open Vec  using (Vec;  []; _∷_)
 import Data.List as List; open List using (List; []; _∷_)
 open import Data.Sum
 open import Data.Maybe
-open import Relation.Binary.OrderMorphism
+open import Relation.Binary.OrderMorphism hiding (_∘_)
 open _⇒-Poset_
 import Relation.Binary.On as On
 import Relation.Binary.Props.StrictTotalOrder as STOProps
@@ -67,6 +69,7 @@ open STOProps NatProp.strictTotalOrder
 import StructurallyRecursiveDescentParsing.Memoised.Monad as Monad
 open import StructurallyRecursiveDescentParsing.Type
 open import StructurallyRecursiveDescentParsing.Utilities
+  renaming (_∘_ to _∘′_)
 
 ------------------------------------------------------------------------
 -- Some monotone functions
@@ -79,10 +82,10 @@ suc-mono (inj₁ i<j)    = inj₁ (s≤s i<j)
 suc-mono (inj₂ ≡-refl) = inj₂ ≡-refl
 
 pred-mono : _≤_ =[ pred ]⇒ _≤_
-pred-mono (inj₁ (s≤s (z≤n {zero})))  = inj₂ ≡-refl
+pred-mono (inj₁ (s≤s (z≤n {zero})))  = inj₂ PropEq.refl
 pred-mono (inj₁ (s≤s (z≤n {suc j}))) = inj₁ (s≤s z≤n)
 pred-mono (inj₁ (s≤s (s≤s i<j)))     = inj₁ (s≤s i<j)
-pred-mono (inj₂ ≡-refl)              = inj₂ ≡-refl
+pred-mono (inj₂ PropEq.refl)         = inj₂ PropEq.refl
 
 sucM : MonoFun
 sucM = record
@@ -97,7 +100,7 @@ predM = record
   }
 
 maybePredM : Empty → MonoFun
-maybePredM e = if e then idM else predM
+maybePredM e = if e then id else predM
 
 lemma : ∀ e pos → fun (maybePredM e) pos ≤ pos
 lemma ⊤ pos       = refl
@@ -124,11 +127,11 @@ ordered = On.isStrictTotalOrder shuffle ntOrdered
 
 funsEqual : _≈K_ =[ proj₁ ]⇒ _≡_
 funsEqual {(._ , _ , key _)} {(._ , _ , key _)} eq =
-  ≡-cong (maybePredM ∘ empty ∘ proj₁) (indicesEqual eq)
+  PropEq.cong (maybePredM ∘ empty ∘ proj₁) (indicesEqual eq)
 
 resultsEqual : _≈K_ =[ (λ rfk → proj₁ (proj₂ rfk)) ]⇒ _≡_
 resultsEqual {(._ , _ , key _)} {(._ , _ , key _)} eq =
-  ≡-cong proj₂ (indicesEqual eq)
+  PropEq.cong proj₂ (indicesEqual eq)
 
 open Monad
        (StrictTotalOrder.isStrictTotalOrder NatProp.strictTotalOrder)
@@ -146,7 +149,7 @@ open PM
            )
 
 cast : ∀ {bnd f A₁ A₂} → A₁ ≡₁ A₂ → P bnd f A₁ → P bnd f A₂
-cast ≡₁-refl p = p
+cast refl p = p
 
 ------------------------------------------------------------------------
 -- Run function for the parsers
@@ -210,7 +213,7 @@ private
       where
       k     = key (notTooLarge x)
       cast₁ = cast (resultTypeCorrect x)
-      cast₂ = cast (≡₁-sym (resultTypeCorrect x))
+      cast₂ = cast (sym (resultTypeCorrect x))
 
 -- Exported run function.
 
@@ -218,7 +221,7 @@ parse : ∀ {i R} →
         Grammar LargeNT Tok → Parser LargeNT Tok i R →
         List Tok → List (R × List Tok)
 parse g p toks =
-  List.map (map-× id (λ xs → Vec.toList (string xs))) $
+  List.map (Prod.map id (λ xs → Vec.toList (string xs))) $
   run (Vec.fromList toks) (Dummy.parse g _ p)
 
 -- A variant which only returns parses which leave no remaining input.

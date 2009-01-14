@@ -102,4 +102,4 @@ module Example where
 
   ex₁ : parseComplete emptyGrammar pbm (String.toList (show image)) ≡
         List.[_] image
-  ex₁ = ≡-refl
+  ex₁ = refl

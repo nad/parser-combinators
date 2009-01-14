@@ -32,8 +32,8 @@ data Operator (fix : Fixity) (arity : ℕ) : Set where
 
 hasFixity : ∀ fix → ∃₂ Operator → Maybe (∃ (Operator fix))
 hasFixity fix (fix' , op) with fix ≟ fix'
-hasFixity fix (.fix , op) | yes ≡-refl = just op
-hasFixity fix (fix' , op) | _          = nothing
+hasFixity fix (.fix , op) | yes refl = just op
+hasFixity fix (fix' , op) | _        = nothing
 
 -- Precedence graphs are represented by their unfoldings as forests
 -- (one tree for every node in the graph). This does not take into

@@ -4,7 +4,8 @@
 
 open import Relation.Binary
 open import Relation.Binary.OrderMorphism
-open import Relation.Binary.PropositionalEquality
+import Relation.Binary.PropositionalEquality as PropEq
+open PropEq using (_≡_)
 import Relation.Binary.Props.StrictTotalOrder as STOProps
 open import Data.Product
 
@@ -52,9 +53,9 @@ import Data.AVL.IndexedMap as Map renaming (Map to MemoTable)
 open import Category.Monad
 open import Category.Monad.State
 import Data.List as List; open List using (List)
-open import Data.Function
-open import Data.Maybe
-open import Data.Unit
+open import Data.Function using (_⟨_⟩_; _on₁_)
+open import Data.Maybe using (Maybe; nothing; just)
+open import Data.Unit using (⊤)
 open import Relation.Binary.Product.StrictLex
 open import Relation.Binary.Product.Pointwise
 import Relation.Binary.On as On
@@ -120,7 +121,7 @@ private
 
   -- The list monad.
 
-  module List = RawMonadPlus List.ListMonadPlus
+  module List = RawMonadPlus List.monadPlus
 
   -- The inner monad (memo table plus list).
 
@@ -204,11 +205,12 @@ private
 
     -- Other monadic operations.
 
-    return : ∀ {bnd A} → A → P bnd idM A
-    return a = pm λ xs → IM.return (a , string xs isBounded∶ refl)
+    return : ∀ {bnd A} → A → P bnd id A
+    return a =
+      pm λ xs → IM.return (a , string xs isBounded∶ refl)
 
     _>>=_ : ∀ {bnd A B f g} →
-            P bnd f A → (A → P (fun f bnd) g B) → P bnd (g ∘M f) B
+            P bnd f A → (A → P (fun f bnd) g B) → P bnd (g ∘ f) B
     _>>=_ {f = f} {g} (pm m₁) m₂ = pm λ xs →
       m₁ xs ⟨ IM._>>=_ ⟩ λ ays →
       let a = proj₁ ays; ys = proj₂ ays in
@@ -226,11 +228,11 @@ private
         (a , string xs isBounded∶ lemma g le (bounded xs))
 
     _>>_ : ∀ {bnd A B f g} →
-           P bnd f A → P (fun f bnd) g B → P bnd (g ∘M f) B
+           P bnd f A → P (fun f bnd) g B → P bnd (g ∘ f) B
     m₁ >> m₂ = m₁ >>= λ _ → m₂
 
     _=<<_ : ∀ {bnd A B f g} →
-            (A → P (fun f bnd) g B) → P bnd f A → P bnd (g ∘M f) B
+            (A → P (fun f bnd) g B) → P bnd f A → P bnd (g ∘ f) B
     m₂ =<< m₁ = m₁ >>= m₂
 
     ∅ : ∀ {bnd f A} → P bnd f A
@@ -239,10 +241,10 @@ private
     _∣_ : ∀ {bnd f A} → P bnd f A → P bnd f A → P bnd f A
     pm m₁ ∣ pm m₂ = pm λ xs → IM._∣_ (m₁ xs) (m₂ xs)
 
-    get : ∀ {bnd} → P bnd idM (Input≤ bnd)
+    get : ∀ {bnd} → P bnd id (Input≤ bnd)
     get = pm λ xs → IM.return (xs , string xs isBounded∶ refl)
 
-    put : ∀ {bnd bnd′} → Input≤ bnd′ → P bnd (constM bnd′) ⊤
+    put : ∀ {bnd bnd′} → Input≤ bnd′ → P bnd (const bnd′) ⊤
     put xs = pm λ _ → IM.return (_ , xs)
 
     -- A generalised variant of modify.
@@ -262,7 +264,7 @@ private
     adjustBound hyp (pm m) =
       pm λ xs →
         let le = λ (ys : _) → trans (bounded ys) (hyp (position xs)) in
-        map-× id (λ ys → string ys isBounded∶ le ys)
+        map (λ x → x) (λ ys → string ys isBounded∶ le ys)
           ⟨ IM._<$>_ ⟩
         m xs
 
@@ -294,7 +296,8 @@ isOrdered = On.isStrictTotalOrder shuffle
 indicesEqual′ : Eq =[ proj₁ ]⇒ _≡_
 indicesEqual′ {((_ , _ , _) , key _ ._)}
               {((_ , _ , _) , key _ ._)} (eq₁ , eq₂) =
-  ≡-cong₂ _,_ eq₁ (≡-cong₂ _,_ (funsEqual eq₂) (resultsEqual eq₂))
+  PropEq.cong₂ _,_ eq₁
+    (PropEq.cong₂ _,_ (funsEqual eq₂) (resultsEqual eq₂))
 
 open Map isOrdered (λ {k₁} {k₂} → indicesEqual′ {k₁} {k₂}) Value
 
