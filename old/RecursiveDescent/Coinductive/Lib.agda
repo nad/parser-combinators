@@ -9,14 +9,14 @@ open import RecursiveDescent.Coinductive
 import RecursiveDescent.Coinductive.Internal as Internal
 open import RecursiveDescent.Index
 
-open import Data.Bool
-open import Data.Nat hiding (_≟_)
+open import Data.Bool hiding (_≟_)
+open import Data.Nat  hiding (_≟_)
 open import Data.Product.Record using (_,_)
 open import Data.Product renaming (_,_ to pair)
 open import Data.List hiding (any)
 open import Data.Function
 open import Data.Maybe
-open import Data.Unit
+open import Data.Unit hiding (_≟_)
 import Data.Char as C
 open import Relation.Nullary
 open import Relation.Binary

@@ -24,10 +24,10 @@ import Data.List as L ; open L  using (List)
 open import Relation.Nullary
 open import Data.Product.Record
 open import Data.Product renaming (_,_ to pair)
-open import Data.Bool
+open import Data.Bool hiding (_≟_)
 open import Data.Function
 open import Data.Maybe
-open import Data.Unit
+open import Data.Unit hiding (_≟_)
 
 ------------------------------------------------------------------------
 -- Applicative functor parsers

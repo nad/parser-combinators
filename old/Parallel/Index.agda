@@ -8,7 +8,7 @@ open import Data.Product.Record
 import Data.Product as Prod; open Prod using () renaming (_,_ to pair)
 
 open import Data.Bool using (Bool; true; false; _∨_; _∧_; if_then_else_)
-open import Data.Bool.Properties
+open import Data.Bool.Properties as Bool
 
 open import Data.Nat using (ℕ; zero; suc; _⊔_)
 open import Data.Nat.Properties
@@ -20,10 +20,11 @@ private
   module NR = CommutativeSemiringWithoutOne
                 ⊔-⊓-0-commutativeSemiringWithoutOne
   module NL = DL distributiveLattice
-  module BR = CommutativeSemiring Bool-commutativeSemiring-∨-∧
-  module BA = BAlg Bool-booleanAlgebra
+  module BR = CommutativeSemiring Bool.commutativeSemiring-∨-∧
+  module BA = BAlg Bool.booleanAlgebra
 
-open import Relation.Binary.PropositionalEquality
+import Relation.Binary.PropositionalEquality as PropEq
+open PropEq hiding (setoid)
 open ≡-Reasoning
 open import Data.Function
 open import Relation.Nullary
@@ -49,7 +50,7 @@ Distance = ℕ
 Index : Set
 Index = Empty × Distance
 
-import Algebra.FunctionProperties as P; open P (≡-setoid Index)
+import Algebra.FunctionProperties as P; open P (PropEq.setoid Index)
 
 ------------------------------------------------------------------------
 -- The basic operations on indices
@@ -85,64 +86,63 @@ private
 
   ∣-assoc : Associative _∣I_
   ∣-assoc i₁ i₂ i₃ =
-    ≡-cong₂ _,_ (BR.+-assoc (proj₁ i₁) (proj₁ i₂) (proj₁ i₃))
-                (NR.+-assoc (proj₂ i₁) (proj₂ i₂) (proj₂ i₃))
+    cong₂ _,_ (BR.+-assoc (proj₁ i₁) (proj₁ i₂) (proj₁ i₃))
+              (NR.+-assoc (proj₂ i₁) (proj₂ i₂) (proj₂ i₃))
 
   ∣-comm : Commutative _∣I_
   ∣-comm i₁ i₂ =
-    ≡-cong₂ _,_ (BR.+-comm (proj₁ i₁) (proj₁ i₂))
-                (NR.+-comm (proj₂ i₁) (proj₂ i₂))
+    cong₂ _,_ (BR.+-comm (proj₁ i₁) (proj₁ i₂))
+              (NR.+-comm (proj₂ i₁) (proj₂ i₂))
 
   ∣-identity : Identity 0I _∣I_
   ∣-identity = pair
-    (\i -> ≡-cong₂ _,_ (Prod.proj₁ BR.+-identity (proj₁ i))
-                       (Prod.proj₁ NR.+-identity (proj₂ i)))
-    (\i -> ≡-cong₂ _,_ (Prod.proj₂ BR.+-identity (proj₁ i))
-                       (Prod.proj₂ NR.+-identity (proj₂ i)))
+    (\i -> cong₂ _,_ (Prod.proj₁ BR.+-identity (proj₁ i))
+                     (Prod.proj₁ NR.+-identity (proj₂ i)))
+    (\i -> cong₂ _,_ (Prod.proj₂ BR.+-identity (proj₁ i))
+                     (Prod.proj₂ NR.+-identity (proj₂ i)))
 
   ·-assoc : Associative _·I_
   ·-assoc i₁ i₂ i₃ with proj₁ i₁ | proj₁ i₂
-  ·-assoc i₁ i₂ i₃ | false | e₂    = ≡-refl
-  ·-assoc i₁ i₂ i₃ | true  | false = ≡-refl
+  ·-assoc i₁ i₂ i₃ | false | e₂    = refl
+  ·-assoc i₁ i₂ i₃ | true  | false = refl
   ·-assoc i₁ i₂ i₃ | true  | true  =
-    ≡-cong (_,_ (proj₁ i₃))
-           (NR.+-assoc (proj₂ i₁) (proj₂ i₂) (proj₂ i₃))
+    cong (_,_ (proj₁ i₃)) (NR.+-assoc (proj₂ i₁) (proj₂ i₂) (proj₂ i₃))
 
   ·-identity : Identity 1I _·I_
-  ·-identity = pair (\_ -> ≡-refl) (\x -> helper (proj₁ x) (proj₂ x))
+  ·-identity = pair (\_ -> refl) (\x -> helper (proj₁ x) (proj₂ x))
     where
     helper : forall e d ->
              _≡_ {a = Index} (e ∧ true , (if e then d ⊔ zero else d))
                              (e        , d)
-    helper false d = ≡-refl
-    helper true  d = ≡-cong (_,_ true) (Prod.proj₂ NR.+-identity d)
+    helper false d = refl
+    helper true  d = cong (_,_ true) (Prod.proj₂ NR.+-identity d)
 
   ·-∣-distrib : _·I_ DistributesOver _∣I_
   ·-∣-distrib = pair
     (\i₁ i₂ i₃ ->
-        ≡-cong₂ _,_
-                (Prod.proj₁ BR.distrib (proj₁ i₁) (proj₁ i₂) (proj₁ i₃))
-                (distribˡ₂ (proj₂ i₁) (proj₂ i₂) (proj₂ i₃) (proj₁ i₁)))
+        cong₂ _,_
+              (Prod.proj₁ BR.distrib (proj₁ i₁) (proj₁ i₂) (proj₁ i₃))
+              (distribˡ₂ (proj₂ i₁) (proj₂ i₂) (proj₂ i₃) (proj₁ i₁)))
     (\i₁ i₂ i₃ ->
-        ≡-cong₂ _,_
-                (Prod.proj₂ BR.distrib (proj₁ i₁) (proj₁ i₂) (proj₁ i₃))
-                (distribʳ₂ (proj₂ i₁) (proj₂ i₂) (proj₂ i₃)
-                                      (proj₁ i₂) (proj₁ i₃)))
+        cong₂ _,_
+              (Prod.proj₂ BR.distrib (proj₁ i₁) (proj₁ i₂) (proj₁ i₃))
+              (distribʳ₂ (proj₂ i₁) (proj₂ i₂) (proj₂ i₃)
+                                    (proj₁ i₂) (proj₁ i₃)))
     where
     lemma : forall d₁ d₂ d₃ -> d₁ ⊔ (d₂ ⊔ d₃) ≡ d₁ ⊔ d₂ ⊔ (d₁ ⊔ d₃)
     lemma d₁ d₂ d₃ = begin
-      d₁       ⊔ (d₂ ⊔ d₃)   ≡⟨ ≡-sym (NL.∧-idempotent d₁)
+      d₁       ⊔ (d₂ ⊔ d₃)   ≡⟨ sym (NL.∧-idempotent d₁)
                                   ⟨ NR.+-pres-≈ ⟩
                                 byDef {x = d₂ ⊔ d₃} ⟩
       d₁ ⊔  d₁ ⊔ (d₂ ⊔ d₃)   ≡⟨ NR.+-assoc d₁ d₁ (d₂ ⊔ d₃) ⟩
       d₁ ⊔ (d₁ ⊔ (d₂ ⊔ d₃))  ≡⟨ byDef {x = d₁} ⟨ NR.+-pres-≈ ⟩
-                                ≡-sym (NR.+-assoc d₁ d₂ d₃) ⟩
+                                sym (NR.+-assoc d₁ d₂ d₃) ⟩
       d₁ ⊔ (d₁ ⊔  d₂ ⊔ d₃)   ≡⟨ byDef {x = d₁} ⟨ NR.+-pres-≈ ⟩
                                   (NR.+-comm d₁ d₂ ⟨ NR.+-pres-≈ ⟩
                                    byDef {x = d₃}) ⟩
       d₁ ⊔ (d₂ ⊔  d₁ ⊔ d₃)   ≡⟨ byDef {x = d₁} ⟨ NR.+-pres-≈ ⟩
                                 NR.+-assoc d₂ d₁ d₃ ⟩
-      d₁ ⊔ (d₂ ⊔ (d₁ ⊔ d₃))  ≡⟨ ≡-sym $ NR.+-assoc d₁ d₂ (d₁ ⊔ d₃) ⟩
+      d₁ ⊔ (d₂ ⊔ (d₁ ⊔ d₃))  ≡⟨ sym $ NR.+-assoc d₁ d₂ (d₁ ⊔ d₃) ⟩
       d₁ ⊔ d₂  ⊔ (d₁ ⊔ d₃)   ∎
 
     distribˡ₂ : forall d₁ d₂ d₃ e₁ ->
@@ -150,7 +150,7 @@ private
                 (if e₁ then d₁ ⊔ d₂        else d₁) ⊔
                 (if e₁ then d₁ ⊔ d₃        else d₁)
     distribˡ₂ d₁ d₂ d₃ true  = lemma d₁ d₂ d₃
-    distribˡ₂ d₁ d₂ d₃ false = ≡-sym (NL.∧-idempotent d₁)
+    distribˡ₂ d₁ d₂ d₃ false = sym (NL.∧-idempotent d₁)
 
     distribʳ₂ : forall d₁ d₂ d₃ e₂ e₃ ->
                 (if e₂ ∨ e₃ then d₂ ⊔ d₃ ⊔ d₁ else d₂ ⊔ d₃)
@@ -167,28 +167,28 @@ private
       d₂ ⊔  d₃ ⊔ d₁   ≡⟨ NR.+-assoc d₂ d₃ d₁ ⟩
       d₂ ⊔ (d₃ ⊔ d₁)  ≡⟨ byDef {x = d₂} ⟨ NR.+-pres-≈ ⟩
                          NR.+-comm d₃ d₁ ⟩
-      d₂ ⊔ (d₁ ⊔ d₃)  ≡⟨ ≡-sym $ NR.+-assoc d₂ d₁ d₃ ⟩
+      d₂ ⊔ (d₁ ⊔ d₃)  ≡⟨ sym $ NR.+-assoc d₂ d₁ d₃ ⟩
       d₂ ⊔  d₁ ⊔ d₃   ∎
     distribʳ₂ d₁ d₂ d₃ false true  = NR.+-assoc d₂ d₃ d₁
-    distribʳ₂ d₁ d₂ d₃ false false = ≡-refl
+    distribʳ₂ d₁ d₂ d₃ false false = refl
 
 ·-idempotent : Idempotent _·I_
-·-idempotent i = ≡-cong₂ _,_ (BA.∧-idempotent (proj₁ i))
-                             (lemma (proj₁ i) (proj₂ i))
+·-idempotent i = cong₂ _,_ (BA.∧-idempotent (proj₁ i))
+                           (lemma (proj₁ i) (proj₂ i))
   where
   lemma : forall b x -> (if b then x ⊔ x else x) ≡ x
   lemma true  x = NL.∧-idempotent x
-  lemma false x = ≡-refl
+  lemma false x = refl
 
 ∣-idempotent : Idempotent _∣I_
-∣-idempotent i = ≡-cong₂ _,_ (BA.∨-idempotent (proj₁ i))
-                             (NL.∧-idempotent (proj₂ i))
+∣-idempotent i = cong₂ _,_ (BA.∨-idempotent (proj₁ i))
+                           (NL.∧-idempotent (proj₂ i))
 
 -- Not quite a semiring, but the proper name is too long...
 
 indexSemiring : SemiringWithoutAnnihilatingZero
 indexSemiring = record
-  { setoid = ≡-setoid Index
+  { setoid = PropEq.setoid Index
   ; _+_    = _∣I_
   ; _*_    = _·I_
   ; 0#     = 0I
@@ -198,7 +198,7 @@ indexSemiring = record
       { isMonoid = record
         { isSemigroup = record
           { assoc    = ∣-assoc
-          ; ∙-pres-≈ = ≡-cong₂ _∣I_
+          ; ∙-pres-≈ = cong₂ _∣I_
           }
         ; identity = ∣-identity
         }
@@ -207,7 +207,7 @@ indexSemiring = record
     ; *-isMonoid = record
       { isSemigroup = record
         { assoc    = ·-assoc
-        ; ∙-pres-≈ = ≡-cong₂ _·I_
+        ; ∙-pres-≈ = cong₂ _·I_
         }
       ; identity = ·-identity
       }
@@ -228,7 +228,7 @@ nearSemiring = record
     { +-isMonoid    = +-isMonoid
     ; *-isSemigroup = *-isSemigroup
     ; distribʳ      = Prod.proj₂ distrib
-    ; zeroˡ         = \_ -> refl
+    ; zeroˡ         = \_ -> PropEq.refl
     }
   }
   where open IndexSemiring
@@ -242,13 +242,13 @@ private
   -- only missing piece is that 0I is not a right zero for ·I:
 
   notRightZero : ¬ RightZero 0I _·I_
-  notRightZero zeroʳ = lemma $ ≡-cong proj₂ $
+  notRightZero zeroʳ = lemma $ cong proj₂ $
     zeroʳ (false , suc zero)
 
   -- It might also be worth noting that ·I is not commutative:
 
   notCommutative : ¬ Commutative _·I_
-  notCommutative comm = lemma $ ≡-cong proj₂ $
+  notCommutative comm = lemma $ cong proj₂ $
     comm (true , suc zero) (false , zero)
 
   -- Note that we don't want these properties to be true. The second

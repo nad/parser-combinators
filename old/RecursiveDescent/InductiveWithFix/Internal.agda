@@ -117,10 +117,10 @@ P : Set -> IFun ℕ
 P tok = IStateT (BoundedVec tok) L.List
 
 PIMonadPlus : (tok : Set) -> RawIMonadPlus (P tok)
-PIMonadPlus tok = StateTIMonadPlus (BoundedVec tok) L.ListMonadPlus
+PIMonadPlus tok = StateTIMonadPlus (BoundedVec tok) L.monadPlus
 
 PIMonadState : (tok : Set) -> RawIMonadState (BoundedVec tok) (P tok)
-PIMonadState tok = StateTIMonadState (BoundedVec tok) L.ListMonad
+PIMonadState tok = StateTIMonadState (BoundedVec tok) L.monad
 
 private
   open module LM {tok} = RawIMonadPlus  (PIMonadPlus  tok)

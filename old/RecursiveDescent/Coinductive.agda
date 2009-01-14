@@ -11,7 +11,7 @@ open P public using (Parser)
 open import Data.List
 open import Data.Bool
 open import Data.Maybe
-open import Data.Product.Record
+open import Data.Product.Record hiding (map)
 import Data.Product as Prod
 open import Data.Function
 import Data.BoundedVec.Inefficient as BVec
@@ -21,7 +21,7 @@ import Data.BoundedVec.Inefficient as BVec
 
 parse : forall {tok i r} ->
         Parser tok i r -> List tok -> List (Prod._×_ r (List tok))
-parse p s = map (Prod.map-× id BVec.toList)
+parse p s = map (Prod.map id BVec.toList)
                 (P.parse _ p (BVec.fromList s))
 
 -- A variant which only returns parses which leave no remaining input.

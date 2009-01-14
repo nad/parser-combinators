@@ -28,11 +28,11 @@ private
   P tok = IStateT (BoundedVec tok) L.List
 
   open module M₁ {tok} =
-    RawIMonadPlus (StateTIMonadPlus (BoundedVec tok) L.ListMonadPlus)
+    RawIMonadPlus (StateTIMonadPlus (BoundedVec tok) L.monadPlus)
     renaming (return to ret)
 
   open module M₂ {tok} =
-    RawIMonadState (StateTIMonadState (BoundedVec tok) L.ListMonad)
+    RawIMonadState (StateTIMonadState (BoundedVec tok) L.monad)
     using (get; put; modify)
 
 ------------------------------------------------------------------------
@@ -84,7 +84,7 @@ private
 parse :  forall {tok nt i r}
       -> Parser tok nt i r -> Grammar tok nt
       -> L.List tok -> L.List (Prod._×_ r (L.List tok))
-parse p g s = L.map (Prod.map-× id toList)
+parse p g s = L.map (Prod.map id toList)
                     (Dummy.parse g _ p (fromList s))
 
 -- A variant which only returns parses which leave no remaining input.

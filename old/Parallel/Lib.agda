@@ -11,8 +11,8 @@ open import Utilities
 open import Parallel
 open import Parallel.Index
 
-open import Data.Bool
-open import Data.Nat hiding (_≟_)
+open import Data.Bool hiding (_≟_)
+open import Data.Nat  hiding (_≟_)
 open import Data.Product.Record using (_,_)
 open import Data.Product renaming (_,_ to pair)
 open import Data.List
@@ -21,7 +21,6 @@ open import Data.Maybe
 import Data.Char as C
 open import Relation.Nullary
 open import Relation.Binary
-open import Relation.Binary.PropositionalEquality
 
 ------------------------------------------------------------------------
 -- Applicative functor parsers

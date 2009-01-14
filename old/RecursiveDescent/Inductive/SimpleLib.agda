@@ -22,10 +22,10 @@ open import Data.Bool
 open import Data.Function
 open import Data.Maybe
 open import Data.Unit
-open import Data.Bool.Properties
+open import Data.Bool.Properties as Bool
 open import Algebra
 private
-  module BCS = CommutativeSemiring Bool-commutativeSemiring-∨-∧
+  module BCS = CommutativeSemiring Bool.commutativeSemiring-∨-∧
 open import Relation.Binary.PropositionalEquality
 
 ------------------------------------------------------------------------
@@ -50,7 +50,7 @@ _⊛!_ : forall {tok nt i₁ c₂ r₁ r₂} ->
        Parser tok nt i₁ (r₁ -> r₂) ->
        Parser tok nt (false , c₂) r₁ ->
        Parser tok nt (false , _)  r₂
-_⊛!_ {i₁ = i₁} p₁ p₂ = cast (BCS.*-comm (proj₁ i₁) false) ≡-refl
+_⊛!_ {i₁ = i₁} p₁ p₂ = cast (BCS.*-comm (proj₁ i₁) false) refl
                             (p₁ ⊛ p₂)
 
 _<$>_ : forall {tok nt i r₁ r₂} ->

@@ -11,7 +11,7 @@ open P public using (Parser; Grammar)
 open import Data.List
 open import Data.Bool
 open import Data.Maybe
-open import Data.Product.Record
+open import Data.Product.Record hiding (map)
 import Data.Product as Prod
 open import Data.Function
 import Data.BoundedVec.Inefficient as BVec
@@ -23,7 +23,7 @@ open import Relation.Binary.PropositionalEquality
 parse :  forall {tok nt i r}
       -> Parser tok nt i r -> Grammar tok nt
       -> List tok -> List (Prod._×_ r (List tok))
-parse p g s = map (Prod.map-× id BVec.toList)
+parse p g s = map (Prod.map id BVec.toList)
                   (P.parse g _ p (BVec.fromList s))
 
 -- A variant which only returns parses which leave no remaining input.
@@ -80,4 +80,4 @@ _∣_ = P.alt _ _
 cast : forall {tok nt e₁ e₂ c₁ c₂ r} ->
        e₁ ≡ e₂ -> c₁ ≡ c₂ ->
        Parser tok nt (e₁ , c₁) r -> Parser tok nt (e₂ , c₂) r
-cast ≡-refl ≡-refl p = p
+cast refl refl p = p

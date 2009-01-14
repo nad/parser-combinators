@@ -18,19 +18,19 @@ open import Data.Vec1 using (Vec₁; []; _∷_; map₀₁)
 open import Data.List using (List; []; _∷_; foldr; reverse)
 open import Data.Product.Record hiding (_×_)
 open import Data.Product using (_×_) renaming (_,_ to pair)
-open import Data.Bool
+open import Data.Bool hiding (_≟_)
 open import Data.Function
 open import Data.Maybe
-open import Data.Unit
-open import Data.Bool.Properties
+open import Data.Unit hiding (_≟_)
+open import Data.Bool.Properties as Bool
 import Data.Char as Char
 open Char using (Char; _==_)
 open import Algebra
 private
-  module BCS = CommutativeSemiring Bool-commutativeSemiring-∨-∧
+  module BCS = CommutativeSemiring Bool.commutativeSemiring-∨-∧
 open import Relation.Nullary
 open import Relation.Binary
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality using (refl)
 
 ------------------------------------------------------------------------
 -- Applicative functor parsers
@@ -54,7 +54,7 @@ _⊛!_ : forall {tok nt i₁ c₂ r₁ r₂} ->
        Parser tok nt i₁ (r₁ -> r₂) ->
        Parser tok nt (false , c₂) r₁ ->
        Parser tok nt (false , _)  r₂
-_⊛!_ {i₁ = i₁} p₁ p₂ = cast (BCS.*-comm (proj₁ i₁) false) ≡-refl
+_⊛!_ {i₁ = i₁} p₁ p₂ = cast (BCS.*-comm (proj₁ i₁) false) refl
                             (p₁ ⊛ p₂)
 
 _<$>_ : forall {tok nt i r₁ r₂} ->

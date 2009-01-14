@@ -51,12 +51,12 @@ Fixity-is-finite = record
   from (suc (suc (suc (suc (suc (suc ()))))))
 
   left-inverse : from LeftInverseOf to
-  left-inverse prefx        = ≡-refl
-  left-inverse (infx left)  = ≡-refl
-  left-inverse (infx right) = ≡-refl
-  left-inverse (infx non)   = ≡-refl
-  left-inverse postfx       = ≡-refl
-  left-inverse closed       = ≡-refl
+  left-inverse prefx        = refl
+  left-inverse (infx left)  = refl
+  left-inverse (infx right) = refl
+  left-inverse (infx non)   = refl
+  left-inverse postfx       = refl
+  left-inverse closed       = refl
 
 _≟_ : Decidable (_≡_ {Fixity})
 _≟_ = eq? injection

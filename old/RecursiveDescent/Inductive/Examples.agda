@@ -10,7 +10,7 @@ import Data.Char as C
 import Data.String as S
 open C using (Char)
 open S using (String)
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 
 open import RecursiveDescent.Index
 open import RecursiveDescent.Inductive
@@ -38,7 +38,7 @@ module Ex₁ where
             ∣ sym '0'
 
   ex₁ : "0+0" ∈? (! e) / grammar ≡ '0' ∷ []
-  ex₁ = ≡-refl
+  ex₁ = refl
 
 module Ex₂ where
 
@@ -57,10 +57,10 @@ module Ex₂ where
                  ∣ sym '(' ⊛> ! expr <⊛ sym ')'
 
   ex₁ : "(0*)" ∈? (! expr) / grammar ≡ []
-  ex₁ = ≡-refl
+  ex₁ = refl
 
   ex₂ : "0*(0+0)" ∈? (! expr) / grammar ≡ '0' ∷ []
-  ex₂ = ≡-refl
+  ex₂ = refl
 
 {-
 module Ex₃ where
@@ -103,10 +103,10 @@ module Ex₄ where
   grammar (bcs c (suc n)) = sym c ⊛> ! bcs c n
 
   ex₁ : "aaabbbccc" ∈? (! top) / grammar ≡ 3 ∷ []
-  ex₁ = ≡-refl
+  ex₁ = refl
 
   ex₂ : "aaabbccc" ∈? (! top) / grammar ≡ []
-  ex₂ = ≡-refl
+  ex₂ = refl
 
 module Ex₅ where
 
@@ -125,7 +125,7 @@ module Ex₅ where
   grammar as      = length <$> ! a ⋆
 
   ex₁ : "aaaaa" ∈? (! as) / grammar ≡ 5 ∷ []
-  ex₁ = ≡-refl
+  ex₁ = refl
 
 module Ex₆ where
 
@@ -151,13 +151,13 @@ module Ex₆ where
   grammar (expr a) = chain≥ 0 a number (! op)
 
   ex₁ : "12345" ∈? number / grammar ≡ 12345 ∷ []
-  ex₁ = ≡-refl
+  ex₁ = refl
 
   ex₂ : "1+5*2∸3" ∈? (! expr left) / grammar ≡ 9 ∷ []
-  ex₂ = ≡-refl
+  ex₂ = refl
 
   ex₃ : "1+5*2∸3" ∈? (! expr right) / grammar ≡ 1 ∷ []
-  ex₃ = ≡-refl
+  ex₃ = refl
 
 module Ex₇ where
 
@@ -189,7 +189,7 @@ module Ex₇ where
   grammar mulOp    = _*_ <$ sym '*'
 
   ex₁ : "1+5*2∸3" ∈? (! expr) / grammar ≡ 8 ∷ []
-  ex₁ = ≡-refl
+  ex₁ = refl
 
   ex₂ : "1+5*(2∸3)" ∈? (! expr) / grammar ≡ 1 ∷ []
-  ex₂ = ≡-refl
+  ex₂ = refl

@@ -60,4 +60,4 @@ _∣_ = P.alt _ _
 cast : forall {tok nt e₁ e₂ c₁ c₂ r} ->
        e₁ ≡ e₂ -> c₁ ≡ c₂ ->
        Parser tok nt (e₁ , c₁) r -> Parser tok nt (e₂ , c₂) r
-cast ≡-refl ≡-refl p = p
+cast refl refl p = p

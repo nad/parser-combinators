@@ -28,7 +28,7 @@ open import Data.Unit
 open import Data.Maybe
 import Data.Nat.Show as N
 open import Relation.Nullary
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 
 open import RecursiveDescent.Index
 open import RecursiveDescent.Hybrid
@@ -108,4 +108,4 @@ module Example where
 
   ex₁ : parse-complete (! pbm) grammar (String.toList (show image)) ≡
         List.[_] image
-  ex₁ = ≡-refl
+  ex₁ = refl

@@ -67,23 +67,23 @@ infix 15 _Index-≟_ _Corners-≟_
 private
 
   drop-step : forall {c₁ c₂} -> step c₁ ≡ step c₂ -> c₁ ≡ c₂
-  drop-step ≡-refl = ≡-refl
+  drop-step refl = refl
 
   drop-node₁ : forall {c₁ c₂ c₃ c₄} ->
                node c₁ c₂ ≡ node c₃ c₄ -> c₁ ≡ c₃
-  drop-node₁ ≡-refl = ≡-refl
+  drop-node₁ refl = refl
 
   drop-node₂ : forall {c₁ c₂ c₃ c₄} ->
                node c₁ c₂ ≡ node c₃ c₄ -> c₂ ≡ c₄
-  drop-node₂ ≡-refl = ≡-refl
+  drop-node₂ refl = refl
 
 _Corners-≟_ : Decidable {Corners} _≡_
-leaf       Corners-≟ leaf         = yes ≡-refl
+leaf       Corners-≟ leaf         = yes refl
 step c₁    Corners-≟ step  c₂     with c₁ Corners-≟ c₂
-step c₁    Corners-≟ step .c₁     | yes ≡-refl = yes ≡-refl
+step c₁    Corners-≟ step .c₁     | yes refl   = yes refl
 step c₁    Corners-≟ step  c₂     | no  ¬c₁≡c₂ = no (¬c₁≡c₂ ∘ drop-step)
 node c₁ c₂ Corners-≟ node  c₃  c₄ with c₁ Corners-≟ c₃ | c₂ Corners-≟ c₄
-node c₁ c₂ Corners-≟ node .c₁ .c₂ | yes ≡-refl | yes ≡-refl = yes ≡-refl
+node c₁ c₂ Corners-≟ node .c₁ .c₂ | yes refl   | yes refl = yes refl
 node c₁ c₂ Corners-≟ node  c₃  c₄ | no  ¬c₁≡c₂ | _          = no (¬c₁≡c₂ ∘ drop-node₁)
 node c₁ c₂ Corners-≟ node  c₃  c₄ | _          | no  ¬c₁≡c₂ = no (¬c₁≡c₂ ∘ drop-node₂)
 leaf       Corners-≟ step _       = no \()
@@ -94,8 +94,8 @@ node _ _   Corners-≟ leaf         = no \()
 node _ _   Corners-≟ step _       = no \()
 
 _Index-≟_ : Decidable {Index} _≡_
-i₁ Index-≟ i₂ with proj₁ i₁ Bool-≟ proj₁ i₂
+i₁ Index-≟ i₂ with proj₁ i₁ ≟ proj₁ i₂
                  | proj₂ i₁ Corners-≟ proj₂ i₂
-... | yes e₁≡e₂ | yes c₁≡c₂ = yes (≡-cong₂ (_,_) e₁≡e₂ c₁≡c₂)
-... | no ¬e₁≡e₂ | _         = no (¬e₁≡e₂ ∘ ≡-cong proj₁)
-... | _         | no ¬c₁≡c₂ = no (¬c₁≡c₂ ∘ ≡-cong proj₂)
+... | yes e₁≡e₂ | yes c₁≡c₂ = yes (cong₂ (_,_) e₁≡e₂ c₁≡c₂)
+... | no ¬e₁≡e₂ | _         = no (¬e₁≡e₂ ∘ cong proj₁)
+... | _         | no ¬c₁≡c₂ = no (¬c₁≡c₂ ∘ cong proj₂)

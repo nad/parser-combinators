@@ -42,7 +42,8 @@ shiftˡ ((x₁ , x₂) ∷ xs₃) x₄ = (x₁ , (x₂ , proj₁ x₃xs₄) ∷ 
 chain₁-combine : forall {r} ->
                  Assoc -> List (r × (r -> r -> r)) -> r -> r
 chain₁-combine right xs y = foldr appʳ y xs
-chain₁-combine left  xs y = uncurry (foldl appˡ) (shiftˡ xs y)
+chain₁-combine left  xs y with shiftˡ xs y
+... | (x , ys) = foldl appˡ x ys
 
 -- Variants.
 
@@ -53,8 +54,9 @@ shiftʳ x₁ ((x₂ , x₃) ∷ xs₄) = ((x₁ , x₂) ∷ proj₁ xs₃x₄ , 
 
 chain≥-combine : forall {r} ->
                  Assoc -> r -> List ((r -> r -> r) × r) -> r
-chain≥-combine right x ys = uncurry (flip (foldr appʳ)) (shiftʳ x ys)
 chain≥-combine left  x ys = foldl appˡ x ys
+chain≥-combine right x ys with shiftʳ x ys
+... | (xs , y) = foldr appʳ y xs
 
 private
  module Examples {r s : Set}
@@ -66,22 +68,22 @@ private
   open import Relation.Binary.PropositionalEquality
 
   ex₁ : shiftˡ ((x , A) ∷ (y , B) ∷ []) z ≡ (x , ((A , y) ∷ (B , z) ∷ []))
-  ex₁ = ≡-refl
+  ex₁ = refl
 
   ex₁ʳ : chain₁-combine right ((x , _+_) ∷ (y , _*_) ∷ []) z ≡ x + (y * z)
-  ex₁ʳ = ≡-refl
+  ex₁ʳ = refl
 
   ex₁ˡ : chain₁-combine left  ((x , _+_) ∷ (y , _*_) ∷ []) z ≡ (x + y) * z
-  ex₁ˡ = ≡-refl
+  ex₁ˡ = refl
 
   ex≥ : shiftʳ x ((A , y) ∷ (B , z) ∷ []) ≡ ((x , A) ∷ (y , B) ∷ [] , z)
-  ex≥ = ≡-refl
+  ex≥ = refl
 
   ex≥ʳ : chain≥-combine right x ((_+_ , y) ∷ (_*_ , z) ∷ []) ≡ x + (y * z)
-  ex≥ʳ = ≡-refl
+  ex≥ʳ = refl
 
   ex≥ˡ : chain≥-combine left  x ((_+_ , y) ∷ (_*_ , z) ∷ []) ≡ (x + y) * z
-  ex≥ˡ = ≡-refl
+  ex≥ˡ = refl
 
 ------------------------------------------------------------------------
 -- Some suitably typed composition operators

@@ -23,7 +23,8 @@ open Vec using (Vec; []; _∷_) renaming (_++_ to _<+>_)
 open import Category.Monad.State
 open import Data.Function
 open import Data.Maybe
-open import Relation.Binary.PropositionalEquality
+import Relation.Binary.PropositionalEquality as PropEq
+open PropEq using (_≡_; refl)
 
 ------------------------------------------------------------------------
 -- Parser monad
@@ -64,7 +65,7 @@ private
 
   cast : forall {tok i₁ i₂ r} ->
          i₁ ≡ i₂ -> Parser tok r i₁ -> Parser tok r i₂
-  cast ≡-refl p = p
+  cast refl p = p
 
   infixl 0 _∣_
 

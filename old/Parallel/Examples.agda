@@ -15,7 +15,7 @@ import Data.Char as C
 import Data.String as S
 open C using (Char)
 open S using (String)
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 
 open import Parallel
 open import Utilities
@@ -39,7 +39,7 @@ module Ex₀ where
   p ~ return 5 ⊛> p
 
   -- ex₁ : "apa" ∈? p ≡ {! !}
-  -- ex₁ = ≡-refl
+  -- ex₁ = refl
 
 module Ex₁ where
 
@@ -49,7 +49,7 @@ module Ex₁ where
     ∣ sym '0'
 
   ex₁ : "0+0" ∈? e ≡ '0' ∷ []
-  ex₁ = ≡-refl
+  ex₁ = refl
 
 module Ex₂ where
 
@@ -66,10 +66,10 @@ module Ex₂ where
            ∣ sym '(' ⊛> expr <⊛ sym ')'
 
   ex₁ : "(0*)" ∈? expr ≡ []
-  ex₁ = ≡-refl
+  ex₁ = refl
 
   ex₂ : "0*(0+0)" ∈? expr ≡ '0' ∷ []
-  ex₂ = ≡-refl
+  ex₂ = refl
 
 {-
 module Ex₃ where
@@ -112,10 +112,10 @@ module Ex₄ where
   top = return 0 ∣ as zero
 
   ex₁ : "aaabbbccc" ∈? top ≡ 3 ∷ []
-  ex₁ = ≡-refl
+  ex₁ = refl
 
   ex₂ : "aaabbccc" ∈? top ≡ []
-  ex₂ = ≡-refl
+  ex₂ = refl
 
 module Ex₅ where
 
@@ -125,7 +125,7 @@ module Ex₅ where
   as = length <$> a ⋆
 
   ex₁ : "aaaaa" ∈? as ≡ 5 ∷ []
-  ex₁ = ≡-refl
+  ex₁ = refl
 
 module Ex₆ where
 
@@ -139,17 +139,17 @@ module Ex₆ where
   expr a = chain₁ a number op
 
   ex₁ : "123" ∈? number ≡ 123 ∷ []
-  ex₁ = ≡-refl
+  ex₁ = refl
 
   -- Note: The type checking of the following definitions does not
   -- appear to terminate (with the version of Agda which is current at
   -- the time of writing).
 
   -- ex₂ : "1+5*2∸3" ∈? expr left ≡ 9 ∷ []
-  -- ex₂ = ≡-refl
+  -- ex₂ = refl
 
   -- ex₃ : "1+5*2∸3" ∈? expr right ≡ 1 ∷ []
-  -- ex₃ = ≡-refl
+  -- ex₃ = refl
 
 module Ex₇ where
 
@@ -171,7 +171,7 @@ module Ex₇ where
   -- the time of writing).
 
   -- ex₁ : "1+5*2∸3" ∈? expr ≡ 8 ∷ []
-  -- ex₁ = ≡-refl
+  -- ex₁ = refl
 
   -- ex₂ : "1+5*(2∸3)" ∈? expr ≡ 1 ∷ []
-  -- ex₂ = ≡-refl
+  -- ex₂ = refl
