@@ -74,7 +74,7 @@ emptyGrammar ()
 ⟦ token      ⟧ g = token
 ⟦ p₁ ∣ p₂    ⟧ g = ⟦ p₁ ⟧ g ∣ ⟦ p₂ ⟧ g
 ⟦ p₁ ?>>= p₂ ⟧ g = ⟦ p₁ ⟧ g ?>>= λ x → ⟦ p₂ x ⟧ g
-⟦ p₁ !>>= p₂ ⟧ g ~ ⟦ p₁ ⟧ g !>>= λ x → ⟦ p₂ x ⟧ g
+⟦ p₁ !>>= p₂ ⟧ g = ⟦ p₁ ⟧ g !>>= λ x → ⟦ p₂ x ⟧ g
 ⟦ ! nt       ⟧ g = ⟦ g nt ⟧ g
 
 -- A map function which can be useful when combining grammars.
@@ -82,10 +82,10 @@ emptyGrammar ()
 mapNT : ∀ {NT₁ NT₂ Tok i R} →
         (∀ {i R} → NT₁ i R → NT₂ i R) →
         Parser NT₁ Tok i R → Parser NT₂ Tok i R
-mapNT f (return x)   ~ return x
-mapNT f fail         ~ fail
-mapNT f token        ~ token
-mapNT f (p₁ ∣ p₂)    ~ mapNT f p₁ ∣ mapNT f p₂
-mapNT f (p₁ ?>>= p₂) ~ mapNT f p₁ ?>>= λ x → mapNT f (p₂ x)
-mapNT f (p₁ !>>= p₂) ~ mapNT f p₁ !>>= λ x → mapNT f (p₂ x)
-mapNT f (! nt)       ~ ! (f nt)
+mapNT f (return x)   = return x
+mapNT f fail         = fail
+mapNT f token        = token
+mapNT f (p₁ ∣ p₂)    = mapNT f p₁ ∣ mapNT f p₂
+mapNT f (p₁ ?>>= p₂) = mapNT f p₁ ?>>= λ x → mapNT f (p₂ x)
+mapNT f (p₁ !>>= p₂) = mapNT f p₁ !>>= λ x → mapNT f (p₂ x)
+mapNT f (! nt)       = ! (f nt)

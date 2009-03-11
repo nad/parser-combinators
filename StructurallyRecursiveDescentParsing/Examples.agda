@@ -117,10 +117,9 @@ module Ex₄′ where
 
   aⁿbⁿcⁿ = return 0
          ∣ theToken 'a' +           !>>= λ as →
-           let n = length as in
-           exactly n (theToken 'b') ⊛>
-           exactly n (theToken 'c') ⊛>
-           return n
+           exactly (length as) (theToken 'b') ⊛>
+           exactly (length as) (theToken 'c') ⊛>
+           return  (length as)
 
   ex₁ : "aaabbbccc" ∈? aⁿbⁿcⁿ ≡ [ 3 ]
   ex₁ = refl

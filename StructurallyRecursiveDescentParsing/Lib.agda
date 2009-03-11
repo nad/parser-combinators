@@ -132,12 +132,12 @@ mutual
   _⋆ : ∀ {NT Tok R c} →
        Parser NT Tok (false ◇ c) R        →
        Parser NT Tok _           (List R)
-  p ⋆ ~ return [] ∣ p +
+  p ⋆ = return [] ∣ p +
 
   _+ : ∀ {NT Tok R c} →
        Parser NT Tok (false ◇ c) R        →
        Parser NT Tok _           (List R)
-  p + ~ p   !>>= λ x  →
+  p + = p   !>>= λ x  →
         p ⋆ ?>>= λ xs →
         return (x ∷ xs)
 
