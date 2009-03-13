@@ -87,7 +87,7 @@ mutual
   -- Assume that p + is applied to the continuation k =
   -- const Base.fail. We get
   --
-  --   unP (p +) k ~ unP p (\_ -> unP (p +) k).
+  --   unP (p +) k ~ unP p (\x -> unP (p +) (\xs -> k (x ∷ xs))).
   --
   -- This implies that the definitions above are not /obviously/
   -- productive. Note now that when p is defined the function unP p
@@ -104,15 +104,14 @@ mutual
   --   (r -> Base.Parser tok r' i') ->
   --   Base.Parser tok r' (false , d).
   --
-  -- Due to parametricity p cannot make use of the result of the
-  -- continuation to build the resulting value, so the only way to
-  -- build the result is to use a constructor (either directly or via
-  -- a productive function). However, if p can pattern match on the
-  -- result of the continuation (like in Parallel.problematic), then
-  -- unP (p +) is not productive. In this case the module system
-  -- prevents p from performing such pattern matching /directly/, but
-  -- ensuring that this is not possible /indirectly/ seems overly
-  -- difficult, considering that there are definitions (other than
+  -- Note that in some cases it is actually possible for p to
+  -- immediately return its input (by first checking that i' =
+  -- (false, d)). Furthermore, if p can pattern match on the result of
+  -- the continuation (like in Parallel.problematic), then unP (p +)
+  -- is not productive. In this case the module system prevents p from
+  -- performing such pattern matching /directly/, but ensuring that
+  -- this is not possible /indirectly/ seems overly difficult,
+  -- considering that there are definitions (other than
   -- Parallel.problematic) which pattern match on Base.Parser.
   --
   -- As an example the type checking of the following definition does
