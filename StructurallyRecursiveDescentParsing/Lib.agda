@@ -21,6 +21,7 @@ open import Data.Maybe
 open import Data.Unit using (⊤)
 import Data.Char as Char
 open Char using (Char; _==_)
+open import Coinduction
 open import Algebra
 import Data.Bool.Properties as Bool
 private
@@ -38,8 +39,8 @@ _>>=_ : ∀ {NT Tok e₁ c₁ i₂ R₁ R₂} → let i₁ = e₁ ◇ c₁ in
         Parser NT Tok i₁ R₁ →
         (R₁ → Parser NT Tok i₂ R₂) →
         Parser NT Tok (i₁ · i₂) R₂
-_>>=_ {e₁ = true } = _?>>=_
-_>>=_ {e₁ = false} = _!>>=_
+_>>=_ {e₁ = true } p₁ p₂ = p₁ ?>>= p₂
+_>>=_ {e₁ = false} p₁ p₂ = p₁ !>>= λ x → ♯₁ p₂ x
 
 cast : ∀ {NT Tok e₁ e₂ c₁ c₂ R} →
        e₁ ≡ e₂ → c₁ ≡ c₂ →
@@ -114,18 +115,19 @@ infix 55 _⋆ _+
 
 -- mutual
 
---   _⋆ : ∀ {Tok R c} →
---        Parser Tok (false ◇ c) R     →
---        Parser Tok _           (List R)
---   p ⋆ ~ return [] ∣ p +
+--   _⋆ : ∀ {NT Tok R c} →
+--        Parser NT Tok (false ◇ c) R     →
+--        Parser NT Tok _           (List R)
+--   p ⋆ = return [] ∣ p +
 
---   _+ : ∀ {Tok R c} →
---        Parser Tok (false ◇ c) R     →
---        Parser Tok _           (List R)
---   p + ~ _∷_ <$> p ⊛ p ⋆
+--   _+ : ∀ {NT Tok R c} →
+--        Parser NT Tok (false ◇ c) R     →
+--        Parser NT Tok _           (List R)
+--   p + = _∷_ <$> p ⊛ p ⋆
 
--- By using the constructors of the Parser type directly we can show
--- that the definitions are productive, though:
+-- In fact the code above risks leading to infinite loops in the
+-- current version of Agda (Mar 2009), since it does not contain any
+-- coinductive constructors. The following code is OK, though:
 
 mutual
 
@@ -137,9 +139,9 @@ mutual
   _+ : ∀ {NT Tok R c} →
        Parser NT Tok (false ◇ c) R        →
        Parser NT Tok _           (List R)
-  p + = p   !>>= λ x  →
-        p ⋆ ?>>= λ xs →
-        return (x ∷ xs)
+  p + =  p   !>>= λ x  → ♯₁
+        (p ⋆ ?>>= λ xs →
+         return (x ∷ xs))
 
 -- p sepBy⟨ ne ⟩ sep and p sepBy sep parse one or more ps separated by
 -- seps.
@@ -301,7 +303,7 @@ choiceMap f (x ∷ xs) = f x ∣ choiceMap f xs
 -- sat and friends
 
 sat : ∀ {NT Tok R} → (Tok → Maybe R) → Parser NT Tok (0I · 1I) R
-sat {NT} {Tok} {R} p = token !>>= λ c → ok (p c)
+sat {NT} {Tok} {R} p = token !>>= λ c → ♯₁ ok (p c)
   where
   okIndex : Maybe R → Index
   okIndex nothing  = _

@@ -7,6 +7,7 @@ module StructurallyRecursiveDescentParsing.Type where
 open import Data.Bool
 open import Data.Empty1
 open import Relation.Binary.PropositionalEquality
+open import Coinduction
 
 open import StructurallyRecursiveDescentParsing.Index
 
@@ -19,8 +20,7 @@ infixl  5 _∣_
 
 -- The parsers are parameterised on a type of nonterminals.
 
-codata Parser (NT : NonTerminalType) (Tok : Set) :
-                NonTerminalType where
+data Parser (NT : NonTerminalType) (Tok : Set) : NonTerminalType where
   return : ∀ {R} (x : R) → Parser NT Tok (true ◇ ε) R
 
   fail   : ∀ {R} → Parser NT Tok (false ◇ ε) R
@@ -41,11 +41,18 @@ codata Parser (NT : NonTerminalType) (Tok : Set) :
   -- second parser's index can depend on the result of the first
   -- parser.
   _!>>=_ : ∀ {c₁ R₁ R₂} {i₂ : R₁ → Index}
-           (p₁ :            Parser NT Tok (false ◇ c₁    ) R₁)
-           (p₂ : (x : R₁) → Parser NT Tok (i₂ x)           R₂) →
-                            Parser NT Tok (false ◇ c₁ ∪ ε) R₂
+           (p₁ :                Parser NT Tok (false ◇ c₁    ) R₁)
+           (p₂ : (x : R₁) → ∞₁ (Parser NT Tok (i₂ x)           R₂)) →
+                                Parser NT Tok (false ◇ c₁ ∪ ε) R₂
 
   !      : ∀ {e c R} (nt : NT (e ◇ c) R) → Parser NT Tok (e ◇ step c) R
+
+-- Note that the definition is almost entirely inductive, only the
+-- second argument of _!>>=_ uses coinduction. The reason is that
+-- without the use of _!>>=_ it is impossible to create infinite
+-- parsers: the Corners type is inductive, and every constructor
+-- except for _!>>=_ includes the corners of all its recursive
+-- arguments in its own Corners index.
 
 -- Grammars.
 
@@ -73,8 +80,8 @@ emptyGrammar ()
 ⟦ fail       ⟧ g = fail
 ⟦ token      ⟧ g = token
 ⟦ p₁ ∣ p₂    ⟧ g = ⟦ p₁ ⟧ g ∣ ⟦ p₂ ⟧ g
-⟦ p₁ ?>>= p₂ ⟧ g = ⟦ p₁ ⟧ g ?>>= λ x → ⟦ p₂ x ⟧ g
-⟦ p₁ !>>= p₂ ⟧ g = ⟦ p₁ ⟧ g !>>= λ x → ⟦ p₂ x ⟧ g
+⟦ p₁ ?>>= p₂ ⟧ g = ⟦ p₁ ⟧ g ?>>= λ x →    ⟦     p₂ x  ⟧ g
+⟦ p₁ !>>= p₂ ⟧ g = ⟦ p₁ ⟧ g !>>= λ x → ♯₁ ⟦ ♭₁ (p₂ x) ⟧ g
 ⟦ ! nt       ⟧ g = ⟦ g nt ⟧ g
 
 -- A map function which can be useful when combining grammars.
@@ -86,6 +93,6 @@ mapNT f (return x)   = return x
 mapNT f fail         = fail
 mapNT f token        = token
 mapNT f (p₁ ∣ p₂)    = mapNT f p₁ ∣ mapNT f p₂
-mapNT f (p₁ ?>>= p₂) = mapNT f p₁ ?>>= λ x → mapNT f (p₂ x)
-mapNT f (p₁ !>>= p₂) = mapNT f p₁ !>>= λ x → mapNT f (p₂ x)
+mapNT f (p₁ ?>>= p₂) = mapNT f p₁ ?>>= λ x →    mapNT f     (p₂ x)
+mapNT f (p₁ !>>= p₂) = mapNT f p₁ !>>= λ x → ♯₁ mapNT f (♭₁ (p₂ x))
 mapNT f (! nt)       = ! (f nt)

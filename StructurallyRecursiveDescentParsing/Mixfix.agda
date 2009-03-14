@@ -76,8 +76,8 @@ nameParts (operator ns) = Vec1.map₀₁ theToken ns
 
 internal : ∀ {fix} (ops : List (∃ (Operator fix))) → P _ (Internal fix)
 internal =
-  choiceMap (λ op' → _∙_ (proj₂ op') <$>
-                       (! expr between nameParts (proj₂ op')))
+  choiceMap (λ op' → let op = proj₂ op' in
+                     _∙_ op <$> (! expr between nameParts op))
 
 -- The grammar.
 

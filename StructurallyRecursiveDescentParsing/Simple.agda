@@ -14,11 +14,11 @@ open import Data.Function using (id; _∘_)
 open import Category.Applicative.Indexed
 open import Category.Monad.Indexed
 open import Category.Monad.State
+open import Coinduction
 
 open import StructurallyRecursiveDescentParsing.Index
 open import StructurallyRecursiveDescentParsing.Type
 open import StructurallyRecursiveDescentParsing.Utilities
-  renaming (_∘_ to _∘′_)
 
 ------------------------------------------------------------------------
 -- Parser monad
@@ -71,9 +71,9 @@ private
     parse↓ n       (_∣_ {true}          p₁ p₂) = parse↓ n       p₁   ∣′ parse↑ n    p₂
     parse↓ n       (_∣_ {false} {true}  p₁ p₂) = parse↑ n       p₁   ∣′ parse↓ n    p₂
     parse↓ n       (_∣_ {false} {false} p₁ p₂) = parse↓ n       p₁   ∣′ parse↓ n    p₂
-    parse↓ n       (p₁ ?>>= p₂)                = parse↓ n       p₁ >>=′ parse↓ n ∘′ p₂
+    parse↓ n       (p₁ ?>>= p₂)                = parse↓ n       p₁ >>=′ parse↓ n ∘₁ p₂
     parse↓ zero    (p₁ !>>= p₂)                = fail′
-    parse↓ (suc n) (p₁ !>>= p₂)                = parse↓ (suc n) p₁ >>=′ parse↑ n ∘′ p₂
+    parse↓ (suc n) (p₁ !>>= p₂)                = parse↓ (suc n) p₁ >>=′ parse↑ n ∘₁ ♭₁ ∘₁₁ p₂
     parse↓ n       (! x)                       = parse↓ n (g x)
     parse↓ n       token                       = get′ >>=′ eat
       where

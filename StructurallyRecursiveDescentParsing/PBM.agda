@@ -26,6 +26,7 @@ open import Data.Bool
 open import Data.Unit
 open import Data.Maybe
 import Data.Nat.Show as N
+open import Coinduction
 open import Relation.Nullary
 open import Relation.Binary.PropositionalEquality
 
@@ -81,15 +82,15 @@ colour = white <$ theToken '0'
        ∣ black <$ theToken '1'
 
 pbm =
-  w∣c ⋆ ⊛>
-  theString (String.toVec "P1") ⊛>
-  w∣c ⋆ ⊛>
-  number !>>= λ cols →  -- _>>=_ works just as well.
-  w∣c + ⊛>
-  number >>=  λ rows →  -- _!>>=_ works just as well.
-  w∣c ⊛>
-  (makePBM <$> exactly rows (exactly cols (w∣c ⋆ ⊛> colour))) <⊛
-  any ⋆
+   w∣c ⋆ ⊛>
+   theString (String.toVec "P1") ⊛>
+   w∣c ⋆ ⊛>
+   number !>>= λ cols → ♯₁ -- _>>=_ works just as well.
+  (w∣c + ⊛>
+   number >>=  λ rows →    -- _!>>=_ works just as well.
+   w∣c ⊛>
+   (makePBM <$> exactly rows (exactly cols (w∣c ⋆ ⊛> colour))) <⊛
+   any ⋆)
   where w∣c = whitespace ∣ comment
 
 module Example where

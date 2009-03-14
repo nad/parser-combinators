@@ -12,6 +12,7 @@ import Data.Char as C
 import Data.String as S
 open C using (Char)
 open S using (String)
+open import Coinduction
 open import Relation.Binary.PropositionalEquality
 
 open import StructurallyRecursiveDescentParsing
@@ -116,10 +117,11 @@ module Ex₄′ where
   -- A monadic variant of Ex₄.
 
   aⁿbⁿcⁿ = return 0
-         ∣ theToken 'a' +           !>>= λ as →
-           exactly (length as) (theToken 'b') ⊛>
-           exactly (length as) (theToken 'c') ⊛>
-           return  (length as)
+         ∣ theToken 'a' +           !>>= λ as → ♯₁
+           (let n = length as in
+            exactly n (theToken 'b') ⊛>
+            exactly n (theToken 'c') ⊛>
+            return n)
 
   ex₁ : "aaabbbccc" ∈? aⁿbⁿcⁿ ≡ [ 3 ]
   ex₁ = refl
