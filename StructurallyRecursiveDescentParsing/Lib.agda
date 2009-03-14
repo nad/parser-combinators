@@ -156,7 +156,7 @@ p sepBy⟨ nonEmpty ⟩ sep = _∷_ <$> p ⊛ cast₁ (sep ⊛> p) ⋆
 
 -- _sepBy_ could be implemented by using _sepBy⟨_⟩_, but the following
 -- definition is handled more efficiently by the current version of
--- Agda.
+-- Agda (Dec 2008).
 
 _sepBy_ : ∀ {NT Tok i c R R′} →
           Parser NT Tok i R → Parser NT Tok (false ◇ c) R′ →
