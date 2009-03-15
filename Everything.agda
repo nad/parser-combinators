@@ -4,13 +4,17 @@
 
 module Everything where
 
--- The parser type indices.
-
-import StructurallyRecursiveDescentParsing.Index
-
 -- The parser type.
 
 import StructurallyRecursiveDescentParsing.Type
+
+-- Parser type indices, used by the grammars.
+
+import StructurallyRecursiveDescentParsing.Index
+
+-- Grammars.
+
+import StructurallyRecursiveDescentParsing.Grammars
 
 -- A simple backend.
 
@@ -45,7 +49,3 @@ import StructurallyRecursiveDescentParsing.Mixfix.Fixity
 import StructurallyRecursiveDescentParsing.Mixfix.Expr
 import StructurallyRecursiveDescentParsing.Mixfix
 import StructurallyRecursiveDescentParsing.Mixfix.Example
-
--- Helper function(s).
-
-import StructurallyRecursiveDescentParsing.Utilities

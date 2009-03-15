@@ -6,19 +6,18 @@ module StructurallyRecursiveDescentParsing.Simple where
 
 open import Data.Bool
 open import Data.Product
-open import Data.Maybe
 open import Data.BoundedVec.Inefficient
-import Data.List as L
+import Data.List as L; open L using (List)
 open import Data.Nat
-open import Data.Function using (id; _∘_)
+open import Data.Function
 open import Category.Applicative.Indexed
 open import Category.Monad.Indexed
 open import Category.Monad.State
 open import Coinduction
 
-open import StructurallyRecursiveDescentParsing.Index
 open import StructurallyRecursiveDescentParsing.Type
-open import StructurallyRecursiveDescentParsing.Utilities
+import StructurallyRecursiveDescentParsing.Grammars as G
+open G using (⟦_⟧)
 
 ------------------------------------------------------------------------
 -- Parser monad
@@ -26,7 +25,7 @@ open import StructurallyRecursiveDescentParsing.Utilities
 private
 
   P : Set → IFun ℕ
-  P Tok = IStateT (BoundedVec Tok) L.List
+  P Tok = IStateT (BoundedVec Tok) List
 
   open module M₁ {Tok} =
     RawIMonadPlus (StateTIMonadPlus (BoundedVec Tok) L.monadPlus)
@@ -59,48 +58,41 @@ private
 -- 1) The upper bound of the length of the input string.
 -- 2) The parser's proper left corner tree.
 
-private
+mutual
+  parse↓ : ∀ {Tok e R} n → Parser Tok e R →
+           P Tok n (if e then n else pred n) R
+  parse↓ n       (return x)                  = return′ x
+  parse↓ n       fail                        = fail′
+  parse↓ n       (_∣_ {true}          p₁ p₂) = parse↓ n       p₁   ∣′       parse↑ n      p₂
+  parse↓ n       (_∣_ {false} {true}  p₁ p₂) = parse↑ n       p₁   ∣′       parse↓ n      p₂
+  parse↓ n       (_∣_ {false} {false} p₁ p₂) = parse↓ n       p₁   ∣′       parse↓ n      p₂
+  parse↓ n       (p₁ ?>>= p₂)                = parse↓ n       p₁ >>=′ λ x → parse↓ n     (p₂ x)
+  parse↓ zero    (p₁ !>>= p₂)                = fail′
+  parse↓ (suc n) (p₁ !>>= p₂)                = parse↓ (suc n) p₁ >>=′ λ x → parse↑ n (♭₁ (p₂ x))
+  parse↓ n       token                       = get′ >>=′ eat
+    where
+    eat : ∀ {Tok n} → BoundedVec Tok n → P Tok n (pred n) Tok
+    eat []      = fail′
+    eat (c ∷ s) = put′ s >>′ return′ c
 
- module Dummy {NT Tok} (g : Grammar NT Tok) where
-
-  mutual
-    parse↓ : ∀ {e c R} n → Parser NT Tok (e ◇ c) R →
-             P Tok n (if e then n else pred n) R
-    parse↓ n       (return x)                  = return′ x
-    parse↓ n       fail                        = fail′
-    parse↓ n       (_∣_ {true}          p₁ p₂) = parse↓ n       p₁   ∣′ parse↑ n    p₂
-    parse↓ n       (_∣_ {false} {true}  p₁ p₂) = parse↑ n       p₁   ∣′ parse↓ n    p₂
-    parse↓ n       (_∣_ {false} {false} p₁ p₂) = parse↓ n       p₁   ∣′ parse↓ n    p₂
-    parse↓ n       (p₁ ?>>= p₂)                = parse↓ n       p₁ >>=′ parse↓ n ∘₁ p₂
-    parse↓ zero    (p₁ !>>= p₂)                = fail′
-    parse↓ (suc n) (p₁ !>>= p₂)                = parse↓ (suc n) p₁ >>=′ parse↑ n ∘₁ ♭₁ ∘₁₁ p₂
-    parse↓ n       (! x)                       = parse↓ n (g x)
-    parse↓ n       token                       = get′ >>=′ eat
-      where
-      eat : ∀ {n} → BoundedVec Tok n → P Tok n (pred n) Tok
-      eat []      = fail′
-      eat (c ∷ s) = put′ s >>′ return′ c
-
-    parse↑ : ∀ {e c R} n → Parser NT Tok (e ◇ c) R → P Tok n n R
-    parse↑ {true}  n       p = parse↓ n p
-    parse↑ {false} zero    p = fail′
-    parse↑ {false} (suc n) p = parse↓ (suc n) p >>=′ λ r →
-                               modify′ ↑        >>′
-                               return′ r
-
-open Dummy public
+  parse↑ : ∀ {e Tok R} n → Parser Tok e R → P Tok n n R
+  parse↑ {true}  n       p = parse↓ n p
+  parse↑ {false} zero    p = fail′
+  parse↑ {false} (suc n) p = parse↓ (suc n) p >>=′ λ r →
+                             modify′ ↑        >>′
+                             return′ r
 
 -- Exported run function.
 
 parse : ∀ {NT Tok i R} →
-        Grammar NT Tok → Parser NT Tok i R →
-        L.List Tok → L.List (R × L.List Tok)
-parse g p s = L.map (map id toList) (parse↓ g _ p (fromList s))
+        G.Grammar NT Tok → G.Parser NT Tok i R →
+        List Tok → List (R × List Tok)
+parse g p s = L.map (map id toList) (parse↓ _ (⟦ p ⟧ g) (fromList s))
 
 -- A variant which only returns parses which leave no remaining input.
 
 parseComplete : ∀ {NT Tok i R} →
-                Grammar NT Tok → Parser NT Tok i R →
-                L.List Tok → L.List R
+                G.Grammar NT Tok → G.Parser NT Tok i R →
+                List Tok → List R
 parseComplete g p s =
   L.map proj₁ (L.filter (L.null ∘ proj₂) (parse g p s))

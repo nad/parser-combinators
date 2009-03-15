@@ -7,7 +7,7 @@
 
 module StructurallyRecursiveDescentParsing.Lib where
 
-open import StructurallyRecursiveDescentParsing.Type
+open import StructurallyRecursiveDescentParsing.Grammars
 open import StructurallyRecursiveDescentParsing.Index
 
 open import Data.Nat hiding (_≟_)

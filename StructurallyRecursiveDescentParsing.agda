@@ -10,15 +10,15 @@ module StructurallyRecursiveDescentParsing where
 
 -- Parser indices.
 
-open import StructurallyRecursiveDescentParsing.Index  public
+open import StructurallyRecursiveDescentParsing.Index public
 
--- The parser type.
+-- Grammars.
 
-open import StructurallyRecursiveDescentParsing.Type   public
+open import StructurallyRecursiveDescentParsing.Grammars public
 
 -- Derived parser combinators.
 
-open import StructurallyRecursiveDescentParsing.Lib    public
+open import StructurallyRecursiveDescentParsing.Lib public
 
 -- The simple parser backend.
 

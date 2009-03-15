@@ -210,30 +210,6 @@ module Ex₈ where
   ex₁ : "1,2∸1" ∈? ! exprs / grammar ≡ [ 1 ∷ 1 ∷ [] ]
   ex₁ = refl
 
-module Ex₈′ where
-
-  -- A variant of Ex₈.
-
-  data NT : NonTerminalType where
-    exprs : NT _ (List ℕ)
-
-  expr = ⟦ ! Ex₇.expr ⟧ Ex₇.grammar
-
-  grammar : Grammar NT Char
-  grammar exprs = expr sepBy theToken ','
-
-  ex₁ : "1,2∸1" ∈? ! exprs / grammar ≡ [ 1 ∷ 1 ∷ [] ]
-  ex₁ = refl
-
-module Ex₈″ where
-
-  -- Another variant of Ex₈ (without the outer grammar).
-
-  expr = ⟦ ! Ex₇.expr ⟧ Ex₇.grammar
-
-  ex₁ : "1,2∸1" ∈? (expr sepBy theToken ',') ≡ [ 1 ∷ 1 ∷ [] ]
-  ex₁ = refl
-
 module Ex₉ where
 
   -- An example illustrating the use of one grammar within another

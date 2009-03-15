@@ -109,8 +109,5 @@ grammar (node (precedence ops ps)) =
 
 -- Expression parsers.
 
-expression : ∀ {NT} → Parser NT NamePart _ Expr
-expression = ⟦ ! expr ⟧ grammar
-
 parseExpr : List NamePart → List Expr
 parseExpr = parseComplete grammar (! expr)
