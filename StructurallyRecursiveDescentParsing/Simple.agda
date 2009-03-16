@@ -5,7 +5,7 @@
 module StructurallyRecursiveDescentParsing.Simple where
 
 open import Data.Bool
-open import Data.Product
+open import Data.Product as Prod
 open import Data.BoundedVec.Inefficient
 import Data.List as L; open L using (List)
 open import Data.Nat
@@ -16,8 +16,6 @@ open import Category.Monad.State
 open import Coinduction
 
 open import StructurallyRecursiveDescentParsing.Type
-import StructurallyRecursiveDescentParsing.Grammars as G
-open G using (⟦_⟧)
 
 ------------------------------------------------------------------------
 -- Parser monad
@@ -84,15 +82,10 @@ mutual
 
 -- Exported run function.
 
-parse : ∀ {NT Tok i R} →
-        G.Grammar NT Tok → G.Parser NT Tok i R →
-        List Tok → List (R × List Tok)
-parse g p s = L.map (map id toList) (parse↓ _ (⟦ p ⟧ g) (fromList s))
+parse : ∀ {Tok i R} → Parser Tok i R → List Tok → List (R × List Tok)
+parse p s = L.map (Prod.map id toList) (parse↓ _ p (fromList s))
 
 -- A variant which only returns parses which leave no remaining input.
 
-parseComplete : ∀ {NT Tok i R} →
-                G.Grammar NT Tok → G.Parser NT Tok i R →
-                List Tok → List R
-parseComplete g p s =
-  L.map proj₁ (L.filter (L.null ∘ proj₂) (parse g p s))
+parseComplete : ∀ {Tok i R} → Parser Tok i R → List Tok → List R
+parseComplete p s = L.map proj₁ (L.filter (L.null ∘ proj₂) (parse p s))

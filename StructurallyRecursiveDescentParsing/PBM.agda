@@ -101,6 +101,7 @@ module Example where
                    (black ∷ white ∷ []) ∷
                    (black ∷ black ∷ []) ∷ [])
 
-  ex₁ : parseComplete emptyGrammar pbm (String.toList (show image)) ≡
+  ex₁ : parseComplete (⟦ pbm ⟧ emptyGrammar)
+                      (String.toList (show image)) ≡
         List.[_] image
   ex₁ = refl

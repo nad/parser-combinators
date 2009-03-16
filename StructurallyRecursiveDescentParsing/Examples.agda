@@ -22,7 +22,7 @@ open Token C.decSetoid
 
 _∈?_/_ : ∀ {NT i R} →
          String → Parser NT Char i R → Grammar NT Char → List R
-s ∈? p / g = parseComplete g p (S.toList s)
+s ∈? p / g = parseComplete (⟦ p ⟧ g) (S.toList s)
 
 _∈?_ : ∀ {i R} → String → Parser EmptyNT Char i R → List R
 s ∈? p = s ∈? p / emptyGrammar
