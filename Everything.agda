@@ -8,6 +8,10 @@ module Everything where
 
 import StructurallyRecursiveDescentParsing.Type
 
+-- Definition of unambiguity.
+
+import StructurallyRecursiveDescentParsing.Unambiguity
+
 -- Parser type indices, used by the grammars.
 
 import StructurallyRecursiveDescentParsing.Index
@@ -31,7 +35,7 @@ import StructurallyRecursiveDescentParsing.Simple
 
 import StructurallyRecursiveDescentParsing.Lib
 
--- A module which reexports the modules above.
+-- A module which reexports some of the modules above.
 
 import StructurallyRecursiveDescentParsing
 
