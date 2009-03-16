@@ -4,7 +4,7 @@
 
 module Everything where
 
--- The parser type.
+-- The parser type, including its semantics.
 
 import StructurallyRecursiveDescentParsing.Type
 
