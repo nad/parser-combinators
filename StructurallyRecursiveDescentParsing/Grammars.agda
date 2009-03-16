@@ -78,19 +78,15 @@ emptyGrammar ()
 
 private
 
-  if₁_then_else : {A : Set1} → Bool → A → A → A
-  if₁ true  then x else y = x
-  if₁ false then x else y = y
-
   only-plain : Plain.Parser Bool false Bool
   only-plain = return true ?>>= λ x →
-               if₁ x then token else (token ∣ token)
+               if₁ x then token else token ∣ token
 
   -- The following code does not type-check.
 
   -- doesnt-work : Parser EmptyNT Bool (false ◇ _) Bool
   -- doesnt-work = return true ?>>= λ x →
-  --               if₁ x then token else (token ∣ token)
+  --               if₁ x then token else token ∣ token
 
 -- A map function which can be useful when combining grammars.
 
