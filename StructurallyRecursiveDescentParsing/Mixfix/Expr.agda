@@ -24,8 +24,13 @@ NamePart = String
 -- number of arguments taken between the first and last name parts.
 
 data Operator (fix : Fixity) (arity : ℕ) : Set where
-  operator : (nameParts : Vec NamePart (1 + arity)) →
-             Operator fix arity
+  operator : (ns : Vec NamePart (1 + arity)) → Operator fix arity
+
+-- The operator's name parts.
+
+nameParts : ∀ {fix arity} →
+            Operator fix arity → Vec NamePart (1 + arity)
+nameParts (operator ns) = ns
 
 -- Predicate filtering out operators of the given fixity and
 -- associativity.

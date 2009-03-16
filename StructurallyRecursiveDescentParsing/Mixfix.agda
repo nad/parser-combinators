@@ -10,104 +10,81 @@ module StructurallyRecursiveDescentParsing.Mixfix
          (g : PrecedenceGraph)
          where
 
-import Data.Vec as Vec
-import Data.List as List
-open List using (List; []; _∷_; foldr; foldl)
-import Data.Vec1 as Vec1
-open Vec1 using (Vec₁)
+open import Coinduction
+open import Data.List using (List; []; _∷_; foldr; foldl)
 open import Data.Product
 open import Data.Bool
-open import Data.Unit
-open import Data.Nat
-open import Data.Function hiding (_⟨_⟩_)
+open import Data.Function using (_$_; flip)
 import Data.String as String
 
+open import StructurallyRecursiveDescentParsing.Type
+open import StructurallyRecursiveDescentParsing.Simple
 open import StructurallyRecursiveDescentParsing.Mixfix.Fixity
-open import StructurallyRecursiveDescentParsing
-open Token String.decSetoid
+import StructurallyRecursiveDescentParsing.Mixfix.Lib as Lib
+open Lib String.decSetoid
 
--- Note that, even though grammar below is not recursive, these
--- functions are (mutually). Fortunately the recursion is structural,
--- though. Note also that the reason for not using the implementation
---
---   grammar (nodes ts) = choiceMap (λ t → ! node t) ts
---
--- is that this would lead to a definition of node-corners which
--- was not structurally recursive.
+-- The following definition uses a lexicographic combination of
+-- guarded corecursion and structural recursion. The only "corecursive
+-- call", where the size of the inductive input can increase
+-- arbitrarily, is the use of expr in the expression ♯₁ expr.
 
-nodes-corners : PrecedenceGraph → Corners
-nodes-corners []       = _
-nodes-corners (p ∷ ps) = _
+mutual
 
-node-corners : PrecedenceTree → Corners
-node-corners (precedence ops ps) = _
-
--- Nonterminals.
-
-data NT : NonTerminalType where
   -- Expressions.
-  expr : NT _ Expr
+
+  expr : ParserProg false Expr
+  expr = nodes g
 
   -- Expressions corresponding to zero or more nodes in the precedence
   -- graph: operator applications where the outermost operator has one
   -- of the precedences ps. The graph g is used for internal
   -- expressions.
-  nodes : (ps : PrecedenceGraph) → NT (false ◇ nodes-corners ps) Expr
+
+  nodes : PrecedenceGraph → ParserProg false Expr
+  nodes []       = fail
+  nodes (p ∷ ps) = node p ∣ nodes ps
 
   -- Expressions corresponding to one node in the precedence graph:
   -- operator applications where the outermost operator has
   -- precedence p. The graph g is used for internal expressions.
-  node : (p : PrecedenceTree) → NT (false ◇ node-corners p) Expr
 
--- The parser type used in this module.
+  node : PrecedenceTree → ParserProg false Expr
+  node (precedence ops ps) =
+       ⟪_⟫              <$>      [ closed   ]
+    ∣ _⟨_⟩_             <$>  ↑ ⊛ [ infx non ] ⊛ ↑
+    ∣ flip (foldr _$_)  <$>      preRight +   ⊛ ↑
+    ∣ foldl (flip _$_)  <$>  ↑ ⊛ postLeft +
+    where
+    -- [ fix ] parses the internal parts of operators with the
+    -- current precedence level and fixity fix.
+    [_] = λ (fix : Fixity) → internals (ops fix)
 
-P : Index → Set → Set1
-P = Parser NT NamePart
+    -- Operator applications where the outermost operator binds
+    -- tighter than the current precedence level.
+    ↑ = nodes ps
 
--- A vector containing parsers recognising the name parts of the
--- operator.
+    -- Right associative and prefix operators.
+    preRight =  ⟪_⟩_ <$> [ prefx ]
+             ∣ _⟨_⟩_ <$> ↑ ⊛ [ infx right ]
 
-nameParts : ∀ {fix arity} → Operator fix arity →
-            Vec₁ (P _ NamePart) (1 + arity)
-nameParts (operator ns) = Vec1.map₀₁ theToken ns
+    -- Left associative and postfix operators.
+    postLeft = flip _⟨_⟫                   <$> [ postfx ]
+             ∣ (λ op e₂ e₁ → e₁ ⟨ op ⟩ e₂) <$> [ infx left ] ⊛ ↑
 
--- Internal parts (all name parts plus internal expressions) of
--- operators of the given precedence and fixity.
+  -- Internal parts (all name parts plus internal expressions) of
+  -- operators of the given precedence and fixity.
 
-internal : ∀ {fix} (ops : List (∃ (Operator fix))) → P _ (Internal fix)
-internal =
-  choiceMap (λ op' → let op = proj₂ op' in
-                     _∙_ op <$> (! expr between nameParts op))
-
--- The grammar.
-
-grammar : Grammar NT NamePart
-grammar expr                       = ! (nodes g)
-grammar (nodes [])                 = fail
-grammar (nodes (p ∷ ps))           = ! (node p) ∣ ! (nodes ps)
-grammar (node (precedence ops ps)) =
-     ⟪_⟫              <$>      [ closed   ]
-  ∣ _⟨_⟩_             <$>  ↑ ⊛ [ infx non ] ⊛ ↑
-  ∣ flip (foldr _$_)  <$>      preRight +   ⊛ ↑
-  ∣ foldl (flip _$_)  <$>  ↑ ⊛ postLeft +
-  where
-  -- [ fix ] parses the internal parts of operators with the
-  -- current precedence level and fixity fix.
-  [_] = λ (fix : Fixity) → internal (ops fix)
-
-  -- Operator applications where the outermost operator binds
-  -- tighter than the current precedence level.
-  ↑ = ! (nodes ps)
-
-  -- Right associative and prefix operators.
-  preRight =  ⟪_⟩_ <$> [ prefx ]
-           ∣ _⟨_⟩_ <$> ↑ ⊛ [ infx right ]
-
-  -- Left associative and postfix operators.
-  postLeft = flip _⟨_⟫                   <$> [ postfx ]
-           ∣ (λ op e₂ e₁ → e₁ ⟨ op ⟩ e₂) <$> [ infx left ] ⊛ ↑
+  internals : ∀ {fix} →
+              List (∃ (Operator fix)) → ParserProg false (Internal fix)
+  internals []               = fail
+  internals ((_ , op) ∷ ops) =
+      _∙_ op <$> ((♯₁ expr) between nameParts op)
+    ∣ internals ops
 
 -- Expression parsers.
 
+expression : Parser NamePart false Expr
+expression = ⟦ expr ⟧
+
 parseExpr : List NamePart → List Expr
-parseExpr = parseComplete (⟦ ! expr ⟧ grammar)
+parseExpr = parseComplete expression
