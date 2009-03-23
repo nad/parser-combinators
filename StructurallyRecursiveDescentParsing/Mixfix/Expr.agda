@@ -4,16 +4,19 @@
 
 module StructurallyRecursiveDescentParsing.Mixfix.Expr where
 
-open import Data.Nat hiding (_≟_)
-open import Data.Vec
-open import Data.List using (List)
-open import Data.Product
-open import Data.Maybe
+open import Data.Nat using (ℕ; zero; suc; _+_)
+open import Data.Vec  using (Vec)
+open import Data.List using (List; []; _∷_; _∈_; here; there)
+open import Data.Product using (∃; ∃₂; _,_)
+open import Data.Maybe using (Maybe; just; nothing)
 open import Data.String using (String)
-open import Relation.Nullary
-open import Relation.Binary.PropositionalEquality
+open import Relation.Nullary using (Dec; yes; no)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 
 open import StructurallyRecursiveDescentParsing.Mixfix.Fixity
+
+------------------------------------------------------------------------
+-- Operators
 
 -- Name parts.
 
@@ -40,39 +43,89 @@ hasFixity fix (fix' , op) with fix ≟ fix'
 hasFixity fix (.fix , op) | yes refl = just op
 hasFixity fix (fix' , op) | _        = nothing
 
--- Precedence graphs are represented by their unfoldings as forests
--- (one tree for every node in the graph). This does not take into
--- account the sharing of the precedence graphs, but this program is
--- not aimed at efficiency.
+------------------------------------------------------------------------
+-- Precedence graphs
 
 mutual
+
+  -- Precedence graphs are represented by their unfoldings as forests
+  -- (one tree for every node in the graph). This does not take into
+  -- account the sharing of the precedence graphs, but this code is
+  -- not aimed at efficiency.
 
   PrecedenceGraph : Set
-  PrecedenceGraph = List PrecedenceTree
+  PrecedenceGraph = List Precedence
 
-  data PrecedenceTree : Set where
-    precedence : (ops : (fix : Fixity) → List (∃ (Operator fix)))
-                 (successors : PrecedenceGraph) →
-                 PrecedenceTree
+  -- Precedence trees.
 
--- Concrete syntax. TODO: Ensure that expressions are precedence
--- correct by parameterising the expression type on a precedence graph
--- and indexing on precedences.
+  data Precedence : Set where
+    precedence : (o : (fix : Fixity) → List (∃ (Operator fix)))
+                 (s : PrecedenceGraph) →
+                 Precedence
 
-mutual
+-- The operators of the given precedence.
 
-  infixl 4 _⟨_⟩_ _∙_
-  infix  4 _⟨_⟫ ⟪_⟩_
+ops : Precedence → (fix : Fixity) → List (∃ (Operator fix))
+ops (precedence o s) = o
 
-  data Expr : Set where
-    _⟨_⟩_ : ∀ {assoc}
-            (l : Expr) (op : Internal (infx assoc)) (r : Expr) → Expr
-    _⟨_⟫  : (l : Expr) (op : Internal postfx)                  → Expr
-    ⟪_⟩_  :            (op : Internal prefx)        (r : Expr) → Expr
-    ⟪_⟫   :            (op : Internal closed)                  → Expr
+-- The immediate successors of the precedence level.
 
-  -- Application of an operator to all its internal arguments.
+↑ : Precedence → PrecedenceGraph
+↑ (precedence o s) = s
 
-  data Internal (fix : Fixity) : Set where
-    _∙_ : ∀ {arity} (op : Operator fix arity) (args : Vec Expr arity) →
-          Internal fix
+------------------------------------------------------------------------
+-- Precedence-correct operator applications
+
+-- Parameterised on a precedence graph.
+
+module PrecedenceCorrect (g : PrecedenceGraph) where
+
+  mutual
+
+    infixl 4 _⟨_⟩ˡ_
+    infixr 4 _⟨_⟩ʳ_
+    infix  4 _⟨_⟩_ _⟨_⟫ ⟪_⟩_ _∙_
+
+    -- Expr ps contains expressions where the outermost operator has
+    -- one of the precedences in ps.
+
+    data Expr : PrecedenceGraph → Set where
+      _∙_ : ∀ {fix p ps} (p∈ps : p ∈ ps) (e : ExprIn p fix) → Expr ps
+
+    -- ExprIn p fix contains expressions where the outermost operator
+    -- has precedence p (is /in/ precedence level p) and the fixity
+    -- group g (where nothing stands for closed or non-associative).
+
+    data ExprIn (p : Precedence) : Maybe FixityGroup → Set where
+      ⟪_⟫    :                    (op : Inner (ops p closed      ))                     → ExprIn p nothing
+      _⟨_⟫   : (l : Outer p left) (op : Inner (ops p postfx      ))                     → ExprIn p (just left)
+      ⟪_⟩_   :                    (op : Inner (ops p prefx       )) (r : Outer p right) → ExprIn p (just right)
+      _⟨_⟩_  : (l : Expr (↑ p)  ) (op : Inner (ops p (infx non  ))) (r : Expr (↑ p)   ) → ExprIn p nothing
+      _⟨_⟩ˡ_ : (l : Outer p left) (op : Inner (ops p (infx left ))) (r : Expr (↑ p)   ) → ExprIn p (just left)
+      _⟨_⟩ʳ_ : (l : Expr (↑ p)  ) (op : Inner (ops p (infx right))) (r : Outer p right) → ExprIn p (just right)
+
+    -- Outer p fix contains expressions where the head operator either
+    --   ⑴ has precedence p and fixity group fix, or
+    --   ⑵ binds strictly tighter than p.
+
+    data Outer (p : Precedence) (fix : FixityGroup) : Set where
+      similar : (e : ExprIn p (just fix)) → Outer p fix
+      tighter : (e : Expr (↑ p))          → Outer p fix
+
+    -- Inner ops contains the internal parts (operator plus
+    -- internal arguments) of operator applications. The operators
+    -- have to be members of ops.
+
+    data Inner {fix} (ops : List (∃ (Operator fix))) : Set where
+      _∙_ : ∀ {arity op}
+            (op∈ops : (arity , op) ∈ ops) (args : Vec (Expr g) arity) →
+            Inner ops
+
+  -- "Weakening".
+
+  weakenE : ∀ {p ps} → Expr ps → Expr (p ∷ ps)
+  weakenE (p∈ps ∙ e) = there p∈ps ∙ e
+
+  weakenI : ∀ {fix ops} {op : ∃ (Operator fix)} →
+            Inner ops → Inner (op ∷ ops)
+  weakenI (op∈ops ∙ args) = there op∈ops ∙ args

@@ -26,6 +26,12 @@ data Fixity : Set where
   postfx : Fixity
   closed : Fixity
 
+-- Fixity groups.
+
+data FixityGroup : Set where
+  right : FixityGroup  -- Prefix or right associative.
+  left  : FixityGroup  -- Postfix or left associative.
+
 Fixity-is-finite : LeftInverse Fixity (Fin 6)
 Fixity-is-finite = record
   { from         = from

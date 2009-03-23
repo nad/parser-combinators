@@ -13,8 +13,9 @@ open DecSetoid Token using (_≟_) renaming (carrier to Tok)
 open import Coinduction
 open import Data.Bool using (Bool; true; false; _∧_; _∨_)
 open import Data.Nat using (ℕ; zero; suc)
-open import Data.List
+open import Data.List.NonEmpty
 open import Data.Vec using (Vec; []; _∷_)
+open import Data.Product
 open import Relation.Nullary
 
 open import StructurallyRecursiveDescentParsing.Type
@@ -30,6 +31,7 @@ infix  55 _+
 infixl 50 _⊛_ _<$>_
 infixl 10 _!>>=_ _?>>=_
 infixl  5 _∣_
+infixr  5 _∥_
 
 data ParserProg : Bool → Set → Set1 where
   return    : ∀ {R} (x : R) → ParserProg true R
@@ -55,10 +57,14 @@ data ParserProg : Bool → Set → Set1 where
               (p : ParserProg e R₁) →
                    ParserProg e R₂
   _+        : ∀ {R} (p : ParserProg false R) →
-                         ParserProg false (List R)
+                         ParserProg false (List⁺ R)
   _between_ : ∀ {e R n}
               (p : ∞₁ (ParserProg e R)) (toks : Vec Tok (suc n)) →
               ParserProg false (Vec R n)
+  _∥_       : ∀ {e₁ e₂ I x} {R : I → Set}
+              (p₁ : ParserProg  e₁       (R x))
+              (p₂ : ParserProg       e₂  (∃ R)) →
+                    ParserProg (e₁ ∨ e₂) (∃ R)
 
 -- Parses a given token (or, really, a given equivalence class of
 -- tokens).
@@ -90,10 +96,12 @@ theToken tok = token !>>= λ tok′ → ♯₁ ok tok′
 ⟦ _⊛_ {true} {false} p₁ p₂ ⟧ = ⟦ p₁ ⟧ ?>>= λ f →
                                ⟦ p₂ ⟧ !>>= λ x → ♯₁ return (f x)
 ⟦ _⊛_ {false}        p₁ p₂ ⟧ = ⟦ p₁ ⟧ !>>= λ f → ♯₁ ⟦ f <$> p₂ ⟧
-⟦ _<$>_ {true}  f p        ⟧ = ⟦ p  ⟧ ?>>= λ x →    return (f x)
-⟦ _<$>_ {false} f p        ⟧ = ⟦ p  ⟧ !>>= λ x → ♯₁ return (f x)
+⟦ _<$>_  {true}  f p       ⟧ = ⟦ p  ⟧ ?>>= λ x →    return (f x)
+⟦ _<$>_  {false} f p       ⟧ = ⟦ p  ⟧ !>>= λ x → ♯₁ return (f x)
 ⟦ p +                      ⟧ = ⟦ p  ⟧ !>>= λ x → ♯₁
-                               ⟦ _∷_ x <$> (p + ∣ return []) ⟧
+                               ⟦ _∷_ x <$> p + ∣ return [ x ] ⟧
 ⟦ p between (t ∷ [])       ⟧ = theToken t !>>= λ _ → ♯₁ return []
 ⟦ p between (t ∷ t′ ∷ ts)  ⟧ = theToken t !>>= λ _ → ♯₁
-                               ⟦ _∷_ <$> ♭₁ p ⊛ (p between (t′ ∷ ts)) ⟧
+                                ⟦ _∷_ <$> ♭₁ p ⊛ (p between (t′ ∷ ts)) ⟧
+⟦ _∥_ {true}  p₁ p₂        ⟧ = (⟦ p₁ ⟧ ?>>= λ x →    return (, x)) ∣ ⟦ p₂ ⟧
+⟦ _∥_ {false} p₁ p₂        ⟧ = (⟦ p₁ ⟧ !>>= λ x → ♯₁ return (, x)) ∣ ⟦ p₂ ⟧
