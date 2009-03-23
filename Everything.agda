@@ -53,4 +53,5 @@ import StructurallyRecursiveDescentParsing.Mixfix.Fixity
 import StructurallyRecursiveDescentParsing.Mixfix.Expr
 import StructurallyRecursiveDescentParsing.Mixfix.Lib
 import StructurallyRecursiveDescentParsing.Mixfix
+import StructurallyRecursiveDescentParsing.Mixfix.Show
 import StructurallyRecursiveDescentParsing.Mixfix.Example
