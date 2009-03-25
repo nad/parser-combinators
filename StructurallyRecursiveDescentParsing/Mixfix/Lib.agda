@@ -8,17 +8,21 @@ module StructurallyRecursiveDescentParsing.Mixfix.Lib
          (Token : DecSetoid)
          where
 
-open DecSetoid Token using (_≟_) renaming (carrier to Tok)
+open DecSetoid Token using (_≟_; refl) renaming (carrier to Tok)
 
 open import Coinduction
 open import Data.Bool using (Bool; true; false; _∧_; _∨_)
 open import Data.Nat using (ℕ; zero; suc)
-open import Data.List.NonEmpty
+open import Data.List using (List; []; _∷_; _++_)
+open import Data.List.NonEmpty using (List⁺; [_]; _∷_)
 open import Data.Vec using (Vec; []; _∷_)
 open import Data.Product
 open import Relation.Nullary
 
 open import StructurallyRecursiveDescentParsing.Type
+
+------------------------------------------------------------------------
+-- Programs
 
 -- Agda's termination checker only accepts corecursive definitions if
 -- they are /syntactically/ guarded by constructors. The following
@@ -61,8 +65,8 @@ data ParserProg : Bool → Set → Set1 where
   _between_ : ∀ {e R n}
               (p : ∞₁ (ParserProg e R)) (toks : Vec Tok (suc n)) →
               ParserProg false (Vec R n)
-  _∥_       : ∀ {e₁ e₂ I x} {R : I → Set}
-              (p₁ : ParserProg  e₁       (R x))
+  _∥_       : ∀ {e₁ e₂ I i} {R : I → Set}
+              (p₁ : ParserProg  e₁       (R i))
               (p₂ : ParserProg       e₂  (∃ R)) →
                     ParserProg (e₁ ∨ e₂) (∃ R)
 
@@ -71,7 +75,7 @@ data ParserProg : Bool → Set → Set1 where
 
 theToken : Tok → Parser Tok false Tok
 theToken tok = token !>>= λ tok′ → ♯₁ ok tok′
-  where
+  module TheToken where
   okIndex : Tok → Bool
   okIndex tok′ with tok ≟ tok′
   ... | yes _ = true
@@ -84,6 +88,12 @@ theToken tok = token !>>= λ tok′ → ♯₁ ok tok′
 
 -- Interprets the parser programs as parsers.
 
+private
+  infix 10 ♯′_
+
+  ♯′_ : ∀ {A} → A → ∞₁ A
+  ♯′ x = ♯₁ x
+
 ⟦_⟧ : ∀ {e R} → ParserProg e R → Parser Tok e R
 ⟦ return x                 ⟧ = return x
 ⟦ fail                     ⟧ = fail
@@ -94,14 +104,117 @@ theToken tok = token !>>= λ tok′ → ♯₁ ok tok′
 ⟦ _⊛_ {true} {true}  p₁ p₂ ⟧ = ⟦ p₁ ⟧ ?>>= λ f →
                                ⟦ p₂ ⟧ ?>>= λ x →    return (f x)
 ⟦ _⊛_ {true} {false} p₁ p₂ ⟧ = ⟦ p₁ ⟧ ?>>= λ f →
-                               ⟦ p₂ ⟧ !>>= λ x → ♯₁ return (f x)
+                               ⟦ p₂ ⟧ !>>= λ x → ♯′ return (f x)
 ⟦ _⊛_ {false}        p₁ p₂ ⟧ = ⟦ p₁ ⟧ !>>= λ f → ♯₁ ⟦ f <$> p₂ ⟧
 ⟦ _<$>_  {true}  f p       ⟧ = ⟦ p  ⟧ ?>>= λ x →    return (f x)
-⟦ _<$>_  {false} f p       ⟧ = ⟦ p  ⟧ !>>= λ x → ♯₁ return (f x)
+⟦ _<$>_  {false} f p       ⟧ = ⟦ p  ⟧ !>>= λ x → ♯′ return (f x)
 ⟦ p +                      ⟧ = ⟦ p  ⟧ !>>= λ x → ♯₁
                                ⟦ _∷_ x <$> p + ∣ return [ x ] ⟧
-⟦ p between (t ∷ [])       ⟧ = theToken t !>>= λ _ → ♯₁ return []
+⟦ p between (t ∷ [])       ⟧ = theToken t !>>= λ _ → ♯′ return []
 ⟦ p between (t ∷ t′ ∷ ts)  ⟧ = theToken t !>>= λ _ → ♯₁
                                 ⟦ _∷_ <$> ♭₁ p ⊛ (p between (t′ ∷ ts)) ⟧
 ⟦ _∥_ {true}  p₁ p₂        ⟧ = (⟦ p₁ ⟧ ?>>= λ x →    return (, x)) ∣ ⟦ p₂ ⟧
-⟦ _∥_ {false} p₁ p₂        ⟧ = (⟦ p₁ ⟧ !>>= λ x → ♯₁ return (, x)) ∣ ⟦ p₂ ⟧
+⟦ _∥_ {false} p₁ p₂        ⟧ = (⟦ p₁ ⟧ !>>= λ x → ♯′ return (, x)) ∣ ⟦ p₂ ⟧
+
+------------------------------------------------------------------------
+-- Semantics of the programs
+
+-- This definition may seem unnecessary: why not simply define
+--
+--   x ⊕ s′ ∈⟦ p ⟧· s  =  x ⊕ s′ ∈ ⟦ p ⟧ · s?
+--
+-- The reason is that it is hard for Agda to infer the value of p from
+-- ⟦ p ⟧ (note that ⟦_⟧ is a function which evaluates). By using the
+-- definition below this problem is avoided.
+
+infix 4 _⊕_∈⟦_⟧·_
+
+data _⊕_∈⟦_⟧·_ : ∀ {R e} →
+                 R → List Tok → ParserProg e R → List Tok → Set1 where
+  return     : ∀ {R} {x : R} {s} → x ⊕ s ∈⟦ return x ⟧· s
+  token      : ∀ {x s} → x ⊕ s ∈⟦ token ⟧· x ∷ s
+  ∣ˡ         : ∀ {R x e₁ e₂ s s₁}
+                 {p₁ : ParserProg e₁ R} {p₂ : ParserProg e₂ R}
+               (x∈p₁ : x ⊕ s₁ ∈⟦ p₁ ⟧· s) → x ⊕ s₁ ∈⟦ p₁ ∣ p₂ ⟧· s
+  ∣ʳ         : ∀ {R x e₂ s s₁} e₁
+                 {p₁ : ParserProg e₁ R} {p₂ : ParserProg e₂ R}
+               (x∈p₂ : x ⊕ s₁ ∈⟦ p₂ ⟧· s) → x ⊕ s₁ ∈⟦ p₁ ∣ p₂ ⟧· s
+  _?>>=_     : ∀ {R₁ R₂ x y e₂ s s₁ s₂}
+                 {p₁ : ParserProg true R₁} {p₂ : R₁ → ParserProg e₂ R₂}
+               (x∈p₁ : x ⊕ s₁ ∈⟦ p₁ ⟧· s) (y∈p₂x : y ⊕ s₂ ∈⟦ p₂ x ⟧· s₁) →
+               y ⊕ s₂ ∈⟦ p₁ ?>>= p₂ ⟧· s
+  _!>>=_     : ∀ {R₁ R₂ x y} {e₂ : R₁ → Bool} {s s₁ s₂}
+                 {p₁ : ParserProg false R₁}
+                 {p₂ : (x : R₁) → ∞₁ (ParserProg (e₂ x) R₂)}
+               (x∈p₁ : x ⊕ s₁ ∈⟦ p₁ ⟧· s) (y∈p₂x : y ⊕ s₂ ∈⟦ ♭₁ (p₂ x) ⟧· s₁) →
+               y ⊕ s₂ ∈⟦ p₁ !>>= p₂ ⟧· s
+  _⊛_        : ∀ {e₁ e₂ s s₁ s₂ R₁ R₂ f x}
+                 {p₁ : ParserProg e₁ (R₁ → R₂)} {p₂ : ParserProg e₂ R₁}
+               (f∈p₁ : f ⊕ s₁ ∈⟦ p₁ ⟧· s) (x∈p₂ : x ⊕ s₂ ∈⟦ p₂ ⟧· s₁) →
+               f x ⊕ s₂ ∈⟦ p₁ ⊛ p₂ ⟧· s
+  _<$>_      : ∀ {e s s′ R₁ R₂ x} (f : R₁ → R₂) {p : ParserProg e R₁}
+               (x∈p : x ⊕ s′ ∈⟦ p ⟧· s) → f x ⊕ s′ ∈⟦ f <$> p ⟧· s
+  +-[]       : ∀ {R x s s₁} {p : ParserProg false R}
+               (x∈p : x ⊕ s₁ ∈⟦ p ⟧· s) → [ x ] ⊕ s₁ ∈⟦ p + ⟧· s
+  +-∷        : ∀ {R x s s₁ s₂ xs} {p : ParserProg false R}
+               (x∈p : x ⊕ s₁ ∈⟦ p ⟧· s) (xs∈p : xs ⊕ s₂ ∈⟦ p + ⟧· s₁) →
+               x ∷ xs ⊕ s₂ ∈⟦ p + ⟧· s
+  between-[] : ∀ {e R t s} {p : ∞₁ (ParserProg e R)} →
+               [] ⊕ s ∈⟦ p between (t ∷ []) ⟧· t ∷ s
+  between-∷  : ∀ {e R n t x xs s s₁ s₂}
+                 {p : ∞₁ (ParserProg e R)} {ts : Vec Tok (suc n)} →
+               (x∈p : x ⊕ s₁ ∈⟦ ♭₁ p ⟧· s)
+               (xs∈⋯ : xs ⊕ s₂ ∈⟦ p between ts ⟧· s₁) →
+               x ∷ xs ⊕ s₂ ∈⟦ p between (t ∷ ts) ⟧· t ∷ s
+  ∥ˡ         : ∀ {e₁ e₂ I i} {R : I → Set} {x s s′}
+                 {p₁ : ParserProg e₁ (R i)} {p₂ : ParserProg e₂ (∃ R)}
+               (x∈p₁ : x ⊕ s′ ∈⟦ p₁ ⟧· s) → (, x) ⊕ s′ ∈⟦ p₁ ∥ p₂ ⟧· s
+  ∥ʳ         : ∀ e₁ {e₂ I i} {R : I → Set} {x s s′}
+                 {p₁ : ParserProg e₁ (R i)} {p₂ : ParserProg e₂ (∃ R)}
+               (x∈p₂ : x ⊕ s′ ∈⟦ p₂ ⟧· s) → x ⊕ s′ ∈⟦ p₁ ∥ p₂ ⟧· s
+
+-- The semantics is correct.
+
+private
+
+  <$>-lemma : ∀ {e s s′ R₁ R₂ x} (p : ParserProg e R₁) {f : R₁ → R₂} →
+              x ⊕ s′ ∈ ⟦ p ⟧ · s → f x ⊕ s′ ∈ ⟦ f <$> p ⟧ · s
+  <$>-lemma {true}  _ x∈p·s = x∈p·s ?>>= return
+  <$>-lemma {false} _ x∈p·s = x∈p·s !>>= return
+
+  ⊛-lemma : ∀ {e₁ e₂ s s₁ s₂ R₁ R₂ f x}
+              {p₁ : ParserProg e₁ (R₁ → R₂)} {p₂ : ParserProg e₂ R₁} →
+            f ⊕ s₁ ∈ ⟦ p₁ ⟧ · s → x ⊕ s₂ ∈ ⟦ p₂ ⟧ · s₁ → f x ⊕ s₂ ∈ ⟦ p₁ ⊛ p₂ ⟧ · s
+  ⊛-lemma {true}  {true}  {p₂ = p₂} f∈p₁ x∈p₂ = f∈p₁ ?>>= <$>-lemma p₂ x∈p₂
+  ⊛-lemma {true}  {false} {p₂ = p₂} f∈p₁ x∈p₂ = f∈p₁ ?>>= <$>-lemma p₂ x∈p₂
+  ⊛-lemma {false} {_}     {p₂ = p₂} f∈p₁ x∈p₂ = f∈p₁ !>>= <$>-lemma p₂ x∈p₂
+
+  theToken-lemma : ∀ {t s} → t ⊕ s ∈ theToken t · t ∷ s
+  theToken-lemma {t} {s} = token !>>= ok-lemma
+    where
+    ok-lemma : t ⊕ s ∈ TheToken.ok t t · s
+    ok-lemma with t ≟ t
+    ... | yes t≈t = return
+    ... | no  t≉t with t≉t refl
+    ...   | ()
+
+correct : ∀ {R e x s s′} {p : ParserProg e R} →
+          x ⊕ s′ ∈⟦ p ⟧· s → x ⊕ s′ ∈ ⟦ p ⟧ · s
+correct return                 = return
+correct token                  = token
+correct (∣ˡ x∈p₁)              = ∣ˡ (correct x∈p₁)
+correct (∣ʳ e₁ x∈p₂)           = ∣ʳ e₁ (correct x∈p₂)
+correct (x∈p₁ ?>>= y∈p₂x)      = correct x∈p₁ ?>>= correct y∈p₂x
+correct (x∈p₁ !>>= y∈p₂x)      = correct x∈p₁ !>>= correct y∈p₂x
+correct (f∈p₁ ⊛ x∈p₂)          = ⊛-lemma (correct f∈p₁) (correct x∈p₂)
+correct (f <$> x∈p)            = <$>-lemma _ (correct x∈p)
+correct (+-[] x∈p)             = correct x∈p !>>= ∣ʳ false return
+correct (+-∷ {p = p} x∈p xs∈p) = correct x∈p !>>=
+                                 ∣ˡ (<$>-lemma (p +) (correct xs∈p))
+correct between-[]             = theToken-lemma !>>= return
+correct (between-∷ {p = p} {_ ∷ _} x∈p xs∈⋯) =
+  theToken-lemma !>>= ⊛-lemma (<$>-lemma _ (correct x∈p)) (correct xs∈⋯)
+correct (∥ˡ {true}  {p₁ = p₁} x∈p₁) = ∣ˡ (<$>-lemma p₁ (correct x∈p₁))
+correct (∥ˡ {false} {p₁ = p₁} x∈p₁) = ∣ˡ (<$>-lemma p₁ (correct x∈p₁))
+correct (∥ʳ true  x∈p₂)             = ∣ʳ true  (correct x∈p₂)
+correct (∥ʳ false x∈p₂)             = ∣ʳ false (correct x∈p₂)
