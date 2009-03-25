@@ -86,21 +86,21 @@ data _∈_·_ {Tok} : ∀ {R e} → R → Parser Tok e R → List Tok → Set1 w
            (x∈p₁·s₁ : x ∈ p₁ · s₁) (y∈p₂x·s₂ : y ∈ ♭₁ (p₂ x) · s₂) →
            y ∈ p₁ !>>= p₂ · s₁ ++ s₂
 
+------------------------------------------------------------------------
+-- Some lemmas
+
+-- A simple cast lemma.
+
 cast : ∀ {Tok e R} {p : Parser Tok e R} {x s s′} →
        s ≡ s′ → x ∈ p · s → x ∈ p · s′
 cast refl x∈ = x∈
 
-------------------------------------------------------------------------
--- Some lemmas
-
 -- Sanity check: The Bool index is true iff the empty string is
 -- accepted.
 
-mutual
-
-  does : ∀ {Tok R} (p : Parser Tok true R) → ∃ λ x → x ∈ p · []
-  does p = does′ p refl
-
+does : ∀ {Tok R} (p : Parser Tok true R) → ∃ λ x → x ∈ p · []
+does p = does′ p refl
+  where
   does′ : ∀ {Tok e R}
           (p : Parser Tok e R) → e ≡ true → ∃ λ x → x ∈ p · []
   does′ (return x)          refl = (x , return)
@@ -113,11 +113,9 @@ mutual
   does′ token        ()
   does′ (p₁ !>>= p₂) ()
 
-mutual
-
-  doesNot : ∀ {Tok R} (p : Parser Tok false R) → ∃ (λ x → x ∈ p · []) → ⊥
-  doesNot p x∈p·[] = doesNot′ p refl x∈p·[] refl
-
+doesNot : ∀ {Tok R} (p : Parser Tok false R) → ∃ (λ x → x ∈ p · []) → ⊥
+doesNot p x∈p·[] = doesNot′ p refl x∈p·[] refl
+  where
   doesNot′ : ∀ {Tok R e s} (p : Parser Tok e R) → e ≡ false →
              ∃ (λ x → x ∈ p · s) → s ≢ []
   doesNot′ (return x) () _ _
