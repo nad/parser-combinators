@@ -74,7 +74,7 @@ data _∈_·_ {Tok} : ∀ {R e} → R → Parser Tok e R → List Tok → Set1 w
   token  : ∀ {x} → x ∈ token · [ x ]
   ∣ˡ     : ∀ {R x e₁ e₂ s} {p₁ : Parser Tok e₁ R} {p₂ : Parser Tok e₂ R}
            (x∈p₁·s : x ∈ p₁ · s) → x ∈ p₁ ∣ p₂ · s
-  ∣ʳ     : ∀ {R x e₁ e₂ s} {p₁ : Parser Tok e₁ R} {p₂ : Parser Tok e₂ R}
+  ∣ʳ     : ∀ {R x e₂ s} e₁ {p₁ : Parser Tok e₁ R} {p₂ : Parser Tok e₂ R}
            (x∈p₂·s : x ∈ p₂ · s) → x ∈ p₁ ∣ p₂ · s
   _?>>=_ : ∀ {R₁ R₂ x y e₂ s₁ s₂}
              {p₁ : Parser Tok true R₁} {p₂ : R₁ → Parser Tok e₂ R₂}
@@ -104,8 +104,8 @@ mutual
   does′ : ∀ {Tok e R}
           (p : Parser Tok e R) → e ≡ true → ∃ λ x → x ∈ p · []
   does′ (return x)          refl = (x , return)
-  does′ (_∣_ {true}  p₁ p₂) refl = Prod.map id ∣ˡ             (does p₁)
-  does′ (_∣_ {false} p₁ p₂) refl = Prod.map id (∣ʳ {p₁ = p₁}) (does p₂)
+  does′ (_∣_ {true}  p₁ p₂) refl = Prod.map id ∣ˡ         (does p₁)
+  does′ (_∣_ {false} p₁ p₂) refl = Prod.map id (∣ʳ false) (does p₂)
   does′ (p₁ ?>>= p₂)        refl with does p₁
   does′ (p₁ ?>>= p₂)        refl | (x , x∈p₁·[]) =
     Prod.map id (_?>>=_ x∈p₁·[]) (does (p₂ x))
@@ -125,8 +125,8 @@ mutual
   doesNot′ token refl (_ , ()) refl
   doesNot′ (_∣_ {true}          p₁ p₂) () _ _
   doesNot′ (_∣_ {false} {true}  p₁ p₂) () _ _
-  doesNot′ (_∣_ {false} {false} p₁ p₂) refl (x , ∣ˡ x∈p₁·s) refl = doesNot p₁ (x , x∈p₁·s)
-  doesNot′ (_∣_ {false} {false} p₁ p₂) refl (x , ∣ʳ x∈p₂·s) refl = doesNot p₂ (x , x∈p₂·s)
+  doesNot′ (_∣_ {false} {false} p₁ p₂) refl (x , ∣ˡ        x∈p₁·s) refl = doesNot p₁ (x , x∈p₁·s)
+  doesNot′ (_∣_ {false} {false} p₁ p₂) refl (x , ∣ʳ .false x∈p₂·s) refl = doesNot p₂ (x , x∈p₂·s)
   doesNot′ (p₁ ?>>= p₂) refl (y , _?>>=_ {x = x} {s₁ = []} x∈p₁·[] y∈p₂x·[]) refl = doesNot (p₂ x) (y , y∈p₂x·[])
   doesNot′ (p₁ ?>>= p₂) refl (y , _?>>=_         {s₁ = _ ∷ _} _ _) ()
   doesNot′ (p₁ !>>= p₂) refl (y , _!>>=_ {x = x} {s₁ = []} x∈p₁·[] y∈p₂x·[]) refl = doesNot p₁ (x , x∈p₁·[])

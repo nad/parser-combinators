@@ -61,14 +61,14 @@ data Unambiguous′ {Tok} : ∀ {e R} → Parser Tok e R → Set1 where
 
 sound : ∀ {Tok e R} {p : Parser Tok e R} →
         Unambiguous′ p → Unambiguous p
-sound return           return      return      = refl
-sound fail             ()          ()
-sound token            token       token       = refl
-sound (choice u₁ u₂ u) (∣ˡ x∈p₁·s) (∣ˡ y∈p₁·s) =      sound u₁ x∈p₁·s y∈p₁·s
-sound (choice u₁ u₂ u) (∣ˡ x∈p₁·s) (∣ʳ y∈p₂·s) =      u        x∈p₁·s y∈p₂·s
-sound (choice u₁ u₂ u) (∣ʳ x∈p₂·s) (∣ˡ y∈p₁·s) = sym (u        y∈p₁·s x∈p₂·s)
-sound (choice u₁ u₂ u) (∣ʳ x∈p₂·s) (∣ʳ y∈p₂·s) =      sound u₂ x∈p₂·s y∈p₂·s
-sound (?bind {p₁ = p₁} {p₂} u) x∈p·s y∈p·s     = helper x∈p·s y∈p·s refl
+sound return           return        return         = refl
+sound fail             ()            ()
+sound token            token         token          = refl
+sound (choice u₁ u₂ u) (∣ˡ   x∈p₁·s) (∣ˡ    y∈p₁·s) =      sound u₁ x∈p₁·s y∈p₁·s
+sound (choice u₁ u₂ u) (∣ˡ   x∈p₁·s) (∣ʳ _  y∈p₂·s) =      u        x∈p₁·s y∈p₂·s
+sound (choice u₁ u₂ u) (∣ʳ _ x∈p₂·s) (∣ˡ    y∈p₁·s) = sym (u        y∈p₁·s x∈p₂·s)
+sound (choice u₁ u₂ u) (∣ʳ _ x∈p₂·s) (∣ʳ ._ y∈p₂·s) =      sound u₂ x∈p₂·s y∈p₂·s
+sound (?bind {p₁ = p₁} {p₂} u) x∈p·s y∈p·s          = helper x∈p·s y∈p·s refl
   where
   helper : ∀ {x₁ x₂ s₁ s₂} →
            x₁ ∈ p₁ ?>>= p₂ · s₁ → x₂ ∈ p₁ ?>>= p₂ · s₂ →
@@ -85,13 +85,12 @@ sound (!bind {p₁ = p₁} {p₂} u) x∈p·s y∈p·s = helper x∈p·s y∈p·
 
 complete : ∀ {Tok e R} (p : Parser Tok e R) →
            Unambiguous p → Unambiguous′ p
-complete (return x)   _ = return
-complete fail         _ = fail
-complete token        _ = token
-complete (p₁ ∣ p₂)    u = choice (complete p₁ (λ x₁∈ x₂∈ → u (∣ˡ x₁∈) (∣ˡ x₂∈)))
-                                 (complete p₂ (λ x₁∈ x₂∈ → u (∣ʳ {p₁ = p₁} x₁∈)
-                                                             (∣ʳ {p₁ = p₁} x₂∈)))
-                                 (λ x₁∈ x₂∈ → u (∣ˡ x₁∈) (∣ʳ {p₁ = p₁} x₂∈))
+complete (return x)       _ = return
+complete fail             _ = fail
+complete token            _ = token
+complete (_∣_ {e₁} p₁ p₂) u = choice (complete p₁ (λ x₁∈ x₂∈ → u (∣ˡ    x₁∈) (∣ˡ    x₂∈)))
+                                     (complete p₂ (λ x₁∈ x₂∈ → u (∣ʳ e₁ x₁∈) (∣ʳ e₁ x₂∈)))
+                                     (λ x₁∈ x₂∈ → u (∣ˡ x₁∈) (∣ʳ e₁ x₂∈))
 complete (p₁ ?>>= p₂) u = ?bind (λ x₁∈ y₁∈ eq₁ x₂∈ y₂∈ eq₂ →
                                    u (x₁∈ ?>>= y₁∈) (cast (trans eq₂ (sym eq₁))
                                                           (x₂∈ ?>>= y₂∈)))
