@@ -29,14 +29,14 @@ open Lib String.decSetoid
 -- The following definition uses a lexicographic combination of
 -- guarded corecursion and structural recursion. The only "corecursive
 -- call", where the size of the inductive input can increase
--- arbitrarily, is the use of expr in the expression ♯₁ expr.
+-- arbitrarily, is the one in expr.
 
 mutual
 
   -- Expressions.
 
-  expr : ParserProg false (Expr g)
-  expr = nodes g
+  expr : ∞₁ (ParserProg false (Expr g))
+  expr = ♯₁ nodes g
 
   -- Expressions corresponding to zero or more nodes in the precedence
   -- graph: operator applications where the outermost operator has one
@@ -59,7 +59,7 @@ mutual
     ∥ appʳ   <$>      preRight +   ⊛ ↟
     ∥ appˡ   <$>  ↟ ⊛ postLeft +
     ∥ fail
-    where
+    module Node where
     -- [ fix ] parses the internal parts of operators with the
     -- current precedence level and fixity fix.
     [_] = λ (fix : Fixity) → inner (ops fix)
@@ -83,17 +83,17 @@ mutual
   -- Internal parts (all name parts plus internal expressions) of
   -- operators of the given precedence and fixity.
 
-  inner : ∀ {fix} → (ops : List (∃ (Operator fix))) →
+  inner : ∀ {fix} (ops : List (∃ (Operator fix))) →
           ParserProg false (Inner ops)
   inner []               = fail
   inner ((_ , op) ∷ ops) =
-      _∙_ here <$> ((♯₁ expr) between nameParts op)
+      _∙_ here <$> (expr between nameParts op)
     ∣ weakenI  <$> inner ops
 
 -- Expression parsers.
 
 expression : Parser NamePart false (Expr g)
-expression = ⟦ expr ⟧
+expression = ⟦ ♭₁ expr ⟧
 
 parseExpr : List NamePart → List (Expr g)
 parseExpr = parseComplete expression

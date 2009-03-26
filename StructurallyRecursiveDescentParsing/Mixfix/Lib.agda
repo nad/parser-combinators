@@ -14,12 +14,14 @@ open import Coinduction
 open import Data.Bool using (Bool; true; false; _∧_; _∨_)
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.List using (List; []; _∷_; _++_)
-open import Data.List.NonEmpty using (List⁺; [_]; _∷_)
+open import Data.List.NonEmpty using (List⁺; [_]; _∷_; _∷ʳ_)
 open import Data.Vec using (Vec; []; _∷_)
 open import Data.Product
 open import Relation.Nullary
+import Relation.Binary.PropositionalEquality as PropEq
+open PropEq using (_≡_)
 
-open import StructurallyRecursiveDescentParsing.Type
+open import StructurallyRecursiveDescentParsing.Type hiding (cast)
 
 ------------------------------------------------------------------------
 -- Programs
@@ -218,3 +220,15 @@ correct (∥ˡ {true}  {p₁ = p₁} x∈p₁) = ∣ˡ (<$>-lemma p₁ (correct 
 correct (∥ˡ {false} {p₁ = p₁} x∈p₁) = ∣ˡ (<$>-lemma p₁ (correct x∈p₁))
 correct (∥ʳ true  x∈p₂)             = ∣ʳ true  (correct x∈p₂)
 correct (∥ʳ false x∈p₂)             = ∣ʳ false (correct x∈p₂)
+
+-- Some lemmas.
+
++-∷ʳ : ∀ {R x s s₁ s₂ xs} {p : ParserProg false R} →
+       xs ⊕ s₁ ∈⟦ p + ⟧· s → x ⊕ s₂ ∈⟦ p ⟧· s₁ →
+       xs ∷ʳ x ⊕ s₂ ∈⟦ p + ⟧· s
++-∷ʳ (+-[] x∈p)     y∈p = +-∷ x∈p (+-[] y∈p)
++-∷ʳ (+-∷ x∈p xs∈p) y∈p = +-∷ x∈p (+-∷ʳ xs∈p y∈p)
+
+cast : ∀ {e R x₁ x₂ s s′} {p : ParserProg e R} →
+       x₁ ≡ x₂ → x₁ ⊕ s′ ∈⟦ p ⟧· s → x₂ ⊕ s′ ∈⟦ p ⟧· s
+cast PropEq.refl x∈p = x∈p
