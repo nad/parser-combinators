@@ -117,22 +117,22 @@ does p = does′ p refl
   does′ token        ()
   does′ (p₁ !>>= p₂) ()
 
-doesNot : ∀ {Tok R} (p : Parser Tok false R) → ∃ (λ x → x ∈ p · []) → ⊥
-doesNot p x∈p·[] = doesNot′ p refl x∈p·[] refl
+doesNot : ∀ {Tok R x} {p : Parser Tok false R} → x ∈ p · [] → ⊥
+doesNot x∈p·[] = doesNot′ x∈p·[] refl refl
   where
-  doesNot′ : ∀ {Tok R e s} (p : Parser Tok e R) → e ≡ false →
-             ∃ (λ x → x ∈ p · s) → s ≢ []
-  doesNot′ (return x) () _ _
-  doesNot′ fail  refl (_ , ()) _
-  doesNot′ token refl (_ , ()) refl
-  doesNot′ (_∣_ {true}          p₁ p₂) () _ _
-  doesNot′ (_∣_ {false} {true}  p₁ p₂) () _ _
-  doesNot′ (_∣_ {false} {false} p₁ p₂) refl (x , ∣ˡ        x∈p₁·s) refl = doesNot p₁ (x , x∈p₁·s)
-  doesNot′ (_∣_ {false} {false} p₁ p₂) refl (x , ∣ʳ .false x∈p₂·s) refl = doesNot p₂ (x , x∈p₂·s)
-  doesNot′ (p₁ ?>>= p₂) refl (y , _?>>=_ {x = x} {s₁ = []} x∈p₁·[] y∈p₂x·[]) refl = doesNot (p₂ x) (y , y∈p₂x·[])
-  doesNot′ (p₁ ?>>= p₂) refl (y , _?>>=_         {s₁ = _ ∷ _} _ _) ()
-  doesNot′ (p₁ !>>= p₂) refl (y , _!>>=_ {x = x} {s₁ = []} x∈p₁·[] y∈p₂x·[]) refl = doesNot p₁ (x , x∈p₁·[])
-  doesNot′ (p₁ !>>= p₂) refl (y , _!>>=_         {s₁ = _ ∷ _} _ _) ()
+  doesNot′ : ∀ {Tok R x e s} {p : Parser Tok e R} →
+             x ∈ p · s → e ≡ false → s ≢ []
+  doesNot′ (∣ˡ {e₁ = false} x∈p₁)        refl refl = doesNot x∈p₁
+  doesNot′ (∣ʳ       false  x∈p₂)        refl refl = doesNot x∈p₂
+  doesNot′ (_?>>=_ {s₁ = []} x∈p₁ y∈p₂x) refl refl = doesNot y∈p₂x
+  doesNot′ (_!>>=_ {s₁ = []} x∈p₁ y∈p₂x) refl refl = doesNot x∈p₁
+
+  doesNot′ return                    () _
+  doesNot′ token                     _  ()
+  doesNot′ (∣ˡ {e₁ = true} x∈p₁)     () _
+  doesNot′ (∣ʳ       true  x∈p₂)     () _
+  doesNot′ (_?>>=_ {s₁ = _ ∷ _} _ _) _  ()
+  doesNot′ (_!>>=_ {s₁ = _ ∷ _} _ _) _  ()
 
 ------------------------------------------------------------------------
 -- A variant of the semantics
