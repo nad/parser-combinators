@@ -77,17 +77,17 @@ data _∈_·_ {Tok} : ∀ {R e} → R → Parser Tok e R → List Tok → Set1 w
   return : ∀ {R} {x : R} → x ∈ return x · []
   token  : ∀ {x} → x ∈ token · [ x ]
   ∣ˡ     : ∀ {R x e₁ e₂ s} {p₁ : Parser Tok e₁ R} {p₂ : Parser Tok e₂ R}
-           (x∈p₁·s : x ∈ p₁ · s) → x ∈ p₁ ∣ p₂ · s
+           (x∈p₁ : x ∈ p₁ · s) → x ∈ p₁ ∣ p₂ · s
   ∣ʳ     : ∀ {R x e₂ s} e₁ {p₁ : Parser Tok e₁ R} {p₂ : Parser Tok e₂ R}
-           (x∈p₂·s : x ∈ p₂ · s) → x ∈ p₁ ∣ p₂ · s
+           (x∈p₂ : x ∈ p₂ · s) → x ∈ p₁ ∣ p₂ · s
   _?>>=_ : ∀ {R₁ R₂ x y e₂ s₁ s₂}
              {p₁ : Parser Tok true R₁} {p₂ : R₁ → Parser Tok e₂ R₂}
-           (x∈p₁·s₁ : x ∈ p₁ · s₁) (y∈p₂x·s₂ : y ∈ p₂ x · s₂) →
+           (x∈p₁ : x ∈ p₁ · s₁) (y∈p₂x : y ∈ p₂ x · s₂) →
            y ∈ p₁ ?>>= p₂ · s₁ ++ s₂
   _!>>=_ : ∀ {R₁ R₂ x y} {e₂ : R₁ → Bool} {s₁ s₂}
              {p₁ : Parser Tok false R₁}
              {p₂ : (x : R₁) → ∞₁ (Parser Tok (e₂ x) R₂)}
-           (x∈p₁·s₁ : x ∈ p₁ · s₁) (y∈p₂x·s₂ : y ∈ ♭₁ (p₂ x) · s₂) →
+           (x∈p₁ : x ∈ p₁ · s₁) (y∈p₂x : y ∈ ♭₁ (p₂ x) · s₂) →
            y ∈ p₁ !>>= p₂ · s₁ ++ s₂
 
 ------------------------------------------------------------------------
@@ -200,14 +200,14 @@ extend (x∈p₁ !>>= y∈p₂x) = extend x∈p₁ !>>= extend y∈p₂x
 
 complete : ∀ {Tok R e x s} {p : Parser Tok e R} →
            x ∈ p · s → x ⊕ [] ∈ p · s
-complete return                  = return
-complete token                   = token
-complete (∣ˡ x∈p₁·s)             = ∣ˡ    (complete x∈p₁·s)
-complete (∣ʳ e₁ x∈p₂·s)          = ∣ʳ e₁ (complete x∈p₂·s)
-complete (x∈p₁·s₁ ?>>= y∈p₂x·s₂) = extend (complete x∈p₁·s₁) ?>>=
-                                           complete y∈p₂x·s₂
-complete (x∈p₁·s₁ !>>= y∈p₂x·s₂) = extend (complete x∈p₁·s₁) !>>=
-                                           complete y∈p₂x·s₂
+complete return            = return
+complete token             = token
+complete (∣ˡ x∈p₁)         = ∣ˡ    (complete x∈p₁)
+complete (∣ʳ e₁ x∈p₂)      = ∣ʳ e₁ (complete x∈p₂)
+complete (x∈p₁ ?>>= y∈p₂x) = extend (complete x∈p₁) ?>>=
+                                     complete y∈p₂x
+complete (x∈p₁ !>>= y∈p₂x) = extend (complete x∈p₁) !>>=
+                                     complete y∈p₂x
 
 complete′ : ∀ {Tok R e x s₂ s} {p : Parser Tok e R} →
             (∃ λ s₁ → Σ₀₁ (s ≡ s₁ ++ s₂) λ _ → x ∈ p · s₁) →
