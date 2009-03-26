@@ -4,18 +4,36 @@
 
 module StructurallyRecursiveDescentParsing.Mixfix.Example where
 
+open import Coinduction
 open import Data.Vec using ([]; _∷_; [_])
-open import Data.List renaming ([_] to L[_])
+import Data.List as List
+open List using (List; []; _∷_; _∈_; here; there)
+          renaming ([_] to L[_])
+import Data.Colist as Colist
 open import Data.Product using (∃₂; ,_)
+open import Data.Unit using (⊤)
+open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Nat using (zero; suc)
 open import Data.Fin using (#_)
-open import Data.String
-open import Data.Function using (_∘_)
+import Data.String as String
+open String using (String; _++_)
+import Data.List.Equality as ListEq
+open import Relation.Binary
+open DecSetoid (ListEq.DecidableEquality.decSetoid String.decSetoid)
+  using (_≟_)
+open import Data.Function using (_∘_; _$_)
+open import Data.Bool using (Bool; if_then_else_)
+import Data.Bool.Show as Bool
+open import Data.Maybe using (Maybe; just; nothing)
+open import Relation.Nullary.Decidable using (decToBool)
 open import Relation.Binary.PropositionalEquality
+open import IO
 
-open import StructurallyRecursiveDescentParsing.Mixfix.Expr
+open import StructurallyRecursiveDescentParsing.Mixfix.Expr as Expr
 open import StructurallyRecursiveDescentParsing.Mixfix.Fixity
+  hiding (_≟_)
 import StructurallyRecursiveDescentParsing.Mixfix as Mixfix
+import StructurallyRecursiveDescentParsing.Mixfix.Show as Show
 
 ------------------------------------------------------------------------
 -- Operators
@@ -23,74 +41,96 @@ import StructurallyRecursiveDescentParsing.Mixfix as Mixfix
 atom : Operator closed 0
 atom = operator ("•" ∷ [])
 
-• : Expr
-• = ⟪ atom ∙ [] ⟫
-
 parens : Operator closed 1
 parens = operator ("(" ∷ ")" ∷ [])
-
-⟦_⟧ : Expr → Expr
-⟦ e ⟧ = ⟪ parens ∙ [ e ] ⟫
 
 plus : Operator (infx left) 0
 plus = operator ("+" ∷ [])
 
-_+_ : Expr → Expr → Expr
-e₁ + e₂ = e₁ ⟨ plus ∙ [] ⟩ e₂
-
 minus : Operator (infx left) 0
 minus = operator ("-" ∷ [])
-
-_-_ : Expr → Expr → Expr
-e₁ - e₂ = e₁ ⟨ minus ∙ [] ⟩ e₂
 
 times : Operator (infx left) 0
 times = operator ("*" ∷ [])
 
-_*_ : Expr → Expr → Expr
-e₁ * e₂ = e₁ ⟨ times ∙ [] ⟩ e₂
-
 comma : Operator (infx left) 0
 comma = operator ("," ∷ [])
-
-_,_ : Expr → Expr → Expr
-e₁ , e₂ = e₁ ⟨ comma ∙ [] ⟩ e₂
 
 wellTyped : Operator postfx 1
 wellTyped = operator ("⊢" ∷ "∶" ∷ [])
 
-_⊢_∶ : Expr → Expr → Expr
-e₁ ⊢ e₂ ∶ = e₁ ⟨ wellTyped ∙ [ e₂ ] ⟫
-
 ------------------------------------------------------------------------
 -- Precedence graph
 
-prec : List (∃₂ Operator) → PrecedenceGraph → PrecedenceTree
-prec ops = precedence (λ fix → gfilter (hasFixity fix) ops)
+abstract  -- To speed up type-checking.
 
-g : PrecedenceGraph
-g = wt ∷ c ∷ pm ∷ t ∷ ap ∷ []
-  where
-  ap = prec ((, , atom) ∷ (, , parens) ∷ []) []
-  t  = prec ((, , times) ∷ [])               (ap ∷ [])
-  pm = prec ((, , plus) ∷ (, , minus) ∷ [])  (t ∷ ap ∷ [])
-  c  = prec ((, , comma) ∷ [])               (pm ∷ t ∷ ap ∷ [])
-  wt = prec ((, , wellTyped) ∷ [])           (c ∷ ap ∷ [])
+  prec : List (∃₂ Operator) → PrecedenceGraph → Precedence
+  prec ops = precedence (λ fix → List.gfilter (hasFixity fix) ops)
+
+  mutual
+
+    ap = prec ((, , atom) ∷ (, , parens) ∷ []) []
+    t  = prec ((, , times) ∷ [])               (ap ∷ [])
+    pm = prec ((, , plus) ∷ (, , minus) ∷ [])  (t ∷ ap ∷ [])
+    c  = prec ((, , comma) ∷ [])               (pm ∷ t ∷ ap ∷ [])
+    wt = prec ((, , wellTyped) ∷ [])           (c ∷ ap ∷ [])
+
+  g : PrecedenceGraph
+  g = wt ∷ c ∷ pm ∷ t ∷ ap ∷ []
+
+------------------------------------------------------------------------
+-- Expressions
+
+  open Expr.PrecedenceCorrect g
+
+  • : ExprIn ap nothing
+  • = ⟪ here ∙ [] ⟫
+
+  ⟦_⟧ : Expr g → ExprIn ap nothing
+  ⟦ e ⟧ = ⟪ there here ∙ [ e ] ⟫
+
+  _+_ : Outer pm left → Expr (t ∷ ap ∷ []) → ExprIn pm (just left)
+  e₁ + e₂ = e₁ ⟨ here ∙ [] ⟩ˡ e₂
+
+  _-_ : Outer pm left → Expr (t ∷ ap ∷ []) → ExprIn pm (just left)
+  e₁ - e₂ = e₁ ⟨ there here ∙ [] ⟩ˡ e₂
+
+  _*_ : Outer t left → Expr (ap ∷ []) → ExprIn t (just left)
+  e₁ * e₂ = e₁ ⟨ here ∙ [] ⟩ˡ e₂
+
+  _,_ : Outer c left → Expr (pm ∷ t ∷ ap ∷ []) → ExprIn c (just left)
+  e₁ , e₂ = e₁ ⟨ here ∙ [] ⟩ˡ e₂
+
+  _⊢_∶ : Outer wt left → Expr g → Expr g
+  e₁ ⊢ e₂ ∶ = here ∙ (e₁ ⟨ here ∙ [ e₂ ] ⟫)
 
 ------------------------------------------------------------------------
 -- Some tests
 
-test : String → List Expr
-test s = Mixfix.parseExpr g (map (fromList ∘ L[_]) (toList s))
+open Show g
 
--- Using an unoptimised type checker to run an inefficient parser can
--- take ages… The following examples have been converted into
--- postulates since I have not had the patience to wait long enough to
--- see whether the left- and right-hand sides actually match.
+fromNameParts : List NamePart → String
+fromNameParts = List.foldr _++_ ""
 
-postulate
-  ex₁ : test "•⊢•" ≡ []
-  ex₂ : test "(•,•)⊢∶" ≡ []
-  ex₃ : test "•⊢•∶" ≡ L[ • ⊢ • ∶ ]
-  ex₄ : test "•,•+•*•⊢(•⊢•∶)∶" ≡
-        L[ (• , (• + (• * •))) ⊢ ⟦ • ⊢ • ∶ ⟧ ∶ ]
+toNameParts : String → List NamePart
+toNameParts = List.map (String.fromList ∘ L[_]) ∘ String.toList
+
+parse : String → List String
+parse = List.map (fromNameParts ∘ show) ∘
+        Mixfix.parseExpr g ∘
+        toNameParts
+
+test : String → List String → Bool
+test s₁ s₂ = decToBool (parse s₁ ≟ s₂)
+
+runTest : String → List String → IO ⊤
+runTest s₁ s₂ = ♯₁
+  putStrLn ("Testing: " ++ s₁)                         >> ♯₁ (♯₁
+  mapM′ putStrLn (Colist.fromList $ parse s₁)          >> ♯₁
+  putStrLn (if test s₁ s₂ then "Passed" else "Failed") )
+
+main = run (♯₁
+  runTest "•⊢•"             []                     >> ♯₁ (♯₁
+  runTest "(•,•)⊢∶"         []                     >> ♯₁ (♯₁
+  runTest "•⊢•∶"            L[ "•⊢•∶" ]            >> ♯₁
+  runTest "•,•+•*•⊢(•⊢•∶)∶" L[ "•,•+•*•⊢(•⊢•∶)∶" ] )))
