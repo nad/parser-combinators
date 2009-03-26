@@ -24,13 +24,6 @@ import StructurallyRecursiveDescentParsing.Grammars
 
 import StructurallyRecursiveDescentParsing.Simple
 
--- An optimised backend. Unfortunately Agda is currently (Dec 2008)
--- too slow to be able to comfortably type check these modules (at
--- least on my machine). There is a risk that the code has bitrotted.
-
--- import StructurallyRecursiveDescentParsing.Memoised
--- import StructurallyRecursiveDescentParsing.Memoised.Monad
-
 -- A library of derived parser combinators.
 
 import StructurallyRecursiveDescentParsing.Lib

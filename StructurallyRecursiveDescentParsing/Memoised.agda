@@ -2,6 +2,8 @@
 -- A memoising backend
 ------------------------------------------------------------------------
 
+-- This code has bitrotted.
+
 -- Following Frost/Szydlowski and Frost/Hafiz/Callaghan (but without
 -- the left recursion fix). An improvement has been made: The user
 -- does not have to insert memoisation annotations manually. Instead

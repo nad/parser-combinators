@@ -2,6 +2,8 @@
 -- Parser monad
 ------------------------------------------------------------------------
 
+-- This code may have bitrotted.
+
 open import Relation.Binary
 open import Relation.Binary.OrderMorphism
 import Relation.Binary.PropositionalEquality as PropEq
