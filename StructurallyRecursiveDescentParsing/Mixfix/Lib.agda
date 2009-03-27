@@ -21,7 +21,8 @@ open import Relation.Nullary
 import Relation.Binary.PropositionalEquality as PropEq
 open PropEq using (_≡_)
 
-open import StructurallyRecursiveDescentParsing.Type hiding (cast)
+open import StructurallyRecursiveDescentParsing.Type
+open import StructurallyRecursiveDescentParsing.Semantics hiding (cast)
 
 ------------------------------------------------------------------------
 -- Programs

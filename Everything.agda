@@ -4,9 +4,13 @@
 
 module Everything where
 
--- The parser type, including its semantics.
+-- The parser type.
 
 import StructurallyRecursiveDescentParsing.Type
+
+-- Semantics of the parsers.
+
+import StructurallyRecursiveDescentParsing.Semantics
 
 -- Definition of unambiguity.
 

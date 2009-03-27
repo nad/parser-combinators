@@ -10,6 +10,7 @@ open import Data.List
 open import Relation.Binary.PropositionalEquality
 
 open import StructurallyRecursiveDescentParsing.Type
+open import StructurallyRecursiveDescentParsing.Semantics
   hiding (sound; complete)
 
 ------------------------------------------------------------------------
