@@ -22,7 +22,7 @@ import StructurallyRecursiveDescentParsing.Index
 
 -- Grammars.
 
-import StructurallyRecursiveDescentParsing.Grammars
+import StructurallyRecursiveDescentParsing.Grammar
 
 -- A simple backend.
 

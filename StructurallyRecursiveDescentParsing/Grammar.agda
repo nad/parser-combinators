@@ -2,7 +2,7 @@
 -- Parsers containing non-terminals, and grammars using such parsers
 ------------------------------------------------------------------------
 
-module StructurallyRecursiveDescentParsing.Grammars where
+module StructurallyRecursiveDescentParsing.Grammar where
 
 open import Data.Bool
 open import Data.Empty1

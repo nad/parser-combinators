@@ -14,7 +14,7 @@ open import StructurallyRecursiveDescentParsing.Index public
 
 -- Grammars.
 
-open import StructurallyRecursiveDescentParsing.Grammars public
+open import StructurallyRecursiveDescentParsing.Grammar public
 
 -- Derived parser combinators.
 
