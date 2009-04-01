@@ -8,7 +8,7 @@ module StructurallyRecursiveDescentParsing.Mixfix.Lib
          (Token : DecSetoid)
          where
 
-open DecSetoid Token using (_≟_; refl) renaming (carrier to Tok)
+open DecSetoid Token using (_≈_; _≟_; refl) renaming (carrier to Tok)
 
 open import Coinduction
 open import Data.Bool using (Bool; true; false; _∧_; _∨_)
@@ -26,7 +26,7 @@ import StructurallyRecursiveDescentParsing.Parser as Parser
 import StructurallyRecursiveDescentParsing.Simplified as Simplified
 open Simplified hiding (⟦_⟧)
 open import StructurallyRecursiveDescentParsing.Parser.Semantics
-  hiding (cast∈)
+  hiding (cast∈; sound; complete; _≈_)
 
 ------------------------------------------------------------------------
 -- Programs
@@ -169,13 +169,15 @@ data _⊕_∈⟦_⟧·_ : ∀ {R e} →
   +-∷        : ∀ {R x s s₁ s₂ xs} {p : ParserProg false R}
                (x∈p : x ⊕ s₁ ∈⟦ p ⟧· s) (xs∈p : xs ⊕ s₂ ∈⟦ p + ⟧· s₁) →
                x ∷ xs ⊕ s₂ ∈⟦ p + ⟧· s
-  between-[] : ∀ {e R t s} {p : ∞₁ (ParserProg e R)} →
-               [] ⊕ s ∈⟦ p between (t ∷ []) ⟧· t ∷ s
-  between-∷  : ∀ {e R n t x xs s s₁ s₂}
-                 {p : ∞₁ (ParserProg e R)} {ts : Vec Tok (suc n)} →
+  between-[] : ∀ {e R t t′ s} {p : ∞₁ (ParserProg e R)}
+               (t≈t′ : t ≈ t′) →
+               [] ⊕ s ∈⟦ p between (t ∷ []) ⟧· t′ ∷ s
+  between-∷  : ∀ {e R n t t′ x xs s s₁ s₂}
+                 {p : ∞₁ (ParserProg e R)} {ts : Vec Tok (suc n)}
+               (t≈t′ : t ≈ t′)
                (x∈p : x ⊕ s₁ ∈⟦ ♭₁ p ⟧· s)
                (xs∈⋯ : xs ⊕ s₂ ∈⟦ p between ts ⟧· s₁) →
-               x ∷ xs ⊕ s₂ ∈⟦ p between (t ∷ ts) ⟧· t ∷ s
+               x ∷ xs ⊕ s₂ ∈⟦ p between (t ∷ ts) ⟧· t′ ∷ s
   ∥ˡ         : ∀ {e₁ e₂ I i} {R : I → Set} {x s s′}
                  {p₁ : ParserProg e₁ (R i)} {p₂ : ParserProg e₂ (∃ R)}
                (x∈p₁ : x ⊕ s′ ∈⟦ p₁ ⟧· s) → (, x) ⊕ s′ ∈⟦ p₁ ∥ p₂ ⟧· s
@@ -187,49 +189,94 @@ data _⊕_∈⟦_⟧·_ : ∀ {R e} →
 
 private
 
-  <$>-lemma : ∀ {e s s′ R₁ R₂ x} (p : ParserProg e R₁) {f : R₁ → R₂} →
-              x ⊕ s′ ∈ ⟦ p ⟧′ · s → f x ⊕ s′ ∈ ⟦ f <$> p ⟧′ · s
-  <$>-lemma {true}  _ x∈p·s = cast (x∈p·s >>= return)
-  <$>-lemma {false} _ x∈p·s =       x∈p·s >>= return
+  <$>-complete : ∀ {e s s′ R₁ R₂ x} (p : ParserProg e R₁) {f : R₁ → R₂} →
+                 x ⊕ s′ ∈ ⟦ p ⟧′ · s → f x ⊕ s′ ∈ ⟦ f <$> p ⟧′ · s
+  <$>-complete {true}  _ x∈p·s = cast (x∈p·s >>= return)
+  <$>-complete {false} _ x∈p·s =       x∈p·s >>= return
 
-  ⊛-lemma : ∀ {e₁ e₂ s s₁ s₂ R₁ R₂ f x}
-              {p₁ : ParserProg e₁ (R₁ → R₂)} {p₂ : ParserProg e₂ R₁} →
-            f ⊕ s₁ ∈ ⟦ p₁ ⟧′ · s → x ⊕ s₂ ∈ ⟦ p₂ ⟧′ · s₁ →
-            f x ⊕ s₂ ∈ ⟦ p₁ ⊛ p₂ ⟧′ · s
-  ⊛-lemma {true}  {true}  {p₂ = p₂} f∈p₁ x∈p₂ = cast (f∈p₁ >>= <$>-lemma p₂ x∈p₂)
-  ⊛-lemma {true}  {false} {p₂ = p₂} f∈p₁ x∈p₂ = cast (f∈p₁ >>= <$>-lemma p₂ x∈p₂)
-  ⊛-lemma {false} {_}     {p₂ = p₂} f∈p₁ x∈p₂ =       f∈p₁ >>= <$>-lemma p₂ x∈p₂
+  ⊛-complete : ∀ {e₁ e₂ s s₁ s₂ R₁ R₂ f x}
+                 {p₁ : ParserProg e₁ (R₁ → R₂)} {p₂ : ParserProg e₂ R₁} →
+               f ⊕ s₁ ∈ ⟦ p₁ ⟧′ · s → x ⊕ s₂ ∈ ⟦ p₂ ⟧′ · s₁ →
+               f x ⊕ s₂ ∈ ⟦ p₁ ⊛ p₂ ⟧′ · s
+  ⊛-complete {true}  {true}  {p₂ = p₂} f∈p₁ x∈p₂ = cast (f∈p₁ >>= <$>-complete p₂ x∈p₂)
+  ⊛-complete {true}  {false} {p₂ = p₂} f∈p₁ x∈p₂ = cast (f∈p₁ >>= <$>-complete p₂ x∈p₂)
+  ⊛-complete {false} {_}     {p₂ = p₂} f∈p₁ x∈p₂ =       f∈p₁ >>= <$>-complete p₂ x∈p₂
 
-  theToken-lemma : ∀ {t s} →
-                   t ⊕ s ∈ Simplified.⟦_⟧ (theToken t) · t ∷ s
-  theToken-lemma {t} {s} = token >>= ok-lemma
+  theToken-sound : ∀ {t t′ s₁ s} →
+                   t′ ⊕ s₁ ∈ Simplified.⟦_⟧ (theToken t) · s →
+                   t ≈ t′ × s ≡ t′ ∷ s₁
+  theToken-sound {t} (_>>=_ {x = t″} token t′∈) with t ≟ t″
+  theToken-sound (token >>= return) | yes t≈t″ = (t≈t″ , PropEq.refl)
+  theToken-sound (token >>= ())     | no  t≉t″
+
+  theToken-complete : ∀ {t t′ s} → t ≈ t′ →
+                      t′ ⊕ s ∈ Simplified.⟦_⟧ (theToken t) · t′ ∷ s
+  theToken-complete {t} {t′} {s} t≈t′ = token >>= ok-lemma
     where
-    ok-lemma : t ⊕ s ∈ Simplified.⟦_⟧ (TheToken.ok t t) · s
-    ok-lemma with t ≟ t
-    ... | yes t≈t = return
-    ... | no  t≉t with t≉t refl
+    ok-lemma : t′ ⊕ s ∈ Simplified.⟦_⟧ (TheToken.ok t t′) · s
+    ok-lemma with t ≟ t′
+    ... | yes t≈t′ = return
+    ... | no  t≉t′ with t≉t′ t≈t′
     ...   | ()
 
-correct : ∀ {R e x s s′} {p : ParserProg e R} →
-          x ⊕ s′ ∈⟦ p ⟧· s → x ⊕ s′ ∈ ⟦ p ⟧′ · s
-correct return                 = return
-correct token                  = token
-correct (∣ˡ x∈p₁)              = ∣ˡ (correct x∈p₁)
-correct (∣ʳ e₁ x∈p₂)           = ∣ʳ e₁ (correct x∈p₂)
-correct (x∈p₁ ?>>= y∈p₂x)      = cast (correct x∈p₁ >>= correct y∈p₂x)
-correct (x∈p₁ !>>= y∈p₂x)      =       correct x∈p₁ >>= correct y∈p₂x
-correct (f∈p₁ ⊛ x∈p₂)          = ⊛-lemma (correct f∈p₁) (correct x∈p₂)
-correct (f <$> x∈p)            = <$>-lemma _ (correct x∈p)
-correct (+-[] x∈p)             = correct x∈p >>= ∣ʳ false return
-correct (+-∷ {p = p} x∈p xs∈p) = correct x∈p >>=
-                                 ∣ˡ (<$>-lemma (p +) (correct xs∈p))
-correct between-[]             = theToken-lemma >>= return
-correct (between-∷ {p = p} {_ ∷ _} x∈p xs∈⋯) =
-  theToken-lemma >>= ⊛-lemma (<$>-lemma _ (correct x∈p)) (correct xs∈⋯)
-correct (∥ˡ {true}  {p₁ = p₁} x∈p₁) = ∣ˡ (<$>-lemma p₁ (correct x∈p₁))
-correct (∥ˡ {false} {p₁ = p₁} x∈p₁) = ∣ˡ (<$>-lemma p₁ (correct x∈p₁))
-correct (∥ʳ true  x∈p₂)             = ∣ʳ true  (correct x∈p₂)
-correct (∥ʳ false x∈p₂)             = ∣ʳ false (correct x∈p₂)
+sound : ∀ {R e x s s′} {p : ParserProg e R} →
+        x ⊕ s′ ∈⟦ p ⟧· s → x ⊕ s′ ∈ ⟦ p ⟧′ · s
+sound return                 = return
+sound token                  = token
+sound (∣ˡ x∈p₁)              = ∣ˡ (sound x∈p₁)
+sound (∣ʳ e₁ x∈p₂)           = ∣ʳ e₁ (sound x∈p₂)
+sound (x∈p₁ ?>>= y∈p₂x)      = cast (sound x∈p₁ >>= sound y∈p₂x)
+sound (x∈p₁ !>>= y∈p₂x)      =       sound x∈p₁ >>= sound y∈p₂x
+sound (f∈p₁ ⊛ x∈p₂)          = ⊛-complete (sound f∈p₁) (sound x∈p₂)
+sound (f <$> x∈p)            = <$>-complete _ (sound x∈p)
+sound (+-[] x∈p)             = sound x∈p >>= ∣ʳ false return
+sound (+-∷ {p = p} x∈p xs∈p) = sound x∈p >>=
+                               ∣ˡ (<$>-complete (p +) (sound xs∈p))
+sound (between-[] t≈t′)      = theToken-complete t≈t′ >>= return
+sound (between-∷ {p = p} {_ ∷ _} t≈t′ x∈p xs∈⋯) =
+  theToken-complete t≈t′ >>=
+  ⊛-complete (<$>-complete _ (sound x∈p)) (sound xs∈⋯)
+sound (∥ˡ {true}  {p₁ = p₁} x∈p₁) = ∣ˡ (<$>-complete p₁ (sound x∈p₁))
+sound (∥ˡ {false} {p₁ = p₁} x∈p₁) = ∣ˡ (<$>-complete p₁ (sound x∈p₁))
+sound (∥ʳ true  x∈p₂)             = ∣ʳ true  (sound x∈p₂)
+sound (∥ʳ false x∈p₂)             = ∣ʳ false (sound x∈p₂)
+
+complete : ∀ {R e x s s′} (p : ParserProg e R) →
+           x ⊕ s′ ∈ ⟦ p ⟧′ · s → x ⊕ s′ ∈⟦ p ⟧· s
+complete (return x)   return                  = return
+complete fail         ()
+complete token        token                   = token
+complete (p₁ ∣ p₂)    (∣ˡ    x∈p₁)            = ∣ˡ    (complete p₁ x∈p₁)
+complete (p₁ ∣ p₂)    (∣ʳ e₁ x∈p₂)            = ∣ʳ e₁ (complete p₂ x∈p₂)
+complete (p₁ ?>>= p₂) (cast (x∈p₁ >>= y∈p₂x)) = complete p₁ x∈p₁ ?>>= complete     (p₂ _)  y∈p₂x
+complete (p₁ !>>= p₂)       (x∈p₁ >>= y∈p₂x)  = complete p₁ x∈p₁ !>>= complete (♭₁ (p₂ _)) y∈p₂x
+
+complete (_⊛_ {true}  {true}  p₁ p₂) (cast (f∈p₁ >>= cast (y∈p₂ >>= return))) = complete p₁ f∈p₁ ⊛ complete p₂ y∈p₂
+complete (_⊛_ {true}  {false} p₁ p₂) (cast (f∈p₁ >>=      (y∈p₂ >>= return))) = complete p₁ f∈p₁ ⊛ complete p₂ y∈p₂
+complete (_⊛_ {false} {true}  p₁ p₂) (      f∈p₁ >>= cast (y∈p₂ >>= return) ) = complete p₁ f∈p₁ ⊛ complete p₂ y∈p₂
+complete (_⊛_ {false} {false} p₁ p₂) (      f∈p₁ >>=      (y∈p₂ >>= return) ) = complete p₁ f∈p₁ ⊛ complete p₂ y∈p₂
+
+complete (_<$>_ {true}  f p) (cast (x∈p >>= return)) = f <$> complete p x∈p
+complete (_<$>_ {false} f p)       (x∈p >>= return)  = f <$> complete p x∈p
+
+complete (p +) (x∈p >>= ∣ˡ (xs∈p+ >>= return)) = +-∷  (complete p x∈p) (complete (p +) xs∈p+)
+complete (p +) (x∈p >>= ∣ʳ .false return)      = +-[] (complete p x∈p)
+
+complete (p between (t ∷ [])) (t∈ >>= return) with theToken-sound t∈
+... | (t≈t′ , PropEq.refl) = between-[] t≈t′
+complete (_between_ {true}  p (t ∷ t′ ∷ ts))
+         (t∈ >>= cast (cast (x∈p >>= return) >>= (xs∈ >>= return))) with theToken-sound t∈
+... | (t≈t″ , PropEq.refl) =
+  between-∷ t≈t″ (complete (♭₁ p) x∈p) (complete (p between (t′ ∷ ts)) xs∈)
+complete (_between_ {false} p (t ∷ t′ ∷ ts))
+         (t∈ >>=      (      x∈p >>= return  >>= (xs∈ >>= return))) with theToken-sound t∈
+... | (t≈t″ , PropEq.refl) =
+  between-∷ t≈t″ (complete (♭₁ p) x∈p) (complete (p between (t′ ∷ ts)) xs∈)
+
+complete (_∥_ {true}  p₁ p₂) (∣ˡ (cast (x∈p₁ >>= return))) = ∥ˡ (complete p₁ x∈p₁)
+complete (_∥_ {true}  p₁ p₂) (∣ʳ .true x∈p₂) = ∥ʳ true (complete p₂ x∈p₂)
+complete (_∥_ {false} p₁ p₂) (∣ˡ (x∈p₁ >>= return)) = ∥ˡ (complete p₁ x∈p₁)
+complete (_∥_ {false} p₁ p₂) (∣ʳ .false x∈p₂) = ∥ʳ false (complete p₂ x∈p₂)
 
 -- Some lemmas.
 
