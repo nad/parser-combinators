@@ -22,7 +22,7 @@ open Expr.PrecedenceCorrect g
 
 open import StructurallyRecursiveDescentParsing.Simplified
   hiding (⟦_⟧)
-open import StructurallyRecursiveDescentParsing.Simple
+open import StructurallyRecursiveDescentParsing.Backend.DepthFirst
 open import StructurallyRecursiveDescentParsing.Mixfix.Fixity
 import StructurallyRecursiveDescentParsing.Mixfix.Lib as Lib
 open Lib String.decSetoid

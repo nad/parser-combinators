@@ -21,3 +21,17 @@ open import Relation.Binary.PropositionalEquality1
 ♭? : ∀ b {A} → ∞? b A → A
 ♭? true  x =    x
 ♭? false x = ♭₁ x
+
+♭¿ : ∀ b {A} → ∞₁ A → ∞? b A
+♭¿ true  x = ♭₁ x
+♭¿ false x =    x
+
+-- Some lemmas.
+
+♭?♯? : ∀ b {A} {x : A} → ♭? b (♯? b x) ≡₁ x
+♭?♯? true  = refl
+♭?♯? false = refl
+
+♭?♭¿ : ∀ b {A} {x : ∞₁ A} → ♭? b (♭¿ b x) ≡₁ ♭₁ x
+♭?♭¿ true  = refl
+♭?♭¿ false = refl

@@ -29,9 +29,12 @@ import StructurallyRecursiveDescentParsing.Index
 
 import StructurallyRecursiveDescentParsing.Grammar
 
--- A simple backend.
+-- A depth-first and a breadth-first backend. The breadth-first
+-- backend uses code which simplifies parsers.
 
-import StructurallyRecursiveDescentParsing.Simple
+import StructurallyRecursiveDescentParsing.Backend.DepthFirst
+import StructurallyRecursiveDescentParsing.Backend.BreadthFirst
+import StructurallyRecursiveDescentParsing.Backend.Simplification
 
 -- A library of derived parser combinators.
 

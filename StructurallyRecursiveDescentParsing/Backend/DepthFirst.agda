@@ -1,8 +1,11 @@
 ------------------------------------------------------------------------
--- A simple backend
+-- A depth-first backend
 ------------------------------------------------------------------------
 
-module StructurallyRecursiveDescentParsing.Simple where
+-- Based on the parser combinators in Wadler's "How to Replace Failure
+-- by a List of Successes".
+
+module StructurallyRecursiveDescentParsing.Backend.DepthFirst where
 
 open import Data.Bool
 open import Data.Product as Prod
@@ -55,6 +58,14 @@ private
 --
 -- 1) The upper bound of the length of the input string.
 -- 2) The parser's proper left corner tree.
+
+-- Note that this function cannot /trivially/ be adapted to handle the
+-- more general parsers from
+-- StructurallyRecursiveDescentParsing.Parser. The reason is that p₂
+-- in the (_>>=_ {true} p₁ p₂) case would have a dependent type, so
+-- the type of parse↓ n (p₂ x) would depend on x, but _>>=′_ is not
+-- dependent. I suspect that this problem could be fixed by making the
+-- type of parse↓ more informative, though.
 
 mutual
   parse↓ : ∀ {Tok e R} n → Parser Tok e R →

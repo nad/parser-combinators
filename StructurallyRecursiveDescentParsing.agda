@@ -20,6 +20,7 @@ open import StructurallyRecursiveDescentParsing.Grammar public
 
 open import StructurallyRecursiveDescentParsing.Lib public
 
--- The simple parser backend.
+-- A depth-first parser backend.
 
-open import StructurallyRecursiveDescentParsing.Simple public
+open import StructurallyRecursiveDescentParsing.Backend.DepthFirst
+  public
