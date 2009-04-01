@@ -21,8 +21,12 @@ open import Relation.Nullary
 import Relation.Binary.PropositionalEquality as PropEq
 open PropEq using (_≡_)
 
-open import StructurallyRecursiveDescentParsing.Type
-open import StructurallyRecursiveDescentParsing.Semantics hiding (cast)
+open import StructurallyRecursiveDescentParsing.Coinduction
+import StructurallyRecursiveDescentParsing.Parser as Parser
+import StructurallyRecursiveDescentParsing.Simplified as Simplified
+open Simplified hiding (⟦_⟧)
+open import StructurallyRecursiveDescentParsing.Parser.Semantics
+  hiding (cast∈)
 
 ------------------------------------------------------------------------
 -- Programs
@@ -119,15 +123,18 @@ private
 ⟦ _∥_ {true}  p₁ p₂        ⟧ = (⟦ p₁ ⟧ ?>>= λ x →    return (, x)) ∣ ⟦ p₂ ⟧
 ⟦ _∥_ {false} p₁ p₂        ⟧ = (⟦ p₁ ⟧ !>>= λ x → ♯′ return (, x)) ∣ ⟦ p₂ ⟧
 
+⟦_⟧′ : ∀ {e R} → ParserProg e R → Parser.Parser Tok e R
+⟦ p ⟧′ = Simplified.⟦_⟧ ⟦ p ⟧
+
 ------------------------------------------------------------------------
 -- Semantics of the programs
 
 -- This definition may seem unnecessary: why not simply define
 --
---   x ⊕ s′ ∈⟦ p ⟧· s  =  x ⊕ s′ ∈ ⟦ p ⟧ · s?
+--   x ⊕ s′ ∈⟦ p ⟧· s  =  x ⊕ s′ ∈ ⟦ p ⟧′ · s?
 --
 -- The reason is that it is hard for Agda to infer the value of p from
--- ⟦ p ⟧ (note that ⟦_⟧ is a function which evaluates). By using the
+-- ⟦ p ⟧′ (note that ⟦_⟧′ is a function which evaluates). By using the
 -- definition below this problem is avoided.
 
 infix 4 _⊕_∈⟦_⟧·_
@@ -181,42 +188,44 @@ data _⊕_∈⟦_⟧·_ : ∀ {R e} →
 private
 
   <$>-lemma : ∀ {e s s′ R₁ R₂ x} (p : ParserProg e R₁) {f : R₁ → R₂} →
-              x ⊕ s′ ∈ ⟦ p ⟧ · s → f x ⊕ s′ ∈ ⟦ f <$> p ⟧ · s
-  <$>-lemma {true}  _ x∈p·s = x∈p·s ?>>= return
-  <$>-lemma {false} _ x∈p·s = x∈p·s !>>= return
+              x ⊕ s′ ∈ ⟦ p ⟧′ · s → f x ⊕ s′ ∈ ⟦ f <$> p ⟧′ · s
+  <$>-lemma {true}  _ x∈p·s = cast (x∈p·s >>= return)
+  <$>-lemma {false} _ x∈p·s =       x∈p·s >>= return
 
   ⊛-lemma : ∀ {e₁ e₂ s s₁ s₂ R₁ R₂ f x}
               {p₁ : ParserProg e₁ (R₁ → R₂)} {p₂ : ParserProg e₂ R₁} →
-            f ⊕ s₁ ∈ ⟦ p₁ ⟧ · s → x ⊕ s₂ ∈ ⟦ p₂ ⟧ · s₁ → f x ⊕ s₂ ∈ ⟦ p₁ ⊛ p₂ ⟧ · s
-  ⊛-lemma {true}  {true}  {p₂ = p₂} f∈p₁ x∈p₂ = f∈p₁ ?>>= <$>-lemma p₂ x∈p₂
-  ⊛-lemma {true}  {false} {p₂ = p₂} f∈p₁ x∈p₂ = f∈p₁ ?>>= <$>-lemma p₂ x∈p₂
-  ⊛-lemma {false} {_}     {p₂ = p₂} f∈p₁ x∈p₂ = f∈p₁ !>>= <$>-lemma p₂ x∈p₂
+            f ⊕ s₁ ∈ ⟦ p₁ ⟧′ · s → x ⊕ s₂ ∈ ⟦ p₂ ⟧′ · s₁ →
+            f x ⊕ s₂ ∈ ⟦ p₁ ⊛ p₂ ⟧′ · s
+  ⊛-lemma {true}  {true}  {p₂ = p₂} f∈p₁ x∈p₂ = cast (f∈p₁ >>= <$>-lemma p₂ x∈p₂)
+  ⊛-lemma {true}  {false} {p₂ = p₂} f∈p₁ x∈p₂ = cast (f∈p₁ >>= <$>-lemma p₂ x∈p₂)
+  ⊛-lemma {false} {_}     {p₂ = p₂} f∈p₁ x∈p₂ =       f∈p₁ >>= <$>-lemma p₂ x∈p₂
 
-  theToken-lemma : ∀ {t s} → t ⊕ s ∈ theToken t · t ∷ s
-  theToken-lemma {t} {s} = token !>>= ok-lemma
+  theToken-lemma : ∀ {t s} →
+                   t ⊕ s ∈ Simplified.⟦_⟧ (theToken t) · t ∷ s
+  theToken-lemma {t} {s} = token >>= ok-lemma
     where
-    ok-lemma : t ⊕ s ∈ TheToken.ok t t · s
+    ok-lemma : t ⊕ s ∈ Simplified.⟦_⟧ (TheToken.ok t t) · s
     ok-lemma with t ≟ t
     ... | yes t≈t = return
     ... | no  t≉t with t≉t refl
     ...   | ()
 
 correct : ∀ {R e x s s′} {p : ParserProg e R} →
-          x ⊕ s′ ∈⟦ p ⟧· s → x ⊕ s′ ∈ ⟦ p ⟧ · s
+          x ⊕ s′ ∈⟦ p ⟧· s → x ⊕ s′ ∈ ⟦ p ⟧′ · s
 correct return                 = return
 correct token                  = token
 correct (∣ˡ x∈p₁)              = ∣ˡ (correct x∈p₁)
 correct (∣ʳ e₁ x∈p₂)           = ∣ʳ e₁ (correct x∈p₂)
-correct (x∈p₁ ?>>= y∈p₂x)      = correct x∈p₁ ?>>= correct y∈p₂x
-correct (x∈p₁ !>>= y∈p₂x)      = correct x∈p₁ !>>= correct y∈p₂x
+correct (x∈p₁ ?>>= y∈p₂x)      = cast (correct x∈p₁ >>= correct y∈p₂x)
+correct (x∈p₁ !>>= y∈p₂x)      =       correct x∈p₁ >>= correct y∈p₂x
 correct (f∈p₁ ⊛ x∈p₂)          = ⊛-lemma (correct f∈p₁) (correct x∈p₂)
 correct (f <$> x∈p)            = <$>-lemma _ (correct x∈p)
-correct (+-[] x∈p)             = correct x∈p !>>= ∣ʳ false return
-correct (+-∷ {p = p} x∈p xs∈p) = correct x∈p !>>=
+correct (+-[] x∈p)             = correct x∈p >>= ∣ʳ false return
+correct (+-∷ {p = p} x∈p xs∈p) = correct x∈p >>=
                                  ∣ˡ (<$>-lemma (p +) (correct xs∈p))
-correct between-[]             = theToken-lemma !>>= return
+correct between-[]             = theToken-lemma >>= return
 correct (between-∷ {p = p} {_ ∷ _} x∈p xs∈⋯) =
-  theToken-lemma !>>= ⊛-lemma (<$>-lemma _ (correct x∈p)) (correct xs∈⋯)
+  theToken-lemma >>= ⊛-lemma (<$>-lemma _ (correct x∈p)) (correct xs∈⋯)
 correct (∥ˡ {true}  {p₁ = p₁} x∈p₁) = ∣ˡ (<$>-lemma p₁ (correct x∈p₁))
 correct (∥ˡ {false} {p₁ = p₁} x∈p₁) = ∣ˡ (<$>-lemma p₁ (correct x∈p₁))
 correct (∥ʳ true  x∈p₂)             = ∣ʳ true  (correct x∈p₂)
@@ -230,6 +239,6 @@ correct (∥ʳ false x∈p₂)             = ∣ʳ false (correct x∈p₂)
 +-∷ʳ (+-[] x∈p)     y∈p = +-∷ x∈p (+-[] y∈p)
 +-∷ʳ (+-∷ x∈p xs∈p) y∈p = +-∷ x∈p (+-∷ʳ xs∈p y∈p)
 
-cast : ∀ {e R x₁ x₂ s s′} {p : ParserProg e R} →
-       x₁ ≡ x₂ → x₁ ⊕ s′ ∈⟦ p ⟧· s → x₂ ⊕ s′ ∈⟦ p ⟧· s
-cast PropEq.refl x∈p = x∈p
+cast∈ : ∀ {e R x₁ x₂ s s′} {p : ParserProg e R} →
+        x₁ ≡ x₂ → x₁ ⊕ s′ ∈⟦ p ⟧· s → x₂ ⊕ s′ ∈⟦ p ⟧· s
+cast∈ PropEq.refl x∈p = x∈p

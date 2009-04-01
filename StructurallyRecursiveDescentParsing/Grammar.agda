@@ -11,8 +11,8 @@ open import Relation.Binary.PropositionalEquality
 open import Coinduction
 
 open import StructurallyRecursiveDescentParsing.Index
-import StructurallyRecursiveDescentParsing.Type as Plain
-open Plain hiding (Parser)
+import StructurallyRecursiveDescentParsing.Simplified as Simplified
+open Simplified hiding (Parser; ⟦_⟧)
 
 infixl 10 _!>>=_ _?>>=_
 infixl  5 _∣_
@@ -63,7 +63,8 @@ emptyGrammar ()
 -- non-terminals corecursively.
 
 ⟦_⟧ : ∀ {Tok NT e c R} →
-      Parser NT Tok (e ◇ c) R → Grammar NT Tok → Plain.Parser Tok e R
+      Parser NT Tok (e ◇ c) R → Grammar NT Tok →
+      Simplified.Parser Tok e R
 ⟦ return x   ⟧ g = return x
 ⟦ fail       ⟧ g = fail
 ⟦ token      ⟧ g = token
@@ -78,7 +79,7 @@ emptyGrammar ()
 
 private
 
-  only-plain : Plain.Parser Bool false Bool
+  only-plain : Simplified.Parser Bool false Bool
   only-plain = return true ?>>= λ x →
                if₁ x then token else token ∣ token
 

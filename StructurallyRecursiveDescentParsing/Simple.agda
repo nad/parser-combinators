@@ -15,7 +15,7 @@ open import Category.Monad.Indexed
 open import Category.Monad.State
 open import Coinduction
 
-open import StructurallyRecursiveDescentParsing.Type
+open import StructurallyRecursiveDescentParsing.Simplified
 
 ------------------------------------------------------------------------
 -- Parser monad

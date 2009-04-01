@@ -4,17 +4,22 @@
 
 module Everything where
 
--- The parser type.
+-- Helper functions related to coinduction.
 
-import StructurallyRecursiveDescentParsing.Type
+import StructurallyRecursiveDescentParsing.Coinduction
 
--- Semantics of the parsers.
+-- The parser type, along with its semantics
 
-import StructurallyRecursiveDescentParsing.Semantics
+import StructurallyRecursiveDescentParsing.Parser
+import StructurallyRecursiveDescentParsing.Parser.Semantics
 
 -- Definition of unambiguity.
 
 import StructurallyRecursiveDescentParsing.Unambiguity
+
+-- A simplified parser type.
+
+import StructurallyRecursiveDescentParsing.Simplified
 
 -- Parser type indices, used by the grammars.
 
