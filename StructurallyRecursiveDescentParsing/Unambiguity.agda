@@ -44,6 +44,14 @@ data Unambiguous′ {Tok} : ∀ {R xs} → Parser Tok R xs → Set1 where
            (u₁ : Unambiguous′ p₁) (u₂ : Unambiguous′ p₂) →
            (u : ∀ {x₁ x₂ s} → x₁ ∈ p₁ · s → x₂ ∈ p₂ · s → x₁ ≡ x₂) →
            Unambiguous′ (p₁ ∣ p₂)
+  app    : ∀ {R₁ R₂ fs} xs
+             {p₁ : ∞? (null xs) (Parser Tok (R₁ → R₂) fs)}
+             {p₂ :               Parser Tok R₁        xs}
+           (u : ∀ {f₁ f₂ x₁ x₂ s s₁ s₂ s₃ s₄} →
+              f₁ ∈ ♭? (null xs) p₁ · s₁ → x₁ ∈ p₂ · s₂ → s₁ ++ s₂ ≡ s →
+              f₂ ∈ ♭? (null xs) p₁ · s₃ → x₂ ∈ p₂ · s₄ → s₃ ++ s₄ ≡ s →
+              f₁ x₁ ≡ f₂ x₂) →
+           Unambiguous′ (p₁ ⊛ p₂)
   bind   : ∀ {R₁ R₂ xs} {f : R₁ → List R₂}
              {p₁ : Parser Tok R₁ xs}
              {p₂ : (x : R₁) → ∞? (null xs) (Parser Tok R₂ (f x))}
@@ -59,20 +67,27 @@ data Unambiguous′ {Tok} : ∀ {R xs} → Parser Tok R xs → Set1 where
 
 sound : ∀ {Tok R xs} {p : Parser Tok R xs} →
         Unambiguous′ p → Unambiguous p
-sound return           return        return         = refl
-sound fail             ()            ()
-sound token            token         token          = refl
-sound (choice u₁ u₂ u) (∣ˡ   x∈p₁·s) (∣ˡ    y∈p₁·s) =      sound u₁ x∈p₁·s y∈p₁·s
-sound (choice u₁ u₂ u) (∣ˡ   x∈p₁·s) (∣ʳ _  y∈p₂·s) =      u        x∈p₁·s y∈p₂·s
-sound (choice u₁ u₂ u) (∣ʳ _ x∈p₂·s) (∣ˡ    y∈p₁·s) = sym (u        y∈p₁·s x∈p₂·s)
-sound (choice u₁ u₂ u) (∣ʳ _ x∈p₂·s) (∣ʳ ._ y∈p₂·s) =      sound u₂ x∈p₂·s y∈p₂·s
-sound (bind {p₁ = p₁} {p₂} u) x∈p·s y∈p·s           = helper x∈p·s y∈p·s refl
+sound return           return      return       = refl
+sound fail             ()          ()
+sound token            token       token        = refl
+sound (choice u₁ u₂ u) (∣ˡ   x∈p₁) (∣ˡ    y∈p₁) =      sound u₁ x∈p₁ y∈p₁
+sound (choice u₁ u₂ u) (∣ˡ   x∈p₁) (∣ʳ _  y∈p₂) =      u        x∈p₁ y∈p₂
+sound (choice u₁ u₂ u) (∣ʳ _ x∈p₂) (∣ˡ    y∈p₁) = sym (u        y∈p₁ x∈p₂)
+sound (choice u₁ u₂ u) (∣ʳ _ x∈p₂) (∣ʳ ._ y∈p₂) =      sound u₂ x∈p₂ y∈p₂
+sound (app xs {p₁ = p₁} {p₂} u) x∈p y∈p = helper x∈p y∈p refl
+  where
+  helper : ∀ {fx₁ fx₂ s₁ s₂} →
+           fx₁ ∈ p₁ ⊛ p₂ · s₁ → fx₂ ∈ p₁ ⊛ p₂ · s₂ →
+           s₁ ≡ s₂ → fx₁ ≡ fx₂
+  helper (f∈p₁ ⊛ x∈p₂) (f′∈p₁ ⊛ x′∈p₂) eq =
+    u f∈p₁ x∈p₂ eq f′∈p₁ x′∈p₂ refl
+sound (bind   {p₁ = p₁} {p₂} u) x∈p y∈p = helper x∈p y∈p refl
   where
   helper : ∀ {x₁ x₂ s₁ s₂} →
            x₁ ∈ p₁ >>= p₂ · s₁ → x₂ ∈ p₁ >>= p₂ · s₂ →
            s₁ ≡ s₂ → x₁ ≡ x₂
-  helper (x∈p₁·s₁₁ >>= y∈p₂x·s₁₂) (x∈p₁·s₂₁ >>= y∈p₂x·s₂₂) eq =
-    u x∈p₁·s₁₁ y∈p₂x·s₁₂ eq x∈p₁·s₂₁ y∈p₂x·s₂₂ refl
+  helper (x∈p₁ >>= y∈p₂x) (x′∈p₁ >>= y′∈p₂x′) eq =
+    u x∈p₁ y∈p₂x eq x′∈p₁ y′∈p₂x′ refl
 sound (cast u) (cast x∈p) (cast y∈p) = sound u x∈p y∈p
 
 complete : ∀ {Tok R xs} (p : Parser Tok R xs) →
@@ -83,6 +98,9 @@ complete token                   _ = token
 complete (_∣_ {xs₁ = xs₁} p₁ p₂) u = choice (complete p₁ (λ x₁∈ x₂∈ → u (∣ˡ     x₁∈) (∣ˡ     x₂∈)))
                                             (complete p₂ (λ x₁∈ x₂∈ → u (∣ʳ xs₁ x₁∈) (∣ʳ xs₁ x₂∈)))
                                             (λ x₁∈ x₂∈ → u (∣ˡ x₁∈) (∣ʳ xs₁ x₂∈))
+complete (_⊛_ {xs = xs}   p₁ p₂) u = app xs (λ f₁∈ x₁∈ eq₁ f₂∈ x₂∈ eq₂ →
+                                               u (cast∈ refl refl eq₁ (_⊛_ f₁∈ x₁∈))
+                                                 (cast∈ refl refl eq₂ (_⊛_ f₂∈ x₂∈)))
 complete (p₁ >>= p₂)             u = bind (λ x₁∈ y₁∈ eq₁ x₂∈ y₂∈ eq₂ →
                                              u (cast∈ refl refl eq₁ (_>>=_ {p₁ = p₁} x₁∈ y₁∈))
                                                (cast∈ refl refl eq₂ (_>>=_           x₂∈ y₂∈)))

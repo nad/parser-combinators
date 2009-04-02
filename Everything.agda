@@ -21,6 +21,7 @@ import StructurallyRecursiveDescentParsing.Unambiguity
 
 import StructurallyRecursiveDescentParsing.Simplified
 import StructurallyRecursiveDescentParsing.Simplified.Semantics
+import StructurallyRecursiveDescentParsing.Simplified.Lemmas
 
 -- Parser type indices, used by the grammars.
 

@@ -35,6 +35,7 @@ open import StructurallyRecursiveDescentParsing.Parser
 -- result of applying the parser p to the string s. Note that the
 -- semantics is defined inductively.
 
+infixl 50 _⊛_
 infixl 10 _>>=_
 infix   4 _∈_·_
 
@@ -47,6 +48,11 @@ data _∈_·_ {Tok} : ∀ {R xs} → R → Parser Tok R xs → List Tok → Set1
   ∣ʳ     : ∀ {R x xs₂ s} xs₁
              {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂}
            (x∈p₂ : x ∈ p₂ · s) → x ∈ p₁ ∣ p₂ · s
+  _⊛_    : ∀ {R₁ R₂ f x s₁ s₂ fs xs}
+             {p₁ : ∞? (null xs) (Parser Tok (R₁ → R₂) fs)}
+             {p₂ : Parser Tok R₁ xs} →
+           (f∈p₁ : f ∈ ♭? (null xs) p₁ · s₁) (x∈p₂ : x ∈ p₂ · s₂) →
+           f x ∈ p₁ ⊛ p₂ · s₁ ++ s₂
   _>>=_  : ∀ {R₁ R₂ x y s₁ s₂ xs} {f : R₁ → List R₂}
              {p₁ : Parser Tok R₁ xs}
              {p₂ : (x : R₁) → ∞? (null xs) (Parser Tok R₂ (f x))}
@@ -86,14 +92,18 @@ initial-complete x∈p = initial-complete′ x∈p refl
   initial-complete′ return                                        refl = here
   initial-complete′ (∣ˡ     x∈p₁)                                 refl = ListProp.∈-++ˡ (initial-complete x∈p₁)
   initial-complete′ (∣ʳ xs₁ x∈p₂)                                 refl = ListProp.∈-++ʳ xs₁ (initial-complete x∈p₂)
-  initial-complete′ (_>>=_ {s₁ = []} {xs = _ ∷ _} {f} x∈p₁ y∈p₂x) refl = ListProp.∈-concat (initial-complete y∈p₂x)
-                                                                           (ListProp.∈-map {f = f} (initial-complete x∈p₁))
+  initial-complete′ (_⊛_   {s₁ = []} {fs = fs}        f∈p₁ x∈p₂)  refl = ListProp.∈->>= (λ x → List.map (λ f → f x) fs)
+                                                                                        (initial-complete x∈p₂)
+                                                                                        (ListProp.∈-map (initial-complete f∈p₁))
+  initial-complete′ (_>>=_ {s₁ = []} {xs = _ ∷ _} {f} x∈p₁ y∈p₂x) refl = ListProp.∈->>= f (initial-complete x∈p₁)
+                                                                                          (initial-complete y∈p₂x)
   initial-complete′ (cast {eq = refl} x∈p)                        refl = initial-complete x∈p
 
-  initial-complete′ (_>>=_ {s₁ = []} {xs = []}        x∈p₁ y∈p₂x) refl with initial-complete x∈p₁
+  initial-complete′ (_>>=_ {s₁ = []} {xs = []}  x∈p₁ y∈p₂x) refl with initial-complete x∈p₁
   ... | ()
 
   initial-complete′ token                    ()
+  initial-complete′ (_⊛_   {s₁ = _ ∷ _} _ _) ()
   initial-complete′ (_>>=_ {s₁ = _ ∷ _} _ _) ()
 
 initial-sound : ∀ {Tok R xs x} (p : Parser Tok R xs) →
@@ -102,16 +112,21 @@ initial-sound (return x)              here = return
 initial-sound (_∣_ {xs₁ = xs₁} p₁ p₂) x∈xs with ListProp.++-∈ xs₁ x∈xs
 ... | inj₁ x∈xs₁ = ∣ˡ     (initial-sound p₁ x∈xs₁)
 ... | inj₂ x∈xs₂ = ∣ʳ xs₁ (initial-sound p₂ x∈xs₂)
+initial-sound (_⊛_ {fs = fs} {x ∷ xs}     p₁ p₂) y∈ys
+  with Prod.map id (Prod.map id (ListProp.map-∈ fs)) $
+         ListProp.>>=-∈ (λ x → List.map (λ f → f x) fs) (x ∷ xs) y∈ys
+... | (x′ , x′∈x∷xs , (f , f∈fs , refl)) =
+  initial-sound p₁ f∈fs ⊛ initial-sound p₂ x′∈x∷xs
 initial-sound (_>>=_ {xs = z ∷ zs} {f} p₁ p₂) y∈ys
-  with Prod.map id (Prod.map id (ListProp.map-∈ (z ∷ zs)))
-         (ListProp.concat-∈ (List.map f (z ∷ zs)) y∈ys)
-... | (.(f x) , y∈fx , (x , x∈z∷zs , refl)) =
+  with ListProp.>>=-∈ f (z ∷ zs) y∈ys
+... | (x , x∈z∷zs , y∈fx) =
   _>>=_ {f = f} (initial-sound p₁ x∈z∷zs) (initial-sound (p₂ x) y∈fx)
 initial-sound (cast refl p) x∈xs  = cast (initial-sound p x∈xs)
 
 initial-sound (return x)            (there ())
 initial-sound fail                  ()
 initial-sound token                 ()
+initial-sound (_⊛_   {xs = []} _ _) ()
 initial-sound (_>>=_ {xs = []} _ _) ()
 
 ------------------------------------------------------------------------
@@ -134,6 +149,12 @@ data _⊕_∈_·_ {Tok} : ∀ {R xs} → R → List Tok →
   ∣ʳ     : ∀ {R x xs₂ s s₁} xs₁
              {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂}
            (x∈p₂ : x ⊕ s₁ ∈ p₂ · s) → x ⊕ s₁ ∈ p₁ ∣ p₂ · s
+  _⊛_    : ∀ {R₁ R₂ f x s s₁ s₂ fs xs}
+             {p₁ : ∞? (null xs) (Parser Tok (R₁ → R₂) fs)}
+             {p₂ : Parser Tok R₁ xs} →
+           (f∈p₁ : f ⊕ s₁ ∈ ♭? (null xs) p₁ · s)
+           (x∈p₂ : x ⊕ s₂ ∈ p₂ · s₁) →
+           f x ⊕ s₂ ∈ p₁ ⊛ p₂ · s
   _>>=_  : ∀ {R₁ R₂ x y s s₁ s₂ xs} {f : R₁ → List R₂}
              {p₁ : Parser Tok R₁ xs}
              {p₂ : (x : R₁) → ∞? (null xs) (Parser Tok R₂ (f x))}
@@ -152,6 +173,9 @@ sound′ return           = ([]    , refl , return)
 sound′ {x = x} token    = ([ x ] , refl , token)
 sound′ (∣ˡ x∈p₁)        = Prod1.map id (Prod1.map id ∣ˡ)      (sound′ x∈p₁)
 sound′ (∣ʳ e₁ x∈p₁)     = Prod1.map id (Prod1.map id (∣ʳ e₁)) (sound′ x∈p₁)
+sound′ (f∈p₁ ⊛ x∈p₂)    with sound′ f∈p₁ | sound′ x∈p₂
+sound′ (f∈p₁ ⊛ x∈p₂)    | (s₁ , refl , f∈p₁′) | (s₂ , refl , x∈p₂′) =
+  (s₁ ++ s₂ , sym (LM.assoc s₁ s₂ _) , f∈p₁′ ⊛ x∈p₂′)
 sound′ (x∈p₁ >>= y∈p₂x) with sound′ x∈p₁ | sound′ y∈p₂x
 sound′ (x∈p₁ >>= y∈p₂x) | (s₁ , refl , x∈p₁′) | (s₂ , refl , y∈p₂x′) =
   (s₁ ++ s₂ , sym (LM.assoc s₁ s₂ _) , x∈p₁′ >>= y∈p₂x′)
@@ -169,6 +193,7 @@ extend return           = return
 extend token            = token
 extend (∣ˡ x∈p₁)        = ∣ˡ    (extend x∈p₁)
 extend (∣ʳ e₁ x∈p₂)     = ∣ʳ e₁ (extend x∈p₂)
+extend (f∈p₁ ⊛   x∈p₂)  = extend f∈p₁ ⊛   extend x∈p₂
 extend (x∈p₁ >>= y∈p₂x) = extend x∈p₁ >>= extend y∈p₂x
 extend (cast x∈p)       = cast (extend x∈p)
 
@@ -178,6 +203,7 @@ complete return           = return
 complete token            = token
 complete (∣ˡ x∈p₁)        = ∣ˡ    (complete x∈p₁)
 complete (∣ʳ e₁ x∈p₂)     = ∣ʳ e₁ (complete x∈p₂)
+complete (f∈p₁ ⊛   x∈p₂)  = extend (complete f∈p₁) ⊛   complete x∈p₂
 complete (x∈p₁ >>= y∈p₂x) = extend (complete x∈p₁) >>= complete y∈p₂x
 complete (cast x∈p)       = cast (complete x∈p)
 
