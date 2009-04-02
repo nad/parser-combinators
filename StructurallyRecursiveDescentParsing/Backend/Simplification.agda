@@ -5,37 +5,16 @@
 module StructurallyRecursiveDescentParsing.Backend.Simplification where
 
 open import Algebra
-open import Data.Bool
-import Data.Bool.Properties as Bool
-private module BCS = CommutativeSemiring Bool.commutativeSemiring-∨-∧
 open import Data.Product
-import Data.Product1 as Prod1
-open Prod1 using (∃₁₁; Σ₁₁; _,_; proj₁₁₁; proj₁₁₂)
-open import Data.List
-import Data.List.Properties as List
+open import Data.Product1 using (∃₁₁; _,_; proj₁₁₁; proj₁₁₂)
+open import Data.List as List
+private module LM {Tok} = Monoid (List.monoid Tok)
 open import Relation.Binary.PropositionalEquality
-open ≡-Reasoning
 
 open import StructurallyRecursiveDescentParsing.Coinduction
 open import StructurallyRecursiveDescentParsing.Parser
 open import StructurallyRecursiveDescentParsing.Parser.Semantics
   hiding (sound; complete)
-
-private
-
-  initial-lemma : ∀ {Tok e′ R} {p₁ p₂ : Parser Tok e′ R} (e : R → Bool) →
-                  p₁ ≈ p₂ → any e (initial p₁) ≡ any e (initial p₂)
-  initial-lemma {Tok} {e′} {R} e p₁≈p₂ =
-    Bool.⇔→≡ (helper (proj₁₁₁ p₁≈p₂) , helper (proj₁₁₂ p₁≈p₂))
-    where
-    helper : {p₁ p₂ : Parser Tok e′ R} →
-             p₁ ⊑ p₂ →
-             any e (initial p₁) ≡ true → any e (initial p₂) ≡ true
-    helper {p₁ = p₁} {p₂} p₁⊑p₂ eq with List.any-∈ e (initial p₁) eq
-    ... | (x , x∈is₁ , ex) = List.∈-any e x∈is₂ ex
-      where
-      x∈is₂ : x ∈ initial p₂
-      x∈is₂ = initial-complete (p₁⊑p₂ (initial-sound p₁ x∈is₁))
 
 -- The functions below simplify parsers. The following simplifications
 -- are applied in a bottom-up manner (note that some casts may be
@@ -65,23 +44,23 @@ private
 --   view) were employed the three cases in simplify (p₁ ∣ p₂) would
 --   have to be expanded to 21 cases in the correctness proof.
 
-simplify′ : ∀ {Tok e R} (p : Parser Tok e R) → ∃₁₁ λ p′ → p ≈ p′
+simplify′ : ∀ {Tok R xs} (p : Parser Tok R xs) → ∃₁₁ λ p′ → p ≈ p′
 simplify′ (return x) = (return x , (λ x∈ → x∈) , λ x∈ → x∈)
 simplify′ fail       = (fail     , (λ ())      , λ ())
 simplify′ token      = (token    , (λ x∈ → x∈) , λ x∈ → x∈)
 
 simplify′ (p₁ ∣ p₂) with simplify′ p₁ | simplify′ p₂
 simplify′ (p₁ ∣ p₂) | (fail , p₁≈∅) | (p₂′ , p₂≈p₂′) =
-  (p₂′ , (λ {_} → helper) , λ x∈ → ∣ʳ false (proj₁₁₂ p₂≈p₂′ x∈))
+  (p₂′ , (λ {_} → helper) , λ x∈ → ∣ʳ [] (proj₁₁₂ p₂≈p₂′ x∈))
   where
   helper : ∀ {x s} → x ∈ p₁ ∣ p₂ · s → x ∈ p₂′ · s
-  helper (∣ʳ .false x∈p₂) = proj₁₁₁ p₂≈p₂′ x∈p₂
-  helper (∣ˡ        x∈p₁) with proj₁₁₁ p₁≈∅ x∈p₁
+  helper (∣ʳ .[] x∈p₂) = proj₁₁₁ p₂≈p₂′ x∈p₂
+  helper (∣ˡ     x∈p₁) with proj₁₁₁ p₁≈∅ x∈p₁
   ... | ()
 simplify′ (p₁ ∣ p₂) | (p₁′ , p₁≈p₁′) | (fail , p₂≈∅) =
   (cast lem p₁′ , (λ {_} → helper₁) , λ {_} → helper₂)
   where
-  lem = sym (proj₂ BCS.+-identity _)
+  lem = sym (proj₂ LM.identity _)
 
   helper₁ : ∀ {x s} → x ∈ p₁ ∣ p₂ · s → x ∈ cast lem p₁′ · s
   helper₁ (∣ˡ    x∈p₁) = cast (proj₁₁₁ p₁≈p₁′ x∈p₁)
@@ -90,16 +69,16 @@ simplify′ (p₁ ∣ p₂) | (p₁′ , p₁≈p₁′) | (fail , p₂≈∅) =
 
   helper₂ : ∀ {x s} → x ∈ cast lem p₁′ · s → x ∈ p₁ ∣ p₂ · s
   helper₂ (cast x∈p₁′) = ∣ˡ (proj₁₁₂ p₁≈p₁′ x∈p₁′)
-simplify′ (_∣_ {e₁} p₁ p₂) | (p₁′ , p₁≈p₁′) | (p₂′ , p₂≈p₂′) =
+simplify′ (_∣_ {xs₁ = xs₁} p₁ p₂) | (p₁′ , p₁≈p₁′) | (p₂′ , p₂≈p₂′) =
   (p₁′ ∣ p₂′ , (λ {_} → helper₁) , λ {_} → helper₂)
   where
   helper₁ : ∀ {x s} → x ∈ p₁ ∣ p₂ · s → x ∈ p₁′ ∣ p₂′ · s
-  helper₁ (∣ˡ     x∈p₁) = ∣ˡ    (proj₁₁₁ p₁≈p₁′ x∈p₁)
-  helper₁ (∣ʳ .e₁ x∈p₂) = ∣ʳ e₁ (proj₁₁₁ p₂≈p₂′ x∈p₂)
+  helper₁ (∣ˡ      x∈p₁) = ∣ˡ     (proj₁₁₁ p₁≈p₁′ x∈p₁)
+  helper₁ (∣ʳ .xs₁ x∈p₂) = ∣ʳ xs₁ (proj₁₁₁ p₂≈p₂′ x∈p₂)
 
   helper₂ : ∀ {x s} → x ∈ p₁′ ∣ p₂′ · s → x ∈ p₁ ∣ p₂ · s
-  helper₂ (∣ˡ     x∈p₁′) = ∣ˡ    (proj₁₁₂ p₁≈p₁′ x∈p₁′)
-  helper₂ (∣ʳ .e₁ x∈p₂′) = ∣ʳ e₁ (proj₁₁₂ p₂≈p₂′ x∈p₂′)
+  helper₂ (∣ˡ      x∈p₁′) = ∣ˡ     (proj₁₁₂ p₁≈p₁′ x∈p₁′)
+  helper₂ (∣ʳ .xs₁ x∈p₂′) = ∣ʳ xs₁ (proj₁₁₂ p₂≈p₂′ x∈p₂′)
 
 simplify′ (p₁ >>= p₂) with simplify′ p₁
 simplify′ (p₁ >>= p₂) | (fail , p₁≈∅) = (fail , (λ {_} → helper) , λ ())
@@ -108,13 +87,10 @@ simplify′ (p₁ >>= p₂) | (fail , p₁≈∅) = (fail , (λ {_} → helper) 
   helper (x∈p₁ >>= y∈p₂x) with proj₁₁₁ p₁≈∅ x∈p₁
   ... | ()
 simplify′ (p₁ >>= p₂) | (return x , p₁≈ε) with simplify′ (p₂ x)
-simplify′ (_>>=_ {e₂ = e₂} p₁ p₂) | (return x , p₁≈ε) | (p₂′ , p₂x≈p₂′) =
+simplify′ (p₁ >>= p₂) | (return x , p₁≈ε) | (p₂′ , p₂x≈p₂′) =
   (cast lem p₂′ , (λ {_} → helper₁) , λ {_} → helper₂)
   where
-  lem = begin
-    e₂ x                ≡⟨ sym (proj₂ BCS.+-identity (e₂ x)) ⟩
-    e₂ x ∨ false        ≡⟨ sym (initial-lemma e₂ p₁≈ε) ⟩
-    any e₂ (initial p₁) ∎
+  lem = sym (proj₂ LM.identity _)
 
   helper₁ : ∀ {y s} → y ∈ p₁ >>= p₂ · s → y ∈ cast lem p₂′ · s
   helper₁ (_>>=_ {y = y} {s₂ = s₂} x∈p₁ y∈p₂x) =
@@ -125,17 +101,17 @@ simplify′ (_>>=_ {e₂ = e₂} p₁ p₂) | (return x , p₁≈ε) | (p₂′ 
     helper return x∈p₂ = proj₁₁₁ p₂x≈p₂′ x∈p₂
 
   helper₂ : ∀ {y s} → y ∈ cast lem p₂′ · s → y ∈ p₁ >>= p₂ · s
-  helper₂ (cast y∈p₂′) = proj₁₁₂ p₁≈ε return >>= proj₁₁₂ p₂x≈p₂′ y∈p₂′
-simplify′ (_>>=_ {e₁} {e₂ = e₂} p₁ p₂) | (p₁′ , p₁≈p₁′) =
-  (cast lem (p₁′ >>= p₂) , (λ {_} → helper₁) , λ {_} → helper₂)
+  helper₂ (cast y∈p₂′) =
+    _>>=_ {x = x} {p₂ = p₂} (proj₁₁₂ p₁≈ε (return {x = x}))
+                            (proj₁₁₂ p₂x≈p₂′ y∈p₂′)
+simplify′ (p₁ >>= p₂) | (p₁′ , p₁≈p₁′) =
+  (p₁′ >>= p₂ , (λ {_} → helper₁) , λ {_} → helper₂)
   where
-  lem = sym (cong (_∧_ e₁) (initial-lemma e₂ p₁≈p₁′))
+  helper₁ : ∀ {y s} → y ∈ p₁ >>= p₂ · s → y ∈ p₁′ >>= p₂ · s
+  helper₁ (x∈p₁ >>= y∈p₂x) = proj₁₁₁ p₁≈p₁′ x∈p₁ >>= y∈p₂x
 
-  helper₁ : ∀ {y s} → y ∈ p₁ >>= p₂ · s → y ∈ cast lem (p₁′ >>= p₂) · s
-  helper₁ (x∈p₁ >>= y∈p₂x) = cast (proj₁₁₁ p₁≈p₁′ x∈p₁ >>= y∈p₂x)
-
-  helper₂ : ∀ {y s} → y ∈ cast lem (p₁′ >>= p₂) · s → y ∈ p₁ >>= p₂ · s
-  helper₂ (cast (x∈p₁ >>= y∈p₂x)) = proj₁₁₂ p₁≈p₁′ x∈p₁ >>= y∈p₂x
+  helper₂ : ∀ {y s} → y ∈ p₁′ >>= p₂ · s → y ∈ p₁ >>= p₂ · s
+  helper₂ (x∈p₁ >>= y∈p₂x) = proj₁₁₂ p₁≈p₁′ x∈p₁ >>= y∈p₂x
 
 simplify′ (cast refl p) with simplify′ p
 simplify′ (cast refl p) | (p′ , p≈p′) =
@@ -144,8 +120,8 @@ simplify′ (cast refl p) | (p′ , p≈p′) =
   helper : ∀ {x s} → x ∈ cast refl p · s → x ∈ p′ · s
   helper (cast x∈p) = proj₁₁₁ p≈p′ x∈p
 
-simplify : ∀ {Tok e R} → Parser Tok e R → Parser Tok e R
+simplify : ∀ {Tok R xs} → Parser Tok R xs → Parser Tok R xs
 simplify p = proj₁₁₁ (simplify′ p)
 
-correct : ∀ {Tok e R} {p : Parser Tok e R} → p ≈ simplify p
+correct : ∀ {Tok R xs} {p : Parser Tok R xs} → p ≈ simplify p
 correct = proj₁₁₂ (simplify′ _)

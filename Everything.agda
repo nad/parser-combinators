@@ -8,7 +8,7 @@ module Everything where
 
 import StructurallyRecursiveDescentParsing.Coinduction
 
--- The parser type, along with its semantics
+-- The parser type, along with its semantics.
 
 import StructurallyRecursiveDescentParsing.Parser
 import StructurallyRecursiveDescentParsing.Parser.Semantics
@@ -17,9 +17,10 @@ import StructurallyRecursiveDescentParsing.Parser.Semantics
 
 import StructurallyRecursiveDescentParsing.Unambiguity
 
--- A simplified parser type.
+-- A simplified parser type, along with its semantics.
 
 import StructurallyRecursiveDescentParsing.Simplified
+import StructurallyRecursiveDescentParsing.Simplified.Semantics
 
 -- Parser type indices, used by the grammars.
 

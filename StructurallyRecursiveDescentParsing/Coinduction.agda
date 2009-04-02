@@ -8,23 +8,23 @@ open import Coinduction
 open import Data.Bool
 open import Relation.Binary.PropositionalEquality1
 
--- Coinductive if the argument is false.
+-- Coinductive if the argument is true.
 
 ∞? : Bool → Set1 → Set1
-∞? true  A =    A
-∞? false A = ∞₁ A
+∞? true  A = ∞₁ A
+∞? false A =    A
 
 ♯? : ∀ b {A} → A → ∞? b A
-♯? true  x =    x
-♯? false x = ♯₁ x
+♯? true  x = ♯₁ x
+♯? false x =    x
 
 ♭? : ∀ b {A} → ∞? b A → A
-♭? true  x =    x
-♭? false x = ♭₁ x
+♭? true  x = ♭₁ x
+♭? false x =    x
 
 ♭¿ : ∀ b {A} → ∞₁ A → ∞? b A
-♭¿ true  x = ♭₁ x
-♭¿ false x =    x
+♭¿ true  x =    x
+♭¿ false x = ♭₁ x
 
 -- Some lemmas.
 
