@@ -39,25 +39,25 @@ import StructurallyRecursiveDescentParsing.Mixfix.Show as Show
 -- Operators
 
 atom : Operator closed 0
-atom = operator ("•" ∷ [])
+atom = record { nameParts = "•" ∷ [] }
 
 parens : Operator closed 1
-parens = operator ("(" ∷ ")" ∷ [])
+parens = record { nameParts = "(" ∷ ")" ∷ [] }
 
 plus : Operator (infx left) 0
-plus = operator ("+" ∷ [])
+plus = record { nameParts = "+" ∷ [] }
 
 minus : Operator (infx left) 0
-minus = operator ("-" ∷ [])
+minus = record { nameParts = "-" ∷ [] }
 
 times : Operator (infx left) 0
-times = operator ("*" ∷ [])
+times = record { nameParts = "*" ∷ [] }
 
 comma : Operator (infx left) 0
-comma = operator ("," ∷ [])
+comma = record { nameParts = "," ∷ [] }
 
 wellTyped : Operator postfx 1
-wellTyped = operator ("⊢" ∷ "∶" ∷ [])
+wellTyped = record { nameParts = "⊢" ∷ "∶" ∷ [] }
 
 ------------------------------------------------------------------------
 -- Precedence graph

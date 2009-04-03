@@ -26,14 +26,11 @@ NamePart = String
 -- Operators. arity is the internal arity of the operator, i.e. the
 -- number of arguments taken between the first and last name parts.
 
-data Operator (fix : Fixity) (arity : ℕ) : Set where
-  operator : (ns : Vec NamePart (1 + arity)) → Operator fix arity
+record Operator (fix : Fixity) (arity : ℕ) : Set where
+  field
+    nameParts : Vec NamePart (1 + arity)
 
--- The operator's name parts.
-
-nameParts : ∀ {fix arity} →
-            Operator fix arity → Vec NamePart (1 + arity)
-nameParts (operator ns) = ns
+open Operator public
 
 -- Predicate filtering out operators of the given fixity and
 -- associativity.

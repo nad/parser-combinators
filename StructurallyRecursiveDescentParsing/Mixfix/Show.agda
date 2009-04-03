@@ -61,7 +61,7 @@ module Show where
 
     inner : ∀ {fix} {ops : List (∃ (Operator fix))} →
             Inner ops → DiffList NamePart
-    inner (_∙_ {op = operator ns} _ args) = inner′ ns args
+    inner (_∙_ {op = op} _ args) = inner′ (nameParts op) args
 
     inner′ : ∀ {arity} → Vec NamePart (1 + arity) → Vec (Expr g) arity →
              DiffList NamePart
@@ -139,10 +139,16 @@ module Correctness where
 
     inner : ∀ {fix s ops} (i : Inner {fix} ops) →
             i ⊕ s ∈⟦ Mixfix.inner ops ⟧· Show.inner i s
-    inner (_∙_ {op = operator ns} (here {xs = ops}) args) =
-      ∣ˡ (_ <$> inner′ ns args)
-    inner (_∙_ {op = operator ns} (there {y = _ , _} x∈xs) args) =
-      ∣ʳ false (_ <$> inner (_∙_ x∈xs args))
+    inner {fix} {s} (_∙_ {arity} {op} op∈ops args) =
+      helper op∈ops args
+      where
+      helper : {ops : List (∃ (Operator fix))}
+               (op∈ : (arity , op) ∈ ops) (args : Vec (Expr g) arity) →
+               let i = op∈ ∙ args in
+               i ⊕ s ∈⟦ Mixfix.inner ops ⟧· Show.inner i s
+      helper here args = ∣ˡ (_ <$> inner′ (nameParts op) args)
+      helper (there {y = _ , _} op∈) args =
+        ∣ʳ false (_ <$> helper op∈ args)
 
     inner′ : ∀ {arity s} (ns : Vec NamePart (1 + arity)) args →
              args ⊕ s ∈⟦ Mixfix.expr between ns ⟧· Show.inner′ ns args s
