@@ -14,7 +14,6 @@ open RawMonadPlus List.monadPlus
            ; ∅      to fail′
            ; _∣_    to _∣′_
            ; _>>=_  to _>>=′_
-           ; _<$>_  to _<$>′_
            )
 open import Data.Function
 open import Relation.Binary.PropositionalEquality
@@ -30,6 +29,11 @@ infixl 50 _⊛′_
 
 _⊛′_ : ∀ {A B} → List (A → B) → List A → List B
 fs ⊛′ xs = xs >>=′ λ x → map (λ f → f x) fs
+
+private
+
+  ⊛′-[] : ∀ {A B} {fs : List (A → B)} → fs ⊛′ [] ≡ []
+  ⊛′-[] = refl
 
 ------------------------------------------------------------------------
 -- Parsers
