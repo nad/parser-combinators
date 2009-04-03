@@ -22,7 +22,6 @@ open Expr.PrecedenceCorrect g
 
 import StructurallyRecursiveDescentParsing.Simplified as Simplified
 open Simplified hiding (Parser; ⟦_⟧)
-open import StructurallyRecursiveDescentParsing.Backend.DepthFirst
 open import StructurallyRecursiveDescentParsing.Mixfix.Fixity
 import StructurallyRecursiveDescentParsing.Mixfix.Lib as Lib
   renaming (ParserProg to Parser)
@@ -100,6 +99,3 @@ mutual
 
 expression : Simplified.Parser NamePart false (Expr g)
 expression = ⟦ ♭₁ expr ⟧
-
-parseExpr : List NamePart → List (Expr g)
-parseExpr = parseComplete expression

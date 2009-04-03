@@ -34,6 +34,12 @@ open import StructurallyRecursiveDescentParsing.Mixfix.Fixity
   hiding (_≟_)
 import StructurallyRecursiveDescentParsing.Mixfix as Mixfix
 import StructurallyRecursiveDescentParsing.Mixfix.Show as Show
+import StructurallyRecursiveDescentParsing.Simplified as Simplified
+open Simplified using (Parser)
+import StructurallyRecursiveDescentParsing.Backend.DepthFirst
+  as DepthFirst
+import StructurallyRecursiveDescentParsing.Backend.BreadthFirst
+  as BreadthFirst
 
 ------------------------------------------------------------------------
 -- Operators
@@ -115,19 +121,30 @@ fromNameParts = List.foldr _++_ ""
 toNameParts : String → List NamePart
 toNameParts = List.map (String.fromList ∘ L[_]) ∘ String.toList
 
-parse : String → List String
-parse = List.map (fromNameParts ∘ show) ∘
-        Mixfix.parseExpr g ∘
-        toNameParts
+data Backend : Set where
+  depthFirst   : Backend
+  breadthFirst : Backend
 
-test : String → List String → Bool
-test s₁ s₂ = decToBool (parse s₁ ≟ s₂)
+parse : ∀ {Tok e R} → Backend → Parser Tok e R → List Tok → List R
+parse depthFirst   p = DepthFirst.parseComplete p
+parse breadthFirst p = BreadthFirst.parseComplete (Simplified.⟦_⟧ p)
+
+parseExpr : Backend → String → List String
+parseExpr backend = List.map (fromNameParts ∘ show) ∘
+                    parse backend (Mixfix.expression g) ∘
+                    toNameParts
+
+-- The breadth-first backend is considerably slower than the
+-- depth-first one on these examples.
+backend = depthFirst
 
 runTest : String → List String → IO ⊤
 runTest s₁ s₂ = ♯₁
-  putStrLn ("Testing: " ++ s₁)                         >> ♯₁ (♯₁
-  mapM′ putStrLn (Colist.fromList $ parse s₁)          >> ♯₁
-  putStrLn (if test s₁ s₂ then "Passed" else "Failed") )
+  putStrLn ("Testing: " ++ s₁)           >> ♯₁ (♯₁
+  mapM′ putStrLn (Colist.fromList p)     >> ♯₁
+  putStrLn (if decToBool (p ≟ s₂)
+            then "Passed" else "Failed") )
+  where p = parseExpr backend s₁
 
 main = run (♯₁
   runTest "•⊢•"             []                     >> ♯₁ (♯₁
