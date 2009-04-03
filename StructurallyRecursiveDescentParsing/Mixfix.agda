@@ -13,18 +13,19 @@ module StructurallyRecursiveDescentParsing.Mixfix
 open import Coinduction
 open import Data.List using (List; []; _∷_; _∈_; here; there)
 open import Data.List.NonEmpty using (foldr; foldl)
+open import Data.Maybe using (Maybe; just; nothing)
 open import Data.Product
 open import Data.Bool
-open import Data.Function using (flip)
 import Data.String as String
 
 open Expr.PrecedenceCorrect g
 
-open import StructurallyRecursiveDescentParsing.Simplified
-  hiding (⟦_⟧)
+import StructurallyRecursiveDescentParsing.Simplified as Simplified
+open Simplified hiding (Parser; ⟦_⟧)
 open import StructurallyRecursiveDescentParsing.Backend.DepthFirst
 open import StructurallyRecursiveDescentParsing.Mixfix.Fixity
 import StructurallyRecursiveDescentParsing.Mixfix.Lib as Lib
+  renaming (ParserProg to Parser)
 open Lib String.decSetoid
 
 -- The following definition uses a lexicographic combination of
@@ -36,45 +37,49 @@ mutual
 
   -- Expressions.
 
-  expr : ∞₁ (ParserProg false (Expr g))
-  expr = ♯₁ nodes g
+  expr : ∞₁ (Parser false (Expr g))
+  expr = ♯₁ precs g
 
   -- Expressions corresponding to zero or more nodes in the precedence
   -- graph: operator applications where the outermost operator has one
   -- of the precedences ps. The graph g is used for internal
   -- expressions.
 
-  nodes : (ps : PrecedenceGraph) → ParserProg false (Expr ps)
-  nodes []       = fail
-  nodes (p ∷ ps) = (λ e → here ∙ proj₂ e) <$> node p
-                 ∣ weakenE                <$> nodes ps
+  precs : (ps : List Precedence) → Parser false (Expr ps)
+  precs []       = fail
+  precs (p ∷ ps) = (λ e → here ∙ proj₂ e) <$> prec p
+                 ∣ weakenE                <$> precs ps
 
   -- Expressions corresponding to one node in the precedence graph:
   -- operator applications where the outermost operator has
   -- precedence p. The graph g is used for internal expressions.
 
-  node : (p : Precedence) → ParserProg false (∃ (ExprIn p))
-  node (precedence ops sucs) =
+  prec : (p : Precedence) → Parser false (∃ (ExprIn p))
+  prec (precedence ops sucs) =
       ⟪_⟫    <$>      [ closed   ]
     ∥ _⟨_⟩_  <$>  ↟ ⊛ [ infx non ] ⊛ ↟
     ∥ appʳ   <$>      preRight +   ⊛ ↟
     ∥ appˡ   <$>  ↟ ⊛ postLeft +
     ∥ fail
-    module Node where
+    module Prec where
+    p = precedence ops sucs
+
     -- [ fix ] parses the internal parts of operators with the
     -- current precedence level and fixity fix.
     [_] = λ (fix : Fixity) → inner (ops fix)
 
     -- Operator applications where the outermost operator binds
     -- tighter than the current precedence level.
-    ↟ = nodes sucs
+    ↟ = precs sucs
 
     -- Right associative and prefix operators.
-    preRight =  ⟪_⟩_  <$> [ prefx ]
+    preRight : Parser false (Outer p right → ExprIn p (just right))
+    preRight =  ⟪_⟩_  <$>     [ prefx      ]
              ∣ _⟨_⟩ʳ_ <$> ↟ ⊛ [ infx right ]
 
     -- Left associative and postfix operators.
-    postLeft = flip _⟨_⟫                    <$> [ postfx ]
+    postLeft : Parser false (Outer p left → ExprIn p (just left))
+    postLeft = (λ op    e₁ → e₁ ⟨ op ⟫    ) <$> [ postfx    ]
              ∣ (λ op e₂ e₁ → e₁ ⟨ op ⟩ˡ e₂) <$> [ infx left ] ⊛ ↟
 
     -- Post-processing for the non-empty lists returned by _+.
@@ -85,15 +90,15 @@ mutual
   -- operators of the given precedence and fixity.
 
   inner : ∀ {fix} (ops : List (∃ (Operator fix))) →
-          ParserProg false (Inner ops)
+          Parser false (Inner ops)
   inner []               = fail
   inner ((_ , op) ∷ ops) =
-      _∙_ here <$> (expr between nameParts op)
-    ∣ weakenI  <$> inner ops
+      (λ args → here ∙ args) <$> (expr between nameParts op)
+    ∣ weakenI                <$> inner ops
 
 -- Expression parsers.
 
-expression : Parser NamePart false (Expr g)
+expression : Simplified.Parser NamePart false (Expr g)
 expression = ⟦ ♭₁ expr ⟧
 
 parseExpr : List NamePart → List (Expr g)

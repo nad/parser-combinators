@@ -76,7 +76,7 @@ show = DiffList.toList ∘ Show.expr
 
 module Correctness where
 
-  -- A generalisation of Mixfix.Node.appˡ.
+  -- A generalisation of Mixfix.Prec.appˡ.
 
   appˡ′ : ∀ {p} → Outer p left →
           List⁺ (Outer p left → ExprIn p (just left)) →
@@ -91,16 +91,16 @@ module Correctness where
   mutual
 
     expr : ∀ {ps s} (e : Expr ps) →
-           e ⊕ s ∈⟦ Mixfix.nodes ps ⟧· Show.expr e s
+           e ⊕ s ∈⟦ Mixfix.precs ps ⟧· Show.expr e s
     expr (here       ∙ e) = ∣ˡ       (_ <$> exprIn e)
     expr (there x∈xs ∙ e) = ∣ʳ false (_ <$> expr (x∈xs ∙ e))
 
     exprIn : ∀ {p fix s} (e : ExprIn p fix) →
-             (, e) ⊕ s ∈⟦ Mixfix.node p ⟧· Show.exprIn e s
+             (, e) ⊕ s ∈⟦ Mixfix.prec p ⟧· Show.exprIn e s
     exprIn {precedence ops sucs} e = exprIn′ _ e
       where
       p        = precedence ops sucs
-      module N = Mixfix.Node ops sucs
+      module N = Mixfix.Prec ops sucs
 
       lemmaʳ : ∀ {f : Outer p right → ExprIn p (just right)} {s e} {g : DiffList NamePart} →
                (∀ {s} → f ⊕ s ∈⟦ N.preRight ⟧· g s) →
@@ -131,7 +131,7 @@ module Correctness where
       postLeft (similar e ⟨ op ⟩ˡ r) = lemmaˡ (∣ʳ false ((λ op r l → l ⟨ op ⟩ˡ r) <$> inner op ⊛ expr r)) (postLeft e)
 
       exprIn′ : ∀ fix {s} (e : ExprIn p fix) →
-                (, e) ⊕ s ∈⟦ Mixfix.node p ⟧· Show.exprIn e s
+                (, e) ⊕ s ∈⟦ Mixfix.prec p ⟧· Show.exprIn e s
       exprIn′ nothing         ⟪ op ⟫    = ∥ˡ (_ <$> inner op)
       exprIn′ nothing      (l ⟨ op ⟩ r) = ∥ʳ false (∥ˡ (_ <$> expr l ⊛ inner op ⊛ expr r))
       exprIn′ (just right) e            = ∥ʳ false (∥ʳ false (∥ˡ (preRight e)))
