@@ -47,17 +47,14 @@ import StructurallyRecursiveDescentParsing.Backend.BreadthFirst
 atom : Operator closed 0
 atom = record { nameParts = "•" ∷ [] }
 
-parens : Operator closed 1
-parens = record { nameParts = "(" ∷ ")" ∷ [] }
-
 plus : Operator (infx left) 0
 plus = record { nameParts = "+" ∷ [] }
 
-minus : Operator (infx left) 0
-minus = record { nameParts = "-" ∷ [] }
+ifThen : Operator prefx 1
+ifThen = record { nameParts = "i" ∷ "t" ∷ [] }
 
-times : Operator (infx left) 0
-times = record { nameParts = "*" ∷ [] }
+ifThenElse : Operator prefx 2
+ifThenElse = record { nameParts = "i" ∷ "t" ∷ "e" ∷ [] }
 
 comma : Operator (infx left) 0
 comma = record { nameParts = "," ∷ [] }
@@ -75,36 +72,33 @@ abstract  -- To speed up type-checking.
 
   mutual
 
-    ap = prec ((, , atom) ∷ (, , parens) ∷ []) []
-    t  = prec ((, , times) ∷ [])               (ap ∷ [])
-    pm = prec ((, , plus) ∷ (, , minus) ∷ [])  (t ∷ ap ∷ [])
-    c  = prec ((, , comma) ∷ [])               (pm ∷ t ∷ ap ∷ [])
-    wt = prec ((, , wellTyped) ∷ [])           (c ∷ ap ∷ [])
+    a  = prec ((, , atom) ∷ [])                       []
+    pl = prec ((, , plus) ∷ [])                       (a ∷ [])
+    ii = prec ((, , ifThen) ∷ (, , ifThenElse) ∷ [])  (pl ∷ a ∷ [])
+    c  = prec ((, , comma) ∷ [])                      (ii ∷ pl ∷ a ∷ [])
+    wt = prec ((, , wellTyped) ∷ [])                  (c ∷ a ∷ [])
 
   g : PrecedenceGraph
-  g = wt ∷ c ∷ pm ∷ t ∷ ap ∷ []
+  g = wt ∷ c ∷ ii ∷ pl ∷ a ∷ []
 
 ------------------------------------------------------------------------
 -- Expressions
 
   open Expr.PrecedenceCorrect g
 
-  • : ExprIn ap nothing
+  • : ExprIn a nothing
   • = ⟪ here ∙ [] ⟫
 
-  ⟦_⟧ : Expr g → ExprIn ap nothing
-  ⟦ e ⟧ = ⟪ there here ∙ [ e ] ⟫
-
-  _+_ : Outer pm left → Expr (t ∷ ap ∷ []) → ExprIn pm (just left)
+  _+_ : Outer pl left → Expr (a ∷ []) → ExprIn pl (just left)
   e₁ + e₂ = e₁ ⟨ here ∙ [] ⟩ˡ e₂
 
-  _-_ : Outer pm left → Expr (t ∷ ap ∷ []) → ExprIn pm (just left)
-  e₁ - e₂ = e₁ ⟨ there here ∙ [] ⟩ˡ e₂
+  i_t_ : Expr g → Outer ii right → ExprIn ii (just right)
+  i e₁ t e₂ = ⟪ here ∙ e₁ ∷ [] ⟩ e₂
 
-  _*_ : Outer t left → Expr (ap ∷ []) → ExprIn t (just left)
-  e₁ * e₂ = e₁ ⟨ here ∙ [] ⟩ˡ e₂
+  i_t_e_ : Expr g → Expr g → Outer ii right → ExprIn ii (just right)
+  i e₁ t e₂ e e₃ = ⟪ there here ∙ e₁ ∷ e₂ ∷ [] ⟩ e₃
 
-  _,_ : Outer c left → Expr (pm ∷ t ∷ ap ∷ []) → ExprIn c (just left)
+  _,_ : Outer c left → Expr (ii ∷ pl ∷ a ∷ []) → ExprIn c (just left)
   e₁ , e₂ = e₁ ⟨ here ∙ [] ⟩ˡ e₂
 
   _⊢_∶ : Outer wt left → Expr g → Expr g
@@ -141,13 +135,14 @@ backend = depthFirst
 runTest : String → List String → IO ⊤
 runTest s₁ s₂ = ♯₁
   putStrLn ("Testing: " ++ s₁)           >> ♯₁ (♯₁
-  mapM′ putStrLn (Colist.fromList p)     >> ♯₁
-  putStrLn (if decToBool (p ≟ s₂)
+  mapM′ putStrLn (Colist.fromList p₁)    >> ♯₁
+  putStrLn (if decToBool (p₁ ≟ s₂)
             then "Passed" else "Failed") )
-  where p = parseExpr backend s₁
+  where p₁ = parseExpr backend s₁
 
 main = run (♯₁
-  runTest "•⊢•"             []                     >> ♯₁ (♯₁
-  runTest "(•,•)⊢∶"         []                     >> ♯₁ (♯₁
-  runTest "•⊢•∶"            L[ "•⊢•∶" ]            >> ♯₁
-  runTest "•,•+•*•⊢(•⊢•∶)∶" L[ "•,•+•*•⊢(•⊢•∶)∶" ] )))
+  runTest "•+•⊢•∶"      []                               >> ♯₁ (♯₁
+  runTest "•,•⊢∶"       []                               >> ♯₁ (♯₁
+  runTest "•⊢•∶"        L[ "•⊢•∶" ]                      >> ♯₁ (♯₁
+  runTest "•,i•t•+•⊢•∶" L[ "•,i•t•+•⊢•∶" ]               >> ♯₁
+  runTest "i•ti•t•e•"   ("i•ti•t•e•" ∷ "i•ti•t•e•" ∷ []) ))))
