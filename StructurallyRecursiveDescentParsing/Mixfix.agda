@@ -22,9 +22,8 @@ open Expr.PrecedenceCorrect g
 import StructurallyRecursiveDescentParsing.Simplified as Simplified
 open Simplified hiding (Parser; ⟦_⟧)
 open import StructurallyRecursiveDescentParsing.Mixfix.Fixity
-import StructurallyRecursiveDescentParsing.Mixfix.Lib as Lib
+open import StructurallyRecursiveDescentParsing.Mixfix.Lib
   renaming (ParserProg to Parser)
-open Lib String.decSetoid
 
 -- The following definition uses a lexicographic combination of
 -- guarded corecursion and structural recursion. The only "corecursive
@@ -35,7 +34,7 @@ mutual
 
   -- Expressions.
 
-  expr : ∞₁ (Parser false (Expr g))
+  expr : ∞₁ (Parser (Expr g))
   expr = ♯₁ precs g
 
   -- Expressions corresponding to zero or more nodes in the precedence
@@ -43,7 +42,7 @@ mutual
   -- of the precedences ps. The graph g is used for internal
   -- expressions.
 
-  precs : (ps : List Precedence) → Parser false (Expr ps)
+  precs : (ps : List Precedence) → Parser (Expr ps)
   precs []       = fail
   precs (p ∷ ps) = (λ e → here ∙ proj₂ e) <$> prec p
                  ∣ weakenE                <$> precs ps
@@ -52,7 +51,7 @@ mutual
   -- operator applications where the outermost operator has
   -- precedence p. The graph g is used for internal expressions.
 
-  prec : (p : Precedence) → Parser false (∃ (ExprIn p))
+  prec : (p : Precedence) → Parser (∃ (ExprIn p))
   prec (precedence ops sucs) =
       ⟪_⟫    <$>      [ closed   ]
     ∥ _⟨_⟩_  <$>  ↟ ⊛ [ infx non ] ⊛ ↟
@@ -71,12 +70,12 @@ mutual
     ↟ = precs sucs
 
     -- Right associative and prefix operators.
-    preRight : Parser false (Outer p right → ExprIn p right)
+    preRight : Parser (Outer p right → ExprIn p right)
     preRight =  ⟪_⟩_  <$>     [ prefx      ]
              ∣ _⟨_⟩ʳ_ <$> ↟ ⊛ [ infx right ]
 
     -- Left associative and postfix operators.
-    postLeft : Parser false (Outer p left → ExprIn p left)
+    postLeft : Parser (Outer p left → ExprIn p left)
     postLeft = (λ op    e₁ → e₁ ⟨ op ⟫    ) <$> [ postfx    ]
              ∣ (λ op e₂ e₁ → e₁ ⟨ op ⟩ˡ e₂) <$> [ infx left ] ⊛ ↟
 
@@ -88,7 +87,7 @@ mutual
   -- operators of the given precedence and fixity.
 
   inner : ∀ {fix} (ops : List (∃ (Operator fix))) →
-          Parser false (Inner ops)
+          Parser (Inner ops)
   inner []               = fail
   inner ((_ , op) ∷ ops) =
       (λ args → here ∙ args) <$> (expr between nameParts op)

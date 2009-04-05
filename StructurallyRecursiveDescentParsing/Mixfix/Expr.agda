@@ -85,7 +85,7 @@ module PrecedenceCorrect (g : PrecedenceGraph) where
     -- Expr ps contains expressions where the outermost operator has
     -- one of the precedences in ps.
 
-    data Expr (ps : PrecedenceGraph) : Set where
+    data Expr (ps : List Precedence) : Set where
       _∙_ : ∀ {p assoc} (p∈ps : p ∈ ps) (e : ExprIn p assoc) → Expr ps
 
     -- ExprIn p assoc contains expressions where the outermost

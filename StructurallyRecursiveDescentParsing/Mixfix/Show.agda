@@ -8,7 +8,6 @@ module StructurallyRecursiveDescentParsing.Mixfix.Show
          (g : PrecedenceGraph)
          where
 
-open import Data.Bool using (Bool; true; false)
 open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.List using (List; _∈_; here; there)
 open import Data.List.NonEmpty using (List⁺; [_]; _∷_; foldl; _∷ʳ_)
@@ -28,11 +27,9 @@ open import StructurallyRecursiveDescentParsing.Simplified
 open import StructurallyRecursiveDescentParsing.Simplified.Semantics
   as Semantics
 open import StructurallyRecursiveDescentParsing.Mixfix.Fixity
-import StructurallyRecursiveDescentParsing.Mixfix.Lib
+open import StructurallyRecursiveDescentParsing.Mixfix.Lib as Lib
 import StructurallyRecursiveDescentParsing.Mixfix
 private
-  open module Lib = StructurallyRecursiveDescentParsing.Mixfix.Lib
-                      String.decSetoid
   module Mixfix = StructurallyRecursiveDescentParsing.Mixfix g
 
 ------------------------------------------------------------------------
@@ -91,8 +88,8 @@ module Correctness where
 
     expr : ∀ {ps s} (e : Expr ps) →
            e ⊕ s ∈⟦ Mixfix.precs ps ⟧· Show.expr e s
-    expr (here       ∙ e) = ∣ˡ       (_ <$> exprIn e)
-    expr (there x∈xs ∙ e) = ∣ʳ false (_ <$> expr (x∈xs ∙ e))
+    expr (here       ∙ e) = ∣ˡ (_ <$> exprIn e)
+    expr (there x∈xs ∙ e) = ∣ʳ (_ <$> expr (x∈xs ∙ e))
 
     exprIn : ∀ {p assoc s} (e : ExprIn p assoc) →
              (, e) ⊕ s ∈⟦ Mixfix.prec p ⟧· Show.exprIn e s
@@ -111,8 +108,8 @@ module Correctness where
                  e ⊕ s ∈⟦ N.appʳ <$> N.preRight + ⊛ N.↟ ⟧· Show.exprIn e s
       preRight (  ⟪ op ⟩  tighter e) = _ <$> +-[] (∣ˡ (⟪_⟩_ <$> inner op)) ⊛ expr e
       preRight (  ⟪ op ⟩  similar e) = lemmaʳ     (∣ˡ (⟪_⟩_ <$> inner op)) (preRight e)
-      preRight (l ⟨ op ⟩ʳ tighter e) = _ <$> +-[] (∣ʳ false (_⟨_⟩ʳ_ <$> expr l ⊛ inner op)) ⊛ expr e
-      preRight (l ⟨ op ⟩ʳ similar e) = lemmaʳ     (∣ʳ false (_⟨_⟩ʳ_ <$> expr l ⊛ inner op)) (preRight e)
+      preRight (l ⟨ op ⟩ʳ tighter e) = _ <$> +-[] (∣ʳ (_⟨_⟩ʳ_ <$> expr l ⊛ inner op)) ⊛ expr e
+      preRight (l ⟨ op ⟩ʳ similar e) = lemmaʳ     (∣ʳ (_⟨_⟩ʳ_ <$> expr l ⊛ inner op)) (preRight e)
 
       lemmaˡ : ∀ {f : Outer p left → ExprIn p left} {s e} {g : DiffList NamePart} →
                (∀ {s} → f ⊕ s ∈⟦ N.postLeft ⟧· g s) →
@@ -126,15 +123,15 @@ module Correctness where
       postLeft (tighter e ⟨ op ⟫   ) = _ <$> expr e ⊛ +-[] (∣ˡ (flip _⟨_⟫ <$> inner op))
       postLeft (similar e ⟨ op ⟫   ) = lemmaˡ              (∣ˡ (flip _⟨_⟫ <$> inner op)) (postLeft e)
       postLeft (tighter e ⟨ op ⟩ˡ r) = _ <$> expr e ⊛
-                                         +-[] (∣ʳ false ((λ op r l → l ⟨ op ⟩ˡ r) <$> inner op ⊛ expr r))
-      postLeft (similar e ⟨ op ⟩ˡ r) = lemmaˡ (∣ʳ false ((λ op r l → l ⟨ op ⟩ˡ r) <$> inner op ⊛ expr r)) (postLeft e)
+                                         +-[] (∣ʳ ((λ op r l → l ⟨ op ⟩ˡ r) <$> inner op ⊛ expr r))
+      postLeft (similar e ⟨ op ⟩ˡ r) = lemmaˡ (∣ʳ ((λ op r l → l ⟨ op ⟩ˡ r) <$> inner op ⊛ expr r)) (postLeft e)
 
       exprIn′ : ∀ assoc {s} (e : ExprIn p assoc) →
                 (, e) ⊕ s ∈⟦ Mixfix.prec p ⟧· Show.exprIn e s
       exprIn′ non      ⟪ op ⟫    = ∥ˡ (_ <$> inner op)
-      exprIn′ non   (l ⟨ op ⟩ r) = ∥ʳ false (∥ˡ (_ <$> expr l ⊛ inner op ⊛ expr r))
-      exprIn′ right e            = ∥ʳ false (∥ʳ false (∥ˡ (preRight e)))
-      exprIn′ left  e            = ∥ʳ false (∥ʳ false (∥ʳ false (∥ˡ (postLeft e))))
+      exprIn′ non   (l ⟨ op ⟩ r) = ∥ʳ (∥ˡ (_ <$> expr l ⊛ inner op ⊛ expr r))
+      exprIn′ right e            = ∥ʳ (∥ʳ (∥ˡ (preRight e)))
+      exprIn′ left  e            = ∥ʳ (∥ʳ (∥ʳ (∥ˡ (postLeft e))))
 
     inner : ∀ {fix s ops} (i : Inner {fix} ops) →
             i ⊕ s ∈⟦ Mixfix.inner ops ⟧· Show.inner i s
@@ -147,13 +144,13 @@ module Correctness where
                i ⊕ s ∈⟦ Mixfix.inner ops ⟧· Show.inner i s
       helper here args = ∣ˡ (_ <$> inner′ (nameParts op) args)
       helper (there {y = _ , _} op∈) args =
-        ∣ʳ false (_ <$> helper op∈ args)
+        ∣ʳ (_ <$> helper op∈ args)
 
     inner′ : ∀ {arity s} (ns : Vec NamePart (1 + arity)) args →
              args ⊕ s ∈⟦ Mixfix.expr between ns ⟧· Show.inner′ ns args s
-    inner′ (n ∷ [])      []           = between-[] refl
+    inner′ (n ∷ [])      []           = between-[]
     inner′ (n ∷ n′ ∷ ns) (arg ∷ args) =
-      between-∷ refl (expr arg) (inner′ (n′ ∷ ns) args)
+      between-∷ (expr arg) (inner′ (n′ ∷ ns) args)
 
 -- All generated strings are syntactically correct (but possibly
 -- ambiguous). Note that this result implies that all
