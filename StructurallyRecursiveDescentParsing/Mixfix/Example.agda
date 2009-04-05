@@ -24,7 +24,6 @@ open DecSetoid (ListEq.DecidableEquality.decSetoid String.decSetoid)
 open import Data.Function using (_∘_; _$_)
 open import Data.Bool using (Bool; if_then_else_)
 import Data.Bool.Show as Bool
-open import Data.Maybe using (Maybe; just; nothing)
 open import Relation.Nullary.Decidable using (decToBool)
 open import Relation.Binary.PropositionalEquality
 open import IO
@@ -86,19 +85,19 @@ abstract  -- To speed up type-checking.
 
   open Expr.PrecedenceCorrect g
 
-  • : ExprIn a nothing
+  • : ExprIn a non
   • = ⟪ here ∙ [] ⟫
 
-  _+_ : Outer pl left → Expr (a ∷ []) → ExprIn pl (just left)
+  _+_ : Outer pl left → Expr (a ∷ []) → ExprIn pl left
   e₁ + e₂ = e₁ ⟨ here ∙ [] ⟩ˡ e₂
 
-  i_t_ : Expr g → Outer ii right → ExprIn ii (just right)
+  i_t_ : Expr g → Outer ii right → ExprIn ii right
   i e₁ t e₂ = ⟪ here ∙ e₁ ∷ [] ⟩ e₂
 
-  i_t_e_ : Expr g → Expr g → Outer ii right → ExprIn ii (just right)
+  i_t_e_ : Expr g → Expr g → Outer ii right → ExprIn ii right
   i e₁ t e₂ e e₃ = ⟪ there here ∙ e₁ ∷ e₂ ∷ [] ⟩ e₃
 
-  _,_ : Outer c left → Expr (ii ∷ pl ∷ a ∷ []) → ExprIn c (just left)
+  _,_ : Outer c left → Expr (ii ∷ pl ∷ a ∷ []) → ExprIn c left
   e₁ , e₂ = e₁ ⟨ here ∙ [] ⟩ˡ e₂
 
   _⊢_∶ : Outer wt left → Expr g → Expr g

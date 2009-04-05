@@ -47,7 +47,7 @@ module Show where
     expr : ∀ {ps} → Expr ps → DiffList NamePart
     expr (_ ∙ e) = exprIn e
 
-    exprIn : ∀ {p fix} → ExprIn p fix → DiffList NamePart
+    exprIn : ∀ {p assoc} → ExprIn p assoc → DiffList NamePart
     exprIn    ⟪ op ⟫     =            inner op
     exprIn (l ⟨ op ⟫   ) = outer l ++ inner op
     exprIn (  ⟪ op ⟩  r) =            inner op ++ outer r
@@ -55,7 +55,7 @@ module Show where
     exprIn (l ⟨ op ⟩ˡ r) = outer l ++ inner op ++ expr  r
     exprIn (l ⟨ op ⟩ʳ r) = expr  l ++ inner op ++ outer r
 
-    outer : ∀ {p fix} → Outer p fix → DiffList NamePart
+    outer : ∀ {p assoc} → Outer p assoc → DiffList NamePart
     outer (similar e) = exprIn e
     outer (tighter e) = expr   e
 
@@ -78,9 +78,8 @@ module Correctness where
 
   -- A generalisation of Mixfix.Prec.appˡ.
 
-  appˡ′ : ∀ {p} → Outer p left →
-          List⁺ (Outer p left → ExprIn p (just left)) →
-          ExprIn p (just left)
+  appˡ′ : ∀ {p} → Outer p left → List⁺ (Outer p left → ExprIn p left) →
+          ExprIn p left
   appˡ′ e fs = foldl (λ e f → f (similar e)) (λ f → f e) fs
 
   appˡ′-lemma : ∀ {p} (e : Outer p left) fs f →
@@ -95,34 +94,34 @@ module Correctness where
     expr (here       ∙ e) = ∣ˡ       (_ <$> exprIn e)
     expr (there x∈xs ∙ e) = ∣ʳ false (_ <$> expr (x∈xs ∙ e))
 
-    exprIn : ∀ {p fix s} (e : ExprIn p fix) →
+    exprIn : ∀ {p assoc s} (e : ExprIn p assoc) →
              (, e) ⊕ s ∈⟦ Mixfix.prec p ⟧· Show.exprIn e s
     exprIn {precedence ops sucs} e = exprIn′ _ e
       where
       p        = precedence ops sucs
       module N = Mixfix.Prec ops sucs
 
-      lemmaʳ : ∀ {f : Outer p right → ExprIn p (just right)} {s e} {g : DiffList NamePart} →
+      lemmaʳ : ∀ {f : Outer p right → ExprIn p right} {s e} {g : DiffList NamePart} →
                (∀ {s} → f ⊕ s ∈⟦ N.preRight ⟧· g s) →
                           e  ⊕ s ∈⟦ N.appʳ <$> N.preRight + ⊛ N.↟ ⟧·    Show.exprIn e s →
                f (similar e) ⊕ s ∈⟦ N.appʳ <$> N.preRight + ⊛ N.↟ ⟧· g (Show.exprIn e s)
       lemmaʳ f∈ (.N.appʳ <$> fs∈ ⊛ e∈) = N.appʳ <$> +-∷ f∈ fs∈ ⊛ e∈
 
-      preRight : ∀ {s} (e : ExprIn p (just right)) →
+      preRight : ∀ {s} (e : ExprIn p right) →
                  e ⊕ s ∈⟦ N.appʳ <$> N.preRight + ⊛ N.↟ ⟧· Show.exprIn e s
       preRight (  ⟪ op ⟩  tighter e) = _ <$> +-[] (∣ˡ (⟪_⟩_ <$> inner op)) ⊛ expr e
       preRight (  ⟪ op ⟩  similar e) = lemmaʳ     (∣ˡ (⟪_⟩_ <$> inner op)) (preRight e)
       preRight (l ⟨ op ⟩ʳ tighter e) = _ <$> +-[] (∣ʳ false (_⟨_⟩ʳ_ <$> expr l ⊛ inner op)) ⊛ expr e
       preRight (l ⟨ op ⟩ʳ similar e) = lemmaʳ     (∣ʳ false (_⟨_⟩ʳ_ <$> expr l ⊛ inner op)) (preRight e)
 
-      lemmaˡ : ∀ {f : Outer p left → ExprIn p (just left)} {s e} {g : DiffList NamePart} →
+      lemmaˡ : ∀ {f : Outer p left → ExprIn p left} {s e} {g : DiffList NamePart} →
                (∀ {s} → f ⊕ s ∈⟦ N.postLeft ⟧· g s) →
                           e  ⊕ g s ∈⟦ N.appˡ <$> N.↟ ⊛ N.postLeft + ⟧· Show.exprIn e (g s) →
                f (similar e) ⊕   s ∈⟦ N.appˡ <$> N.↟ ⊛ N.postLeft + ⟧· Show.exprIn e (g s)
       lemmaˡ {f} f∈ (_⊛_ {x = fs} (_<$>_ {x = e} .N.appˡ e∈) fs∈) =
         Lib.cast∈ (appˡ′-lemma (tighter e) fs f) (N.appˡ <$> e∈ ⊛ +-∷ʳ fs∈ f∈)
 
-      postLeft : ∀ {s} (e : ExprIn p (just left)) →
+      postLeft : ∀ {s} (e : ExprIn p left) →
                  e ⊕ s ∈⟦ N.appˡ <$> N.↟ ⊛ N.postLeft + ⟧· Show.exprIn e s
       postLeft (tighter e ⟨ op ⟫   ) = _ <$> expr e ⊛ +-[] (∣ˡ (flip _⟨_⟫ <$> inner op))
       postLeft (similar e ⟨ op ⟫   ) = lemmaˡ              (∣ˡ (flip _⟨_⟫ <$> inner op)) (postLeft e)
@@ -130,12 +129,12 @@ module Correctness where
                                          +-[] (∣ʳ false ((λ op r l → l ⟨ op ⟩ˡ r) <$> inner op ⊛ expr r))
       postLeft (similar e ⟨ op ⟩ˡ r) = lemmaˡ (∣ʳ false ((λ op r l → l ⟨ op ⟩ˡ r) <$> inner op ⊛ expr r)) (postLeft e)
 
-      exprIn′ : ∀ fix {s} (e : ExprIn p fix) →
+      exprIn′ : ∀ assoc {s} (e : ExprIn p assoc) →
                 (, e) ⊕ s ∈⟦ Mixfix.prec p ⟧· Show.exprIn e s
-      exprIn′ nothing         ⟪ op ⟫    = ∥ˡ (_ <$> inner op)
-      exprIn′ nothing      (l ⟨ op ⟩ r) = ∥ʳ false (∥ˡ (_ <$> expr l ⊛ inner op ⊛ expr r))
-      exprIn′ (just right) e            = ∥ʳ false (∥ʳ false (∥ˡ (preRight e)))
-      exprIn′ (just left)  e            = ∥ʳ false (∥ʳ false (∥ʳ false (∥ˡ (postLeft e))))
+      exprIn′ non      ⟪ op ⟫    = ∥ˡ (_ <$> inner op)
+      exprIn′ non   (l ⟨ op ⟩ r) = ∥ʳ false (∥ˡ (_ <$> expr l ⊛ inner op ⊛ expr r))
+      exprIn′ right e            = ∥ʳ false (∥ʳ false (∥ˡ (preRight e)))
+      exprIn′ left  e            = ∥ʳ false (∥ʳ false (∥ʳ false (∥ˡ (postLeft e))))
 
     inner : ∀ {fix s ops} (i : Inner {fix} ops) →
             i ⊕ s ∈⟦ Mixfix.inner ops ⟧· Show.inner i s

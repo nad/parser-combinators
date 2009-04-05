@@ -13,7 +13,6 @@ module StructurallyRecursiveDescentParsing.Mixfix
 open import Coinduction
 open import Data.List using (List; []; _∷_; _∈_; here; there)
 open import Data.List.NonEmpty using (foldr; foldl)
-open import Data.Maybe using (Maybe; just; nothing)
 open import Data.Product
 open import Data.Bool
 import Data.String as String
@@ -72,12 +71,12 @@ mutual
     ↟ = precs sucs
 
     -- Right associative and prefix operators.
-    preRight : Parser false (Outer p right → ExprIn p (just right))
+    preRight : Parser false (Outer p right → ExprIn p right)
     preRight =  ⟪_⟩_  <$>     [ prefx      ]
              ∣ _⟨_⟩ʳ_ <$> ↟ ⊛ [ infx right ]
 
     -- Left associative and postfix operators.
-    postLeft : Parser false (Outer p left → ExprIn p (just left))
+    postLeft : Parser false (Outer p left → ExprIn p left)
     postLeft = (λ op    e₁ → e₁ ⟨ op ⟫    ) <$> [ postfx    ]
              ∣ (λ op e₂ e₁ → e₁ ⟨ op ⟩ˡ e₂) <$> [ infx left ] ⊛ ↟
 
