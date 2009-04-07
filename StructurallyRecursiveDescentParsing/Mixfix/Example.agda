@@ -66,7 +66,7 @@ wellTyped = record { nameParts = "⊢" ∷ "∶" ∷ [] }
 
 abstract  -- To speed up type-checking.
 
-  prec : List (∃₂ Operator) → PrecedenceGraph → Precedence
+  prec : List (∃₂ Operator) → List Precedence → Precedence
   prec ops = precedence (λ fix → List.gfilter (hasFixity fix) ops)
 
   mutual

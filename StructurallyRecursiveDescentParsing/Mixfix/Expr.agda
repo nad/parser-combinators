@@ -42,22 +42,22 @@ hasFixity fix (fix' , op) | _        = nothing
 ------------------------------------------------------------------------
 -- Precedence graphs
 
-mutual
+-- Precedence graphs are represented by their unfoldings as forests
+-- (one tree for every node in the graph). This does not take into
+-- account the sharing of the precedence graphs, but this code is
+-- not aimed at efficiency.
 
-  -- Precedence graphs are represented by their unfoldings as forests
-  -- (one tree for every node in the graph). This does not take into
-  -- account the sharing of the precedence graphs, but this code is
-  -- not aimed at efficiency.
+-- Precedence trees.
 
-  PrecedenceGraph : Set
-  PrecedenceGraph = List Precedence
+data Precedence : Set where
+  precedence : (o : (fix : Fixity) → List (∃ (Operator fix)))
+               (s : List Precedence) →
+               Precedence
 
-  -- Precedence trees.
+-- Precedence forests.
 
-  data Precedence : Set where
-    precedence : (o : (fix : Fixity) → List (∃ (Operator fix)))
-                 (s : PrecedenceGraph) →
-                 Precedence
+PrecedenceGraph : Set
+PrecedenceGraph = List Precedence
 
 -- The operators of the given precedence.
 
@@ -66,7 +66,7 @@ ops (precedence o s) = o
 
 -- The immediate successors of the precedence level.
 
-↑ : Precedence → PrecedenceGraph
+↑ : Precedence → List Precedence
 ↑ (precedence o s) = s
 
 ------------------------------------------------------------------------

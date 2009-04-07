@@ -53,10 +53,10 @@ mutual
 
   prec : (p : Precedence) → Parser (∃ (ExprIn p))
   prec (precedence ops sucs) =
-      ⟪_⟫    <$>      [ closed   ]
-    ∥ _⟨_⟩_  <$>  ↟ ⊛ [ infx non ] ⊛ ↟
-    ∥ appʳ   <$>      preRight +   ⊛ ↟
-    ∥ appˡ   <$>  ↟ ⊛ postLeft +
+      ⟪_⟫    <$>       [ closed   ]
+    ∥ _⟨_⟩_  <$>  p↑ ⊛ [ infx non ] ⊛ p↑
+    ∥ appʳ   <$>       preRight +   ⊛ p↑
+    ∥ appˡ   <$>  p↑ ⊛ postLeft +
     ∥ fail
     module Prec where
     p = precedence ops sucs
@@ -67,17 +67,17 @@ mutual
 
     -- Operator applications where the outermost operator binds
     -- tighter than the current precedence level.
-    ↟ = precs sucs
+    p↑ = precs sucs
 
     -- Right associative and prefix operators.
     preRight : Parser (Outer p right → ExprIn p right)
-    preRight =  ⟪_⟩_  <$>     [ prefx      ]
-             ∣ _⟨_⟩ʳ_ <$> ↟ ⊛ [ infx right ]
+    preRight =  ⟪_⟩_  <$>      [ prefx      ]
+             ∣ _⟨_⟩ʳ_ <$> p↑ ⊛ [ infx right ]
 
     -- Left associative and postfix operators.
     postLeft : Parser (Outer p left → ExprIn p left)
     postLeft = (λ op    e₁ → e₁ ⟨ op ⟫    ) <$> [ postfx    ]
-             ∣ (λ op e₂ e₁ → e₁ ⟨ op ⟩ˡ e₂) <$> [ infx left ] ⊛ ↟
+             ∣ (λ op e₂ e₁ → e₁ ⟨ op ⟩ˡ e₂) <$> [ infx left ] ⊛ p↑
 
     -- Post-processing for the non-empty lists returned by _+.
     appʳ = λ fs e → foldr (λ f e → f (similar e)) (λ f → f (tighter e)) fs

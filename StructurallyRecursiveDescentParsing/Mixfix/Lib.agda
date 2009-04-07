@@ -6,7 +6,7 @@ module StructurallyRecursiveDescentParsing.Mixfix.Lib where
 
 open import Coinduction
 open import Data.Bool using (Bool; true; false)
-open import Data.Nat using (ℕ; zero; suc)
+open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.List using (List; []; _∷_; _++_)
 open import Data.List.NonEmpty using (List⁺; [_]; _∷_; _∷ʳ_)
 open import Data.Vec using (Vec; []; _∷_)
@@ -57,7 +57,7 @@ data ParserProg : Set → Set1 where
   _+        : ∀ {R} (p : ParserProg R) →
                          ParserProg (List⁺ R)
   _between_ : ∀ {R n}
-              (p : ∞₁ (ParserProg R)) (toks : Vec NamePart (suc n)) →
+              (p : ∞₁ (ParserProg R)) (toks : Vec NamePart (1 + n)) →
               ParserProg (Vec R n)
   _∥_       : ∀ {I i} {R : I → Set}
               (p₁ : ParserProg (R i))
