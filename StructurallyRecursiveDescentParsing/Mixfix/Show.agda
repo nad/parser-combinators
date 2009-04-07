@@ -100,12 +100,12 @@ module Correctness where
 
       lemmaʳ : ∀ {f : Outer p right → ExprIn p right} {s e} {g : DiffList NamePart} →
                (∀ {s} → f ⊕ s ∈⟦ N.preRight ⟧· g s) →
-                          e  ⊕ s ∈⟦ N.appʳ <$> N.preRight + ⊛ N.↟ ⟧·    Show.exprIn e s →
-               f (similar e) ⊕ s ∈⟦ N.appʳ <$> N.preRight + ⊛ N.↟ ⟧· g (Show.exprIn e s)
+                          e  ⊕ s ∈⟦ N.appʳ <$> N.preRight + ⊛ N.p↑ ⟧·    Show.exprIn e s →
+               f (similar e) ⊕ s ∈⟦ N.appʳ <$> N.preRight + ⊛ N.p↑ ⟧· g (Show.exprIn e s)
       lemmaʳ f∈ (.N.appʳ <$> fs∈ ⊛ e∈) = N.appʳ <$> +-∷ f∈ fs∈ ⊛ e∈
 
       preRight : ∀ {s} (e : ExprIn p right) →
-                 e ⊕ s ∈⟦ N.appʳ <$> N.preRight + ⊛ N.↟ ⟧· Show.exprIn e s
+                 e ⊕ s ∈⟦ N.appʳ <$> N.preRight + ⊛ N.p↑ ⟧· Show.exprIn e s
       preRight (  ⟪ op ⟩  tighter e) = _ <$> +-[] (∣ˡ (⟪_⟩_ <$> inner op)) ⊛ expr e
       preRight (  ⟪ op ⟩  similar e) = lemmaʳ     (∣ˡ (⟪_⟩_ <$> inner op)) (preRight e)
       preRight (l ⟨ op ⟩ʳ tighter e) = _ <$> +-[] (∣ʳ (_⟨_⟩ʳ_ <$> expr l ⊛ inner op)) ⊛ expr e
@@ -113,13 +113,13 @@ module Correctness where
 
       lemmaˡ : ∀ {f : Outer p left → ExprIn p left} {s e} {g : DiffList NamePart} →
                (∀ {s} → f ⊕ s ∈⟦ N.postLeft ⟧· g s) →
-                          e  ⊕ g s ∈⟦ N.appˡ <$> N.↟ ⊛ N.postLeft + ⟧· Show.exprIn e (g s) →
-               f (similar e) ⊕   s ∈⟦ N.appˡ <$> N.↟ ⊛ N.postLeft + ⟧· Show.exprIn e (g s)
+                          e  ⊕ g s ∈⟦ N.appˡ <$> N.p↑ ⊛ N.postLeft + ⟧· Show.exprIn e (g s) →
+               f (similar e) ⊕   s ∈⟦ N.appˡ <$> N.p↑ ⊛ N.postLeft + ⟧· Show.exprIn e (g s)
       lemmaˡ {f} f∈ (_⊛_ {x = fs} (_<$>_ {x = e} .N.appˡ e∈) fs∈) =
         Lib.cast∈ (appˡ′-lemma (tighter e) fs f) (N.appˡ <$> e∈ ⊛ +-∷ʳ fs∈ f∈)
 
       postLeft : ∀ {s} (e : ExprIn p left) →
-                 e ⊕ s ∈⟦ N.appˡ <$> N.↟ ⊛ N.postLeft + ⟧· Show.exprIn e s
+                 e ⊕ s ∈⟦ N.appˡ <$> N.p↑ ⊛ N.postLeft + ⟧· Show.exprIn e s
       postLeft (tighter e ⟨ op ⟫   ) = _ <$> expr e ⊛ +-[] (∣ˡ (flip _⟨_⟫ <$> inner op))
       postLeft (similar e ⟨ op ⟫   ) = lemmaˡ              (∣ˡ (flip _⟨_⟫ <$> inner op)) (postLeft e)
       postLeft (tighter e ⟨ op ⟩ˡ r) = _ <$> expr e ⊛
