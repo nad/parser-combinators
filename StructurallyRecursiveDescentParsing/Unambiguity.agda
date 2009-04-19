@@ -46,12 +46,14 @@ data Unambiguous′ {Tok} : ∀ {R xs} → Parser Tok R xs → Set1 where
            Unambiguous′ (p₁ ∣ p₂)
   app    : ∀ {R₁ R₂ fs} xs
              {p₁ : ∞? (null xs) (Parser Tok (R₁ → R₂) fs)}
-             {p₂ :               Parser Tok R₁        xs}
+             {p₂ : ∞? (null fs) (Parser Tok R₁        xs)}
            (u : ∀ {f₁ f₂ x₁ x₂ s s₁ s₂ s₃ s₄} →
-              f₁ ∈ ♭? (null xs) p₁ · s₁ → x₁ ∈ p₂ · s₂ → s₁ ++ s₂ ≡ s →
-              f₂ ∈ ♭? (null xs) p₁ · s₃ → x₂ ∈ p₂ · s₄ → s₃ ++ s₄ ≡ s →
+              f₁ ∈ ♭? (null xs) p₁ · s₁ → x₁ ∈ ♭? (null fs) p₂ · s₂ →
+              s₁ ++ s₂ ≡ s →
+              f₂ ∈ ♭? (null xs) p₁ · s₃ → x₂ ∈ ♭? (null fs) p₂ · s₄ →
+              s₃ ++ s₄ ≡ s →
               f₁ x₁ ≡ f₂ x₂) →
-           Unambiguous′ (p₁ ⊛ p₂)
+           Unambiguous′ (xs ∶ p₁ ⊛ p₂)
   bind   : ∀ {R₁ R₂ xs} {f : R₁ → List R₂}
              {p₁ : Parser Tok R₁ xs}
              {p₂ : (x : R₁) → ∞? (null xs) (Parser Tok R₂ (f x))}
@@ -77,7 +79,7 @@ sound (choice u₁ u₂ u) (∣ʳ _ x∈p₂) (∣ʳ ._ y∈p₂) =      sound u
 sound (app xs {p₁ = p₁} {p₂} u) x∈p y∈p = helper x∈p y∈p refl
   where
   helper : ∀ {fx₁ fx₂ s₁ s₂} →
-           fx₁ ∈ p₁ ⊛ p₂ · s₁ → fx₂ ∈ p₁ ⊛ p₂ · s₂ →
+           fx₁ ∈ xs ∶ p₁ ⊛ p₂ · s₁ → fx₂ ∈ xs ∶ p₁ ⊛ p₂ · s₂ →
            s₁ ≡ s₂ → fx₁ ≡ fx₂
   helper (f∈p₁ ⊛ x∈p₂) (f′∈p₁ ⊛ x′∈p₂) eq =
     u f∈p₁ x∈p₂ eq f′∈p₁ x′∈p₂ refl
@@ -98,7 +100,7 @@ complete token                   _ = token
 complete (_∣_ {xs₁ = xs₁} p₁ p₂) u = choice (complete p₁ (λ x₁∈ x₂∈ → u (∣ˡ     x₁∈) (∣ˡ     x₂∈)))
                                             (complete p₂ (λ x₁∈ x₂∈ → u (∣ʳ xs₁ x₁∈) (∣ʳ xs₁ x₂∈)))
                                             (λ x₁∈ x₂∈ → u (∣ˡ x₁∈) (∣ʳ xs₁ x₂∈))
-complete (_⊛_ {xs = xs}   p₁ p₂) u = app xs (λ f₁∈ x₁∈ eq₁ f₂∈ x₂∈ eq₂ →
+complete (xs ∶ p₁ ⊛ p₂)          u = app xs (λ f₁∈ x₁∈ eq₁ f₂∈ x₂∈ eq₂ →
                                                u (cast∈ refl refl eq₁ (_⊛_ f₁∈ x₁∈))
                                                  (cast∈ refl refl eq₂ (_⊛_ f₂∈ x₂∈)))
 complete (p₁ >>= p₂)             u = bind (λ x₁∈ y₁∈ eq₁ x₂∈ y₂∈ eq₂ →

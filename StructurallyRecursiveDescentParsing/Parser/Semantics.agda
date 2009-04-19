@@ -18,7 +18,7 @@ import Data.Product as Prod
 open Prod using (_,_)
 open import Data.Product1 as Prod1 renaming (∃₀₁ to ∃; map₀₁ to map)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import Data.Function
+open import Data.Function hiding (_∶_)
 open import Data.Empty
 open import Relation.Nullary.Negation
 open import Relation.Binary.PropositionalEquality
@@ -50,9 +50,10 @@ data _∈_·_ {Tok} : ∀ {R xs} → R → Parser Tok R xs → List Tok → Set1
            (x∈p₂ : x ∈ p₂ · s) → x ∈ p₁ ∣ p₂ · s
   _⊛_    : ∀ {R₁ R₂ f x s₁ s₂ fs xs}
              {p₁ : ∞? (null xs) (Parser Tok (R₁ → R₂) fs)}
-             {p₂ : Parser Tok R₁ xs} →
-           (f∈p₁ : f ∈ ♭? (null xs) p₁ · s₁) (x∈p₂ : x ∈ p₂ · s₂) →
-           f x ∈ p₁ ⊛ p₂ · s₁ ++ s₂
+             {p₂ : ∞? (null fs) (Parser Tok R₁ xs)} →
+           (f∈p₁ : f ∈ ♭? (null xs) p₁ · s₁)
+           (x∈p₂ : x ∈ ♭? (null fs) p₂ · s₂) →
+           f x ∈ xs ∶ p₁ ⊛ p₂ · s₁ ++ s₂
   _>>=_  : ∀ {R₁ R₂ x y s₁ s₂ xs} {f : R₁ → List R₂}
              {p₁ : Parser Tok R₁ xs}
              {p₂ : (x : R₁) → ∞? (null xs) (Parser Tok R₂ (f x))}
@@ -112,11 +113,12 @@ initial-sound (return x)              here = return
 initial-sound (_∣_ {xs₁ = xs₁} p₁ p₂) x∈xs with ListProp.++-∈ xs₁ x∈xs
 ... | inj₁ x∈xs₁ = ∣ˡ     (initial-sound p₁ x∈xs₁)
 ... | inj₂ x∈xs₂ = ∣ʳ xs₁ (initial-sound p₂ x∈xs₂)
-initial-sound (_⊛_ {fs = fs} {x ∷ xs}     p₁ p₂) y∈ys
+initial-sound (_∶_⊛_ (x ∷ xs) {fs} p₁ p₂) y∈ys
   with Prod.map id (Prod.map id (ListProp.map-∈ fs)) $
          ListProp.>>=-∈ (λ x → List.map (λ f → f x) fs) (x ∷ xs) y∈ys
-... | (x′ , x′∈x∷xs , (f , f∈fs , refl)) =
-  initial-sound p₁ f∈fs ⊛ initial-sound p₂ x′∈x∷xs
+initial-sound (_∶_⊛_ (x ∷ xs) {[]}     p₁ p₂) y∈ys | (x′ , x′∈x∷xs , (f′ , ()    , refl))
+initial-sound (_∶_⊛_ (x ∷ xs) {f ∷ fs} p₁ p₂) y∈ys | (x′ , x′∈x∷xs , (f′ , f′∈fs , refl)) =
+  initial-sound p₁ f′∈fs ⊛ initial-sound p₂ x′∈x∷xs
 initial-sound (_>>=_ {xs = z ∷ zs} {f} p₁ p₂) y∈ys
   with ListProp.>>=-∈ f (z ∷ zs) y∈ys
 ... | (x , x∈z∷zs , y∈fx) =
@@ -126,7 +128,7 @@ initial-sound (cast refl p) x∈xs  = cast (initial-sound p x∈xs)
 initial-sound (return x)            (there ())
 initial-sound fail                  ()
 initial-sound token                 ()
-initial-sound (_⊛_   {xs = []} _ _) ()
+initial-sound ([] ∶ _ ⊛ _)          ()
 initial-sound (_>>=_ {xs = []} _ _) ()
 
 ------------------------------------------------------------------------
@@ -151,10 +153,10 @@ data _⊕_∈_·_ {Tok} : ∀ {R xs} → R → List Tok →
            (x∈p₂ : x ⊕ s₁ ∈ p₂ · s) → x ⊕ s₁ ∈ p₁ ∣ p₂ · s
   _⊛_    : ∀ {R₁ R₂ f x s s₁ s₂ fs xs}
              {p₁ : ∞? (null xs) (Parser Tok (R₁ → R₂) fs)}
-             {p₂ : Parser Tok R₁ xs} →
+             {p₂ : ∞? (null fs) (Parser Tok R₁ xs)} →
            (f∈p₁ : f ⊕ s₁ ∈ ♭? (null xs) p₁ · s)
-           (x∈p₂ : x ⊕ s₂ ∈ p₂ · s₁) →
-           f x ⊕ s₂ ∈ p₁ ⊛ p₂ · s
+           (x∈p₂ : x ⊕ s₂ ∈ ♭? (null fs) p₂ · s₁) →
+           f x ⊕ s₂ ∈ xs ∶ p₁ ⊛ p₂ · s
   _>>=_  : ∀ {R₁ R₂ x y s s₁ s₂ xs} {f : R₁ → List R₂}
              {p₁ : Parser Tok R₁ xs}
              {p₂ : (x : R₁) → ∞? (null xs) (Parser Tok R₂ (f x))}

@@ -38,7 +38,7 @@ private
 ------------------------------------------------------------------------
 -- Parsers
 
-infixl 50 _⊛_
+infixl 50 _∶_⊛_
 infixl 10 _>>=_
 infixl  5 _∣_
 
@@ -57,9 +57,9 @@ data Parser (Tok : Set) : (R : Set) → List R → Set1 where
            (p₁ : Parser Tok R  xs₁       )
            (p₂ : Parser Tok R         xs₂) →
                  Parser Tok R (xs₁ ∣′ xs₂)
-  _⊛_    : ∀ {R₁ R₂ fs xs}
+  _∶_⊛_  : ∀ {R₁ R₂} xs {fs}
            (p₁ : ∞? (null xs) (Parser Tok (R₁ → R₂)  fs      ))
-           (p₂ :               Parser Tok  R₁              xs) →
+           (p₂ : ∞? (null fs) (Parser Tok  R₁              xs)) →
                                Parser Tok       R₂  (fs ⊛′ xs)
   _>>=_  : ∀ {R₁ R₂} {xs} {f : R₁ → List R₂}
            (p₁ :                          Parser Tok R₁  xs)
@@ -76,5 +76,6 @@ data Parser (Tok : Set) : (R : Set) → List R → Set1 where
 
 private
 
-  leftRight : ∀ {Tok} → Parser Tok (Tok → Tok) _
-  leftRight = (♯₁ leftRight) ⊛ token >>= λ _ → ♯₁ leftRight
+  leftRight : ∀ {Tok} → Parser Tok (Tok → Tok) []
+  leftRight =
+    [] ∶ ♯₁ ([] ∶ ♯₁ return const ⊛ leftRight) ⊛ (♯₁ leftRight)

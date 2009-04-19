@@ -24,7 +24,7 @@ open import StructurallyRecursiveDescentParsing.Simplified.Lemmas
 -- fail ∣ p          → p
 -- p    ∣ fail       → p
 -- fail     ⊛   p    → fail  (If p is nullable.)
--- p        ⊛   fail → fail
+-- p        ⊛   fail → fail  (If p is nullable.)
 -- fail     >>= p    → fail
 -- return x >>= p    → p x
 -- cast eq p         → p
@@ -83,44 +83,51 @@ simplify′ (_∣_ {xs₁ = xs₁} p₁ p₂) | (p₁′ , p₁≈p₁′) | (p�
   helper₂ (∣ˡ      x∈p₁′) = ∣ˡ     (proj₁₁₂ p₁≈p₁′ x∈p₁′)
   helper₂ (∣ʳ .xs₁ x∈p₂′) = ∣ʳ xs₁ (proj₁₁₂ p₂≈p₂′ x∈p₂′)
 
-simplify′ (p₁ ⊛ p₂) with simplify′ p₂
-simplify′ (p₁ ⊛ p₂) | (fail , p₂≈∅) = (fail , (λ {_} → helper) , λ ())
+simplify′ (_∶_⊛_ []       {[]} p₁ p₂) =
+  ([] ∶ p₁ ⊛ p₂ , (λ x∈ → x∈) , λ x∈ → x∈)
+simplify′ (_∶_⊛_ (x ∷ xs) {[]} p₁ p₂) with simplify′ p₁
+... | (p₁′ , p₁≈p₁′) =
+  ((x ∷ xs) ∶ p₁′ ⊛ p₂ , (λ {_} → helper₁) , λ {_} → helper₂)
   where
-  helper : ∀ {x s} → x ∈ p₁ ⊛ p₂ · s → x ∈ fail · s
+  helper₁ : ∀ {y s} → y ∈ (x ∷ xs) ∶ p₁  ⊛ p₂ · s →
+                      y ∈ (x ∷ xs) ∶ p₁′ ⊛ p₂ · s
+  helper₁ (f∈p₁ ⊛ x∈p₂) = proj₁₁₁ p₁≈p₁′ f∈p₁ ⊛ x∈p₂
+
+  helper₂ : ∀ {y s} → y ∈ (x ∷ xs) ∶ p₁′ ⊛ p₂ · s →
+                      y ∈ (x ∷ xs) ∶ p₁  ⊛ p₂ · s
+  helper₂ (f∈p₁′ ⊛ x∈p₂) = proj₁₁₂ p₁≈p₁′ f∈p₁′ ⊛ x∈p₂
+simplify′ (_∶_⊛_ xs  {_ ∷ _} p₁ p₂) with simplify′ p₂
+simplify′ (_∶_⊛_ .[] {_ ∷ _} p₁ p₂) | (fail , p₂≈∅) =
+  (fail , (λ {_} → helper) , λ ())
+  where
+  helper : ∀ {x s} → x ∈ [] ∶ p₁ ⊛ p₂ · s → x ∈ fail · s
   helper (f∈p₁ ⊛ x∈p₂) with proj₁₁₁ p₂≈∅ x∈p₂
   ... | ()
-simplify′ (p₁ ⊛ p₂) | (p₂′ , p₂≈p₂′) = helper _ p₁ _ _ p₂≈p₂′
+simplify′ (_∶_⊛_ xs {_ ∷ _} p₁ p₂) | (p₂′ , p₂≈p₂′) =
+  helper _ p₁ _ _ p₂≈p₂′
   where
-  helper : ∀ {Tok R₁ R₂ fs} xs
-             (p₁     : ∞? (null xs) (Parser Tok (R₁ → R₂) fs))
+  helper : ∀ {Tok R₁ R₂ f fs} xs
+             (p₁     : ∞? (null xs) (Parser Tok (R₁ → R₂) (f ∷ fs)))
              (p₂ p₂′ :               Parser Tok  R₁       xs) →
-           p₂ ≈ p₂′ → ∃₁₁ λ p′ → p₁ ⊛ p₂ ≈ p′
+           p₂ ≈ p₂′ → ∃₁₁ λ p′ → xs ∶ p₁ ⊛ p₂ ≈ p′
   helper [] p₁ p₂ p₂′ p₂≈p₂′ =
-    (p₁ ⊛ p₂′ , (λ {_} → helper₁) , λ {_} → helper₂)
+    ([] ∶ p₁ ⊛ p₂′ , (λ {_} → helper₁) , λ {_} → helper₂)
     where
-    helper₁ : ∀ {x s} → x ∈ p₁ ⊛ p₂ · s → x ∈ p₁ ⊛ p₂′ · s
+    helper₁ : ∀ {x s} → x ∈ [] ∶ p₁ ⊛ p₂ · s → x ∈ [] ∶ p₁ ⊛ p₂′ · s
     helper₁ (f∈p₁ ⊛ x∈p₂) = f∈p₁ ⊛ proj₁₁₁ p₂≈p₂′ x∈p₂
 
-    helper₂ : ∀ {x s} → x ∈ p₁ ⊛ p₂′ · s → x ∈ p₁ ⊛ p₂ · s
+    helper₂ : ∀ {x s} → x ∈ [] ∶ p₁ ⊛ p₂′ · s → x ∈ [] ∶ p₁ ⊛ p₂ · s
     helper₂ (f∈p₁ ⊛ x∈p₂′) = f∈p₁ ⊛ proj₁₁₂ p₂≈p₂′ x∈p₂′
-  helper (_ ∷ xs) p₁ p₂ p₂′ p₂≈p₂′ with simplify′ p₁
-  ... | (fail , p₁≈∅) =
-    (cast lem fail , (λ {_} → helper₁) , λ {_} → helper₂)
+  helper (x ∷ xs) p₁ p₂ p₂′ p₂≈p₂′ with simplify′ p₁
+  ... | (p₁′ , p₁≈p₁′) =
+    ((x ∷ xs) ∶ p₁′ ⊛ p₂′ , (λ {_} → helper₁) , λ {_} → helper₂)
     where
-    lem = sym (>>=-∅ xs)
-
-    helper₁ : ∀ {x s} → x ∈ p₁ ⊛ p₂ · s → x ∈ cast lem fail · s
-    helper₁ (f∈p₁ ⊛ x∈p₂) with proj₁₁₁ p₁≈∅ f∈p₁
-    ... | ()
-
-    helper₂ : ∀ {x s} → x ∈ cast lem fail · s → x ∈ p₁ ⊛ p₂ · s
-    helper₂ (cast ())
-  ... | (p₁′ , p₁≈p₁′) = (p₁′ ⊛ p₂′ , (λ {_} → helper₁) , λ {_} → helper₂)
-    where
-    helper₁ : ∀ {x s} → x ∈ p₁ ⊛ p₂ · s → x ∈ p₁′ ⊛ p₂′ · s
+    helper₁ : ∀ {y s} → y ∈ (x ∷ xs) ∶ p₁  ⊛ p₂  · s →
+                        y ∈ (x ∷ xs) ∶ p₁′ ⊛ p₂′ · s
     helper₁ (f∈p₁ ⊛ x∈p₂) = proj₁₁₁ p₁≈p₁′ f∈p₁ ⊛ proj₁₁₁ p₂≈p₂′ x∈p₂
 
-    helper₂ : ∀ {x s} → x ∈ p₁′ ⊛ p₂′ · s → x ∈ p₁ ⊛ p₂ · s
+    helper₂ : ∀ {y s} → y ∈ (x ∷ xs) ∶ p₁′ ⊛ p₂′ · s →
+                        y ∈ (x ∷ xs) ∶ p₁  ⊛ p₂  · s
     helper₂ (f∈p₁′ ⊛ x∈p₂′) = proj₁₁₂ p₁≈p₁′ f∈p₁′ ⊛ proj₁₁₂ p₂≈p₂′ x∈p₂′
 
 simplify′ (p₁ >>= p₂) with simplify′ p₁
