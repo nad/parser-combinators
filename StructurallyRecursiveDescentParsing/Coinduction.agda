@@ -22,16 +22,8 @@ open import Relation.Binary.PropositionalEquality1
 ♭? true  x = ♭₁ x
 ♭? false x =    x
 
-♭¿ : ∀ b {A} → ∞₁ A → ∞? b A
-♭¿ true  x =    x
-♭¿ false x = ♭₁ x
-
 -- Some lemmas.
 
 ♭?♯? : ∀ b {A} {x : A} → ♭? b (♯? b x) ≡₁ x
 ♭?♯? true  = refl
 ♭?♯? false = refl
-
-♭?♭¿ : ∀ b {A} {x : ∞₁ A} → ♭? b (♭¿ b x) ≡₁ ♭₁ x
-♭?♭¿ true  = refl
-♭?♭¿ false = refl
