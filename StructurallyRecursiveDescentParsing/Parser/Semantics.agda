@@ -16,7 +16,8 @@ private module LM {Tok} = Monoid (List.monoid Tok)
 import Data.List.Properties as ListProp
 import Data.Product as Prod
 open Prod using (_,_)
-open import Data.Product1 as Prod1 renaming (∃₀₁ to ∃; map₀₁ to map)
+import Data.Product1 as Prod1 renaming (∃₀₁ to ∃; map₀₁ to map)
+open Prod1
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Function hiding (_∶_)
 open import Data.Empty
