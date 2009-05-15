@@ -2,7 +2,7 @@
 -- A total parser combinator library
 ------------------------------------------------------------------------
 
-module Everything where
+module README where
 
 -- Helper functions related to coinduction.
 
