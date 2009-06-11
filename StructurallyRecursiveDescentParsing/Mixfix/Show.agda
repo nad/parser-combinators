@@ -9,7 +9,9 @@ module StructurallyRecursiveDescentParsing.Mixfix.Show
          where
 
 open import Data.Nat using (ℕ; zero; suc; _+_)
-open import Data.List using (List; _∈_; here; there)
+open import Data.List using (List)
+open import Data.List.Any as Any using (here; there)
+open Any.Membership-≡ using (_∈_)
 open import Data.List.NonEmpty using (List⁺; [_]; _∷_; foldl; _∷ʳ_)
 open import Data.Vec using (Vec; []; _∷_)
 import Data.DifferenceList as DiffList
@@ -88,7 +90,7 @@ module Correctness where
 
     expr : ∀ {ps s} (e : Expr ps) →
            e ⊕ s ∈⟦ Mixfix.precs ps ⟧· Show.expr e s
-    expr (here       ∙ e) = ∣ˡ (_ <$> exprIn e)
+    expr (here refl  ∙ e) = ∣ˡ (_ <$> exprIn e)
     expr (there x∈xs ∙ e) = ∣ʳ (_ <$> expr (x∈xs ∙ e))
 
     exprIn : ∀ {p assoc s} (e : ExprIn p assoc) →
@@ -142,8 +144,8 @@ module Correctness where
                (op∈ : (arity , op) ∈ ops) (args : Vec (Expr g) arity) →
                let i = op∈ ∙ args in
                i ⊕ s ∈⟦ Mixfix.inner ops ⟧· Show.inner i s
-      helper here args = ∣ˡ (_ <$> inner′ (nameParts op) args)
-      helper (there {y = _ , _} op∈) args =
+      helper (here refl) args = ∣ˡ (_ <$> inner′ (nameParts op) args)
+      helper (there {x = _ , _} op∈) args =
         ∣ʳ (_ <$> helper op∈ args)
 
     inner′ : ∀ {arity s} (ns : Vec NamePart (1 + arity)) args →

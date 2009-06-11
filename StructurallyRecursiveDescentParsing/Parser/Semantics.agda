@@ -12,8 +12,11 @@ private
   module BCS = CommutativeSemiring BoolProp.commutativeSemiring-∨-∧
   module BA  = BAProp BoolProp.booleanAlgebra
 open import Data.List as List
+open import Data.List.Any
+open Membership-≡
 private module LM {Tok} = Monoid (List.monoid Tok)
-import Data.List.Properties as ListProp
+open import Data.List.Any.Properties as AnyProp
+open AnyProp.Membership-≡
 import Data.Product as Prod
 open Prod using (_,_)
 import Data.Product1 as Prod1 renaming (∃₀₁ to ∃; map₀₁ to map)
@@ -91,14 +94,14 @@ initial-complete x∈p = initial-complete′ x∈p refl
   where
   initial-complete′ : ∀ {Tok R xs x s} {p : Parser Tok R xs} →
                       x ∈ p · s → s ≡ [] → x ∈ xs
-  initial-complete′ return                                        refl = here
-  initial-complete′ (∣ˡ     x∈p₁)                                 refl = ListProp.∈-++ˡ (initial-complete x∈p₁)
-  initial-complete′ (∣ʳ xs₁ x∈p₂)                                 refl = ListProp.∈-++ʳ xs₁ (initial-complete x∈p₂)
-  initial-complete′ (_⊛_   {s₁ = []} {fs = fs}        f∈p₁ x∈p₂)  refl = ListProp.∈->>= (λ x → List.map (λ f → f x) fs)
-                                                                                        (initial-complete x∈p₂)
-                                                                                        (ListProp.∈-map (initial-complete f∈p₁))
-  initial-complete′ (_>>=_ {s₁ = []} {xs = _ ∷ _} {f} x∈p₁ y∈p₂x) refl = ListProp.∈->>= f (initial-complete x∈p₁)
-                                                                                          (initial-complete y∈p₂x)
+  initial-complete′ return                                        refl = here refl
+  initial-complete′ (∣ˡ     x∈p₁)                                 refl = ++⁺ˡ (initial-complete x∈p₁)
+  initial-complete′ (∣ʳ xs₁ x∈p₂)                                 refl = ++⁺ʳ xs₁ (initial-complete x∈p₂)
+  initial-complete′ (_⊛_   {s₁ = []} {fs = fs}        f∈p₁ x∈p₂)  refl = >>=-∈⁺ (λ x → List.map (λ f → f x) fs)
+                                                                                (initial-complete x∈p₂)
+                                                                                (map-∈⁺ (initial-complete f∈p₁))
+  initial-complete′ (_>>=_ {s₁ = []} {xs = _ ∷ _} {f} x∈p₁ y∈p₂x) refl = >>=-∈⁺ f (initial-complete x∈p₁)
+                                                                                  (initial-complete y∈p₂x)
   initial-complete′ (cast {eq = refl} x∈p)                        refl = initial-complete x∈p
 
   initial-complete′ (_>>=_ {s₁ = []} {xs = []}  x∈p₁ y∈p₂x) refl with initial-complete x∈p₁
@@ -110,18 +113,18 @@ initial-complete x∈p = initial-complete′ x∈p refl
 
 initial-sound : ∀ {Tok R xs x} (p : Parser Tok R xs) →
                 x ∈ xs → x ∈ p · []
-initial-sound (return x)              here = return
-initial-sound (_∣_ {xs₁ = xs₁} p₁ p₂) x∈xs with ListProp.++-∈ xs₁ x∈xs
+initial-sound (return x)              (here refl) = return
+initial-sound (_∣_ {xs₁ = xs₁} p₁ p₂) x∈xs with ++⁻ xs₁ x∈xs
 ... | inj₁ x∈xs₁ = ∣ˡ     (initial-sound p₁ x∈xs₁)
 ... | inj₂ x∈xs₂ = ∣ʳ xs₁ (initial-sound p₂ x∈xs₂)
 initial-sound (_∶_⊛_ (x ∷ xs) {fs} p₁ p₂) y∈ys
-  with Prod.map id (Prod.map id (ListProp.map-∈ fs)) $
-         ListProp.>>=-∈ (λ x → List.map (λ f → f x) fs) (x ∷ xs) y∈ys
+  with Prod.map id (Prod.map id (map-∈⁻ fs)) $
+         >>=-∈⁻ (λ x → List.map (λ f → f x) fs) (x ∷ xs) y∈ys
 initial-sound (_∶_⊛_ (x ∷ xs) {[]}     p₁ p₂) y∈ys | (x′ , x′∈x∷xs , (f′ , ()    , refl))
 initial-sound (_∶_⊛_ (x ∷ xs) {f ∷ fs} p₁ p₂) y∈ys | (x′ , x′∈x∷xs , (f′ , f′∈fs , refl)) =
   initial-sound p₁ f′∈fs ⊛ initial-sound p₂ x′∈x∷xs
 initial-sound (_>>=_ {xs = z ∷ zs} {f} p₁ p₂) y∈ys
-  with ListProp.>>=-∈ f (z ∷ zs) y∈ys
+  with >>=-∈⁻ f (z ∷ zs) y∈ys
 ... | (x , x∈z∷zs , y∈fx) =
   _>>=_ {f = f} (initial-sound p₁ x∈z∷zs) (initial-sound (p₂ x) y∈fx)
 initial-sound (cast refl p) x∈xs  = cast (initial-sound p x∈xs)

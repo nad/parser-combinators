@@ -6,9 +6,10 @@ module StructurallyRecursiveDescentParsing.Mixfix.Example where
 
 open import Coinduction
 open import Data.Vec using ([]; _∷_; [_])
-import Data.List as List
-open List using (List; []; _∷_; _∈_; here; there)
-          renaming ([_] to L[_])
+open import Data.List as List
+  using (List; []; _∷_) renaming ([_] to L[_])
+open import Data.List.Any as Any using (here; there)
+open Any.Membership-≡ using (_∈_)
 import Data.Colist as Colist
 open import Data.Product using (∃₂; ,_)
 open import Data.Unit using (⊤)
@@ -86,22 +87,22 @@ abstract  -- To speed up type-checking.
   open Expr.PrecedenceCorrect g
 
   • : ExprIn a non
-  • = ⟪ here ∙ [] ⟫
+  • = ⟪ here refl ∙ [] ⟫
 
   _+_ : Outer pl left → Expr (a ∷ []) → ExprIn pl left
-  e₁ + e₂ = e₁ ⟨ here ∙ [] ⟩ˡ e₂
+  e₁ + e₂ = e₁ ⟨ here refl ∙ [] ⟩ˡ e₂
 
   i_t_ : Expr g → Outer ii right → ExprIn ii right
-  i e₁ t e₂ = ⟪ here ∙ e₁ ∷ [] ⟩ e₂
+  i e₁ t e₂ = ⟪ here refl ∙ e₁ ∷ [] ⟩ e₂
 
   i_t_e_ : Expr g → Expr g → Outer ii right → ExprIn ii right
-  i e₁ t e₂ e e₃ = ⟪ there here ∙ e₁ ∷ e₂ ∷ [] ⟩ e₃
+  i e₁ t e₂ e e₃ = ⟪ there (here refl) ∙ e₁ ∷ e₂ ∷ [] ⟩ e₃
 
   _,_ : Outer c left → Expr (ii ∷ pl ∷ a ∷ []) → ExprIn c left
-  e₁ , e₂ = e₁ ⟨ here ∙ [] ⟩ˡ e₂
+  e₁ , e₂ = e₁ ⟨ here refl ∙ [] ⟩ˡ e₂
 
   _⊢_∶ : Outer wt left → Expr g → Expr g
-  e₁ ⊢ e₂ ∶ = here ∙ (e₁ ⟨ here ∙ [ e₂ ] ⟫)
+  e₁ ⊢ e₂ ∶ = here refl ∙ (e₁ ⟨ here refl ∙ [ e₂ ] ⟫)
 
 ------------------------------------------------------------------------
 -- Some tests

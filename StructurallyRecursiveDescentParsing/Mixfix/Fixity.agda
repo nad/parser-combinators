@@ -8,7 +8,7 @@ open import Data.Fin using (Fin; zero; suc; #_)
 open import Data.Fin.Props using (eq?)
 open import Relation.Nullary
 open import Relation.Binary
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality as Eq
 
 data Associativity : Set where
   left  : Associativity
@@ -26,10 +26,10 @@ data Fixity : Set where
   postfx : Fixity
   closed : Fixity
 
-Fixity-is-finite : LeftInverse Fixity (Fin 6)
+Fixity-is-finite : LeftInverse (Eq.setoid Fixity) (Eq.setoid (Fin 6))
 Fixity-is-finite = record
-  { from         = from
-  ; to           = to
+  { from         = Eq.→-to-⟶ from
+  ; to           = Eq.→-to-⟶ to
   ; left-inverse = left-inverse
   }
   where
@@ -50,7 +50,7 @@ Fixity-is-finite = record
   from (suc (suc (suc (suc (suc zero)))))     = closed
   from (suc (suc (suc (suc (suc (suc ()))))))
 
-  left-inverse : from LeftInverseOf to
+  left-inverse : Eq.→-to-⟶ from LeftInverseOf Eq.→-to-⟶ to
   left-inverse prefx        = refl
   left-inverse (infx left)  = refl
   left-inverse (infx right) = refl

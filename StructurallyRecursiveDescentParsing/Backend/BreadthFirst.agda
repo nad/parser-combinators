@@ -14,7 +14,10 @@ open import Coinduction
 open import Data.Bool
 open import Data.Function hiding (_∶_)
 open import Data.List as List
-open RawMonad List.monad using () renaming (_>>=_ to _>>=′_; return to return′)
+open import Data.List.Any
+open Membership-≡
+open RawMonad List.monad
+  using () renaming (_>>=_ to _>>=′_; return to return′)
 open import Data.Product1 as Prod1 renaming (∃₀₁ to ∃; Σ₀₁ to Σ)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 import Relation.Binary.PropositionalEquality1 as Eq1
@@ -120,7 +123,7 @@ private
             (f : (x : R₁) → Parser Tok R₂ (i x)) (xs : List R₁) →
             y ∈ ⋁ f xs · s → ∃ λ x → Σ (x ∈ xs) λ _ → y ∈ f x · s
   ⋁-sound f []       ()
-  ⋁-sound f (x ∷ xs) (∣ˡ    y∈fx)   = (x , here , y∈fx)
+  ⋁-sound f (x ∷ xs) (∣ˡ    y∈fx)   = (x , here refl , y∈fx)
   ⋁-sound f (x ∷ xs) (∣ʳ ._ y∈⋁fxs) =
     Prod1.map₀₁ id (Prod1.map₀₁ there (λ y∈ → y∈)) (⋁-sound f xs y∈⋁fxs)
 
@@ -161,7 +164,7 @@ private
                 y ∈ ∂-⋁ t xs p · s →
                 ∃ λ x → Σ (x ∈ xs) λ _ → y ∈ p x · t ∷ s
     ∂-⋁-sound []       p ()
-    ∂-⋁-sound (x ∷ xs) p (∣ˡ    y∈p₂′x)  = (x , here , ∂-sound (p x) y∈p₂′x)
+    ∂-⋁-sound (x ∷ xs) p (∣ˡ    y∈p₂′x)  = (x , here refl , ∂-sound (p x) y∈p₂′x)
     ∂-⋁-sound (x ∷ xs) p (∣ʳ ._ y∈p₂′xs) =
       Prod1.map₀₁ id (Prod1.map₀₁ there (λ y∈ → y∈))
         (∂-⋁-sound xs p y∈p₂′xs)
@@ -180,7 +183,7 @@ private
   ⋁-complete : ∀ {Tok R₁ R₂ x y s} {i : R₁ → List R₂} →
                (f : (x : R₁) → Parser Tok R₂ (i x)) {xs : List R₁} →
                x ∈ xs → y ∈ f x · s → y ∈ ⋁ f xs · s
-  ⋁-complete         f here         y∈fx = ∣ˡ y∈fx
+  ⋁-complete         f (here refl)  y∈fx = ∣ˡ y∈fx
   ⋁-complete {i = i} f (there x∈xs) y∈fx = ∣ʳ (i _) (⋁-complete f x∈xs y∈fx)
 
   mutual
@@ -239,7 +242,7 @@ private
     ∂-⋁-complete : ∀ {Tok R₁ R₂ t x y xs s} {f : R₁ → List R₂}
                    (p : (x : R₁) → Parser Tok R₂ (f x)) →
                    x ∈ xs → y ∈ p x · t ∷ s → y ∈ ∂-⋁ t xs p · s
-    ∂-⋁-complete p here         y∈px = ∣ˡ (∂-complete y∈px)
+    ∂-⋁-complete p (here refl)  y∈px = ∣ˡ (∂-complete y∈px)
     ∂-⋁-complete p (there x∈xs) y∈px =
       ∣ʳ (∂-initial _ (p _)) (∂-⋁-complete p x∈xs y∈px)
 

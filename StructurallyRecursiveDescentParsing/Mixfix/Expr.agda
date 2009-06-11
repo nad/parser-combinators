@@ -6,7 +6,9 @@ module StructurallyRecursiveDescentParsing.Mixfix.Expr where
 
 open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.Vec  using (Vec)
-open import Data.List using (List; []; _∷_; _∈_; here; there)
+open import Data.List using (List; []; _∷_)
+open import Data.List.Any as Any using (here; there)
+open Any.Membership-≡ using (_∈_)
 open import Data.Product using (∃; ∃₂; _,_)
 open import Data.Maybe using (Maybe; just; nothing)
 open import Data.String using (String)

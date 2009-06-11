@@ -11,11 +11,14 @@ module StructurallyRecursiveDescentParsing.Mixfix
          where
 
 open import Coinduction
-open import Data.List using (List; []; _∷_; _∈_; here; there)
+open import Data.List using (List; []; _∷_)
+open import Data.List.Any as Any using (here; there)
+open Any.Membership-≡ using (_∈_)
 open import Data.List.NonEmpty using (foldr; foldl)
 open import Data.Product
 open import Data.Bool
 import Data.String as String
+open import Relation.Binary.PropositionalEquality
 
 open Expr.PrecedenceCorrect g
 
@@ -44,8 +47,8 @@ mutual
 
   precs : (ps : List Precedence) → Parser (Expr ps)
   precs []       = fail
-  precs (p ∷ ps) = (λ e → here ∙ proj₂ e) <$> prec p
-                 ∣ weakenE                <$> precs ps
+  precs (p ∷ ps) = (λ e → here refl ∙ proj₂ e) <$> prec p
+                 ∣ weakenE                     <$> precs ps
 
   -- Expressions corresponding to one node in the precedence graph:
   -- operator applications where the outermost operator has
@@ -90,8 +93,8 @@ mutual
           Parser (Inner ops)
   inner []               = fail
   inner ((_ , op) ∷ ops) =
-      (λ args → here ∙ args) <$> (expr between nameParts op)
-    ∣ weakenI                <$> inner ops
+      (λ args → here refl ∙ args) <$> (expr between nameParts op)
+    ∣ weakenI                     <$> inner ops
 
 -- Expression parsers.
 
