@@ -1,5 +1,7 @@
 ------------------------------------------------------------------------
 -- A total parser combinator library
+--
+-- Nils Anders Danielsson and Ulf Norell
 ------------------------------------------------------------------------
 
 module README where
