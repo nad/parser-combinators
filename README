@@ -1,8 +1,15 @@
-A total implementation of parser combinators, as documented in the
-(forthcoming) paper Structurally Recursive Descent Parsing by Nils
-Anders Danielsson and Ulf Norell.
+------------------------------------------------------------------------
+A total implementation of parser combinators
+Nils Anders Danielsson and Ulf Norell
+------------------------------------------------------------------------
 
-This code depends on the Agda standard library. Note that you have to
-use library code from a suitable date to make things work. (If you use
-only the patches originating before the creation date of the last
-patch in this repository then things usually work.)
+This implementation is partly described in "Mixing Induction and
+Coinduction" (by Nils Anders Danielsson and Thorsten Altenkirch) and
+partly described in "Structurally Recursive Descent Parsing" (by Nils
+Anders Danielsson and Ulf Norell). The latter paper may currently be a
+bit out of date.
+
+See StructurallyRecursiveDescentParsing.README for a listing and brief
+explanation of the modules making up this project.
+
+Tested using Agda 2.2.4 and version 0.2 of Agda's standard library.
