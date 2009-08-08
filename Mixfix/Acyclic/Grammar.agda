@@ -2,13 +2,12 @@
 -- Parsing of mixfix operators
 ------------------------------------------------------------------------
 
--- This module defines a grammar for the precedence graph g.
+-- This module defines a grammar for the precedence graph g. The
+-- grammar is neither left nor right recursive.
 
-open import StructurallyRecursiveDescentParsing.Mixfix.Expr as Expr
+open import Mixfix.Acyclic.Expr as Expr
 
-module StructurallyRecursiveDescentParsing.Mixfix
-         (g : PrecedenceGraph)
-         where
+module Mixfix.Acyclic.Grammar (g : PrecedenceGraph) where
 
 open import Coinduction
 open import Data.List using (List; []; _∷_)
@@ -24,9 +23,9 @@ open Expr.PrecedenceCorrect g
 
 import StructurallyRecursiveDescentParsing.Simplified as Simplified
 open Simplified hiding (Parser; ⟦_⟧)
-open import StructurallyRecursiveDescentParsing.Mixfix.Fixity
-open import StructurallyRecursiveDescentParsing.Mixfix.Lib
-  renaming (ParserProg to Parser)
+open import Mixfix.Fixity
+open import Mixfix.Operator
+open import Mixfix.Acyclic.Lib renaming (ParserProg to Parser)
 
 -- The following definition uses a lexicographic combination of
 -- guarded corecursion and structural recursion. The only "corecursive

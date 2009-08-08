@@ -2,7 +2,7 @@
 -- An example
 ------------------------------------------------------------------------
 
-module StructurallyRecursiveDescentParsing.Mixfix.Example where
+module Mixfix.Acyclic.Example where
 
 open import Coinduction
 open import Data.Vec using ([]; _∷_; [_])
@@ -29,11 +29,11 @@ open import Relation.Nullary.Decidable using (decToBool)
 open import Relation.Binary.PropositionalEquality
 open import IO
 
-open import StructurallyRecursiveDescentParsing.Mixfix.Expr as Expr
-open import StructurallyRecursiveDescentParsing.Mixfix.Fixity
-  hiding (_≟_)
-import StructurallyRecursiveDescentParsing.Mixfix as Mixfix
-import StructurallyRecursiveDescentParsing.Mixfix.Show as Show
+open import Mixfix.Operator
+open import Mixfix.Acyclic.Expr as Expr
+open import Mixfix.Fixity hiding (_≟_)
+import Mixfix.Acyclic.Grammar as Grammar
+import Mixfix.Acyclic.Show as Show
 import StructurallyRecursiveDescentParsing.Simplified as Simplified
 open Simplified using (Parser)
 import StructurallyRecursiveDescentParsing.Backend.DepthFirst
@@ -125,7 +125,7 @@ parse breadthFirst p = BreadthFirst.parseComplete (Simplified.⟦_⟧ p)
 
 parseExpr : Backend → String → List String
 parseExpr backend = List.map (fromNameParts ∘ show) ∘
-                    parse backend (Mixfix.expression g) ∘
+                    parse backend (Grammar.expression g) ∘
                     toNameParts
 
 -- The breadth-first backend is considerably slower than the

@@ -2,10 +2,11 @@
 -- Concrete syntax used by the mixfix operator parser
 ------------------------------------------------------------------------
 
-module StructurallyRecursiveDescentParsing.Mixfix.Expr where
+module Mixfix.Cyclic.Expr where
 
+open import Data.Fin using (Fin)
 open import Data.Nat using (ℕ; zero; suc; _+_)
-open import Data.Vec  using (Vec)
+open import Data.Vec as Vec using (Vec; allFin)
 open import Data.List using (List; []; _∷_)
 open import Data.List.Any as Any using (here; there)
 open Any.Membership-≡ using (_∈_)
@@ -15,61 +16,31 @@ open import Data.String using (String)
 open import Relation.Nullary using (Dec; yes; no)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 
-open import StructurallyRecursiveDescentParsing.Mixfix.Fixity
-
-------------------------------------------------------------------------
--- Operators
-
--- Name parts.
-
-NamePart : Set
-NamePart = String
-
--- Operators. arity is the internal arity of the operator, i.e. the
--- number of arguments taken between the first and last name parts.
-
-record Operator (fix : Fixity) (arity : ℕ) : Set where
-  field nameParts : Vec NamePart (1 + arity)
-
-open Operator public
-
--- Predicate filtering out operators of the given fixity and
--- associativity.
-
-hasFixity : ∀ fix → ∃₂ Operator → Maybe (∃ (Operator fix))
-hasFixity fix (fix' , op) with fix ≟ fix'
-hasFixity fix (.fix , op) | yes refl = just op
-hasFixity fix (fix' , op) | _        = nothing
+open import Mixfix.Fixity
+open import Mixfix.Operator
 
 ------------------------------------------------------------------------
 -- Precedence graphs
 
--- Precedence graphs are represented by their unfoldings as forests
--- (one tree for every node in the graph). This does not take into
--- account the sharing of the precedence graphs, but this code is
--- not aimed at efficiency.
+record PrecedenceGraph : Set where
+  field
+    -- The number of precedence levels.
+    levels : ℕ
 
--- Precedence trees.
+  -- Precedence levels.
+  Precedence : Set
+  Precedence = Fin levels
 
-data Precedence : Set where
-  precedence : (o : (fix : Fixity) → List (∃ (Operator fix)))
-               (s : List Precedence) →
-               Precedence
+  field
+    -- The precedence level's operators.
+    ops : Precedence → (fix : Fixity) → List (∃ (Operator fix))
 
--- Precedence forests.
+    -- The immediate successors of the precedence level.
+    ↑ : Precedence → List Precedence
 
-PrecedenceGraph : Set
-PrecedenceGraph = List Precedence
-
--- The operators of the given precedence.
-
-ops : Precedence → (fix : Fixity) → List (∃ (Operator fix))
-ops (precedence o s) = o
-
--- The immediate successors of the precedence level.
-
-↑ : Precedence → List Precedence
-↑ (precedence o s) = s
+  -- All precedence levels.
+  anyPrecedence : List Precedence
+  anyPrecedence = Vec.toList (allFin levels)
 
 ------------------------------------------------------------------------
 -- Precedence-correct operator applications
@@ -77,6 +48,8 @@ ops (precedence o s) = o
 -- Parameterised on a precedence graph.
 
 module PrecedenceCorrect (g : PrecedenceGraph) where
+
+  open PrecedenceGraph g
 
   mutual
 
@@ -116,7 +89,8 @@ module PrecedenceCorrect (g : PrecedenceGraph) where
 
     data Inner {fix} (ops : List (∃ (Operator fix))) : Set where
       _∙_ : ∀ {arity op}
-            (op∈ops : (arity , op) ∈ ops) (args : Vec (Expr g) arity) →
+            (op∈ops : (arity , op) ∈ ops)
+            (args : Vec (Expr anyPrecedence) arity) →
             Inner ops
 
   -- "Weakening".

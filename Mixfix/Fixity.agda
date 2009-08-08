@@ -2,7 +2,7 @@
 -- Fixity and associativity
 ------------------------------------------------------------------------
 
-module StructurallyRecursiveDescentParsing.Mixfix.Fixity where
+module Mixfix.Fixity where
 
 open import Data.Fin using (Fin; zero; suc; #_)
 open import Data.Fin.Props using (eq?)

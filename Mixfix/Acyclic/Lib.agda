@@ -1,8 +1,20 @@
 ------------------------------------------------------------------------
--- Small library used by StructurallyRecursiveDescentParsing.Mixfix
+-- Small parser combinator library used by Mixfix.Acyclic.Grammar
 ------------------------------------------------------------------------
 
-module StructurallyRecursiveDescentParsing.Mixfix.Lib where
+-- Note that while Mixfix.Acyclic.Lib and Mixfix.Cyclic.Lib may appear
+-- to be very similar, there are some important differences:
+--
+-- • Mixfix.Cyclic.Lib._⊛_ accepts delayed parsers,
+--   Mixfix.Acyclic.Lib._⊛_ does not.
+--
+-- • There is a translation from the parsers in Mixfix.Acyclic.Lib to
+--   the /simplified/ parsers in
+--   StructurallyRecursiveDescentParsing.Simplified; no such
+--   translation is defined for the parsers in Mixfix.Cyclic.Lib. Note
+--   that the depth-first backend only handles simplified parsers.
+
+module Mixfix.Acyclic.Lib where
 
 open import Coinduction
 open import Data.Bool using (Bool; true; false)
@@ -23,8 +35,7 @@ import StructurallyRecursiveDescentParsing.Simplified as Simplified
 open Simplified hiding (⟦_⟧)
 open import StructurallyRecursiveDescentParsing.Simplified.Semantics
   hiding (cast∈; sound; complete)
-open import StructurallyRecursiveDescentParsing.Mixfix.Expr
-  using (NamePart)
+open import Mixfix.Operator using (NamePart)
 
 ------------------------------------------------------------------------
 -- Programs
@@ -33,8 +44,8 @@ open import StructurallyRecursiveDescentParsing.Mixfix.Expr
 -- they are /syntactically/ guarded by constructors. The following
 -- small language of "parser programs" reifies a selection of parser
 -- combinators as /constructors/. These constructors are then used in
--- StructurallyRecursiveDescentParsing.Mixfix in order to ensure that
--- Agda accepts the grammar defined there.
+-- Mixfix.Acyclic.Grammar in order to ensure that Agda accepts the
+-- grammars defined there.
 
 infix  55 _+
 infixl 50 _⊛_ _<$>_

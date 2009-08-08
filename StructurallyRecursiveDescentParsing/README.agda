@@ -33,12 +33,7 @@ import StructurallyRecursiveDescentParsing.Backend.Simplification
 
 -- An extended example: mixfix operator parsing.
 
-import StructurallyRecursiveDescentParsing.Mixfix.Fixity
-import StructurallyRecursiveDescentParsing.Mixfix.Expr
-import StructurallyRecursiveDescentParsing.Mixfix.Lib
-import StructurallyRecursiveDescentParsing.Mixfix
-import StructurallyRecursiveDescentParsing.Mixfix.Show
-import StructurallyRecursiveDescentParsing.Mixfix.Example
+import Mixfix.README
 
 ------------------------------------------------------------------------
 -- Remaining modules
