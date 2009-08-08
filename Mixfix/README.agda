@@ -33,16 +33,21 @@ import Mixfix.Fixity
 
 import Mixfix.Operator
 
+-- Precedence-correct expressions, parametrised on abstract precedence
+-- graphs.
+
+import Mixfix.Expr
+
 ------------------------------------------------------------------------
 -- Acyclic graphs
-
--- Precedence graphs and precedence-correct expressions.
-
-import Mixfix.Acyclic.Expr
 
 -- A custom-made parser combinator library (with a formal semantics).
 
 import Mixfix.Acyclic.Lib
+
+-- Acyclic precedence graphs.
+
+import Mixfix.Acyclic.PrecedenceGraph
 
 -- Mixfix operator grammars. The resulting expressions are
 -- precedence-correct by construction.
@@ -62,13 +67,14 @@ import Mixfix.Acyclic.Example
 ------------------------------------------------------------------------
 -- Cyclic graphs
 
--- Precedence graphs and precedence-correct expressions.
-
-import Mixfix.Cyclic.Expr
-
 -- A custom-made parser combinator library (with a formal semantics).
 
 import Mixfix.Cyclic.Lib
+
+-- Cyclic precedence graphs. (These graphs are not used below, because
+-- Mixfix.Cyclic.Grammar can handle arbitrary precedence graphs.)
+
+import Mixfix.Cyclic.PrecedenceGraph
 
 -- Mixfix operator grammars. The resulting expressions are
 -- precedence-correct by construction.

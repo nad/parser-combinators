@@ -2,9 +2,12 @@
 -- Linearisation of mixfix operators
 ------------------------------------------------------------------------
 
-open import Mixfix.Cyclic.Expr as Expr
+open import Mixfix.Expr
 
-module Mixfix.Cyclic.Show (g : PrecedenceGraph) where
+module Mixfix.Cyclic.Show
+         (i : PrecedenceGraphInterface)
+         (g : PrecedenceGraphInterface.PrecedenceGraph i)
+         where
 
 open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.List using (List)
@@ -18,8 +21,8 @@ open import Data.Function using (_∘_)
 open import Relation.Binary.PropositionalEquality
   using (_≡_; refl)
 
-open Expr.PrecedenceGraph   g
-open Expr.PrecedenceCorrect g
+open PrecedenceGraph   i g
+open PrecedenceCorrect i g
 open import StructurallyRecursiveDescentParsing.Parser
 open import StructurallyRecursiveDescentParsing.Parser.Semantics
   as Semantics
@@ -28,7 +31,7 @@ open import Mixfix.Operator
 open import Mixfix.Cyclic.Lib as Lib
 import Mixfix.Cyclic.Grammar
 private
-  module Grammar = Mixfix.Cyclic.Grammar g
+  module Grammar = Mixfix.Cyclic.Grammar i g
 
 ------------------------------------------------------------------------
 -- Linearisation

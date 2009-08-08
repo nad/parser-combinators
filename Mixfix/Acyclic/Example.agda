@@ -29,9 +29,10 @@ open import Relation.Nullary.Decidable using (decToBool)
 open import Relation.Binary.PropositionalEquality
 open import IO
 
-open import Mixfix.Operator
-open import Mixfix.Acyclic.Expr as Expr
 open import Mixfix.Fixity hiding (_≟_)
+open import Mixfix.Operator
+open import Mixfix.Expr
+open import Mixfix.Acyclic.PrecedenceGraph
 import Mixfix.Acyclic.Grammar as Grammar
 import Mixfix.Acyclic.Show as Show
 import StructurallyRecursiveDescentParsing.Simplified as Simplified
@@ -84,7 +85,7 @@ abstract  -- To speed up type-checking.
 ------------------------------------------------------------------------
 -- Expressions
 
-  open Expr.PrecedenceCorrect g
+  open PrecedenceCorrect acyclic g
 
   • : ExprIn a non
   • = ⟪ here refl ∙ [] ⟫

@@ -4,9 +4,12 @@
 
 -- This module defines a grammar for the precedence graph g.
 
-open import Mixfix.Cyclic.Expr as Expr
+open import Mixfix.Expr
 
-module Mixfix.Cyclic.Grammar (g : PrecedenceGraph) where
+module Mixfix.Cyclic.Grammar
+         (i : PrecedenceGraphInterface)
+         (g : PrecedenceGraphInterface.PrecedenceGraph i)
+         where
 
 open import Coinduction
   using () renaming (∞₁ to ∞; ♯₁_ to ♯_; ♭₁ to ♭)
@@ -17,8 +20,8 @@ open Any.Membership-≡ using (_∈_)
 open import Data.Product
 open import Relation.Binary.PropositionalEquality
 
-open PrecedenceGraph   g
-open PrecedenceCorrect g
+open PrecedenceGraph   i g
+open PrecedenceCorrect i g
 
 import StructurallyRecursiveDescentParsing.Parser as Parser
 open import Mixfix.Fixity

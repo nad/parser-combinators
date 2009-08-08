@@ -5,9 +5,13 @@
 -- This module defines a grammar for the precedence graph g. The
 -- grammar is neither left nor right recursive.
 
-open import Mixfix.Acyclic.Expr as Expr
+open import Mixfix.Expr
+open import Mixfix.Acyclic.PrecedenceGraph
+  using (acyclic; precedence)
 
-module Mixfix.Acyclic.Grammar (g : PrecedenceGraph) where
+module Mixfix.Acyclic.Grammar
+         (g : PrecedenceGraphInterface.PrecedenceGraph acyclic)
+         where
 
 open import Coinduction
 open import Data.List using (List; []; _∷_)
@@ -19,7 +23,8 @@ open import Data.Bool
 import Data.String as String
 open import Relation.Binary.PropositionalEquality
 
-open Expr.PrecedenceCorrect g
+open PrecedenceGraph   acyclic g
+open PrecedenceCorrect acyclic g
 
 import StructurallyRecursiveDescentParsing.Simplified as Simplified
 open Simplified hiding (Parser; ⟦_⟧)

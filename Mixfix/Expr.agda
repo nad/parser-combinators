@@ -1,55 +1,75 @@
 ------------------------------------------------------------------------
--- Concrete syntax used by the mixfix operator parser
+-- Precedence-correct expressions
 ------------------------------------------------------------------------
 
-module Mixfix.Cyclic.Expr where
+module Mixfix.Expr where
 
-open import Data.Fin using (Fin)
-open import Data.Nat using (ℕ; zero; suc; _+_)
-open import Data.Vec as Vec using (Vec; allFin)
+open import Data.Vec  using (Vec)
 open import Data.List using (List; []; _∷_)
 open import Data.List.Any as Any using (here; there)
 open Any.Membership-≡ using (_∈_)
-open import Data.Product using (∃; ∃₂; _,_)
-open import Data.Maybe using (Maybe; just; nothing)
-open import Data.String using (String)
-open import Relation.Nullary using (Dec; yes; no)
-open import Relation.Binary.PropositionalEquality using (_≡_; refl)
+open import Data.Product using (∃; _,_)
 
 open import Mixfix.Fixity
 open import Mixfix.Operator
 
 ------------------------------------------------------------------------
--- Precedence graphs
+-- An abstract definition of precedence graphs
 
-record PrecedenceGraph : Set where
+-- The interface of precedence graphs.
+
+record PrecedenceGraphInterface : Set₁ where
   field
-    -- The number of precedence levels.
-    levels : ℕ
+    -- Precedence graphs.
+    PrecedenceGraph : Set
 
-  -- Precedence levels.
-  Precedence : Set
-  Precedence = Fin levels
+    -- Precedence levels.
+    Precedence : PrecedenceGraph → Set
 
-  field
-    -- The precedence level's operators.
-    ops : Precedence → (fix : Fixity) → List (∃ (Operator fix))
+    -- The operators of the given precedence.
+    ops : (g : PrecedenceGraph) →
+          Precedence g → (fix : Fixity) → List (∃ (Operator fix))
 
     -- The immediate successors of the precedence level.
-    ↑ : Precedence → List Precedence
+    ↑ : (g : PrecedenceGraph) → Precedence g → List (Precedence g)
 
-  -- All precedence levels.
+    -- All precedence levels in the graph.
+    anyPrecedence : (g : PrecedenceGraph) → List (Precedence g)
+
+-- When a precedence graph is given the following module may be
+-- convenient to avoid having to write "g" all the time.
+
+module PrecedenceGraph
+         (i : PrecedenceGraphInterface)
+         (g : PrecedenceGraphInterface.PrecedenceGraph i)
+         where
+
+  PrecedenceGraph : Set
+  PrecedenceGraph = PrecedenceGraphInterface.PrecedenceGraph i
+
+  Precedence : Set
+  Precedence = PrecedenceGraphInterface.Precedence i g
+
+  ops : Precedence → (fix : Fixity) → List (∃ (Operator fix))
+  ops = PrecedenceGraphInterface.ops i g
+
+  ↑ : Precedence → List Precedence
+  ↑ = PrecedenceGraphInterface.↑ i g
+
   anyPrecedence : List Precedence
-  anyPrecedence = Vec.toList (allFin levels)
+  anyPrecedence = PrecedenceGraphInterface.anyPrecedence i g
 
 ------------------------------------------------------------------------
 -- Precedence-correct operator applications
 
 -- Parameterised on a precedence graph.
 
-module PrecedenceCorrect (g : PrecedenceGraph) where
+module PrecedenceCorrect
+         (i : PrecedenceGraphInterface)
+         (g : PrecedenceGraphInterface.PrecedenceGraph i)
+         where
 
-  open PrecedenceGraph g
+  open PrecedenceGraph i g
 
   mutual
 

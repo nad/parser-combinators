@@ -2,9 +2,13 @@
 -- Linearisation of mixfix operators
 ------------------------------------------------------------------------
 
-open import Mixfix.Acyclic.Expr as Expr
+open import Mixfix.Expr
+open import Mixfix.Acyclic.PrecedenceGraph
+  using (acyclic; precedence)
 
-module Mixfix.Acyclic.Show (g : PrecedenceGraph) where
+module Mixfix.Acyclic.Show
+         (g : PrecedenceGraphInterface.PrecedenceGraph acyclic)
+         where
 
 open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.List using (List)
@@ -22,7 +26,8 @@ import Data.String as String
 open import Relation.Binary.PropositionalEquality
   using (_≡_; refl)
 
-open Expr.PrecedenceCorrect g
+open PrecedenceGraph   acyclic g
+open PrecedenceCorrect acyclic g
 open import StructurallyRecursiveDescentParsing.Simplified
 open import StructurallyRecursiveDescentParsing.Simplified.Semantics
   as Semantics
