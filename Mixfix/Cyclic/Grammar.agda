@@ -56,7 +56,7 @@ mutual
   -- could be omitted.
 
   prec : (p : Precedence) → Parser (∃ (ExprIn p))
-  prec p = closedOps ∥ nonAssoc ∥ preRight ∥ postLeft ∥ fail
+  prec p = closedOps ∥ nonAssoc ∥ preRight⁺ ∥ postLeft⁺ ∥ fail
     module Prec where
     -- [ fix ] parses the internal parts of operators with the
     -- current precedence level and fixity fix.
@@ -72,31 +72,29 @@ mutual
 
     -- Non-associative infix operators.
     nonAssoc : Parser (ExprIn p non)
-    nonAssoc = (♯ (♯ _⟨_⟩_ <$> p↑) ⊛ (♯ [ infx non ])) ⊛ (♯ p↑)
+    nonAssoc = (♯ (_⟨_⟩_ <$> p↑ ⊛ [ infx non ])) ⊛∞ (♯ p↑)
 
     -- Right associative and prefix operators.
-    preRight : Parser (ExprIn p right)
-    preRight =
-      (♯ (     ⟪_⟩_  <$>          [ prefx      ]
-         ∣ (♯ _⟨_⟩ʳ_ <$> p↑) ⊛ (♯ [ infx right ])
-         ))
-      ⊛
-      (♯ ( similar <$> preRight
-         ∣ tighter <$> p↑
-         ))
+    preRight : Parser (Outer p right → ExprIn p right)
+    preRight =  ⟪_⟩_  <$>      [ prefx      ]
+             ∣ _⟨_⟩ʳ_ <$> p↑ ⊛ [ infx right ]
+
+    preRight⁺ : Parser (ExprIn p right)
+    preRight⁺ = (♯ preRight)
+                ⊛∞
+                (♯ (similar <$> preRight⁺ ∣ tighter <$> p↑))
 
     -- Left associative and postfix operators.
-    postLeft : Parser (ExprIn p left)
-    postLeft =
-      (♯ flip _$_
-         <$>
-         ( similar <$> postLeft
-         ∣ tighter <$> p↑
-         ))
-      ⊛
-      (♯ (    (λ op    e₁ → e₁ ⟨ op ⟫    ) <$> [ postfx    ]
-         ∣ (♯ (λ op e₂ e₁ → e₁ ⟨ op ⟩ˡ e₂) <$> [ infx left ]) ⊛ (♯ p↑)
-         ))
+    postLeft : Parser (Outer p left → ExprIn p left)
+    postLeft = (λ op    e₁ → e₁ ⟨ op ⟫    ) <$> [ postfx    ]
+             ∣ (λ op e₂ e₁ → e₁ ⟨ op ⟩ˡ e₂) <$> [ infx left ] ⊛ p↑
+
+    postLeft⁺ : Parser (ExprIn p left)
+    postLeft⁺ = (♯ flip _$_ <$> ( similar <$> postLeft⁺
+                                ∣ tighter <$> p↑
+                                ))
+                ⊛∞
+                (♯ postLeft)
 
   -- Internal parts (all name parts plus internal expressions) of
   -- operators of the given precedence and fixity.

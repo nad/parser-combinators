@@ -92,37 +92,37 @@ module Correctness where
       mutual
 
         outerʳ : ∀ {s} (e : Outer p right) →
-                 e ⊕ s ∈⟦ similar <$> N.preRight
+                 e ⊕ s ∈⟦ similar <$> N.preRight⁺
                         ∣ tighter <$> N.p↑
                         ⟧· Show.outer e s
         outerʳ (tighter e) = ∣ʳ (tighter <$> expr e)
-        outerʳ (similar e) = ∣ˡ (similar <$> preRight e)
+        outerʳ (similar e) = ∣ˡ (similar <$> preRight⁺ e)
 
-        preRight : ∀ {s} (e : ExprIn p right) →
-                   e ⊕ s ∈⟦ N.preRight ⟧· Show.exprIn e s
-        preRight (  ⟪ op ⟩  e) = ∣ˡ ( ⟪_⟩_  <$>          inner op) ⊛ outerʳ e
-        preRight (l ⟨ op ⟩ʳ e) = ∣ʳ (_⟨_⟩ʳ_ <$> expr l ⊛ inner op) ⊛ outerʳ e
+        preRight⁺ : ∀ {s} (e : ExprIn p right) →
+                    e ⊕ s ∈⟦ N.preRight⁺ ⟧· Show.exprIn e s
+        preRight⁺ (  ⟪ op ⟩  e) = ∣ˡ ( ⟪_⟩_  <$>          inner op) ⊛∞ outerʳ e
+        preRight⁺ (l ⟨ op ⟩ʳ e) = ∣ʳ (_⟨_⟩ʳ_ <$> expr l ⊛ inner op) ⊛∞ outerʳ e
 
       mutual
 
         outerˡ : ∀ {s} (e : Outer p left) →
-                 e ⊕ s ∈⟦ similar <$> N.postLeft
+                 e ⊕ s ∈⟦ similar <$> N.postLeft⁺
                         ∣ tighter <$> N.p↑
                         ⟧· Show.outer e s
         outerˡ (tighter e) = ∣ʳ (tighter <$> expr e)
-        outerˡ (similar e) = ∣ˡ (similar <$> postLeft e)
+        outerˡ (similar e) = ∣ˡ (similar <$> postLeft⁺ e)
 
-        postLeft : ∀ {s} (e : ExprIn p left) →
-                   e ⊕ s ∈⟦ N.postLeft ⟧· Show.exprIn e s
-        postLeft (e ⟨ op ⟫   ) = _ <$> outerˡ e ⊛ ∣ˡ (_ <$> inner op)
-        postLeft (e ⟨ op ⟩ˡ r) = _ <$> outerˡ e ⊛ ∣ʳ (_ <$> inner op ⊛ expr r)
+        postLeft⁺ : ∀ {s} (e : ExprIn p left) →
+                    e ⊕ s ∈⟦ N.postLeft⁺ ⟧· Show.exprIn e s
+        postLeft⁺ (e ⟨ op ⟫   ) = _ <$> outerˡ e ⊛∞ ∣ˡ (_ <$> inner op)
+        postLeft⁺ (e ⟨ op ⟩ˡ r) = _ <$> outerˡ e ⊛∞ ∣ʳ (_ <$> inner op ⊛ expr r)
 
       exprIn′ : ∀ assoc {s} (e : ExprIn p assoc) →
                 (, e) ⊕ s ∈⟦ Grammar.prec p ⟧· Show.exprIn e s
       exprIn′ non      ⟪ op ⟫    = ∥ˡ (_ <$> inner op)
-      exprIn′ non   (l ⟨ op ⟩ r) = ∥ʳ (∥ˡ (_ <$> expr l ⊛ inner op ⊛ expr r))
-      exprIn′ right e            = ∥ʳ (∥ʳ (∥ˡ (preRight e)))
-      exprIn′ left  e            = ∥ʳ (∥ʳ (∥ʳ (∥ˡ (postLeft e))))
+      exprIn′ non   (l ⟨ op ⟩ r) = ∥ʳ (∥ˡ (_ <$> expr l ⊛ inner op ⊛∞ expr r))
+      exprIn′ right e            = ∥ʳ (∥ʳ (∥ˡ (preRight⁺ e)))
+      exprIn′ left  e            = ∥ʳ (∥ʳ (∥ʳ (∥ˡ (postLeft⁺ e))))
 
     inner : ∀ {fix s ops} (i : Inner {fix} ops) →
             i ⊕ s ∈⟦ Grammar.inner ops ⟧· Show.inner i s

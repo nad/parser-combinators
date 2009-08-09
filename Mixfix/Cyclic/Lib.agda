@@ -35,7 +35,7 @@ open import Mixfix.Operator using (NamePart)
 -- grammars defined there.
 
 infix  55 _+
-infixl 50 _⊛_ _<$>_
+infixl 50 _⊛_ _⊛∞_ _<$>_
 infixl  5 _∣_
 infixr  5 _∥_
 
@@ -46,6 +46,10 @@ data ParserProg : Set → Set1 where
               (p₂ : ParserProg R) →
                     ParserProg R
   _⊛_       : ∀ {R₁ R₂}
+              (p₁ : ParserProg (R₁ → R₂))
+              (p₂ : ParserProg R₁) →
+                    ParserProg R₂
+  _⊛∞_      : ∀ {R₁ R₂}
               (p₁ : ∞₁ (ParserProg (R₁ → R₂)))
               (p₂ : ∞₁ (ParserProg R₁)) →
                         ParserProg R₂
@@ -80,25 +84,18 @@ theToken tok = token >>= λ tok′ → ♯₁ ok tok′
 
 -- Interprets the parser programs as parsers.
 
-private
-  infix 10 ♯′_
-
-  ♯′_ : ∀ {A} → A → ∞₁ A
-  ♯′ x = ♯₁ x
-
 ⟦_⟧ : ∀ {R} → ParserProg R → Parser NamePart R []
 ⟦ fail                    ⟧ = fail
 ⟦ p₁ ∣ p₂                 ⟧ = ⟦ p₁ ⟧ ∣ ⟦ p₂ ⟧
-⟦ p₁ ⊛ p₂                 ⟧ = [] ∶ ♯₁ ⟦ ♭₁ p₁ ⟧ ⊛ (♯₁ ⟦ ♭₁ p₂ ⟧)
-⟦ f <$> p                 ⟧ = [] ∶ ♯′ return f ⊛ ⟦ p ⟧
+⟦ p₁ ⊛  p₂                ⟧ = [] ∶ ♯₁ ⟦    p₁ ⟧ ⊛ (♯₁ ⟦    p₂ ⟧)
+⟦ p₁ ⊛∞ p₂                ⟧ = [] ∶ ♯₁ ⟦ ♭₁ p₁ ⟧ ⊛ (♯₁ ⟦ ♭₁ p₂ ⟧)
+⟦ f <$> p                 ⟧ = [] ∶ ♯₁ return f ⊛ ⟦ p ⟧
 ⟦ p +                     ⟧ = ⟦ p ⟧ >>= λ x → ♯₁
                               (⟦ _∷_ x <$> p + ⟧ ∣ return [ x ])
-⟦ p between (t ∷ [])      ⟧ = [] ∶ ♯′ return (const []) ⊛ theToken t
+⟦ p between (t ∷ [])      ⟧ = [] ∶ ♯₁ return (const []) ⊛ theToken t
 ⟦ p between (t ∷ t′ ∷ ts) ⟧ = theToken t >>= λ _ → ♯₁
-                              ⟦ (♯′ _∷_ <$> ♭₁ p) ⊛
-                                (♯′ (p between (t′ ∷ ts)))
-                              ⟧
-⟦ p₁ ∥ p₂                 ⟧ = [] ∶ ♯′ return ,_ ⊛ ⟦ p₁ ⟧
+                              ⟦ _∷_ <$> ♭₁ p ⊛ (p between (t′ ∷ ts)) ⟧
+⟦ p₁ ∥ p₂                 ⟧ = [] ∶ ♯₁ return ,_ ⊛ ⟦ p₁ ⟧
                             ∣                     ⟦ p₂ ⟧
 
 ------------------------------------------------------------------------
@@ -124,11 +121,17 @@ data _⊕_∈⟦_⟧·_ : ∀ {R} →
                  {p₁ : ParserProg R} {p₂ : ParserProg R}
                (x∈p₂ : x ⊕ s₁ ∈⟦ p₂ ⟧· s) → x ⊕ s₁ ∈⟦ p₁ ∣ p₂ ⟧· s
   _⊛_        : ∀ {s s₁ s₂ R₁ R₂ f x}
+                 {p₁ : ParserProg (R₁ → R₂)}
+                 {p₂ : ParserProg R₁}
+               (f∈p₁ : f ⊕ s₁ ∈⟦ p₁ ⟧· s)
+               (x∈p₂ : x ⊕ s₂ ∈⟦ p₂ ⟧· s₁) →
+               f x ⊕ s₂ ∈⟦ p₁ ⊛ p₂ ⟧· s
+  _⊛∞_       : ∀ {s s₁ s₂ R₁ R₂ f x}
                  {p₁ : ∞₁ (ParserProg (R₁ → R₂))}
                  {p₂ : ∞₁ (ParserProg R₁)}
                (f∈p₁ : f ⊕ s₁ ∈⟦ ♭₁ p₁ ⟧· s)
                (x∈p₂ : x ⊕ s₂ ∈⟦ ♭₁ p₂ ⟧· s₁) →
-               f x ⊕ s₂ ∈⟦ p₁ ⊛ p₂ ⟧· s
+               f x ⊕ s₂ ∈⟦ p₁ ⊛∞ p₂ ⟧· s
   _<$>_      : ∀ {s s′ R₁ R₂ x} (f : R₁ → R₂) {p : ParserProg R₁}
                (x∈p : x ⊕ s′ ∈⟦ p ⟧· s) → f x ⊕ s′ ∈⟦ f <$> p ⟧· s
   +-[]       : ∀ {R x s s₁} {p : ParserProg R}
@@ -176,7 +179,8 @@ sound : ∀ {R x s s′} {p : ParserProg R} →
         x ⊕ s′ ∈⟦ p ⟧· s → x ⊕ s′ ∈ ⟦ p ⟧ · s
 sound (∣ˡ x∈p₁)      = ∣ˡ    (sound x∈p₁)
 sound (∣ʳ x∈p₂)      = ∣ʳ [] (sound x∈p₂)
-sound (f∈p₁ ⊛ x∈p₂)  = sound f∈p₁ ⊛ sound x∈p₂
+sound (f∈p₁ ⊛  x∈p₂) = sound f∈p₁ ⊛ sound x∈p₂
+sound (f∈p₁ ⊛∞ x∈p₂) = sound f∈p₁ ⊛ sound x∈p₂
 sound (f <$> x∈p)    = return ⊛ sound x∈p
 sound (+-[] x∈p)     = sound x∈p >>= ∣ʳ [] return
 sound (+-∷ x∈p xs∈p) = sound x∈p >>= ∣ˡ (return ⊛ sound xs∈p)
@@ -193,8 +197,8 @@ complete fail      ()
 complete (p₁ ∣ p₂) (∣ˡ     x∈p₁) = ∣ˡ (complete p₁ x∈p₁)
 complete (p₁ ∣ p₂) (∣ʳ .[] x∈p₂) = ∣ʳ (complete p₂ x∈p₂)
 
-complete (p₁ ⊛ p₂) (f∈p₁ ⊛ y∈p₂) =
-  complete (♭₁ p₁) f∈p₁ ⊛ complete (♭₁ p₂) y∈p₂
+complete (p₁ ⊛  p₂) (f∈p₁ ⊛ y∈p₂) = complete     p₁  f∈p₁ ⊛  complete     p₂  y∈p₂
+complete (p₁ ⊛∞ p₂) (f∈p₁ ⊛ y∈p₂) = complete (♭₁ p₁) f∈p₁ ⊛∞ complete (♭₁ p₂) y∈p₂
 
 complete (f <$> p) (return ⊛ x∈p) = f <$> complete p x∈p
 
@@ -210,15 +214,3 @@ complete (p between (t ∷ t′ ∷ ts))
 
 complete (p₁ ∥ p₂) (∣ˡ (return ⊛ x∈p₁)) = ∥ˡ (complete p₁ x∈p₁)
 complete (p₁ ∥ p₂) (∣ʳ .[] x∈p₂)        = ∥ʳ (complete p₂ x∈p₂)
-
--- Some lemmas.
-
-+-∷ʳ : ∀ {R x s s₁ s₂ xs} {p : ParserProg R} →
-       xs ⊕ s₁ ∈⟦ p + ⟧· s → x ⊕ s₂ ∈⟦ p ⟧· s₁ →
-       xs ∷ʳ x ⊕ s₂ ∈⟦ p + ⟧· s
-+-∷ʳ (+-[] x∈p)     y∈p = +-∷ x∈p (+-[] y∈p)
-+-∷ʳ (+-∷ x∈p xs∈p) y∈p = +-∷ x∈p (+-∷ʳ xs∈p y∈p)
-
-cast∈ : ∀ {R x₁ x₂ s s′} {p : ParserProg R} →
-        x₁ ≡ x₂ → x₁ ⊕ s′ ∈⟦ p ⟧· s → x₂ ⊕ s′ ∈⟦ p ⟧· s
-cast∈ refl x∈p = x∈p

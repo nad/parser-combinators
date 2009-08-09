@@ -5,7 +5,7 @@
 -- Note that while Mixfix.Acyclic.Lib and Mixfix.Cyclic.Lib may appear
 -- to be very similar, there are some important differences:
 --
--- • Mixfix.Cyclic.Lib._⊛_ accepts delayed parsers,
+-- • Mixfix.Cyclic.Lib._⊛∞_ accepts delayed parsers,
 --   Mixfix.Acyclic.Lib._⊛_ does not.
 --
 -- • There is a translation from the parsers in Mixfix.Acyclic.Lib to
