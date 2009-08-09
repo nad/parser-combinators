@@ -14,7 +14,6 @@ open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.List using (List)
 open import Data.List.Any as Any using (here; there)
 open Any.Membership-≡ using (_∈_)
-open import Data.List.NonEmpty using (List⁺; [_]; _∷_; foldl; _∷ʳ_)
 open import Data.Vec using (Vec; []; _∷_)
 import Data.DifferenceList as DiffList
 open DiffList using (DiffList; _++_)
@@ -35,7 +34,10 @@ open import Mixfix.Fixity
 open import Mixfix.Operator
 open import Mixfix.Acyclic.Lib as Lib
 import Mixfix.Acyclic.Grammar
-private module Grammar = Mixfix.Acyclic.Grammar g
+import Mixfix.Acyclic.Lemma
+private
+  module Grammar = Mixfix.Acyclic.Grammar g
+  module Lemma   = Mixfix.Acyclic.Lemma   g
 
 ------------------------------------------------------------------------
 -- Linearisation
@@ -78,17 +80,6 @@ show = DiffList.toList ∘ Show.expr
 
 module Correctness where
 
-  -- A generalisation of Grammar.Prec.appˡ.
-
-  appˡ′ : ∀ {p} → Outer p left → List⁺ (Outer p left → ExprIn p left) →
-          ExprIn p left
-  appˡ′ e fs = foldl (λ e f → f (similar e)) (λ f → f e) fs
-
-  appˡ′-lemma : ∀ {p} (e : Outer p left) fs f →
-                appˡ′ e (fs ∷ʳ f) ≡ f (similar (appˡ′ e fs))
-  appˡ′-lemma e [ f′ ]    f = refl
-  appˡ′-lemma e (f′ ∷ fs) f = appˡ′-lemma (similar (f′ e)) fs f
-
   mutual
 
     expr : ∀ {ps s} (e : Expr ps) →
@@ -121,7 +112,7 @@ module Correctness where
                           e  ⊕ g s ∈⟦ N.appˡ <$> N.p↑ ⊛ N.postLeft + ⟧· Show.exprIn e (g s) →
                f (similar e) ⊕   s ∈⟦ N.appˡ <$> N.p↑ ⊛ N.postLeft + ⟧· Show.exprIn e (g s)
       lemmaˡ {f} f∈ (_⊛_ {x = fs} (_<$>_ {x = e} .N.appˡ e∈) fs∈) =
-        Lib.cast∈ (appˡ′-lemma (tighter e) fs f) (N.appˡ <$> e∈ ⊛ +-∷ʳ fs∈ f∈)
+        Lib.cast∈ (Lemma.appˡ-∷ʳ (tighter e) fs f) (N.appˡ <$> e∈ ⊛ +-∷ʳ fs∈ f∈)
 
       postLeft : ∀ {s} (e : ExprIn p left) →
                  e ⊕ s ∈⟦ N.appˡ <$> N.p↑ ⊛ N.postLeft + ⟧· Show.exprIn e s

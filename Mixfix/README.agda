@@ -54,6 +54,10 @@ import Mixfix.Acyclic.PrecedenceGraph
 
 import Mixfix.Acyclic.Grammar
 
+-- A minor lemma.
+
+import Mixfix.Acyclic.Lemma
+
 -- Linearisation of operators, and a proof showing that all the
 -- generated strings are syntactically correct (although perhaps
 -- ambiguous).
@@ -86,3 +90,11 @@ import Mixfix.Cyclic.Grammar
 -- ambiguous).
 
 import Mixfix.Cyclic.Show
+
+------------------------------------------------------------------------
+-- Equivalence
+
+-- For acyclic precedence graphs the two grammar definitions above are
+-- equivalent.
+
+import Mixfix.Equivalence
