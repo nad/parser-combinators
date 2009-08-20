@@ -91,6 +91,10 @@ import Mixfix.Cyclic.Grammar
 
 import Mixfix.Cyclic.Show
 
+-- An example.
+
+import Mixfix.Cyclic.Example
+
 ------------------------------------------------------------------------
 -- Equivalence
 
