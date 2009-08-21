@@ -66,8 +66,7 @@ data ParserProg : Set → Set1 where
               (p₂ : ParserProg (∃ R)) →
                     ParserProg (∃ R)
 
--- Parses a given token (or, really, a given equivalence class of
--- tokens).
+-- Parses a given token.
 
 theToken : NamePart → Parser NamePart NamePart []
 theToken tok = token >>= λ tok′ → ♯₁ ok tok′
@@ -105,9 +104,11 @@ theToken tok = token >>= λ tok′ → ♯₁ ok tok′
 --
 --   x ⊕ s′ ∈⟦ p ⟧· s  =  x ⊕ s′ ∈ ⟦ p ⟧ · s?
 --
--- The reason is that it is hard for Agda to infer the value of p from
+-- One reason is that it is hard for Agda to infer the value of p from
 -- ⟦ p ⟧ (note that ⟦_⟧ is a function which evaluates). By using the
--- definition below this problem is avoided.
+-- definition below this problem is avoided. A more important reason
+-- may be that the definition below ensures that the details of ⟦_⟧ do
+-- not need to be understood.
 
 infix 4 _⊕_∈⟦_⟧·_
 
