@@ -10,6 +10,7 @@ open import Data.Bool using (Bool; true; false)
 open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.List using (List; []; _∷_; _++_)
 open import Data.List.NonEmpty using (List⁺; [_]; _∷_; _∷ʳ_)
+open import Data.Maybe using (Maybe; just; nothing; maybe)
 open import Data.Vec using (Vec; []; _∷_)
 open import Data.Product
 import Data.String as String
@@ -89,11 +90,15 @@ theToken tok = token >>= λ tok′ → ♯₁ ok tok′
 ⟦ p₁ ⊛  p₂                ⟧ = [] ∶ ♯₁ ⟦    p₁ ⟧ ⊛ (♯₁ ⟦    p₂ ⟧)
 ⟦ p₁ ⊛∞ p₂                ⟧ = [] ∶ ♯₁ ⟦ ♭₁ p₁ ⟧ ⊛ (♯₁ ⟦ ♭₁ p₂ ⟧)
 ⟦ f <$> p                 ⟧ = [] ∶ ♯₁ return f ⊛ ⟦ p ⟧
-⟦ p +                     ⟧ = ⟦ p ⟧ >>= λ x → ♯₁
-                              (⟦ _∷_ x <$> p + ⟧ ∣ return [ x ])
+⟦ p +                     ⟧ = (_ ∷ []) ∶ [] ∶ ♯₁
+                              return (λ x → maybe (_∷_ x) [ x ]) ⊛
+                              ⟦ p ⟧ ⊛
+                              (♯₁ (⟦ just <$> p + ⟧ ∣ return nothing))
 ⟦ p between (t ∷ [])      ⟧ = [] ∶ ♯₁ return (const []) ⊛ theToken t
-⟦ p between (t ∷ t′ ∷ ts) ⟧ = theToken t >>= λ _ → ♯₁
-                              ⟦ _∷_ <$> ♭₁ p ⊛ (p between (t′ ∷ ts)) ⟧
+⟦ p between (t ∷ t′ ∷ ts) ⟧ = [] ∶ ♯₁ [] ∶ ♯₁ [] ∶ ♯₁
+                              return (const _∷_) ⊛ theToken t ⊛
+                              (♯₁ ⟦ ♭₁ p ⟧) ⊛
+                              (♯₁ ⟦ p between (t′ ∷ ts) ⟧)
 ⟦ p₁ ∥ p₂                 ⟧ = [] ∶ ♯₁ return ,_ ⊛ ⟦ p₁ ⟧
                             ∣                     ⟦ p₂ ⟧
 
@@ -183,13 +188,14 @@ sound (∣ʳ x∈p₂)      = ∣ʳ [] (sound x∈p₂)
 sound (f∈p₁ ⊛  x∈p₂) = sound f∈p₁ ⊛ sound x∈p₂
 sound (f∈p₁ ⊛∞ x∈p₂) = sound f∈p₁ ⊛ sound x∈p₂
 sound (f <$> x∈p)    = return ⊛ sound x∈p
-sound (+-[] x∈p)     = sound x∈p >>= ∣ʳ [] return
-sound (+-∷ x∈p xs∈p) = sound x∈p >>= ∣ˡ (return ⊛ sound xs∈p)
+sound (+-[] x∈p)     = return ⊛ sound x∈p ⊛ ∣ʳ [] return
+sound (+-∷ x∈p xs∈p) = _⊛_ {xs = _ ∷ []} (return ⊛ sound x∈p)
+                                         (∣ˡ (return ⊛ sound xs∈p))
 sound (∥ˡ x∈p₁)      = ∣ˡ (return ⊛ sound x∈p₁)
 sound (∥ʳ x∈p₂)      = ∣ʳ [] (sound x∈p₂)
 sound between-[]     = return ⊛ theToken-complete
 sound (between-∷ {ts = _ ∷ _} x∈p xs∈⋯) =
-  theToken-complete >>= return ⊛ sound x∈p ⊛ sound xs∈⋯
+  return ⊛ theToken-complete ⊛ sound x∈p ⊛ sound xs∈⋯
 
 complete : ∀ {R x s s′} (p : ParserProg R) →
            x ⊕ s′ ∈ ⟦ p ⟧ · s → x ⊕ s′ ∈⟦ p ⟧· s
@@ -203,13 +209,13 @@ complete (p₁ ⊛∞ p₂) (f∈p₁ ⊛ y∈p₂) = complete (♭₁ p₁) f�
 
 complete (f <$> p) (return ⊛ x∈p) = f <$> complete p x∈p
 
-complete (p +) (x∈p >>= ∣ˡ (return ⊛ xs∈p+)) = +-∷  (complete p x∈p) (complete (p +) xs∈p+)
-complete (p +) (x∈p >>= ∣ʳ .[] return)       = +-[] (complete p x∈p)
+complete (p +) (return ⊛ x∈p ⊛ ∣ˡ (return ⊛ xs∈p+)) = +-∷  (complete p x∈p) (complete (p +) xs∈p+)
+complete (p +) (return ⊛ x∈p ⊛ ∣ʳ .[] return)       = +-[] (complete p x∈p)
 
 complete (p between (t ∷ [])) (return ⊛ t∈) with theToken-sound t∈
 ... | (refl , refl) = between-[]
-complete (p between (t ∷ t′ ∷ ts))
-         (t∈ >>= (return ⊛ x∈p ⊛ xs∈)) with theToken-sound t∈
+complete (p between (t ∷ t′ ∷ ts)) (return ⊛ t∈ ⊛ x∈p ⊛ xs∈)
+  with theToken-sound t∈
 ... | (refl , refl) =
   between-∷ (complete (♭₁ p) x∈p) (complete (p between (t′ ∷ ts)) xs∈)
 
