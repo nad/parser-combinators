@@ -5,6 +5,7 @@
 module StructurallyRecursiveDescentParsing.Backend.Simplification where
 
 open import Algebra
+open import Coinduction
 open import Data.Product
 open import Data.Product1 using (∃₁₁; _,_; proj₁₁₁; proj₁₁₂)
 open import Data.List as List
@@ -33,23 +34,31 @@ private
           (eq : xs₁ ≡ xs₂) → x ∈ cast′ eq p · s → x ∈ p · s
   cast⁻ refl x∈p = x∈p
 
+  -- A workaround for the nominal equality which Agda uses to compare
+  -- expressions.
+
+  infix 10 ♯′_
+
+  ♯′_ : ∀ {T} → T → ∞₁ T
+  ♯′_ = ♯₁_
+
 -- The functions below simplify parsers. The following simplifications
--- are applied in a bottom-up manner:
+-- are applied in a bottom-up manner (modulo ∞ and casts):
 --
--- fail ∣ p          → p
--- p    ∣ fail       → p
--- fail     ⊛   p    → fail  (If p is nullable.)
--- p        ⊛   fail → fail  (If p is nullable.)
--- fail     >>= p    → fail
--- return x >>= p    → p x
--- cast eq p         → p
+-- fail         ∣ p            → p
+-- p            ∣ fail         → p
+-- token >>= p₁ ∣ token >>= p₂ → token >>= λ t → p₁ t ∣ p₂ t
+-- fail ⊛ p                    → fail  (If p is nullable.)
+-- p    ⊛ fail                 → fail  (If p is nullable.)
+-- fail     >>= p              → fail
+-- return x >>= p              → p x
+-- cast eq p                   → p
 --
 -- No simplifications are performed under ♯₁_.
 --
--- Examples of possible future additions (modulo ∞ and casts):
+-- An example of a possible future addition:
 --
--- token >>= p₁ ∣ token >>= p₂ → token >>= λ t → p₁ t ∣ p₂ t
--- (p₁ >>= p₂) >>= p₃          → p₁ >>= λ x → p₂ >>= p₃
+-- (p₁ >>= p₂) >>= p₃ → p₁ >>= λ x → p₂ >>= p₃
 
 simplify′ : ∀ {Tok R xs} (p : Parser Tok R xs) → ∃₁₁ λ p′ → p ≈ p′
 simplify′ (return x) = (return x , (λ x∈ → x∈) , λ x∈ → x∈)
@@ -64,6 +73,26 @@ simplify′ (p₁ ∣ p₂) | (fail , p₁≈∅) | (p₂′ , p₂≈p₂′) =
   helper (∣ʳ .[] x∈p₂) = proj₁₁₁ p₂≈p₂′ x∈p₂
   helper (∣ˡ     x∈p₁) with proj₁₁₁ p₁≈∅ x∈p₁
   ... | ()
+simplify′ (p₁ ∣ p₂) | (_>>=_ {f = f} token p₁′ , p₁≈…)
+                    | (token >>= p₂′           , p₂≈…) =
+  ( token >>= (λ t → ♯′ (♭₁ (p₁′ t) ∣ ♭₁ (p₂′ t)))
+  , (λ {_} → helper₁) , λ {_} → helper₂
+  )
+  where
+  helper₁ : ∀ {x s} →
+            x ∈ p₁ ∣ p₂ · s →
+            x ∈ token >>= (λ t → ♯′ (♭₁ (p₁′ t) ∣ ♭₁ (p₂′ t))) · s
+  helper₁ (∣ˡ     x∈p₁) with proj₁₁₁ p₁≈… x∈p₁
+  helper₁ (∣ˡ     x∈p₁) | token >>= x∈p₁′ = token >>= ∣ˡ x∈p₁′
+  helper₁ (∣ʳ .[] x∈p₂) with proj₁₁₁ p₂≈… x∈p₂
+  helper₁ (∣ʳ .[] x∈p₂) | _>>=_ {x = x} token x∈p₂′ =
+    token >>= ∣ʳ (f x) x∈p₂′
+
+  helper₂ : ∀ {x s} →
+            x ∈ token >>= (λ t → ♯′ (♭₁ (p₁′ t) ∣ ♭₁ (p₂′ t))) · s →
+            x ∈ p₁ ∣ p₂ · s
+  helper₂ (token >>= ∣ˡ    y∈p₁′x) = ∣ˡ    (proj₁₁₂ p₁≈… (token >>= y∈p₁′x))
+  helper₂ (token >>= ∣ʳ ._ y∈p₂′x) = ∣ʳ [] (proj₁₁₂ p₂≈… (token >>= y∈p₂′x))
 simplify′ (p₁ ∣ p₂) | (p₁′ , p₁≈p₁′) | (fail , p₂≈∅) =
   (cast′ lem p₁′ , (λ {_} → helper₁) , λ {_} → helper₂)
   where
