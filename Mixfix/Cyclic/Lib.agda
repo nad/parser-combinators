@@ -89,18 +89,18 @@ theToken tok = token >>= λ tok′ → ♯₁ ok tok′
 ⟦ p₁ ∣ p₂                 ⟧ = ⟦ p₁ ⟧ ∣ ⟦ p₂ ⟧
 ⟦ p₁ ⊛  p₂                ⟧ = [] ∶ ♯₁ ⟦    p₁ ⟧ ⊛ (♯₁ ⟦    p₂ ⟧)
 ⟦ p₁ ⊛∞ p₂                ⟧ = [] ∶ ♯₁ ⟦ ♭₁ p₁ ⟧ ⊛ (♯₁ ⟦ ♭₁ p₂ ⟧)
-⟦ f <$> p                 ⟧ = [] ∶ ♯₁ return f ⊛ ⟦ p ⟧
-⟦ p +                     ⟧ = (_ ∷ []) ∶ [] ∶ ♯₁
-                              return (λ x → maybe (_∷_ x) [ x ]) ⊛
+⟦ f <$> p                 ⟧ = f <$> ⟦ p ⟧
+⟦ p +                     ⟧ = (_ ∷ []) ∶
+                              (λ x → maybe (_∷_ x) [ x ]) <$>
                               ⟦ p ⟧ ⊛
                               (♯₁ (⟦ just <$> p + ⟧ ∣ return nothing))
-⟦ p between (t ∷ [])      ⟧ = [] ∶ ♯₁ return (const []) ⊛ theToken t
-⟦ p between (t ∷ t′ ∷ ts) ⟧ = [] ∶ ♯₁ [] ∶ ♯₁ [] ∶ ♯₁
-                              return (const _∷_) ⊛ theToken t ⊛
+⟦ p between (t ∷ [])      ⟧ = const [] <$> theToken t
+⟦ p between (t ∷ t′ ∷ ts) ⟧ = [] ∶ ♯₁ [] ∶ ♯₁
+                              const _∷_ <$> theToken t ⊛
                               (♯₁ ⟦ ♭₁ p ⟧) ⊛
                               (♯₁ ⟦ p between (t′ ∷ ts) ⟧)
-⟦ p₁ ∥ p₂                 ⟧ = [] ∶ ♯₁ return ,_ ⊛ ⟦ p₁ ⟧
-                            ∣                     ⟦ p₂ ⟧
+⟦ p₁ ∥ p₂                 ⟧ = ,_ <$> ⟦ p₁ ⟧
+                            ∣        ⟦ p₂ ⟧
 
 ------------------------------------------------------------------------
 -- Semantics of the programs
@@ -187,15 +187,15 @@ sound (∣ˡ x∈p₁)      = ∣ˡ    (sound x∈p₁)
 sound (∣ʳ x∈p₂)      = ∣ʳ [] (sound x∈p₂)
 sound (f∈p₁ ⊛  x∈p₂) = sound f∈p₁ ⊛ sound x∈p₂
 sound (f∈p₁ ⊛∞ x∈p₂) = sound f∈p₁ ⊛ sound x∈p₂
-sound (f <$> x∈p)    = return ⊛ sound x∈p
-sound (+-[] x∈p)     = return ⊛ sound x∈p ⊛ ∣ʳ [] return
-sound (+-∷ x∈p xs∈p) = _⊛_ {xs = _ ∷ []} (return ⊛ sound x∈p)
-                                         (∣ˡ (return ⊛ sound xs∈p))
-sound (∥ˡ x∈p₁)      = ∣ˡ (return ⊛ sound x∈p₁)
+sound (f <$> x∈p)    = f <$> sound x∈p
+sound (+-[] x∈p)     = _ <$> sound x∈p ⊛ ∣ʳ [] return
+sound (+-∷ x∈p xs∈p) = _⊛_ {xs = _ ∷ []} (_ <$> sound x∈p)
+                                         (∣ˡ (_ <$> sound xs∈p))
+sound (∥ˡ x∈p₁)      = ∣ˡ (_ <$> sound x∈p₁)
 sound (∥ʳ x∈p₂)      = ∣ʳ [] (sound x∈p₂)
-sound between-[]     = return ⊛ theToken-complete
+sound between-[]     = _ <$> theToken-complete
 sound (between-∷ {ts = _ ∷ _} x∈p xs∈⋯) =
-  return ⊛ theToken-complete ⊛ sound x∈p ⊛ sound xs∈⋯
+  _ <$> theToken-complete ⊛ sound x∈p ⊛ sound xs∈⋯
 
 complete : ∀ {R x s s′} (p : ParserProg R) →
            x ⊕ s′ ∈ ⟦ p ⟧ · s → x ⊕ s′ ∈⟦ p ⟧· s
@@ -207,17 +207,17 @@ complete (p₁ ∣ p₂) (∣ʳ .[] x∈p₂) = ∣ʳ (complete p₂ x∈p₂)
 complete (p₁ ⊛  p₂) (f∈p₁ ⊛ y∈p₂) = complete     p₁  f∈p₁ ⊛  complete     p₂  y∈p₂
 complete (p₁ ⊛∞ p₂) (f∈p₁ ⊛ y∈p₂) = complete (♭₁ p₁) f∈p₁ ⊛∞ complete (♭₁ p₂) y∈p₂
 
-complete (f <$> p) (return ⊛ x∈p) = f <$> complete p x∈p
+complete (f <$> p) (.f <$> x∈p) = f <$> complete p x∈p
 
-complete (p +) (return ⊛ x∈p ⊛ ∣ˡ (return ⊛ xs∈p+)) = +-∷  (complete p x∈p) (complete (p +) xs∈p+)
-complete (p +) (return ⊛ x∈p ⊛ ∣ʳ .[] return)       = +-[] (complete p x∈p)
+complete (p +) (._ <$> x∈p ⊛ ∣ˡ (._ <$> xs∈p+)) = +-∷  (complete p x∈p) (complete (p +) xs∈p+)
+complete (p +) (._ <$> x∈p ⊛ ∣ʳ .[] return)     = +-[] (complete p x∈p)
 
-complete (p between (t ∷ [])) (return ⊛ t∈) with theToken-sound t∈
+complete (p between (t ∷ [])) (._ <$> t∈) with theToken-sound t∈
 ... | (refl , refl) = between-[]
-complete (p between (t ∷ t′ ∷ ts)) (return ⊛ t∈ ⊛ x∈p ⊛ xs∈)
+complete (p between (t ∷ t′ ∷ ts)) (._ <$> t∈ ⊛ x∈p ⊛ xs∈)
   with theToken-sound t∈
 ... | (refl , refl) =
   between-∷ (complete (♭₁ p) x∈p) (complete (p between (t′ ∷ ts)) xs∈)
 
-complete (p₁ ∥ p₂) (∣ˡ (return ⊛ x∈p₁)) = ∥ˡ (complete p₁ x∈p₁)
-complete (p₁ ∥ p₂) (∣ʳ .[] x∈p₂)        = ∥ʳ (complete p₂ x∈p₂)
+complete (p₁ ∥ p₂) (∣ˡ (._ <$> x∈p₁)) = ∥ˡ (complete p₁ x∈p₁)
+complete (p₁ ∥ p₂) (∣ʳ .[] x∈p₂)      = ∥ʳ (complete p₂ x∈p₂)

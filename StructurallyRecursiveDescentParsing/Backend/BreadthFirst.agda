@@ -53,6 +53,7 @@ private
   ∂-initial _ fail                        = _
   ∂-initial _ token                       = _
   ∂-initial _ (_ ∣ _)                     = _
+  ∂-initial _ (_ <$> _)                   = _
   ∂-initial _ (_∶_⊛_ (_ ∷ _) {[]}    _ _) = _
   ∂-initial _ (_∶_⊛_ (_ ∷ _) {_ ∷ _} _ _) = _
   ∂-initial _ (_∶_⊛_ []      {[]}    _ _) = _
@@ -88,6 +89,7 @@ private
     ∂ t fail                           = fail
     ∂ t token                          = return t
     ∂ t (p₁ ∣ p₂)                      = ∂ t p₁ ∣ ∂ t p₂
+    ∂ t (f <$> p)                      = f <$> ∂ t p
     ∂ t (_∶_⊛_ (_ ∷ _) {[]}     p₁ p₂) = (_ ∷ _)        ∶ ∂ t p₁ ⊛ ♯? (∂-∅? t p₁) (♭₁ p₂)
     ∂ t (_∶_⊛_ (_ ∷ _) {f ∷ fs} p₁ p₂) = (_ ∷ _)        ∶ ∂ t p₁ ⊛ ♯? (∂-∅? t p₁)     p₂
                                        ∣ ∂-initial t p₂ ∶ ♯? (∂-∅? t p₂) (⋁ return (f ∷ fs)) ⊛ ∂ t p₂
@@ -134,6 +136,7 @@ private
     ∂-sound token                           return                 = token
     ∂-sound (p₁ ∣ p₂)                       (∣ˡ    x∈p₁)           = ∣ˡ     (∂-sound p₁ x∈p₁)
     ∂-sound (_∣_ {xs₁ = xs₁} p₁ p₂)         (∣ʳ ._ x∈p₂)           = ∣ʳ xs₁ (∂-sound p₂ x∈p₂)
+    ∂-sound (f <$> p)                       (.f <$> x∈p)           = f <$> ∂-sound p x∈p
     ∂-sound (_∶_⊛_ (_ ∷ _)  {[]}     p₁ p₂)        (f∈p₁′ ⊛ x∈p₂)  = ∂-sound     p₁  f∈p₁′ ⊛ cast∈ refl (♭?♯? (∂-∅? _     p₁))  refl x∈p₂
     ∂-sound (_∶_⊛_ []       {[]}     p₁ p₂)        (f∈p₁′ ⊛ x∈p₂)  = ∂-sound (♭₁ p₁) f∈p₁′ ⊛ cast∈ refl (♭?♯? (∂-∅? _ (♭₁ p₁))) refl x∈p₂
     ∂-sound (_∶_⊛_ (_ ∷ _)  {f ∷ fs} p₁ p₂) (∣ˡ    (f∈p₁′ ⊛ x∈p₂)) = ∂-sound     p₁  f∈p₁′ ⊛ cast∈ refl (♭?♯? (∂-∅? _     p₁))  refl x∈p₂
@@ -198,6 +201,8 @@ private
 
       ∂-complete′ (p₁ ∣ p₂) (∣ˡ   x∈p₁) refl = ∣ˡ                  (∂-complete x∈p₁)
       ∂-complete′ (p₁ ∣ p₂) (∣ʳ _ x∈p₂) refl = ∣ʳ (∂-initial _ p₁) (∂-complete x∈p₂)
+
+      ∂-complete′ (f <$> p) (.f <$> x∈p) refl = f <$> ∂-complete x∈p
 
       ∂-complete′ (_∶_⊛_ (_ ∷ _)  {[]}    p₁ p₂)
                   (_⊛_ {s₁ = _ ∷ _} f∈p₁ x∈p₂) refl =     ∂-complete f∈p₁ ⊛ cast∈ refl (Eq1.sym (♭?♯? (∂-∅? _     p₁)))  refl x∈p₂

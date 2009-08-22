@@ -48,6 +48,8 @@ private
 -- fail         ∣ p            → p
 -- p            ∣ fail         → p
 -- token >>= p₁ ∣ token >>= p₂ → token >>= λ t → p₁ t ∣ p₂ t
+-- f <$> fail                  → fail
+-- f <$> return x              → return (f x)
 -- fail ⊛ p                    → fail  (If p is nullable.)
 -- p    ⊛ fail                 → fail  (If p is nullable.)
 -- fail     >>= p              → fail
@@ -64,6 +66,29 @@ simplify′ : ∀ {Tok R xs} (p : Parser Tok R xs) → ∃₁₁ λ p′ → p �
 simplify′ (return x) = (return x , (λ x∈ → x∈) , λ x∈ → x∈)
 simplify′ fail       = (fail     , (λ ())      , λ ())
 simplify′ token      = (token    , (λ x∈ → x∈) , λ x∈ → x∈)
+
+simplify′ (f <$> p) with simplify′ p
+... | (fail , p≈∅) = (fail , (λ {_} → helper) , λ ())
+  where
+  helper : ∀ {x s} → x ∈ f <$> p · s → x ∈ fail · s
+  helper (.f <$> x∈p) with proj₁₁₁ p≈∅ x∈p
+  ... | ()
+... | (return x , p≈ε) =
+  (return (f x) , (λ {_} → helper₁) , λ {_} → helper₂)
+  where
+  helper₁ : ∀ {y s} → y ∈ f <$> p · s → y ∈ return (f x) · s
+  helper₁ (.f <$> x∈p) with proj₁₁₁ p≈ε x∈p
+  ... | return = return
+
+  helper₂ : ∀ {y s} → y ∈ return (f x) · s → y ∈ f <$> p · s
+  helper₂ return = f <$> proj₁₁₂ p≈ε return
+... | (p′ , p≈p′) = (f <$> p′ , (λ {_} → helper₁) , λ {_} → helper₂)
+  where
+  helper₁ : ∀ {x s} → x ∈ f <$> p · s → x ∈ f <$> p′ · s
+  helper₁ (.f <$> x∈p) = f <$> proj₁₁₁ p≈p′ x∈p
+
+  helper₂ : ∀ {x s} → x ∈ f <$> p′ · s → x ∈ f <$> p · s
+  helper₂ (.f <$> x∈p′) = f <$> proj₁₁₂ p≈p′ x∈p′
 
 simplify′ (p₁ ∣ p₂) with simplify′ p₁ | simplify′ p₂
 simplify′ (p₁ ∣ p₂) | (fail , p₁≈∅) | (p₂′ , p₂≈p₂′) =

@@ -5,7 +5,7 @@
 module StructurallyRecursiveDescentParsing.Unambiguity where
 
 open import Data.Bool
-open import Data.List
+open import Data.List hiding (map)
 open import Relation.Binary.PropositionalEquality
 open import Relation.Binary.PropositionalEquality1 using (refl)
 
@@ -44,6 +44,9 @@ data Unambiguous′ {Tok} : ∀ {R xs} → Parser Tok R xs → Set1 where
            (u₁ : Unambiguous′ p₁) (u₂ : Unambiguous′ p₂) →
            (u : ∀ {x₁ x₂ s} → x₁ ∈ p₁ · s → x₂ ∈ p₂ · s → x₁ ≡ x₂) →
            Unambiguous′ (p₁ ∣ p₂)
+  map    : ∀ {R₁ R₂ xs} {f : R₁ → R₂} {p : Parser Tok R₁ xs}
+           (u : ∀ {x₁ x₂ s} → x₁ ∈ p · s → x₂ ∈ p · s → f x₁ ≡ f x₂) →
+           Unambiguous′ (f <$> p)
   app    : ∀ {R₁ R₂ fs} xs
              {p₁ : ∞? (null xs) (Parser Tok (R₁ → R₂) fs)}
              {p₂ : ∞? (null fs) (Parser Tok R₁        xs)}
@@ -76,6 +79,7 @@ sound (choice u₁ u₂ u) (∣ˡ   x∈p₁) (∣ˡ    y∈p₁) =      sound u
 sound (choice u₁ u₂ u) (∣ˡ   x∈p₁) (∣ʳ _  y∈p₂) =      u        x∈p₁ y∈p₂
 sound (choice u₁ u₂ u) (∣ʳ _ x∈p₂) (∣ˡ    y∈p₁) = sym (u        y∈p₁ x∈p₂)
 sound (choice u₁ u₂ u) (∣ʳ _ x∈p₂) (∣ʳ ._ y∈p₂) =      sound u₂ x∈p₂ y∈p₂
+sound (map u)          (f <$> x∈p) (.f <$> y∈p) = u x∈p y∈p
 sound (app xs {p₁ = p₁} {p₂} u) x∈p y∈p = helper x∈p y∈p refl
   where
   helper : ∀ {fx₁ fx₂ s₁ s₂} →
@@ -100,6 +104,7 @@ complete token                   _ = token
 complete (_∣_ {xs₁ = xs₁} p₁ p₂) u = choice (complete p₁ (λ x₁∈ x₂∈ → u (∣ˡ     x₁∈) (∣ˡ     x₂∈)))
                                             (complete p₂ (λ x₁∈ x₂∈ → u (∣ʳ xs₁ x₁∈) (∣ʳ xs₁ x₂∈)))
                                             (λ x₁∈ x₂∈ → u (∣ˡ x₁∈) (∣ʳ xs₁ x₂∈))
+complete (f <$> p)               u = map (λ x₁∈ x₂∈ → u (f <$> x₁∈) (f <$> x₂∈))
 complete (xs ∶ p₁ ⊛ p₂)          u = app xs (λ f₁∈ x₁∈ eq₁ f₂∈ x₂∈ eq₂ →
                                                u (cast∈ refl refl eq₁ (_⊛_ f₁∈ x₁∈))
                                                  (cast∈ refl refl eq₂ (_⊛_ f₂∈ x₂∈)))
