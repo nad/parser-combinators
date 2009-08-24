@@ -27,7 +27,7 @@ open import StructurallyRecursiveDescentParsing.Parser
 open import StructurallyRecursiveDescentParsing.Parser.Semantics
   hiding (sound; complete)
 open import StructurallyRecursiveDescentParsing.Backend.Simplification
-  as Simplification
+  as Simplification using (simplify)
 
 ------------------------------------------------------------------------
 -- Parsing
@@ -177,7 +177,7 @@ sound : ∀ {Tok R xs x} {p : Parser Tok R xs} (s : List Tok) →
         x ∈ parseComplete p s → x ∈ p · s
 sound []      x∈p = initial-sound _ x∈p
 sound (t ∷ s) x∈p =
-  ∂-sound _ (proj₁₁₂ Simplification.correct (sound s x∈p))
+  ∂-sound _ (Simplification.sound (sound s x∈p))
 
 ------------------------------------------------------------------------
 -- Completeness
@@ -256,4 +256,4 @@ complete : ∀ {Tok R xs x} {p : Parser Tok R xs} (s : List Tok) →
            x ∈ p · s → x ∈ parseComplete p s
 complete []      x∈p = initial-complete x∈p
 complete (t ∷ s) x∈p =
-  complete s (proj₁₁₁ Simplification.correct (∂-complete x∈p))
+  complete s (Simplification.complete (∂-complete x∈p))

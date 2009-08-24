@@ -22,6 +22,9 @@ open import StructurallyRecursiveDescentParsing.Parser.Semantics
   hiding (sound; complete)
 open import StructurallyRecursiveDescentParsing.Simplified.Lemmas
 
+------------------------------------------------------------------------
+-- Helpers
+
 private
 
   -- A variant of cast.
@@ -38,7 +41,7 @@ private
           (eq : xs₁ ≡ xs₂) → x ∈ cast′ eq p · s → x ∈ p · s
   cast⁻ refl x∈p = x∈p
 
-  -- A workaround for the nominal equality which Agda uses to compare
+  -- A workaround for the nominal equality which Agda uses for
   -- expressions.
 
   infix 10 ♯′_
@@ -46,7 +49,11 @@ private
   ♯′_ : ∀ {T} → T → ∞₁ T
   ♯′_ = ♯₁_
 
--- The functions below simplify parsers. The following simplifications
+------------------------------------------------------------------------
+-- Simplification
+
+-- The function simplify₁ simplifies the first "layer" of a parser,
+-- down to the first occurrences of ♯₁_. The following simplifications
 -- are applied in a bottom-up manner (modulo ∞ and casts):
 --
 -- fail         ∣ p            → p
@@ -61,94 +68,102 @@ private
 -- return x >>= p              → p x
 -- cast eq p                   → p
 --
--- Note that simplification is not performed (co)recursively under
--- ♯₁_.
---
 -- An example of a possible future addition:
 --
 -- (p₁ >>= p₂) >>= p₃ → p₁ >>= λ x → p₂ >>= p₃
 
-simplify′ : ∀ {Tok R xs} (p : Parser Tok R xs) → ∃₁₁ λ p′ → p ≈ p′
-simplify′ (return x) = (return x , (λ x∈ → x∈) , λ x∈ → x∈)
-simplify′ fail       = (fail     , (λ ())      , λ ())
-simplify′ token      = (token    , (λ x∈ → x∈) , λ x∈ → x∈)
+simplify₁ : ∀ {Tok R xs} (p : Parser Tok R xs) → ∃₁₁ λ p′ → p ≈ p′
 
-simplify′ (f <$> p) with simplify′ p
+-- • return:
+
+simplify₁ (return x) = (return x , (λ x∈ → x∈) , λ x∈ → x∈)
+
+-- • fail:
+
+simplify₁ fail       = (fail     , (λ ())      , λ ())
+
+-- • token:
+
+simplify₁ token      = (token    , (λ x∈ → x∈) , λ x∈ → x∈)
+
+-- • _<$>_:
+
+simplify₁ (f <$> p) with simplify₁ p
 ... | (fail , p≈∅) = (fail , (λ {_} → helper) , λ ())
   where
-  helper : ∀ {x s} → x ∈ f <$> p · s → x ∈ fail · s
+  helper : f <$> p ⊑ fail
   helper (.f <$> x∈p) with proj₁₁₁ p≈∅ x∈p
   ... | ()
 ... | (return x , p≈ε) =
   (return (f x) , (λ {_} → helper₁) , λ {_} → helper₂)
   where
-  helper₁ : ∀ {y s} → y ∈ f <$> p · s → y ∈ return (f x) · s
+  helper₁ : f <$> p ⊑ return (f x)
   helper₁ (.f <$> x∈p) with proj₁₁₁ p≈ε x∈p
   ... | return = return
 
-  helper₂ : ∀ {y s} → y ∈ return (f x) · s → y ∈ f <$> p · s
+  helper₂ : return (f x) ⊑ f <$> p
   helper₂ return = f <$> proj₁₁₂ p≈ε return
 ... | (p′ , p≈p′) = (f <$> p′ , (λ {_} → helper₁) , λ {_} → helper₂)
   where
-  helper₁ : ∀ {x s} → x ∈ f <$> p · s → x ∈ f <$> p′ · s
+  helper₁ : f <$> p ⊑ f <$> p′
   helper₁ (.f <$> x∈p) = f <$> proj₁₁₁ p≈p′ x∈p
 
-  helper₂ : ∀ {x s} → x ∈ f <$> p′ · s → x ∈ f <$> p · s
+  helper₂ : f <$> p′ ⊑ f <$> p
   helper₂ (.f <$> x∈p′) = f <$> proj₁₁₂ p≈p′ x∈p′
 
-simplify′ (p₁ ∣ p₂) with simplify′ p₁ | simplify′ p₂
-simplify′ (p₁ ∣ p₂) | (fail , p₁≈∅) | (p₂′ , p₂≈p₂′) =
+-- • _∣_:
+
+simplify₁ (p₁ ∣ p₂) with simplify₁ p₁ | simplify₁ p₂
+simplify₁ (p₁ ∣ p₂) | (fail , p₁≈∅) | (p₂′ , p₂≈p₂′) =
   (p₂′ , (λ {_} → helper) , λ x∈ → ∣ʳ [] (proj₁₁₂ p₂≈p₂′ x∈))
   where
-  helper : ∀ {x s} → x ∈ p₁ ∣ p₂ · s → x ∈ p₂′ · s
+  helper : p₁ ∣ p₂ ⊑ p₂′
   helper (∣ʳ .[] x∈p₂) = proj₁₁₁ p₂≈p₂′ x∈p₂
   helper (∣ˡ     x∈p₁) with proj₁₁₁ p₁≈∅ x∈p₁
   ... | ()
-simplify′ (p₁ ∣ p₂) | (_>>=_ {f = f} token p₁′ , p₁≈…)
+simplify₁ (p₁ ∣ p₂) | (_>>=_ {f = f} token p₁′ , p₁≈…)
                     | (token >>= p₂′           , p₂≈…) =
   ( token >>= (λ t → ♯′ (♭₁ (p₁′ t) ∣ ♭₁ (p₂′ t)))
   , (λ {_} → helper₁) , λ {_} → helper₂
   )
   where
-  helper₁ : ∀ {x s} →
-            x ∈ p₁ ∣ p₂ · s →
-            x ∈ token >>= (λ t → ♯′ (♭₁ (p₁′ t) ∣ ♭₁ (p₂′ t))) · s
+  helper₁ : p₁ ∣ p₂ ⊑ token >>= (λ t → ♯′ (♭₁ (p₁′ t) ∣ ♭₁ (p₂′ t)))
   helper₁ (∣ˡ     x∈p₁) with proj₁₁₁ p₁≈… x∈p₁
   helper₁ (∣ˡ     x∈p₁) | token >>= x∈p₁′ = token >>= ∣ˡ x∈p₁′
   helper₁ (∣ʳ .[] x∈p₂) with proj₁₁₁ p₂≈… x∈p₂
   helper₁ (∣ʳ .[] x∈p₂) | _>>=_ {x = x} token x∈p₂′ =
     token >>= ∣ʳ (f x) x∈p₂′
 
-  helper₂ : ∀ {x s} →
-            x ∈ token >>= (λ t → ♯′ (♭₁ (p₁′ t) ∣ ♭₁ (p₂′ t))) · s →
-            x ∈ p₁ ∣ p₂ · s
+  helper₂ : token >>= (λ t → ♯′ (♭₁ (p₁′ t) ∣ ♭₁ (p₂′ t))) ⊑ p₁ ∣ p₂
   helper₂ (token >>= ∣ˡ    y∈p₁′x) = ∣ˡ    (proj₁₁₂ p₁≈… (token >>= y∈p₁′x))
   helper₂ (token >>= ∣ʳ ._ y∈p₂′x) = ∣ʳ [] (proj₁₁₂ p₂≈… (token >>= y∈p₂′x))
-simplify′ (p₁ ∣ p₂) | (p₁′ , p₁≈p₁′) | (fail , p₂≈∅) =
+simplify₁ (p₁ ∣ p₂) | (p₁′ , p₁≈p₁′) | (fail , p₂≈∅) =
   (cast′ lem p₁′ , (λ {_} → helper₁) , λ {_} → helper₂)
   where
   lem = sym (proj₂ LM.identity _)
 
-  helper₁ : ∀ {x s} → x ∈ p₁ ∣ p₂ · s → x ∈ cast′ lem p₁′ · s
+  helper₁ : p₁ ∣ p₂ ⊑ cast′ lem p₁′
   helper₁ (∣ˡ    x∈p₁) = cast⁺ lem (proj₁₁₁ p₁≈p₁′ x∈p₁)
   helper₁ (∣ʳ ._ x∈p₂) with proj₁₁₁ p₂≈∅ x∈p₂
   ... | ()
 
-  helper₂ : ∀ {x s} → x ∈ cast′ lem p₁′ · s → x ∈ p₁ ∣ p₂ · s
+  helper₂ : cast′ lem p₁′ ⊑ p₁ ∣ p₂
   helper₂ x∈p₁′ = ∣ˡ (proj₁₁₂ p₁≈p₁′ (cast⁻ lem x∈p₁′))
-simplify′ (_∣_ {xs₁ = xs₁} p₁ p₂) | (p₁′ , p₁≈p₁′) | (p₂′ , p₂≈p₂′) =
+simplify₁ (_∣_ {xs₁ = xs₁} p₁ p₂) | (p₁′ , p₁≈p₁′) | (p₂′ , p₂≈p₂′) =
   (p₁′ ∣ p₂′ , (λ {_} → helper₁) , λ {_} → helper₂)
   where
-  helper₁ : ∀ {x s} → x ∈ p₁ ∣ p₂ · s → x ∈ p₁′ ∣ p₂′ · s
+  helper₁ : p₁ ∣ p₂ ⊑ p₁′ ∣ p₂′
   helper₁ (∣ˡ      x∈p₁) = ∣ˡ     (proj₁₁₁ p₁≈p₁′ x∈p₁)
   helper₁ (∣ʳ .xs₁ x∈p₂) = ∣ʳ xs₁ (proj₁₁₁ p₂≈p₂′ x∈p₂)
 
-  helper₂ : ∀ {x s} → x ∈ p₁′ ∣ p₂′ · s → x ∈ p₁ ∣ p₂ · s
+  helper₂ : p₁′ ∣ p₂′ ⊑ p₁ ∣ p₂
   helper₂ (∣ˡ      x∈p₁′) = ∣ˡ     (proj₁₁₂ p₁≈p₁′ x∈p₁′)
   helper₂ (∣ʳ .xs₁ x∈p₂′) = ∣ʳ xs₁ (proj₁₁₂ p₂≈p₂′ x∈p₂′)
 
-simplify′ (_∶_⊛_ xs {fs} p₁ p₂) =
-  helper _ _ (simplify″ (null xs) p₁) (simplify″ (null fs) p₂)
+-- • _∶_⊛_:
+
+simplify₁ (_∶_⊛_ xs {fs} p₁ p₂) =
+  helper _ _ (simplify₁′ (null xs) p₁) (simplify₁′ (null fs) p₂)
          refl refl
   where
   -- Note that if an argument parser is delayed, then simplification
@@ -157,10 +172,10 @@ simplify′ (_∶_⊛_ xs {fs} p₁ p₂) =
   -- predetermined depth, would be possible, but for simplicity
   -- delayed parsers are simply forced and returned.
 
-  simplify″ : ∀ {Tok R xs} b (p : ∞? b (Parser Tok R xs)) →
-              ∃₁₁ λ p′ → ♭? b p ≈ p′
-  simplify″ true  p = (♭₁ p , (λ x∈ → x∈) , λ x∈ → x∈)
-  simplify″ false p = simplify′ p
+  simplify₁′ : ∀ {Tok R xs} b (p : ∞? b (Parser Tok R xs)) →
+               ∃₁₁ λ p′ → ♭? b p ≈ p′
+  simplify₁′ true  p = (♭₁ p , (λ x∈ → x∈) , λ x∈ → x∈)
+  simplify₁′ false p = simplify₁ p
 
   -- [] ∶ token ⊛ token is never type correct, but Agda's
   -- case-splitting machinery cannot see that it is not, so instead
@@ -185,27 +200,27 @@ simplify′ (_∶_⊛_ xs {fs} p₁ p₂) =
     where
     lem = sym (>>=-∅ xs)
 
-    helper₁ : ∀ {x s} → x ∈ xs ∶ p₁ ⊛ p₂ · s → x ∈ cast′ lem fail · s
+    helper₁ : xs ∶ p₁ ⊛ p₂ ⊑ cast′ lem fail
     helper₁ (f∈p₁ ⊛ x∈p₂) with proj₁₁₁ p₁≈∅ f∈p₁
     ... | ()
 
-    helper₂ : ∀ {x s} → x ∈ cast′ lem fail · s → x ∈ xs ∶ p₁ ⊛ p₂ · s
+    helper₂ : cast′ lem fail ⊑ xs ∶ p₁ ⊛ p₂
     helper₂ x∈∅ with cast⁻ lem x∈∅
     ... | ()
   helper p₁ p₂ _ (fail , p₂≈∅) refl refl =
     (fail , (λ {_} → helper₁) , λ ())
     where
-    helper₁ : ∀ {x s} → x ∈ [] ∶ p₁ ⊛ p₂ · s → x ∈ fail · s
+    helper₁ : [] ∶ p₁ ⊛ p₂ ⊑ fail
     helper₁ (f∈p₁ ⊛ x∈p₂) with proj₁₁₁ p₂≈∅ x∈p₂
     ... | ()
   helper p₁ p₂ (return f , p₁≈ε) (return x , p₂≈ε) refl refl =
     (return (f x) , (λ {_} → helper₁) , λ {_} → helper₂)
     where
-    helper₁ : ∀ {y s} → y ∈ [ x ] ∶ p₁ ⊛ p₂ · s → y ∈ return (f x) · s
+    helper₁ : [ x ] ∶ p₁ ⊛ p₂ ⊑ return (f x)
     helper₁ (f∈p₁ ⊛ x∈p₂) with proj₁₁₁ p₁≈ε f∈p₁ | proj₁₁₁ p₂≈ε x∈p₂
     ... | return | return = return
 
-    helper₂ : ∀ {y s} → y ∈ return (f x) · s → y ∈ [ x ] ∶ p₁ ⊛ p₂ · s
+    helper₂ : return (f x) ⊑ [ x ] ∶ p₁ ⊛ p₂
     helper₂ return = proj₁₁₂ p₁≈ε return ⊛ proj₁₁₂ p₂≈ε return
   helper {fs = fs} {xs} p₁ p₂ (p₁′ , p₁≈p₁′) (p₂′ , p₂≈p₂′) R≡ xs≅ =
     helper′ p₁ p₂ (p₁′ , p₁≈p₁′) (p₂′ , p₂≈p₂′) R≡ xs≅
@@ -224,35 +239,35 @@ simplify′ (_∶_⊛_ xs {fs} p₁ p₂) =
       , (λ {_} → helper₁) , λ {_} → helper₂
       )
       where
-      helper₁ : ∀ {x s} →
-                x ∈ xs ∶              p₁  ⊛              p₂  · s →
-                x ∈ xs ∶ ♯? (null xs) p₁′ ⊛ ♯? (null fs) p₂′ · s
+      helper₁ : xs ∶              p₁  ⊛              p₂  ⊑
+                xs ∶ ♯? (null xs) p₁′ ⊛ ♯? (null fs) p₂′
       helper₁ (f∈p₁ ⊛ x∈p₂) =
         cast∈ refl (Eq₁.sym (♭?♯? (null xs))) refl (proj₁₁₁ p₁≈p₁′ f∈p₁)
           ⊛
         cast∈ refl (Eq₁.sym (♭?♯? (null fs))) refl (proj₁₁₁ p₂≈p₂′ x∈p₂)
 
-      helper₂ : ∀ {x s} →
-                x ∈ xs ∶ ♯? (null xs) p₁′ ⊛ ♯? (null fs) p₂′ · s →
-                x ∈ xs ∶              p₁  ⊛              p₂  · s
+      helper₂ : xs ∶ ♯? (null xs) p₁′ ⊛ ♯? (null fs) p₂′ ⊑
+                xs ∶              p₁  ⊛              p₂
       helper₂ (f∈p₁′ ⊛ x∈p₂′) =
         proj₁₁₂ p₁≈p₁′ (cast∈ refl (♭?♯? (null xs)) refl f∈p₁′)
           ⊛
         proj₁₁₂ p₂≈p₂′ (cast∈ refl (♭?♯? (null fs)) refl x∈p₂′)
 
-simplify′ (p₁ >>= p₂) with simplify′ p₁
-simplify′ (p₁ >>= p₂) | (fail , p₁≈∅) = (fail , (λ {_} → helper) , λ ())
+-- • _>>=_:
+
+simplify₁ (p₁ >>= p₂) with simplify₁ p₁
+simplify₁ (p₁ >>= p₂) | (fail , p₁≈∅) = (fail , (λ {_} → helper) , λ ())
   where
-  helper : ∀ {x s} → x ∈ p₁ >>= p₂ · s → x ∈ fail · s
+  helper : p₁ >>= p₂ ⊑ fail
   helper (x∈p₁ >>= y∈p₂x) with proj₁₁₁ p₁≈∅ x∈p₁
   ... | ()
-simplify′ (p₁ >>= p₂) | (return x , p₁≈ε) with simplify′ (p₂ x)
-simplify′ (p₁ >>= p₂) | (return x , p₁≈ε) | (p₂′ , p₂x≈p₂′) =
+simplify₁ (p₁ >>= p₂) | (return x , p₁≈ε) with simplify₁ (p₂ x)
+simplify₁ (p₁ >>= p₂) | (return x , p₁≈ε) | (p₂′ , p₂x≈p₂′) =
   (cast′ lem p₂′ , (λ {_} → helper₁) , λ {_} → helper₂)
   where
   lem = sym (proj₂ LM.identity _)
 
-  helper₁ : ∀ {y s} → y ∈ p₁ >>= p₂ · s → y ∈ cast′ lem p₂′ · s
+  helper₁ : p₁ >>= p₂ ⊑ cast′ lem p₂′
   helper₁ (_>>=_ {y = y} {s₂ = s₂} x∈p₁ y∈p₂x) =
     cast⁺ lem (helper (proj₁₁₁ p₁≈ε x∈p₁) y∈p₂x)
     where
@@ -260,28 +275,35 @@ simplify′ (p₁ >>= p₂) | (return x , p₁≈ε) | (p₂′ , p₂x≈p₂�
              y ∈ p₂′ · s₁ ++ s₂
     helper return x∈p₂ = proj₁₁₁ p₂x≈p₂′ x∈p₂
 
-  helper₂ : ∀ {y s} → y ∈ cast′ lem p₂′ · s → y ∈ p₁ >>= p₂ · s
+  helper₂ : cast′ lem p₂′ ⊑ p₁ >>= p₂
   helper₂ y∈p₂′ =
     _>>=_ {x = x} {p₂ = p₂} (proj₁₁₂ p₁≈ε (return {x = x}))
                             (proj₁₁₂ p₂x≈p₂′ (cast⁻ lem y∈p₂′))
-simplify′ (p₁ >>= p₂) | (p₁′ , p₁≈p₁′) =
+simplify₁ (p₁ >>= p₂) | (p₁′ , p₁≈p₁′) =
   (p₁′ >>= p₂ , (λ {_} → helper₁) , λ {_} → helper₂)
   where
-  helper₁ : ∀ {y s} → y ∈ p₁ >>= p₂ · s → y ∈ p₁′ >>= p₂ · s
+  helper₁ : p₁ >>= p₂ ⊑ p₁′ >>= p₂
   helper₁ (x∈p₁ >>= y∈p₂x) = proj₁₁₁ p₁≈p₁′ x∈p₁ >>= y∈p₂x
 
-  helper₂ : ∀ {y s} → y ∈ p₁′ >>= p₂ · s → y ∈ p₁ >>= p₂ · s
+  helper₂ : p₁′ >>= p₂ ⊑ p₁ >>= p₂
   helper₂ (x∈p₁ >>= y∈p₂x) = proj₁₁₂ p₁≈p₁′ x∈p₁ >>= y∈p₂x
 
-simplify′ (cast refl p) with simplify′ p
-simplify′ (cast refl p) | (p′ , p≈p′) =
+-- • cast:
+
+simplify₁ (cast refl p) with simplify₁ p
+simplify₁ (cast refl p) | (p′ , p≈p′) =
   (p′ , (λ {_} → helper) , λ x∈ → cast (proj₁₁₂ p≈p′ x∈))
   where
-  helper : ∀ {x s} → x ∈ cast refl p · s → x ∈ p′ · s
+  helper : cast refl p ⊑ p′
   helper (cast x∈p) = proj₁₁₁ p≈p′ x∈p
 
-simplify : ∀ {Tok R xs} → Parser Tok R xs → Parser Tok R xs
-simplify p = proj₁₁₁ (simplify′ p)
+-- The projections of simplify₁.
 
-correct : ∀ {Tok R xs} {p : Parser Tok R xs} → p ≈ simplify p
-correct = proj₁₁₂ (simplify′ _)
+simplify : ∀ {Tok R xs} → Parser Tok R xs → Parser Tok R xs
+simplify p = proj₁₁₁ (simplify₁ p)
+
+sound : ∀ {Tok R xs} {p : Parser Tok R xs} → simplify p ⊑ p
+sound = proj₁₁₂ (proj₁₁₂ (simplify₁ _))
+
+complete : ∀ {Tok R xs} {p : Parser Tok R xs} → p ⊑ simplify p
+complete = proj₁₁₁ (proj₁₁₂ (simplify₁ _))
