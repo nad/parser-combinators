@@ -81,7 +81,8 @@ private
 
   mutual
 
-    -- Note: No simplification is currently performed under ♯₁_.
+    -- Note that simplification is currently not performed
+    -- (co)recursively under ♯₁_.
 
     ∂ : ∀ {Tok R xs}
         (t : Tok) (p : Parser Tok R xs) → Parser Tok R (∂-initial t p)
