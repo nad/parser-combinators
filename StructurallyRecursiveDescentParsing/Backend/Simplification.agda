@@ -50,7 +50,7 @@ private
   ♯′_ = ♯₁_
 
 ------------------------------------------------------------------------
--- Simplification
+-- Shallow simplification
 
 -- The function simplify₁ simplifies the first "layer" of a parser,
 -- down to the first occurrences of ♯₁_. The following simplifications
@@ -297,13 +297,73 @@ simplify₁ (cast refl p) | (p′ , p≈p′) =
   helper : cast refl p ⊑ p′
   helper (cast x∈p) = proj₁₁₁ p≈p′ x∈p
 
--- The projections of simplify₁.
+------------------------------------------------------------------------
+-- Deep simplification
 
-simplify : ∀ {Tok R xs} → Parser Tok R xs → Parser Tok R xs
-simplify p = proj₁₁₁ (simplify₁ p)
+-- The function simplify applies simplify₁ also under ♯₁_.
 
-sound : ∀ {Tok R xs} {p : Parser Tok R xs} → simplify p ⊑ p
-sound = proj₁₁₂ (proj₁₁₂ (simplify₁ _))
+mutual
+  simplify : ∀ {Tok R xs} → Parser Tok R xs → Parser Tok R xs
+  simplify p = simplify↓ (proj₁₁₁ (simplify₁ p))
 
-complete : ∀ {Tok R xs} {p : Parser Tok R xs} → p ⊑ simplify p
-complete = proj₁₁₁ (proj₁₁₂ (simplify₁ _))
+  simplify↓ : ∀ {Tok R xs} → Parser Tok R xs → Parser Tok R xs
+  simplify↓ (return x)            = return x
+  simplify↓ fail                  = fail
+  simplify↓ token                 = token
+  simplify↓ (p₁ ∣ p₂)             = simplify↓ p₁ ∣ simplify↓ p₂
+  simplify↓ (f <$> p)             = f <$> simplify↓ p
+  simplify↓ (_∶_⊛_ xs {fs} p₁ p₂) = xs ∶ simplify? (null xs) p₁
+                                       ⊛ simplify? (null fs) p₂
+  simplify↓ (p₁ >>= p₂)           = simplify↓ p₁ >>= p₂
+  simplify↓ (cast eq p)           = cast eq (simplify↓ p)
+
+  simplify? : ∀ {Tok R xs} b → ∞? b (Parser Tok R xs) → ∞? b (Parser Tok R xs)
+  simplify? true  p = ♯₁ simplify (♭₁ p)
+  simplify? false p =    simplify↓    p
+
+mutual
+
+  sound : ∀ {Tok R xs} {p : Parser Tok R xs} → simplify p ⊑ p
+  sound x∈p = proj₁₁₂ (proj₁₁₂ (simplify₁ _)) (sound↓ _ x∈p)
+
+  sound↓ : ∀ {Tok R xs} (p : Parser Tok R xs) → simplify↓ p ⊑ p
+  sound↓ (return x)     return           = return
+  sound↓ fail           ()
+  sound↓ token          token            = token
+  sound↓ (p₁ ∣ p₂)      (∣ˡ     x∈p₁)    = ∣ˡ     (sound↓ p₁ x∈p₁)
+  sound↓ (p₁ ∣ p₂)      (∣ʳ xs₁ x∈p₂)    = ∣ʳ xs₁ (sound↓ p₂ x∈p₂)
+  sound↓ (f <$> p)      (.f <$> x∈p)     = f <$> sound↓ p x∈p
+  sound↓ (_∶_⊛_ xs {fs}
+            p₁ p₂)      (f∈p₁ ⊛ x∈p₂)    = sound? (null xs) f∈p₁ ⊛
+                                           sound? (null fs) x∈p₂
+  sound↓ (p₁ >>= p₂)    (x∈p₁ >>= y∈p₂x) = sound↓ p₁ x∈p₁ >>= y∈p₂x
+  sound↓ (cast eq p)    (cast x∈p)       = cast (sound↓ p x∈p)
+
+  sound? : ∀ {Tok R xs} b {p : ∞? b (Parser Tok R xs)} →
+           ♭? b (simplify? b p) ⊑ ♭? b p
+  sound? true  x∈p = sound    x∈p
+  sound? false x∈p = sound↓ _ x∈p
+
+mutual
+
+  -- Note that the following proof does not pass the termination
+  -- checker.
+
+  complete : ∀ {Tok R xs} {p : Parser Tok R xs} → p ⊑ simplify p
+  complete x∈p = complete↓ (proj₁₁₁ (proj₁₁₂ (simplify₁ _)) x∈p)
+
+  complete↓ : ∀ {Tok R xs} {p : Parser Tok R xs} → p ⊑ simplify↓ p
+  complete↓ return                         = return
+  complete↓ token                          = token
+  complete↓ (∣ˡ     x∈p₁)                  = ∣ˡ     (complete↓ x∈p₁)
+  complete↓ (∣ʳ xs₁ x∈p₂)                  = ∣ʳ xs₁ (complete↓ x∈p₂)
+  complete↓ (f <$> x∈p)                    = f <$> complete↓ x∈p
+  complete↓ (_⊛_ {fs = fs} {xs} f∈p₁ x∈p₂) = complete? (null xs) f∈p₁ ⊛
+                                             complete? (null fs) x∈p₂
+  complete↓ (x∈p₁ >>= y∈p₂x)               = complete↓ x∈p₁ >>= y∈p₂x
+  complete↓ (cast x∈p)                     = cast (complete↓ x∈p)
+
+  complete? : ∀ {Tok R xs} b {p : ∞? b (Parser Tok R xs)} →
+              ♭? b p ⊑ ♭? b (simplify? b p)
+  complete? true  x∈p = complete  x∈p
+  complete? false x∈p = complete↓ x∈p
