@@ -117,18 +117,18 @@ mutual
     ... | ()
   simplify₁ (p₁ ∣ p₂) | (_>>=_ {f = f} token p₁′ , p₁≈…)
                       | (token >>= p₂′           , p₂≈…) =
-    ( token >>= (λ t → forced (♭? (p₁′ t) ∣ ♭? (p₂′ t)))
+    ( token >>= (λ t → ♯? (♭? (p₁′ t) ∣ ♭? (p₂′ t)))
     , (λ {_} → helper₁) , λ {_} → helper₂
     )
     where
-    helper₁ : p₁ ∣ p₂ ⊑ token >>= (λ t → forced (♭? (p₁′ t) ∣ ♭? (p₂′ t)))
+    helper₁ : p₁ ∣ p₂ ⊑ token >>= (λ t → ♯? (♭? (p₁′ t) ∣ ♭? (p₂′ t)))
     helper₁ (∣ˡ     x∈p₁) with proj₁₁₁ p₁≈… x∈p₁
     helper₁ (∣ˡ     x∈p₁) | token >>= x∈p₁′ = token >>= ∣ˡ x∈p₁′
     helper₁ (∣ʳ .[] x∈p₂) with proj₁₁₁ p₂≈… x∈p₂
     helper₁ (∣ʳ .[] x∈p₂) | _>>=_ {x = x} token x∈p₂′ =
       token >>= ∣ʳ (f x) x∈p₂′
 
-    helper₂ : token >>= (λ t → forced (♭? (p₁′ t) ∣ ♭? (p₂′ t))) ⊑ p₁ ∣ p₂
+    helper₂ : token >>= (λ t → ♯? (♭? (p₁′ t) ∣ ♭? (p₂′ t))) ⊑ p₁ ∣ p₂
     helper₂ (token >>= ∣ˡ    y∈p₁′x) = ∣ˡ    (proj₁₁₂ p₁≈… (token >>= y∈p₁′x))
     helper₂ (token >>= ∣ʳ ._ y∈p₂′x) = ∣ʳ [] (proj₁₁₂ p₂≈… (token >>= y∈p₂′x))
   simplify₁ (p₁ ∣ p₂) | (p₁′ , p₁≈p₁′) | (fail , p₂≈∅) =
@@ -217,16 +217,16 @@ mutual
                 ∃₁₁ λ p′ → p₁ ⊛ cast₁ R≡ xs≅ p₂ ≈ p′
       helper′ {fs = fs} {xs} p₁ p₂ (p₁′ , p₁≈p₁′) (p₂′ , p₂≈p₂′)
               refl refl =
-        ( ♯? xs p₁′ ⊛ ♯? fs p₂′
+        ( ♯? p₁′ ⊛ ♯? p₂′
         , (λ {_} → helper₁) , λ {_} → helper₂
         )
         where
-        helper₁ : p₁ ⊛ p₂ ⊑ ♯? xs p₁′ ⊛ ♯? fs p₂′
+        helper₁ : p₁ ⊛ p₂ ⊑ ♯? p₁′ ⊛ ♯? p₂′
         helper₁ (f∈p₁ ⊛ x∈p₂) =
           cast∈ refl (Eq₁.sym (♭?♯? xs)) refl (proj₁₁₁ p₁≈p₁′ f∈p₁) ⊛
           cast∈ refl (Eq₁.sym (♭?♯? fs)) refl (proj₁₁₁ p₂≈p₂′ x∈p₂)
 
-        helper₂ : ♯? xs p₁′ ⊛ ♯? fs p₂′ ⊑ p₁ ⊛ p₂
+        helper₂ : ♯? p₁′ ⊛ ♯? p₂′ ⊑ p₁ ⊛ p₂
         helper₂ (f∈p₁′ ⊛ x∈p₂′) =
           proj₁₁₂ p₁≈p₁′ (cast∈ refl (♭?♯? xs) refl f∈p₁′) ⊛
           proj₁₁₂ p₂≈p₂′ (cast∈ refl (♭?♯? fs) refl x∈p₂′)

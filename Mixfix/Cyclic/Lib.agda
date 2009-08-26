@@ -70,7 +70,7 @@ data ParserProg : Set → Set1 where
 -- Parses a given token.
 
 theToken : NamePart → Parser NamePart NamePart []
-theToken tok = token >>= λ tok′ → forced (ok tok′)
+theToken tok = token >>= λ tok′ → ♯? (ok tok′)
   module TheToken where
   okIndex : NamePart → List NamePart
   okIndex tok′ with tok ≟ tok′
@@ -87,7 +87,7 @@ theToken tok = token >>= λ tok′ → forced (ok tok′)
 ⟦_⟧ : ∀ {R} → ParserProg R → Parser NamePart R []
 ⟦ fail               ⟧ = fail
 ⟦ p₁ ∣ p₂            ⟧ = ⟦ p₁ ⟧ ∣ ⟦ p₂ ⟧
-⟦ p₁ ⊛  p₂           ⟧ = forced      ⟦    p₁ ⟧  ⊛ forced      ⟦    p₂ ⟧
+⟦ p₁ ⊛  p₂           ⟧ = delayed (♯₁ ⟦    p₁ ⟧) ⊛ delayed (♯₁ ⟦    p₂ ⟧)
 ⟦ p₁ ⊛∞ p₂           ⟧ = delayed (♯₁ ⟦ ♭₁ p₁ ⟧) ⊛ delayed (♯₁ ⟦ ♭₁ p₂ ⟧)
 ⟦ f <$> p            ⟧ = f <$> ⟦ p ⟧
 ⟦ p +                ⟧ = forced ((λ x → maybe (_∷_ x) [ x ]) <$>
@@ -95,7 +95,7 @@ theToken tok = token >>= λ tok′ → forced (ok tok′)
                          delayed (♯₁ (⟦ just <$> p + ⟧ ∣ return nothing))
 ⟦ p between (t ∷ []) ⟧ = const [] <$> theToken t
 ⟦ p between
-       (t ∷ t′ ∷ ts) ⟧ = forced (forced (const _∷_ <$> theToken t) ⊛
+       (t ∷ t′ ∷ ts) ⟧ = delayed (♯₁ ♯? (const _∷_ <$> theToken t) ⊛
                          delayed (♯₁ ⟦ ♭₁ p ⟧)) ⊛
                          delayed (♯₁ ⟦ p between (t′ ∷ ts) ⟧)
 ⟦ p₁ ∥ p₂            ⟧ = ,_ <$> ⟦ p₁ ⟧
