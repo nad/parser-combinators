@@ -48,21 +48,19 @@ data Unambiguous′ {Tok} : ∀ {R xs} → Parser Tok R xs → Set1 where
            (u : ∀ {x₁ x₂ s} → x₁ ∈ p · s → x₂ ∈ p · s → f x₁ ≡ f x₂) →
            Unambiguous′ (f <$> p)
   app    : ∀ {R₁ R₂ fs} xs
-             {p₁ : ∞? (null xs) (Parser Tok (R₁ → R₂) fs)}
-             {p₂ : ∞? (null fs) (Parser Tok R₁        xs)}
+             {p₁ : ∞? (Parser Tok (R₁ → R₂) fs) xs}
+             {p₂ : ∞? (Parser Tok R₁        xs) fs}
            (u : ∀ {f₁ f₂ x₁ x₂ s s₁ s₂ s₃ s₄} →
-              f₁ ∈ ♭? (null xs) p₁ · s₁ → x₁ ∈ ♭? (null fs) p₂ · s₂ →
-              s₁ ++ s₂ ≡ s →
-              f₂ ∈ ♭? (null xs) p₁ · s₃ → x₂ ∈ ♭? (null fs) p₂ · s₄ →
-              s₃ ++ s₄ ≡ s →
+              f₁ ∈ ♭? p₁ · s₁ → x₁ ∈ ♭? p₂ · s₂ → s₁ ++ s₂ ≡ s →
+              f₂ ∈ ♭? p₁ · s₃ → x₂ ∈ ♭? p₂ · s₄ → s₃ ++ s₄ ≡ s →
               f₁ x₁ ≡ f₂ x₂) →
-           Unambiguous′ (xs ∶ p₁ ⊛ p₂)
+           Unambiguous′ (p₁ ⊛ p₂)
   bind   : ∀ {R₁ R₂ xs} {f : R₁ → List R₂}
              {p₁ : Parser Tok R₁ xs}
-             {p₂ : (x : R₁) → ∞? (null xs) (Parser Tok R₂ (f x))}
+             {p₂ : (x : R₁) → ∞? (Parser Tok R₂ (f x)) xs}
            (u : ∀ {x₁ x₂ y₁ y₂ s s₁ s₂ s₃ s₄} →
-              x₁ ∈ p₁ · s₁ → y₁ ∈ ♭? (null xs) (p₂ x₁) · s₂ → s₁ ++ s₂ ≡ s →
-              x₂ ∈ p₁ · s₃ → y₂ ∈ ♭? (null xs) (p₂ x₂) · s₄ → s₃ ++ s₄ ≡ s →
+              x₁ ∈ p₁ · s₁ → y₁ ∈ ♭? (p₂ x₁) · s₂ → s₁ ++ s₂ ≡ s →
+              x₂ ∈ p₁ · s₃ → y₂ ∈ ♭? (p₂ x₂) · s₄ → s₃ ++ s₄ ≡ s →
               y₁ ≡ y₂) →
            Unambiguous′ (p₁ >>= p₂)
   cast   : ∀ {R xs₁ xs₂} {eq : xs₁ ≡ xs₂} {p : Parser Tok R xs₁}
@@ -83,7 +81,7 @@ sound (map u)          (f <$> x∈p) (.f <$> y∈p) = u x∈p y∈p
 sound (app xs {p₁ = p₁} {p₂} u) x∈p y∈p = helper x∈p y∈p refl
   where
   helper : ∀ {fx₁ fx₂ s₁ s₂} →
-           fx₁ ∈ xs ∶ p₁ ⊛ p₂ · s₁ → fx₂ ∈ xs ∶ p₁ ⊛ p₂ · s₂ →
+           fx₁ ∈ p₁ ⊛ p₂ · s₁ → fx₂ ∈ p₁ ⊛ p₂ · s₂ →
            s₁ ≡ s₂ → fx₁ ≡ fx₂
   helper (f∈p₁ ⊛ x∈p₂) (f′∈p₁ ⊛ x′∈p₂) eq =
     u f∈p₁ x∈p₂ eq f′∈p₁ x′∈p₂ refl
@@ -105,9 +103,9 @@ complete (_∣_ {xs₁ = xs₁} p₁ p₂) u = choice (complete p₁ (λ x₁∈
                                             (complete p₂ (λ x₁∈ x₂∈ → u (∣ʳ xs₁ x₁∈) (∣ʳ xs₁ x₂∈)))
                                             (λ x₁∈ x₂∈ → u (∣ˡ x₁∈) (∣ʳ xs₁ x₂∈))
 complete (f <$> p)               u = map (λ x₁∈ x₂∈ → u (f <$> x₁∈) (f <$> x₂∈))
-complete (xs ∶ p₁ ⊛ p₂)          u = app xs (λ f₁∈ x₁∈ eq₁ f₂∈ x₂∈ eq₂ →
-                                               u (cast∈ refl refl eq₁ (_⊛_ f₁∈ x₁∈))
-                                                 (cast∈ refl refl eq₂ (_⊛_ f₂∈ x₂∈)))
+complete (_⊛_ {xs = xs} p₁ p₂)   u = app xs (λ f₁∈ x₁∈ eq₁ f₂∈ x₂∈ eq₂ →
+                                               u (cast∈ refl refl eq₁ (f₁∈ ⊛ x₁∈))
+                                                 (cast∈ refl refl eq₂ (f₂∈ ⊛ x₂∈)))
 complete (p₁ >>= p₂)             u = bind (λ x₁∈ y₁∈ eq₁ x₂∈ y₂∈ eq₂ →
                                              u (cast∈ refl refl eq₁ (_>>=_ {p₁ = p₁} x₁∈ y₁∈))
                                                (cast∈ refl refl eq₂ (_>>=_           x₂∈ y₂∈)))

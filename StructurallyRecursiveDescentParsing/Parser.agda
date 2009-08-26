@@ -38,7 +38,7 @@ private
 ------------------------------------------------------------------------
 -- Parsers
 
-infixl 50 _∶_⊛_ _<$>_
+infixl 50 _⊛_ _<$>_
 infixl 10 _>>=_
 infixl  5 _∣_
 
@@ -61,14 +61,14 @@ data Parser (Tok : Set) : (R : Set) → List R → Set1 where
            (f : R₁ → R₂)
            (p : Parser Tok R₁ xs) →
                 Parser Tok R₂ (map f xs)
-  _∶_⊛_  : ∀ {R₁ R₂} xs {fs}
-           (p₁ : ∞? (null xs) (Parser Tok (R₁ → R₂)  fs      ))
-           (p₂ : ∞? (null fs) (Parser Tok  R₁              xs)) →
-                               Parser Tok       R₂  (fs ⊛′ xs)
+  _⊛_    : ∀ {R₁ R₂ fs xs}
+           (p₁ : ∞? (Parser Tok (R₁ → R₂)  fs      ) xs)
+           (p₂ : ∞? (Parser Tok  R₁              xs) fs) →
+                     Parser Tok       R₂  (fs ⊛′ xs)
   _>>=_  : ∀ {R₁ R₂} {xs} {f : R₁ → List R₂}
-           (p₁ :                          Parser Tok R₁  xs)
-           (p₂ : (x : R₁) → ∞? (null xs) (Parser Tok R₂         (f x))) →
-                                          Parser Tok R₂ (xs >>=′ f)
+           (p₁ :                Parser Tok R₁  xs              )
+           (p₂ : (x : R₁) → ∞? (Parser Tok R₂         (f x)) xs) →
+                                Parser Tok R₂ (xs >>=′ f)
   cast   : ∀ {R xs₁ xs₂}
            (eq : xs₁ ≡ xs₂) (p : Parser Tok R xs₁) → Parser Tok R xs₂
 
@@ -81,4 +81,5 @@ data Parser (Tok : Set) : (R : Set) → List R → Set1 where
 private
 
   leftRight : ∀ {Tok} → Parser Tok (Tok → Tok) []
-  leftRight = [] ∶ ♯₁ (const <$> leftRight) ⊛ (♯₁ leftRight)
+  leftRight =
+    delayed (♯₁ (const <$> leftRight)) ⊛ delayed (♯₁ leftRight)

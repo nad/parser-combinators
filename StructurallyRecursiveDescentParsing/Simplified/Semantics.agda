@@ -17,6 +17,7 @@ open import Data.Empty
 open import Relation.Binary.PropositionalEquality
 open import Relation.Binary.PropositionalEquality1 using (_≡₁_; refl)
 
+open import StructurallyRecursiveDescentParsing.Coinduction
 open import StructurallyRecursiveDescentParsing.Simplified
 import StructurallyRecursiveDescentParsing.Parser.Semantics
   as Semantics
@@ -60,7 +61,7 @@ sound token               = token
 sound (∣ˡ x∈p₁)           = cast (∣ˡ              (sound x∈p₁))
 sound (∣ʳ _ {p₁} x∈p₂)    = cast (∣ʳ (initial p₁) (sound x∈p₂))
 sound (_?>>=_ {p₂ = p₂}
-              x∈p₁ y∈p₂x) = cast (_>>=_ {p₂ = λ x → ⟦ p₂ x ⟧}
+              x∈p₁ y∈p₂x) = cast (_>>=_ {p₂ = λ x → forced ⟦ p₂ x ⟧}
                                         (sound x∈p₁) (sound y∈p₂x))
 sound (x∈p₁ !>>= y∈p₂x)   = sound x∈p₁ >>= sound y∈p₂x
 

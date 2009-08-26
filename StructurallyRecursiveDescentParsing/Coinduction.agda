@@ -6,24 +6,24 @@ module StructurallyRecursiveDescentParsing.Coinduction where
 
 open import Coinduction
 open import Data.Bool
+open import Data.List
 open import Relation.Binary.PropositionalEquality1
 
--- Coinductive if the argument is true.
+-- Possibly coinductive if the argument list is empty.
 
-∞? : Bool → Set1 → Set1
-∞? true  A = ∞₁ A
-∞? false A =    A
+data ∞? (A : Set₁) {B : Set} : List B → Set₁ where
+  delayed :        (x : ∞₁ A) → ∞? A []
+  forced  : ∀ {xs} (x :    A) → ∞? A xs
 
-♯? : ∀ b {A} → A → ∞? b A
-♯? true  x = ♯₁ x
-♯? false x =    x
+♯? : ∀ {A B} (xs : List B) → A → ∞? A xs
+♯? _ = forced
 
-♭? : ∀ b {A} → ∞? b A → A
-♭? true  x = ♭₁ x
-♭? false x =    x
+♭? : ∀ {A B} {xs : List B} → ∞? A xs → A
+♭? (delayed x) = ♭₁ x
+♭? (forced  x) = x
 
--- Some lemmas.
+-- A lemma.
 
-♭?♯? : ∀ b {A} {x : A} → ♭? b (♯? b x) ≡₁ x
-♭?♯? true  = refl
-♭?♯? false = refl
+♭?♯? : ∀ {A B} (xs : List B) {x : A} → ♭? (♯? xs x) ≡₁ x
+♭?♯? []      = refl
+♭?♯? (_ ∷ _) = refl

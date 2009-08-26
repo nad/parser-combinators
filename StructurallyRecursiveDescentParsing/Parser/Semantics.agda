@@ -55,16 +55,16 @@ data _∈_·_ {Tok} : ∀ {R xs} → R → Parser Tok R xs → List Tok → Set1
   _<$>_  : ∀ {R₁ R₂ x s xs} {p : Parser Tok R₁ xs} (f : R₁ → R₂)
            (x∈p : x ∈ p · s) → f x ∈ f <$> p · s
   _⊛_    : ∀ {R₁ R₂ f x s₁ s₂ fs xs}
-             {p₁ : ∞? (null xs) (Parser Tok (R₁ → R₂) fs)}
-             {p₂ : ∞? (null fs) (Parser Tok R₁ xs)} →
-           (f∈p₁ : f ∈ ♭? (null xs) p₁ · s₁)
-           (x∈p₂ : x ∈ ♭? (null fs) p₂ · s₂) →
-           f x ∈ xs ∶ p₁ ⊛ p₂ · s₁ ++ s₂
+             {p₁ : ∞? (Parser Tok (R₁ → R₂) fs) xs}
+             {p₂ : ∞? (Parser Tok  R₁       xs) fs} →
+           (f∈p₁ : f ∈ ♭? p₁ · s₁)
+           (x∈p₂ : x ∈ ♭? p₂ · s₂) →
+           f x ∈ p₁ ⊛ p₂ · s₁ ++ s₂
   _>>=_  : ∀ {R₁ R₂ x y s₁ s₂ xs} {f : R₁ → List R₂}
              {p₁ : Parser Tok R₁ xs}
-             {p₂ : (x : R₁) → ∞? (null xs) (Parser Tok R₂ (f x))}
+             {p₂ : (x : R₁) → ∞? (Parser Tok R₂ (f x)) xs}
            (x∈p₁ : x ∈ p₁ · s₁)
-           (y∈p₂x : y ∈ ♭? (null xs) (p₂ x) · s₂) →
+           (y∈p₂x : y ∈ ♭? (p₂ x) · s₂) →
            y ∈ p₁ >>= p₂ · s₁ ++ s₂
   cast   : ∀ {R xs₁ xs₂ x s} {eq : xs₁ ≡ xs₂} {p : Parser Tok R xs₁}
            (x∈p : x ∈ p · s) → x ∈ cast eq p · s
@@ -122,23 +122,28 @@ initial-sound (_∣_ {xs₁ = xs₁} p₁ p₂) x∈xs with ++⁻ xs₁ x∈xs
 ... | inj₂ x∈xs₂ = ∣ʳ xs₁ (initial-sound p₂ x∈xs₂)
 initial-sound (_<$>_ {xs = xs} f p) x∈xs with map-∈⁻ xs x∈xs
 ... | (y , y∈xs , refl) = f <$> initial-sound p y∈xs
-initial-sound (_∶_⊛_ (x ∷ xs) {fs} p₁ p₂) y∈ys
+initial-sound (_⊛_ {fs = fs} {xs} (forced p₁) p₂) y∈ys
   with Prod.map id (Prod.map id (map-∈⁻ fs)) $
-         >>=-∈⁻ (λ x → List.map (λ f → f x) fs) (x ∷ xs) y∈ys
-initial-sound (_∶_⊛_ (x ∷ xs) {[]}     p₁ p₂) y∈ys | (x′ , x′∈x∷xs , (f′ , ()    , refl))
-initial-sound (_∶_⊛_ (x ∷ xs) {f ∷ fs} p₁ p₂) y∈ys | (x′ , x′∈x∷xs , (f′ , f′∈fs , refl)) =
-  initial-sound p₁ f′∈fs ⊛ initial-sound p₂ x′∈x∷xs
-initial-sound (_>>=_ {xs = z ∷ zs} {f} p₁ p₂) y∈ys
-  with >>=-∈⁻ f (z ∷ zs) y∈ys
-... | (x , x∈z∷zs , y∈fx) =
-  _>>=_ {f = f} (initial-sound p₁ x∈z∷zs) (initial-sound (p₂ x) y∈fx)
-initial-sound (cast refl p) x∈xs  = cast (initial-sound p x∈xs)
+         >>=-∈⁻ (λ x → List.map (λ f → f x) fs) xs y∈ys
+initial-sound (forced p₁ ⊛ delayed p₂) y∈ys | (x′ , x′∈xs , (f′ , ()    , refl))
+initial-sound (forced p₁ ⊛ forced  p₂) y∈ys | (x′ , x′∈xs , (f′ , f′∈fs , refl)) =
+  initial-sound p₁ f′∈fs ⊛ initial-sound p₂ x′∈xs
+initial-sound (_>>=_ {xs = zs} {f} p₁ p₂) y∈ys
+  with >>=-∈⁻ f zs y∈ys
+... | (x , x∈zs , y∈fx) =
+  _>>=_ {f = f} (initial-sound p₁ x∈zs) (helper (p₂ x) x∈zs y∈fx)
+  where
+  helper : ∀ {Tok R₁ R₂ x y xs} {zs : List R₁}
+           (p : ∞? (Parser Tok R₂ xs) zs) →
+           x ∈ zs → y ∈ xs → y ∈ ♭? p · []
+  helper (forced  p) _  = initial-sound p
+  helper (delayed p) ()
+initial-sound (cast refl p) x∈xs = cast (initial-sound p x∈xs)
 
-initial-sound (return x)            (there ())
-initial-sound fail                  ()
-initial-sound token                 ()
-initial-sound ([] ∶ _ ⊛ _)          ()
-initial-sound (_>>=_ {xs = []} _ _) ()
+initial-sound (return x)      (there ())
+initial-sound fail            ()
+initial-sound token           ()
+initial-sound (delayed _ ⊛ _) ()
 
 ------------------------------------------------------------------------
 -- A variant of the semantics
@@ -163,16 +168,16 @@ data _⊕_∈_·_ {Tok} : ∀ {R xs} → R → List Tok →
   _<$>_  : ∀ {R₁ R₂ x s s₁ xs} {p : Parser Tok R₁ xs} (f : R₁ → R₂)
            (x∈p : x ⊕ s₁ ∈ p · s) → f x ⊕ s₁ ∈ f <$> p · s
   _⊛_    : ∀ {R₁ R₂ f x s s₁ s₂ fs xs}
-             {p₁ : ∞? (null xs) (Parser Tok (R₁ → R₂) fs)}
-             {p₂ : ∞? (null fs) (Parser Tok R₁ xs)} →
-           (f∈p₁ : f ⊕ s₁ ∈ ♭? (null xs) p₁ · s)
-           (x∈p₂ : x ⊕ s₂ ∈ ♭? (null fs) p₂ · s₁) →
-           f x ⊕ s₂ ∈ xs ∶ p₁ ⊛ p₂ · s
+             {p₁ : ∞? (Parser Tok (R₁ → R₂) fs) xs}
+             {p₂ : ∞? (Parser Tok  R₁       xs) fs} →
+           (f∈p₁ : f ⊕ s₁ ∈ ♭? p₁ · s)
+           (x∈p₂ : x ⊕ s₂ ∈ ♭? p₂ · s₁) →
+           f x ⊕ s₂ ∈ p₁ ⊛ p₂ · s
   _>>=_  : ∀ {R₁ R₂ x y s s₁ s₂ xs} {f : R₁ → List R₂}
              {p₁ : Parser Tok R₁ xs}
-             {p₂ : (x : R₁) → ∞? (null xs) (Parser Tok R₂ (f x))}
+             {p₂ : (x : R₁) → ∞? (Parser Tok R₂ (f x)) xs}
            (x∈p₁ : x ⊕ s₁ ∈ p₁ · s)
-           (y∈p₂x : y ⊕ s₂ ∈ ♭? (null xs) (p₂ x) · s₁) →
+           (y∈p₂x : y ⊕ s₂ ∈ ♭? (p₂ x) · s₁) →
            y ⊕ s₂ ∈ p₁ >>= p₂ · s
   cast   : ∀ {R xs₁ xs₂ x s₁ s₂} {eq : xs₁ ≡ xs₂}
              {p : Parser Tok R xs₁}

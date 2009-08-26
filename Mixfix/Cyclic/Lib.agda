@@ -70,7 +70,7 @@ data ParserProg : Set → Set1 where
 -- Parses a given token.
 
 theToken : NamePart → Parser NamePart NamePart []
-theToken tok = token >>= λ tok′ → ♯₁ ok tok′
+theToken tok = token >>= λ tok′ → forced (ok tok′)
   module TheToken where
   okIndex : NamePart → List NamePart
   okIndex tok′ with tok ≟ tok′
@@ -85,22 +85,21 @@ theToken tok = token >>= λ tok′ → ♯₁ ok tok′
 -- Interprets the parser programs as parsers.
 
 ⟦_⟧ : ∀ {R} → ParserProg R → Parser NamePart R []
-⟦ fail                    ⟧ = fail
-⟦ p₁ ∣ p₂                 ⟧ = ⟦ p₁ ⟧ ∣ ⟦ p₂ ⟧
-⟦ p₁ ⊛  p₂                ⟧ = [] ∶ ♯₁ ⟦    p₁ ⟧ ⊛ (♯₁ ⟦    p₂ ⟧)
-⟦ p₁ ⊛∞ p₂                ⟧ = [] ∶ ♯₁ ⟦ ♭₁ p₁ ⟧ ⊛ (♯₁ ⟦ ♭₁ p₂ ⟧)
-⟦ f <$> p                 ⟧ = f <$> ⟦ p ⟧
-⟦ p +                     ⟧ = (_ ∷ []) ∶
-                              (λ x → maybe (_∷_ x) [ x ]) <$>
-                              ⟦ p ⟧ ⊛
-                              (♯₁ (⟦ just <$> p + ⟧ ∣ return nothing))
-⟦ p between (t ∷ [])      ⟧ = const [] <$> theToken t
-⟦ p between (t ∷ t′ ∷ ts) ⟧ = [] ∶ ♯₁ [] ∶ ♯₁
-                              const _∷_ <$> theToken t ⊛
-                              (♯₁ ⟦ ♭₁ p ⟧) ⊛
-                              (♯₁ ⟦ p between (t′ ∷ ts) ⟧)
-⟦ p₁ ∥ p₂                 ⟧ = ,_ <$> ⟦ p₁ ⟧
-                            ∣        ⟦ p₂ ⟧
+⟦ fail               ⟧ = fail
+⟦ p₁ ∣ p₂            ⟧ = ⟦ p₁ ⟧ ∣ ⟦ p₂ ⟧
+⟦ p₁ ⊛  p₂           ⟧ = forced      ⟦    p₁ ⟧  ⊛ forced      ⟦    p₂ ⟧
+⟦ p₁ ⊛∞ p₂           ⟧ = delayed (♯₁ ⟦ ♭₁ p₁ ⟧) ⊛ delayed (♯₁ ⟦ ♭₁ p₂ ⟧)
+⟦ f <$> p            ⟧ = f <$> ⟦ p ⟧
+⟦ p +                ⟧ = forced ((λ x → maybe (_∷_ x) [ x ]) <$>
+                         ⟦ p ⟧) ⊛
+                         delayed (♯₁ (⟦ just <$> p + ⟧ ∣ return nothing))
+⟦ p between (t ∷ []) ⟧ = const [] <$> theToken t
+⟦ p between
+       (t ∷ t′ ∷ ts) ⟧ = forced (forced (const _∷_ <$> theToken t) ⊛
+                         delayed (♯₁ ⟦ ♭₁ p ⟧)) ⊛
+                         delayed (♯₁ ⟦ p between (t′ ∷ ts) ⟧)
+⟦ p₁ ∥ p₂            ⟧ = ,_ <$> ⟦ p₁ ⟧
+                       ∣        ⟦ p₂ ⟧
 
 ------------------------------------------------------------------------
 -- Semantics of the programs
