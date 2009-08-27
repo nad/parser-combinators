@@ -59,7 +59,7 @@ data Parser (Tok : Set) : (R : Set) → List R → Set1 where
                  Parser Tok R (xs₁ ∣′ xs₂)
   _<$>_  : ∀ {R₁ R₂ xs}
            (f : R₁ → R₂)
-           (p : Parser Tok R₁ xs) →
+           (p : Parser Tok R₁        xs) →
                 Parser Tok R₂ (map f xs)
   _⊛_    : ∀ {R₁ R₂ fs xs}
            (p₁ : ∞? (Parser Tok (R₁ → R₂)  fs      ) xs)
