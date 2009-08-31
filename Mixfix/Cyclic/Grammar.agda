@@ -20,7 +20,6 @@ open Any.Membership-≡ using (_∈_)
 open import Data.Product
 open import Relation.Binary.PropositionalEquality
 
-open PrecedenceGraph   i g
 open PrecedenceCorrect i g
 
 import StructurallyRecursiveDescentParsing.Parser as Parser

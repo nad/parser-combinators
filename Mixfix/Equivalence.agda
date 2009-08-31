@@ -38,7 +38,6 @@ open import Mixfix.Acyclic.Lib as ALib
 open import Mixfix.Cyclic.Lib as CLib
   renaming (⟦_⟧ to ⟦_⟧C; _⊕_∈⟦_⟧·_ to _⊕_∈⟦_⟧C·_)
 
-open PrecedenceGraph   acyclic g
 open PrecedenceCorrect acyclic g
 
 ⟦_⟧A : ∀ {R} → ALib.ParserProg R → Parser NamePart R []

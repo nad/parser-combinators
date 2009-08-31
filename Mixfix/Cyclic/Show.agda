@@ -21,7 +21,6 @@ open import Data.Function using (_∘_)
 open import Relation.Binary.PropositionalEquality
   using (_≡_; refl)
 
-open PrecedenceGraph   i g
 open PrecedenceCorrect i g
 open import StructurallyRecursiveDescentParsing.Parser
 open import StructurallyRecursiveDescentParsing.Parser.Semantics

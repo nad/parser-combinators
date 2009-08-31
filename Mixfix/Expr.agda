@@ -69,7 +69,7 @@ module PrecedenceCorrect
          (g : PrecedenceGraphInterface.PrecedenceGraph i)
          where
 
-  open PrecedenceGraph i g
+  open PrecedenceGraph i g public
 
   mutual
 

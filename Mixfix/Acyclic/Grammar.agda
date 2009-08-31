@@ -23,7 +23,6 @@ open import Data.Bool
 import Data.String as String
 open import Relation.Binary.PropositionalEquality
 
-open PrecedenceGraph   acyclic g
 open PrecedenceCorrect acyclic g
 
 import StructurallyRecursiveDescentParsing.Simplified as Simplified

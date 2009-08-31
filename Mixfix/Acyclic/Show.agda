@@ -25,7 +25,6 @@ import Data.String as String
 open import Relation.Binary.PropositionalEquality
   using (_≡_; refl)
 
-open PrecedenceGraph   acyclic g
 open PrecedenceCorrect acyclic g
 open import StructurallyRecursiveDescentParsing.Simplified
 open import StructurallyRecursiveDescentParsing.Simplified.Semantics

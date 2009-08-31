@@ -101,7 +101,6 @@ g = record
 ------------------------------------------------------------------------
 -- Expressions
 
-open PrecedenceGraph   cyclic g
 open PrecedenceCorrect cyclic g
 
 • : ExprIn a non
