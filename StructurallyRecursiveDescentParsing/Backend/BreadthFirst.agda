@@ -96,8 +96,8 @@ private
     ∂ t token                       = return t
     ∂ t (p₁ ∣ p₂)                   = ∂ t p₁ ∣ ∂ t p₂
     ∂ t (f <$> p)                   = f <$> ∂ t p
-    ∂ t (p₁ ⊛ delayed         p₂)   = ∂? t p₁ ⊛ ♯? (♭₁  p₂)
-    ∂ t (p₁ ⊛ forced {f} {fs} p₂)   = ∂? t p₁ ⊛ ♯?      p₂
+    ∂ t (p₁ ⊛ delayed         p₂)   = ∂? t p₁ ⊛ ♯? (♭₁ p₂)
+    ∂ t (p₁ ⊛ forced {f} {fs} p₂)   = ∂? t p₁ ⊛ ♯?     p₂
                                     ∣ ♯? (⋁ return (f ∷ fs)) ⊛ forced (∂ t p₂)
     ∂ t (_>>=_ {xs = []}     p₁ p₂) = ∂ t p₁ >>= (λ x → ♯? (♭? (p₂ x)))
     ∂ t (_>>=_ {xs = x ∷ xs} p₁ p₂) = ∂ t p₁ >>= (λ x → ♯? (♭? (p₂ x)))
