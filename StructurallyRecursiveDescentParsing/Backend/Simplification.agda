@@ -58,6 +58,7 @@ private
 -- return f ⊛ return x         → return (f x)
 -- fail     >>= p              → fail
 -- return x >>= p              → p x
+-- nonempty fail               → fail
 -- cast eq p                   → p
 --
 -- An example of a possible future addition:
@@ -265,6 +266,24 @@ mutual
 
     helper₂ : p₁′ >>= p₂ ⊑ p₁ >>= p₂
     helper₂ (x∈p₁ >>= y∈p₂x) = proj₁₁₂ p₁≈p₁′ x∈p₁ >>= y∈p₂x
+
+  -- • nonempty:
+
+  simplify₁ (nonempty p) with simplify₁ p
+  simplify₁ (nonempty p) | (fail , p≈∅) =
+    (fail , (λ {_} → helper) , λ ())
+    where
+    helper : nonempty p ⊑ fail
+    helper (nonempty x∈p) with proj₁₁₁ p≈∅ x∈p
+    ... | ()
+  simplify₁ (nonempty p) | (p′ , p≈p′) =
+    (nonempty p′ , (λ {_} → helper₁) , λ {_} → helper₂)
+    where
+    helper₁ : nonempty p ⊑ nonempty p′
+    helper₁ (nonempty x∈p) = nonempty (proj₁₁₁ p≈p′ x∈p)
+
+    helper₂ : nonempty p′ ⊑ nonempty p
+    helper₂ (nonempty x∈p′) = nonempty (proj₁₁₂ p≈p′ x∈p′)
 
   -- • cast:
 

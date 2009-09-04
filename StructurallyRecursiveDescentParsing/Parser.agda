@@ -50,27 +50,28 @@ infixl  5 _∣_
 -- (see StructurallyRecursiveDescentParsing.Parser.Semantics).
 
 data Parser (Tok : Set) : (R : Set) → List R → Set1 where
-  return : ∀ {R} (x : R) → Parser Tok R (return′ x)
-  fail   : ∀ {R} → Parser Tok R fail′
-  token  : Parser Tok Tok fail′
-  _∣_    : ∀ {R xs₁ xs₂}
-           (p₁ : Parser Tok R  xs₁       )
-           (p₂ : Parser Tok R         xs₂) →
-                 Parser Tok R (xs₁ ∣′ xs₂)
-  _<$>_  : ∀ {R₁ R₂ xs}
-           (f : R₁ → R₂)
-           (p : Parser Tok R₁        xs) →
-                Parser Tok R₂ (map f xs)
-  _⊛_    : ∀ {R₁ R₂ fs xs}
-           (p₁ : ∞? (Parser Tok (R₁ → R₂)  fs      ) xs)
-           (p₂ : ∞? (Parser Tok  R₁              xs) fs) →
-                     Parser Tok       R₂  (fs ⊛′ xs)
-  _>>=_  : ∀ {R₁ R₂} {xs} {f : R₁ → List R₂}
-           (p₁ :                Parser Tok R₁  xs              )
-           (p₂ : (x : R₁) → ∞? (Parser Tok R₂         (f x)) xs) →
-                                Parser Tok R₂ (xs >>=′ f)
-  cast   : ∀ {R xs₁ xs₂}
-           (eq : xs₁ ≡ xs₂) (p : Parser Tok R xs₁) → Parser Tok R xs₂
+  return   : ∀ {R} (x : R) → Parser Tok R (return′ x)
+  fail     : ∀ {R} → Parser Tok R fail′
+  token    : Parser Tok Tok fail′
+  _∣_      : ∀ {R xs₁ xs₂}
+             (p₁ : Parser Tok R  xs₁       )
+             (p₂ : Parser Tok R         xs₂) →
+                   Parser Tok R (xs₁ ∣′ xs₂)
+  _<$>_    : ∀ {R₁ R₂ xs}
+             (f : R₁ → R₂)
+             (p : Parser Tok R₁        xs) →
+                  Parser Tok R₂ (map f xs)
+  _⊛_      : ∀ {R₁ R₂ fs xs}
+             (p₁ : ∞? (Parser Tok (R₁ → R₂)  fs      ) xs)
+             (p₂ : ∞? (Parser Tok  R₁              xs) fs) →
+                       Parser Tok       R₂  (fs ⊛′ xs)
+  _>>=_    : ∀ {R₁ R₂} {xs} {f : R₁ → List R₂}
+             (p₁ :                Parser Tok R₁  xs              )
+             (p₂ : (x : R₁) → ∞? (Parser Tok R₂         (f x)) xs) →
+                                  Parser Tok R₂ (xs >>=′ f)
+  nonempty : ∀ {R xs} (p : Parser Tok R xs) → Parser Tok R []
+  cast     : ∀ {R xs₁ xs₂}
+             (eq : xs₁ ≡ xs₂) (p : Parser Tok R xs₁) → Parser Tok R xs₂
 
 -- Note that it would be reasonable to generalise the casts to accept
 -- /set/ equality instead of just list equality. However, I have not

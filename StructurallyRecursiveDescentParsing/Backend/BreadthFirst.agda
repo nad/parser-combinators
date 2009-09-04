@@ -58,6 +58,7 @@ private
   ∂-initial _ (_ ⊛ ⟨ _ ⟩)              = _
   ∂-initial _ (_>>=_ {xs = []}    _ _) = _
   ∂-initial _ (_>>=_ {xs = _ ∷ _} _ _) = _
+  ∂-initial _ (nonempty _)             = _
   ∂-initial _ (cast _ _)               = _
 
   ∂-⋁-initial : ∀ {Tok R₁ R₂ y} {ys : List R₁} {f : R₁ → List R₂} →
@@ -102,6 +103,7 @@ private
     ∂ t (_>>=_ {xs = []}     p₁ p₂) = ∂ t p₁ >>= (λ x → ♯? (♭? (p₂ x)))
     ∂ t (_>>=_ {xs = x ∷ xs} p₁ p₂) = ∂ t p₁ >>= (λ x → ♯? (♭? (p₂ x)))
                                     ∣ ∂-⋁ t (x ∷ xs) p₂
+    ∂ t (nonempty p)                = ∂ t p
     ∂ t (cast _ p)                  = ∂ t p
 
     -- ⋁ is inlined here, because otherwise the termination checker
@@ -167,6 +169,7 @@ private
                                                                                    (cast∈ refl (♭?♯? (∂-initial _ p₁)) refl y∈p₂x)
     ∂-sound (_>>=_ {xs = []}     p₁ p₂)       (x∈p₁′ >>= y∈p₂x)  = ∂-sound p₁ x∈p₁′ >>=
                                                                    cast∈ refl (♭?♯? (∂-initial _ p₁)) refl y∈p₂x
+    ∂-sound (nonempty p)                  x∈p                    = nonempty (∂-sound p x∈p)
     ∂-sound (cast _ p)                    x∈p                    = cast (∂-sound p x∈p)
 
     ∂-sound (return _) ()
@@ -248,6 +251,8 @@ private
                   (_>>=_ {s₁ = _ ∷ _} x∈p₁ y∈p₂x) refl =     ∂-complete x∈p₁ >>=
                                                              cast∈ refl (Eq1.sym (♭?♯? (∂-initial _ p₁))) refl
                                                                y∈p₂x
+
+      ∂-complete′ (nonempty p) (nonempty x∈p) refl = ∂-complete x∈p
 
       ∂-complete′ (cast _ p) (cast x∈p) refl = ∂-complete x∈p
 
