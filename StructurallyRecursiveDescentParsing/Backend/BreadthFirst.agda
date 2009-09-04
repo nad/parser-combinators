@@ -54,8 +54,8 @@ private
   ∂-initial _ token                    = _
   ∂-initial _ (_ ∣ _)                  = _
   ∂-initial _ (_ <$> _)                = _
-  ∂-initial _ (_ ⊛ delayed _)          = _
-  ∂-initial _ (_ ⊛ forced  _)          = _
+  ∂-initial _ (_ ⊛ ⟪ _ ⟫)              = _
+  ∂-initial _ (_ ⊛ ⟨ _ ⟩)              = _
   ∂-initial _ (_>>=_ {xs = []}    _ _) = _
   ∂-initial _ (_>>=_ {xs = _ ∷ _} _ _) = _
   ∂-initial _ (cast _ _)               = _
@@ -69,12 +69,12 @@ private
 
   ∂?-initial : ∀ {Tok R R′ xs} {ys : List R′} →
                Tok → ∞? (Parser Tok R xs) ys → List R
-  ∂?-initial _ (delayed _) = _
-  ∂?-initial _ (forced  _) = _
+  ∂?-initial _ ⟪ _ ⟫ = _
+  ∂?-initial _ ⟨ _ ⟩ = _
 
   ∂!-initial : ∀ {Tok R₁ R₂ xs y} {ys : List R₁} →
                Tok → ∞? (Parser Tok R₂ xs) (y ∷ ys) → List R₂
-  ∂!-initial _ (forced _) = _
+  ∂!-initial _ ⟨ _ ⟩ = _
 
   -- "Derivative": x ∈ ∂ t p · s  iff  x ∈ p · t ∷ s.
 
@@ -96,9 +96,9 @@ private
     ∂ t token                       = return t
     ∂ t (p₁ ∣ p₂)                   = ∂ t p₁ ∣ ∂ t p₂
     ∂ t (f <$> p)                   = f <$> ∂ t p
-    ∂ t (p₁ ⊛ delayed         p₂)   = ∂? t p₁ ⊛ ♯? (♭₁ p₂)
-    ∂ t (p₁ ⊛ forced {f} {fs} p₂)   = ∂? t p₁ ⊛ ♯?     p₂
-                                    ∣ ♯? (⋁ return (f ∷ fs)) ⊛ forced (∂ t p₂)
+    ∂ t (p₁ ⊛ ⟪ p₂ ⟫)               = ∂? t p₁ ⊛ ♯? (♭₁ p₂)
+    ∂ t (p₁ ⊛ ⟨_⟩ {f} {fs} p₂)      = ∂? t p₁ ⊛ ♯?     p₂
+                                    ∣ ♯? (⋁ return (f ∷ fs)) ⊛ ⟨ ∂ t p₂ ⟩
     ∂ t (_>>=_ {xs = []}     p₁ p₂) = ∂ t p₁ >>= (λ x → ♯? (♭? (p₂ x)))
     ∂ t (_>>=_ {xs = x ∷ xs} p₁ p₂) = ∂ t p₁ >>= (λ x → ♯? (♭? (p₂ x)))
                                     ∣ ∂-⋁ t (x ∷ xs) p₂
@@ -117,13 +117,13 @@ private
     ∂? : ∀ {Tok R R′ xs} {ys : List R′}
          (t : Tok) (p : ∞? (Parser Tok R xs) ys) →
          ∞? (Parser Tok R (∂?-initial t p)) ys
-    ∂? t (delayed p) = delayed (♯₁ ∂ t (♭₁ p))
-    ∂? t (forced  p) = forced     (∂ t     p)
+    ∂? t ⟪ p ⟫ = ⟪ ♯₁ ∂ t (♭₁ p) ⟫
+    ∂? t ⟨ p ⟩ = ⟨    ∂ t     p  ⟩
 
     ∂! : ∀ {Tok R₁ R₂ xs y} {ys : List R₁}
          (t : Tok) (p : ∞? (Parser Tok R₂ xs) (y ∷ ys)) →
          Parser Tok R₂ (∂!-initial t p)
-    ∂! t (forced p) = ∂ t p
+    ∂! t ⟨ p ⟩ = ∂ t p
 
 -- Parsing: x ∈ parseComplete p s  iff  x ∈ p · s.
 
@@ -148,26 +148,26 @@ private
 
     ∂-sound : ∀ {Tok R xs x s} {t} (p : Parser Tok R xs) →
               x ∈ ∂ t p · s → x ∈ p · t ∷ s
-    ∂-sound token                            return                 = token
-    ∂-sound (p₁ ∣ p₂)                        (∣ˡ    x∈p₁)           = ∣ˡ     (∂-sound p₁ x∈p₁)
-    ∂-sound (_∣_ {xs₁ = xs₁} p₁ p₂)          (∣ʳ ._ x∈p₂)           = ∣ʳ xs₁ (∂-sound p₂ x∈p₂)
-    ∂-sound (f <$> p)                        (.f <$> x∈p)           = f <$> ∂-sound p x∈p
-    ∂-sound (p₁ ⊛ delayed         p₂)        (f∈p₁′   ⊛ x∈p₂)       = ∂?-sound p₁ f∈p₁′ ⊛
-                                                                      cast∈ refl (♭?♯? (∂?-initial _ p₁)) refl x∈p₂
-    ∂-sound (p₁ ⊛ forced          p₂) (∣ˡ    (f∈p₁′   ⊛ x∈p₂))      = ∂?-sound p₁ f∈p₁′ ⊛
-                                                                      cast∈ refl (♭?♯? (∂?-initial _ p₁)) refl x∈p₂
-    ∂-sound (p₁ ⊛ forced {f} {fs} p₂) (∣ʳ ._ (f∈⋁f∷fs ⊛ x∈p₂′))     with ⋁-sound return (f ∷ fs)
-                                                                                 (cast∈ refl (♭?♯? (∂-initial _ p₂)) refl f∈⋁f∷fs)
-    ∂-sound (p₁ ⊛ forced          p₂) (∣ʳ ._ (f∈⋁f∷fs ⊛ x∈p₂′))     | (f′ , f′∈f∷fs , return) =
-                                                                      initial-sound (♭? p₁) f′∈f∷fs ⊛ ∂-sound p₂ x∈p₂′
-    ∂-sound (_>>=_ {xs = x ∷ xs} p₁ p₂)      (∣ʳ ._ z∈p₂′x)         with ∂-⋁-sound (x ∷ xs) p₂ z∈p₂′x
-    ∂-sound (_>>=_ {xs = x ∷ xs} p₁ p₂)      (∣ʳ ._ z∈p₂′x)         | (y , y∈x∷xs , z∈p₂′y) =
-                                                                      _>>=_ {p₂ = p₂} (initial-sound p₁ y∈x∷xs) z∈p₂′y
-    ∂-sound (_>>=_ {xs = x ∷ xs} p₁ p₂)      (∣ˡ (x∈p₁′ >>= y∈p₂x)) = _>>=_ {p₂ = p₂} (∂-sound p₁ x∈p₁′)
-                                                                                      (cast∈ refl (♭?♯? (∂-initial _ p₁)) refl y∈p₂x)
-    ∂-sound (_>>=_ {xs = []}     p₁ p₂)          (x∈p₁′ >>= y∈p₂x)  = ∂-sound p₁ x∈p₁′ >>=
-                                                                      cast∈ refl (♭?♯? (∂-initial _ p₁)) refl y∈p₂x
-    ∂-sound (cast _ p)                       x∈p                    = cast (∂-sound p x∈p)
+    ∂-sound token                         return                 = token
+    ∂-sound (p₁ ∣ p₂)                     (∣ˡ    x∈p₁)           = ∣ˡ     (∂-sound p₁ x∈p₁)
+    ∂-sound (_∣_ {xs₁ = xs₁} p₁ p₂)       (∣ʳ ._ x∈p₂)           = ∣ʳ xs₁ (∂-sound p₂ x∈p₂)
+    ∂-sound (f <$> p)                     (.f <$> x∈p)           = f <$> ∂-sound p x∈p
+    ∂-sound (p₁ ⊛ ⟪ p₂ ⟫)                 (f∈p₁′   ⊛ x∈p₂)       = ∂?-sound p₁ f∈p₁′ ⊛
+                                                                   cast∈ refl (♭?♯? (∂?-initial _ p₁)) refl x∈p₂
+    ∂-sound (p₁ ⊛ ⟨ p₂ ⟩)          (∣ˡ    (f∈p₁′   ⊛ x∈p₂))      = ∂?-sound p₁ f∈p₁′ ⊛
+                                                                   cast∈ refl (♭?♯? (∂?-initial _ p₁)) refl x∈p₂
+    ∂-sound (p₁ ⊛ ⟨_⟩ {f} {fs} p₂) (∣ʳ ._ (f∈⋁f∷fs ⊛ x∈p₂′))     with ⋁-sound return (f ∷ fs)
+                                                                              (cast∈ refl (♭?♯? (∂-initial _ p₂)) refl f∈⋁f∷fs)
+    ∂-sound (p₁ ⊛ ⟨ p₂ ⟩)          (∣ʳ ._ (f∈⋁f∷fs ⊛ x∈p₂′))     | (f′ , f′∈f∷fs , return) =
+                                                                   initial-sound (♭? p₁) f′∈f∷fs ⊛ ∂-sound p₂ x∈p₂′
+    ∂-sound (_>>=_ {xs = x ∷ xs} p₁ p₂)   (∣ʳ ._ z∈p₂′x)         with ∂-⋁-sound (x ∷ xs) p₂ z∈p₂′x
+    ∂-sound (_>>=_ {xs = x ∷ xs} p₁ p₂)   (∣ʳ ._ z∈p₂′x)         | (y , y∈x∷xs , z∈p₂′y) =
+                                                                   _>>=_ {p₂ = p₂} (initial-sound p₁ y∈x∷xs) z∈p₂′y
+    ∂-sound (_>>=_ {xs = x ∷ xs} p₁ p₂)   (∣ˡ (x∈p₁′ >>= y∈p₂x)) = _>>=_ {p₂ = p₂} (∂-sound p₁ x∈p₁′)
+                                                                                   (cast∈ refl (♭?♯? (∂-initial _ p₁)) refl y∈p₂x)
+    ∂-sound (_>>=_ {xs = []}     p₁ p₂)       (x∈p₁′ >>= y∈p₂x)  = ∂-sound p₁ x∈p₁′ >>=
+                                                                   cast∈ refl (♭?♯? (∂-initial _ p₁)) refl y∈p₂x
+    ∂-sound (cast _ p)                    x∈p                    = cast (∂-sound p x∈p)
 
     ∂-sound (return _) ()
     ∂-sound fail       ()
@@ -185,13 +185,13 @@ private
     ∂?-sound : ∀ {Tok R R′ xs} {ys : List R′} {x s} {t : Tok}
                (p : ∞? (Parser Tok R xs) ys) →
                x ∈ ♭? (∂? t p) · s → x ∈ ♭? p · t ∷ s
-    ∂?-sound (delayed p) x∈p′ = ∂-sound (♭₁ p) x∈p′
-    ∂?-sound (forced  p) x∈p′ = ∂-sound     p  x∈p′
+    ∂?-sound ⟪ p ⟫ x∈p′ = ∂-sound (♭₁ p) x∈p′
+    ∂?-sound ⟨ p ⟩ x∈p′ = ∂-sound     p  x∈p′
 
     ∂!-sound : ∀ {Tok R₁ R₂ z t s xs y} {ys : List R₁}
                (p : ∞? (Parser Tok R₂ xs) (y ∷ ys)) →
                z ∈ ∂! t p · s → z ∈ ♭? p · t ∷ s
-    ∂!-sound (forced p) z∈p′ = ∂-sound p z∈p′
+    ∂!-sound ⟨ p ⟩ z∈p′ = ∂-sound p z∈p′
 
 sound : ∀ {Tok R xs x} {p : Parser Tok R xs} (s : List Tok) →
         x ∈ parseComplete p s → x ∈ p · s
@@ -225,13 +225,13 @@ private
 
       ∂-complete′ (f <$> p) (.f <$> x∈p) refl = f <$> ∂-complete x∈p
 
-      ∂-complete′ (p₁ ⊛ delayed p₂)
+      ∂-complete′ (p₁ ⊛ ⟪ p₂ ⟫)
                   (_⊛_ {s₁ = _ ∷ _} f∈p₁ x∈p₂) refl =     ∂?-complete p₁ f∈p₁ ⊛
                                                           cast∈ refl (Eq1.sym (♭?♯? (∂?-initial _ p₁))) refl x∈p₂
-      ∂-complete′ (_⊛_ {xs = xs} p₁ (forced p₂))
+      ∂-complete′ (_⊛_ {xs = xs} p₁ ⟨ p₂ ⟩)
                   (_⊛_ {s₁ = _ ∷ _} f∈p₁ x∈p₂) refl = ∣ˡ (∂?-complete p₁ f∈p₁ ⊛
                                                           cast∈ refl (Eq1.sym (♭?♯? (∂?-initial _ p₁))) refl x∈p₂)
-      ∂-complete′ (_⊛_ {xs = xs} p₁ (forced p₂))
+      ∂-complete′ (_⊛_ {xs = xs} p₁ ⟨ p₂ ⟩)
                   (_⊛_ {s₁ = []}    f∈p₁ x∈p₂) refl = ∣ʳ (∂?-initial _ p₁ ⊛′ xs)
                                                          (cast∈ refl (Eq1.sym (♭?♯? (∂-initial _ p₂))) refl
                                                             (⋁-complete return (initial-complete f∈p₁) return) ⊛
@@ -253,7 +253,7 @@ private
 
       ∂-complete′ (return _) () refl
       ∂-complete′ fail       () refl
-      ∂-complete′ (_ ⊛ delayed _)       (_⊛_   {s₁ = []} f∈p₁ _) _ with initial-complete f∈p₁
+      ∂-complete′ (_ ⊛ ⟪ _ ⟫)           (_⊛_   {s₁ = []} f∈p₁ _) _ with initial-complete f∈p₁
       ... | ()
       ∂-complete′ (_>>=_ {xs = []} _ _) (_>>=_ {s₁ = []} x∈p₁ _) _ with initial-complete x∈p₁
       ... | ()
@@ -269,13 +269,13 @@ private
     ∂?-complete : ∀ {Tok R R′ xs} {ys : List R′} {x s} {t : Tok}
                   (p : ∞? (Parser Tok R xs) ys) →
                   x ∈ ♭? p · t ∷ s → x ∈ ♭? (∂? t p) · s
-    ∂?-complete (delayed p) x∈p = ∂-complete x∈p
-    ∂?-complete (forced  p) x∈p = ∂-complete x∈p
+    ∂?-complete ⟪ p ⟫ x∈p = ∂-complete x∈p
+    ∂?-complete ⟨ p ⟩ x∈p = ∂-complete x∈p
 
     ∂!-complete : ∀ {Tok R₁ R₂ z t s xs y} {ys : List R₁}
                   (p : ∞? (Parser Tok R₂ xs) (y ∷ ys)) →
                   z ∈ ♭? p · t ∷ s → z ∈ ∂! t p · s
-    ∂!-complete (forced p) z∈p = ∂-complete z∈p
+    ∂!-complete ⟨ p ⟩ z∈p = ∂-complete z∈p
 
 complete : ∀ {Tok R xs x} {p : Parser Tok R xs} (s : List Tok) →
            x ∈ p · s → x ∈ parseComplete p s

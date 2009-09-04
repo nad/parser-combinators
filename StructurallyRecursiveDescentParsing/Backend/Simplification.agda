@@ -283,8 +283,8 @@ mutual
 
   simplify₁′ : ∀ {Tok R R′ xs} {ys : List R′}
                (p : ∞? (Parser Tok R xs) ys) → ∃₁₁ λ p′ → ♭? p ≈ p′
-  simplify₁′ (delayed p) = (♭₁ p , (λ x∈ → x∈) , λ x∈ → x∈)
-  simplify₁′ (forced  p) = simplify₁ p
+  simplify₁′ ⟪ p ⟫ = (♭₁ p , (λ x∈ → x∈) , λ x∈ → x∈)
+  simplify₁′ ⟨ p ⟩ = simplify₁ p
 
 -- The projections of simplify₁.
 

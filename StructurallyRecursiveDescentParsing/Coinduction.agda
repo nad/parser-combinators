@@ -12,16 +12,16 @@ open import Relation.Binary.PropositionalEquality1
 -- Possibly coinductive if the argument list is empty.
 
 data ∞? (A : Set₁) {B : Set} : List B → Set₁ where
-  delayed :          (x : ∞₁ A) → ∞? A []
-  forced  : ∀ {y ys} (x :    A) → ∞? A (y ∷ ys)
+  ⟪_⟫ :          (x : ∞₁ A) → ∞? A []
+  ⟨_⟩ : ∀ {y ys} (x :    A) → ∞? A (y ∷ ys)
 
 ♯? : ∀ {A B} {xs : List B} → A → ∞? A xs
-♯? {xs = []}    x = delayed (♯₁ x)
-♯? {xs = _ ∷ _} x = forced      x
+♯? {xs = []}    x = ⟪ ♯₁ x ⟫
+♯? {xs = _ ∷ _} x = ⟨    x ⟩
 
 ♭? : ∀ {A B} {xs : List B} → ∞? A xs → A
-♭? (delayed x) = ♭₁ x
-♭? (forced  x) = x
+♭? ⟪ x ⟫ = ♭₁ x
+♭? ⟨ x ⟩ =    x
 
 -- A lemma.
 

@@ -81,5 +81,4 @@ data Parser (Tok : Set) : (R : Set) → List R → Set1 where
 private
 
   leftRight : ∀ {Tok} → Parser Tok (Tok → Tok) []
-  leftRight =
-    delayed (♯₁ (const <$> leftRight)) ⊛ delayed (♯₁ leftRight)
+  leftRight = ⟪ ♯₁ (const <$> leftRight) ⟫ ⊛ ⟪ ♯₁ leftRight ⟫

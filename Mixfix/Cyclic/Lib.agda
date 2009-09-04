@@ -87,17 +87,16 @@ theToken tok = token >>= λ tok′ → ♯? (ok tok′)
 ⟦_⟧ : ∀ {R} → ParserProg R → Parser NamePart R []
 ⟦ fail               ⟧ = fail
 ⟦ p₁ ∣ p₂            ⟧ = ⟦ p₁ ⟧ ∣ ⟦ p₂ ⟧
-⟦ p₁ ⊛  p₂           ⟧ = delayed (♯₁ ⟦    p₁ ⟧) ⊛ delayed (♯₁ ⟦    p₂ ⟧)
-⟦ p₁ ⊛∞ p₂           ⟧ = delayed (♯₁ ⟦ ♭₁ p₁ ⟧) ⊛ delayed (♯₁ ⟦ ♭₁ p₂ ⟧)
+⟦ p₁ ⊛  p₂           ⟧ = ⟪ ♯₁ ⟦    p₁ ⟧ ⟫ ⊛ ⟪ ♯₁ ⟦    p₂ ⟧ ⟫
+⟦ p₁ ⊛∞ p₂           ⟧ = ⟪ ♯₁ ⟦ ♭₁ p₁ ⟧ ⟫ ⊛ ⟪ ♯₁ ⟦ ♭₁ p₂ ⟧ ⟫
 ⟦ f <$> p            ⟧ = f <$> ⟦ p ⟧
-⟦ p +                ⟧ = forced ((λ x → maybe (_∷_ x) [ x ]) <$>
-                         ⟦ p ⟧) ⊛
-                         delayed (♯₁ (⟦ just <$> p + ⟧ ∣ return nothing))
+⟦ p +                ⟧ = ⟨ (λ x → maybe (_∷_ x) [ x ]) <$> ⟦ p ⟧ ⟩ ⊛
+                         ⟪ ♯₁ (⟦ just <$> p + ⟧ ∣ return nothing) ⟫
 ⟦ p between (t ∷ []) ⟧ = const [] <$> theToken t
 ⟦ p between
-       (t ∷ t′ ∷ ts) ⟧ = delayed (♯₁ ♯? (const _∷_ <$> theToken t) ⊛
-                         delayed (♯₁ ⟦ ♭₁ p ⟧)) ⊛
-                         delayed (♯₁ ⟦ p between (t′ ∷ ts) ⟧)
+       (t ∷ t′ ∷ ts) ⟧ = ⟪ ♯₁ ♯? (const _∷_ <$> theToken t) ⊛
+                         ⟪ ♯₁ ⟦ ♭₁ p ⟧ ⟫ ⟫ ⊛
+                         ⟪ ♯₁ ⟦ p between (t′ ∷ ts) ⟧ ⟫
 ⟦ p₁ ∥ p₂            ⟧ = ,_ <$> ⟦ p₁ ⟧
                        ∣        ⟦ p₂ ⟧
 

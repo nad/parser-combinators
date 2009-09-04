@@ -128,6 +128,6 @@ private
 ⟦ token      ⟧ = token
 ⟦ p₁ ∣ p₂    ⟧ = cast lem (⟦ p₁ ⟧ ∣ ⟦ p₂ ⟧)
                  where lem = ∣-lemma p₁ p₂
-⟦ p₁ !>>= p₂ ⟧ =           ⟦ p₁ ⟧ >>= λ x → delayed (♯₁ ⟦ ♭₁ (p₂ x) ⟧)
-⟦ p₁ ?>>= p₂ ⟧ = cast lem (⟦ p₁ ⟧ >>= λ x → forced      ⟦     p₂ x  ⟧)
+⟦ p₁ !>>= p₂ ⟧ =           ⟦ p₁ ⟧ >>= λ x → ⟪ ♯₁ ⟦ ♭₁ (p₂ x) ⟧ ⟫
+⟦ p₁ ?>>= p₂ ⟧ = cast lem (⟦ p₁ ⟧ >>= λ x → ⟨    ⟦     p₂ x  ⟧ ⟩)
                  where lem = ?>>=-lemma p₁ p₂

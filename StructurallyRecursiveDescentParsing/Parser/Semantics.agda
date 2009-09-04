@@ -122,11 +122,11 @@ initial-sound (_∣_ {xs₁ = xs₁} p₁ p₂) x∈xs with ++⁻ xs₁ x∈xs
 ... | inj₂ x∈xs₂ = ∣ʳ xs₁ (initial-sound p₂ x∈xs₂)
 initial-sound (_<$>_ {xs = xs} f p) x∈xs with map-∈⁻ xs x∈xs
 ... | (y , y∈xs , refl) = f <$> initial-sound p y∈xs
-initial-sound (_⊛_ {fs = fs} {x ∷ xs} (forced p₁) p₂) y∈ys
+initial-sound (_⊛_ {fs = fs} {x ∷ xs} ⟨ p₁ ⟩ p₂) y∈ys
   with Prod.map id (Prod.map id (map-∈⁻ fs)) $
          >>=-∈⁻ (λ x → List.map (λ f → f x) fs) (x ∷ xs) y∈ys
-initial-sound (_⊛_ {xs = x ∷ xs} (forced p₁) (delayed p₂)) y∈ys | (x′ , x′∈x∷xs , (f′ , ()    , refl))
-initial-sound (_⊛_ {xs = x ∷ xs} (forced p₁) (forced  p₂)) y∈ys | (x′ , x′∈x∷xs , (f′ , f′∈fs , refl)) =
+initial-sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟪ p₂ ⟫) y∈ys | (x′ , x′∈x∷xs , (f′ , ()    , refl))
+initial-sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟨ p₂ ⟩) y∈ys | (x′ , x′∈x∷xs , (f′ , f′∈fs , refl)) =
   initial-sound p₁ f′∈fs ⊛ initial-sound p₂ x′∈x∷xs
 initial-sound (_>>=_ {xs = zs} {f} p₁ p₂) y∈ys
   with >>=-∈⁻ f zs y∈ys
@@ -136,14 +136,14 @@ initial-sound (_>>=_ {xs = zs} {f} p₁ p₂) y∈ys
   helper : ∀ {Tok R₁ R₂ x y xs} {zs : List R₁}
            (p : ∞? (Parser Tok R₂ xs) zs) →
            x ∈ zs → y ∈ xs → y ∈ ♭? p · []
-  helper (forced  p) _  = initial-sound p
-  helper (delayed p) ()
+  helper ⟨ p ⟩ _  = initial-sound p
+  helper ⟪ p ⟫ ()
 initial-sound (cast refl p) x∈xs = cast (initial-sound p x∈xs)
 
-initial-sound (return x)      (there ())
-initial-sound fail            ()
-initial-sound token           ()
-initial-sound (delayed _ ⊛ _) ()
+initial-sound (return x)  (there ())
+initial-sound fail        ()
+initial-sound token       ()
+initial-sound (⟪ _ ⟫ ⊛ _) ()
 
 ------------------------------------------------------------------------
 -- A variant of the semantics
