@@ -19,12 +19,6 @@ import StructurallyRecursiveDescentParsing.Coinduction
 import StructurallyRecursiveDescentParsing.Parser
 import StructurallyRecursiveDescentParsing.Parser.Semantics
 
--- A simplified parser type, along with its semantics.
-
-import StructurallyRecursiveDescentParsing.Simplified
-import StructurallyRecursiveDescentParsing.Simplified.Semantics
-import StructurallyRecursiveDescentParsing.Simplified.Lemmas
-
 -- A breadth-first backend. The backend uses code which simplifies
 -- parsers.
 
@@ -41,6 +35,12 @@ import Mixfix.README
 -- Definition of unambiguity.
 
 import StructurallyRecursiveDescentParsing.Unambiguity
+
+-- A simplified parser type, along with its semantics.
+
+import StructurallyRecursiveDescentParsing.Simplified
+import StructurallyRecursiveDescentParsing.Simplified.Semantics
+import StructurallyRecursiveDescentParsing.Simplified.Lemmas
 
 -- Parser type indices, used by the grammars below.
 
