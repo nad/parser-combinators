@@ -34,9 +34,9 @@ private
   module ALemma  = Mixfix.Acyclic.Lemma          g
   module Cyclic  = Mixfix.Cyclic.Grammar acyclic g
 open import Mixfix.Acyclic.Lib as ALib
-  renaming (_⊕_∈⟦_⟧·_ to _⊕_∈⟦_⟧A·_)
-open import Mixfix.Cyclic.Lib as CLib
-  renaming (⟦_⟧ to ⟦_⟧C; _⊕_∈⟦_⟧·_ to _⊕_∈⟦_⟧C·_)
+open ALib.Semantics-⊕ renaming (_⊕_∈⟦_⟧·_ to _⊕_∈⟦_⟧A·_)
+open import Mixfix.Cyclic.Lib as CLib renaming (⟦_⟧ to ⟦_⟧C)
+open CLib.Semantics-⊕ renaming (_⊕_∈⟦_⟧·_ to _⊕_∈⟦_⟧C·_)
 
 open PrecedenceCorrect acyclic g
 
@@ -159,9 +159,10 @@ module CyclicToAcyclic where
                   e ⊕ s′ ∈⟦ A.appˡ <$> A.p↑ ⊛ A.postLeft + ⟧A· s
       postLeft⁺ (._ <$> ∣ˡ (._ <$> post∈) ⊛∞ f∈) with postLeft⁺ post∈
       postLeft⁺ (._ <$> ∣ˡ (._ <$> post∈) ⊛∞ f∈)
-        | _⊛_ {x = fs} (._ <$> ↑∈) fs∈ = ALib.cast∈ (ALemma.appˡ-∷ʳ _ fs _) (
-                                                   _ <$>         ↑∈ ⊛ ALib.+-∷ʳ fs∈ (postLeft f∈))
-      postLeft⁺ (._ <$> ∣ʳ (._ <$> ↑∈)    ⊛∞ f∈) = _ <$> precs _ ↑∈ ⊛      +-[]     (postLeft f∈)
+        | _⊛_ {x = fs} (._ <$> ↑∈) fs∈ = AS.cast∈ (ALemma.appˡ-∷ʳ _ fs _) (
+                                                   _ <$>         ↑∈ ⊛ AS.+-∷ʳ fs∈ (postLeft f∈))
+        where module AS = ALib.Semantics-⊕
+      postLeft⁺ (._ <$> ∣ʳ (._ <$> ↑∈)    ⊛∞ f∈) = _ <$> precs _ ↑∈ ⊛    +-[]     (postLeft f∈)
 
       prec′ : ∀ {s s′ e} →
               e ⊕ s′ ∈⟦  Cyclic.prec p ⟧C· s →
@@ -190,20 +191,20 @@ acyclicToCyclic
   : ∀ {e s} → e ∈ Simplified.⟦_⟧ Acyclic.expression · s →
               e ∈                 Cyclic.expression · s
 acyclicToCyclic =
-  Sem.sound               ∘₁
-  CLib.sound              ∘₁
-  AcyclicToCyclic.precs _ ∘₁
-  ALib.complete _         ∘₁
-  SSem.⊕-complete         ∘₁
+  Sem.sound                   ∘₁
+  CLib.Semantics-⊕.sound      ∘₁
+  AcyclicToCyclic.precs _     ∘₁
+  ALib.Semantics-⊕.complete _ ∘₁
+  SSem.⊕-complete             ∘₁
   SSem.complete _
 
 cyclicToAcyclic
   : ∀ {e s} → e ∈                 Cyclic.expression · s →
               e ∈ Simplified.⟦_⟧ Acyclic.expression · s
 cyclicToAcyclic =
-  SSem.sound              ∘₁
-  SSem.⊕-sound            ∘₁
-  ALib.sound              ∘₁
-  CyclicToAcyclic.precs _ ∘₁
-  CLib.complete _         ∘₁
+  SSem.sound                  ∘₁
+  SSem.⊕-sound                ∘₁
+  ALib.Semantics-⊕.sound      ∘₁
+  CyclicToAcyclic.precs _     ∘₁
+  CLib.Semantics-⊕.complete _ ∘₁
   Sem.complete
