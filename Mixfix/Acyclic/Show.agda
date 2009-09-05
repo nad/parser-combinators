@@ -84,8 +84,8 @@ module Correctness where
 
     expr : ∀ {ps s} (e : Expr ps) →
            e ⊕ s ∈⟦ Grammar.precs ps ⟧· Show.expr e s
-    expr (here refl  ∙ e) = ∣ˡ (_ <$> exprIn e)
-    expr (there x∈xs ∙ e) = ∣ʳ (_ <$> expr (x∈xs ∙ e))
+    expr (here refl  ∙ e) = ∣ˡ (<$> exprIn e)
+    expr (there x∈xs ∙ e) = ∣ʳ (<$> expr (x∈xs ∙ e))
 
     exprIn : ∀ {p assoc s} (e : ExprIn p assoc) →
              (, e) ⊕ s ∈⟦ Grammar.prec p ⟧· Show.exprIn e s
@@ -98,34 +98,34 @@ module Correctness where
                (∀ {s} → f ⊕ s ∈⟦ N.preRight ⟧· g s) →
                           e  ⊕ s ∈⟦ N.appʳ <$> N.preRight + ⊛ N.p↑ ⟧·    Show.exprIn e s →
                f (similar e) ⊕ s ∈⟦ N.appʳ <$> N.preRight + ⊛ N.p↑ ⟧· g (Show.exprIn e s)
-      lemmaʳ f∈ (.N.appʳ <$> fs∈ ⊛ e∈) = N.appʳ <$> +-∷ f∈ fs∈ ⊛ e∈
+      lemmaʳ f∈ (<$> fs∈ ⊛ e∈) = <$> +-∷ f∈ fs∈ ⊛ e∈
 
       preRight : ∀ {s} (e : ExprIn p right) →
                  e ⊕ s ∈⟦ N.appʳ <$> N.preRight + ⊛ N.p↑ ⟧· Show.exprIn e s
-      preRight (  ⟪ op ⟩  tighter e) = _ <$> +-[] (∣ˡ (⟪_⟩_ <$> inner op)) ⊛ expr e
-      preRight (  ⟪ op ⟩  similar e) = lemmaʳ     (∣ˡ (⟪_⟩_ <$> inner op)) (preRight e)
-      preRight (l ⟨ op ⟩ʳ tighter e) = _ <$> +-[] (∣ʳ (_⟨_⟩ʳ_ <$> expr l ⊛ inner op)) ⊛ expr e
-      preRight (l ⟨ op ⟩ʳ similar e) = lemmaʳ     (∣ʳ (_⟨_⟩ʳ_ <$> expr l ⊛ inner op)) (preRight e)
+      preRight (  ⟪ op ⟩  tighter e) = <$> +-[] (∣ˡ (<$> inner op)) ⊛ expr e
+      preRight (  ⟪ op ⟩  similar e) = lemmaʳ   (∣ˡ (<$> inner op)) (preRight e)
+      preRight (l ⟨ op ⟩ʳ tighter e) = <$> +-[] (∣ʳ (<$> expr l ⊛ inner op)) ⊛ expr e
+      preRight (l ⟨ op ⟩ʳ similar e) = lemmaʳ   (∣ʳ (<$> expr l ⊛ inner op)) (preRight e)
 
       lemmaˡ : ∀ {f : Outer p left → ExprIn p left} {s e} {g : DiffList NamePart} →
                (∀ {s} → f ⊕ s ∈⟦ N.postLeft ⟧· g s) →
                           e  ⊕ g s ∈⟦ N.appˡ <$> N.p↑ ⊛ N.postLeft + ⟧· Show.exprIn e (g s) →
                f (similar e) ⊕   s ∈⟦ N.appˡ <$> N.p↑ ⊛ N.postLeft + ⟧· Show.exprIn e (g s)
-      lemmaˡ {f} f∈ (_⊛_ {x = fs} (_<$>_ {x = e} .N.appˡ e∈) fs∈) =
-        Lib.Semantics-⊕.cast∈ (Lemma.appˡ-∷ʳ (tighter e) fs f) (N.appˡ <$> e∈ ⊛ +-∷ʳ fs∈ f∈)
+      lemmaˡ {f} f∈ (_⊛_ {x = fs} (<$>_ {x = e} e∈) fs∈) =
+        Lib.Semantics-⊕.cast∈ (Lemma.appˡ-∷ʳ (tighter e) fs f) (<$> e∈ ⊛ +-∷ʳ fs∈ f∈)
 
       postLeft : ∀ {s} (e : ExprIn p left) →
                  e ⊕ s ∈⟦ N.appˡ <$> N.p↑ ⊛ N.postLeft + ⟧· Show.exprIn e s
-      postLeft (tighter e ⟨ op ⟫   ) = _ <$> expr e ⊛ +-[] (∣ˡ (flip _⟨_⟫ <$> inner op))
-      postLeft (similar e ⟨ op ⟫   ) = lemmaˡ              (∣ˡ (flip _⟨_⟫ <$> inner op)) (postLeft e)
-      postLeft (tighter e ⟨ op ⟩ˡ r) = _ <$> expr e ⊛
-                                         +-[] (∣ʳ ((λ op r l → l ⟨ op ⟩ˡ r) <$> inner op ⊛ expr r))
-      postLeft (similar e ⟨ op ⟩ˡ r) = lemmaˡ (∣ʳ ((λ op r l → l ⟨ op ⟩ˡ r) <$> inner op ⊛ expr r)) (postLeft e)
+      postLeft (tighter e ⟨ op ⟫   ) = <$> expr e ⊛ +-[] (∣ˡ (<$> inner op))
+      postLeft (similar e ⟨ op ⟫   ) = lemmaˡ            (∣ˡ (<$> inner op)) (postLeft e)
+      postLeft (tighter e ⟨ op ⟩ˡ r) = <$> expr e ⊛
+                                         +-[] (∣ʳ (<$> inner op ⊛ expr r))
+      postLeft (similar e ⟨ op ⟩ˡ r) = lemmaˡ (∣ʳ (<$> inner op ⊛ expr r)) (postLeft e)
 
       exprIn′ : ∀ assoc {s} (e : ExprIn p assoc) →
                 (, e) ⊕ s ∈⟦ Grammar.prec p ⟧· Show.exprIn e s
-      exprIn′ non      ⟪ op ⟫    = ∥ˡ (_ <$> inner op)
-      exprIn′ non   (l ⟨ op ⟩ r) = ∥ʳ (∥ˡ (_ <$> expr l ⊛ inner op ⊛ expr r))
+      exprIn′ non      ⟪ op ⟫    = ∥ˡ (<$> inner op)
+      exprIn′ non   (l ⟨ op ⟩ r) = ∥ʳ (∥ˡ (<$> expr l ⊛ inner op ⊛ expr r))
       exprIn′ right e            = ∥ʳ (∥ʳ (∥ˡ (preRight e)))
       exprIn′ left  e            = ∥ʳ (∥ʳ (∥ʳ (∥ˡ (postLeft e))))
 
@@ -138,9 +138,9 @@ module Correctness where
                (op∈ : (arity , op) ∈ ops) (args : Vec (Expr g) arity) →
                let i = op∈ ∙ args in
                i ⊕ s ∈⟦ Grammar.inner ops ⟧· Show.inner i s
-      helper (here refl) args = ∣ˡ (_ <$> inner′ (nameParts op) args)
+      helper (here refl) args = ∣ˡ (<$> inner′ (nameParts op) args)
       helper (there {x = _ , _} op∈) args =
-        ∣ʳ (_ <$> helper op∈ args)
+        ∣ʳ (<$> helper op∈ args)
 
     inner′ : ∀ {arity s} (ns : Vec NamePart (1 + arity)) args →
              args ⊕ s ∈⟦ Grammar.expr between ns ⟧· Show.inner′ ns args s

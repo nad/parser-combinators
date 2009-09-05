@@ -153,7 +153,7 @@ private
     ∂-sound token                         return                 = token
     ∂-sound (p₁ ∣ p₂)                     (∣ˡ    x∈p₁)           = ∣ˡ     (∂-sound p₁ x∈p₁)
     ∂-sound (_∣_ {xs₁ = xs₁} p₁ p₂)       (∣ʳ ._ x∈p₂)           = ∣ʳ xs₁ (∂-sound p₂ x∈p₂)
-    ∂-sound (f <$> p)                     (.f <$> x∈p)           = f <$> ∂-sound p x∈p
+    ∂-sound (f <$> p)                     (<$> x∈p)              = <$> ∂-sound p x∈p
     ∂-sound (p₁ ⊛ ⟪ p₂ ⟫)                 (f∈p₁′   ⊛ x∈p₂)       = ∂?-sound p₁ f∈p₁′ ⊛
                                                                    cast∈ refl (♭?♯? (∂?-initial _ p₁)) refl x∈p₂
     ∂-sound (p₁ ⊛ ⟨ p₂ ⟩)          (∣ˡ    (f∈p₁′   ⊛ x∈p₂))      = ∂?-sound p₁ f∈p₁′ ⊛
@@ -226,7 +226,7 @@ private
       ∂-complete′ (p₁ ∣ p₂) (∣ˡ   x∈p₁) refl = ∣ˡ                  (∂-complete x∈p₁)
       ∂-complete′ (p₁ ∣ p₂) (∣ʳ _ x∈p₂) refl = ∣ʳ (∂-initial _ p₁) (∂-complete x∈p₂)
 
-      ∂-complete′ (f <$> p) (.f <$> x∈p) refl = f <$> ∂-complete x∈p
+      ∂-complete′ (f <$> p) (<$> x∈p)   refl = <$> ∂-complete x∈p
 
       ∂-complete′ (p₁ ⊛ ⟪ p₂ ⟫)
                   (_⊛_ {s₁ = _ ∷ _} f∈p₁ x∈p₂) refl =     ∂?-complete p₁ f∈p₁ ⊛

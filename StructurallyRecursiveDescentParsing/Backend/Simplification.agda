@@ -87,24 +87,24 @@ mutual
   ... | (fail , p≈∅) = (fail , (λ {_} → helper) , λ ())
     where
     helper : f <$> p ⊑ fail
-    helper (.f <$> x∈p) with proj₁₁₁ p≈∅ x∈p
+    helper (<$> x∈p) with proj₁₁₁ p≈∅ x∈p
     ... | ()
   ... | (return x , p≈ε) =
     (return (f x) , (λ {_} → helper₁) , λ {_} → helper₂)
     where
     helper₁ : f <$> p ⊑ return (f x)
-    helper₁ (.f <$> x∈p) with proj₁₁₁ p≈ε x∈p
+    helper₁ (<$> x∈p) with proj₁₁₁ p≈ε x∈p
     ... | return = return
 
     helper₂ : return (f x) ⊑ f <$> p
-    helper₂ return = f <$> proj₁₁₂ p≈ε return
+    helper₂ return = <$>_ {f = f} (proj₁₁₂ p≈ε return)
   ... | (p′ , p≈p′) = (f <$> p′ , (λ {_} → helper₁) , λ {_} → helper₂)
     where
     helper₁ : f <$> p ⊑ f <$> p′
-    helper₁ (.f <$> x∈p) = f <$> proj₁₁₁ p≈p′ x∈p
+    helper₁ (<$> x∈p) = <$> proj₁₁₁ p≈p′ x∈p
 
     helper₂ : f <$> p′ ⊑ f <$> p
-    helper₂ (.f <$> x∈p′) = f <$> proj₁₁₂ p≈p′ x∈p′
+    helper₂ (<$> x∈p′) = <$> proj₁₁₂ p≈p′ x∈p′
 
   -- • _∣_:
 

@@ -79,8 +79,8 @@ module Correctness where
 
     expr : ∀ {ps s} (e : Expr ps) →
            e ⊕ s ∈⟦ Grammar.precs ps ⟧· Show.expr e s
-    expr (here refl  ∙ e) = ∣ˡ (_ <$> exprIn e)
-    expr (there x∈xs ∙ e) = ∣ʳ (_ <$> expr (x∈xs ∙ e))
+    expr (here refl  ∙ e) = ∣ˡ (<$> exprIn e)
+    expr (there x∈xs ∙ e) = ∣ʳ (<$> expr (x∈xs ∙ e))
 
     exprIn : ∀ {p assoc s} (e : ExprIn p assoc) →
              (, e) ⊕ s ∈⟦ Grammar.prec p ⟧· Show.exprIn e s
@@ -94,13 +94,13 @@ module Correctness where
                  e ⊕ s ∈⟦ similar <$> N.preRight⁺
                         ∣ tighter <$> N.p↑
                         ⟧· Show.outer e s
-        outerʳ (tighter e) = ∣ʳ (tighter <$> expr e)
-        outerʳ (similar e) = ∣ˡ (similar <$> preRight⁺ e)
+        outerʳ (tighter e) = ∣ʳ (<$> expr e)
+        outerʳ (similar e) = ∣ˡ (<$> preRight⁺ e)
 
         preRight⁺ : ∀ {s} (e : ExprIn p right) →
                     e ⊕ s ∈⟦ N.preRight⁺ ⟧· Show.exprIn e s
-        preRight⁺ (  ⟪ op ⟩  e) = ∣ˡ ( ⟪_⟩_  <$>          inner op) ⊛∞ outerʳ e
-        preRight⁺ (l ⟨ op ⟩ʳ e) = ∣ʳ (_⟨_⟩ʳ_ <$> expr l ⊛ inner op) ⊛∞ outerʳ e
+        preRight⁺ (  ⟪ op ⟩  e) = ∣ˡ (<$>          inner op) ⊛∞ outerʳ e
+        preRight⁺ (l ⟨ op ⟩ʳ e) = ∣ʳ (<$> expr l ⊛ inner op) ⊛∞ outerʳ e
 
       mutual
 
@@ -108,18 +108,18 @@ module Correctness where
                  e ⊕ s ∈⟦ similar <$> N.postLeft⁺
                         ∣ tighter <$> N.p↑
                         ⟧· Show.outer e s
-        outerˡ (tighter e) = ∣ʳ (tighter <$> expr e)
-        outerˡ (similar e) = ∣ˡ (similar <$> postLeft⁺ e)
+        outerˡ (tighter e) = ∣ʳ (<$> expr e)
+        outerˡ (similar e) = ∣ˡ (<$> postLeft⁺ e)
 
         postLeft⁺ : ∀ {s} (e : ExprIn p left) →
                     e ⊕ s ∈⟦ N.postLeft⁺ ⟧· Show.exprIn e s
-        postLeft⁺ (e ⟨ op ⟫   ) = _ <$> outerˡ e ⊛∞ ∣ˡ (_ <$> inner op)
-        postLeft⁺ (e ⟨ op ⟩ˡ r) = _ <$> outerˡ e ⊛∞ ∣ʳ (_ <$> inner op ⊛ expr r)
+        postLeft⁺ (e ⟨ op ⟫   ) = <$> outerˡ e ⊛∞ ∣ˡ (<$> inner op)
+        postLeft⁺ (e ⟨ op ⟩ˡ r) = <$> outerˡ e ⊛∞ ∣ʳ (<$> inner op ⊛ expr r)
 
       exprIn′ : ∀ assoc {s} (e : ExprIn p assoc) →
                 (, e) ⊕ s ∈⟦ Grammar.prec p ⟧· Show.exprIn e s
-      exprIn′ non      ⟪ op ⟫    = ∥ˡ (_ <$> inner op)
-      exprIn′ non   (l ⟨ op ⟩ r) = ∥ʳ (∥ˡ (_ <$> expr l ⊛ inner op ⊛∞ expr r))
+      exprIn′ non      ⟪ op ⟫    = ∥ˡ (<$> inner op)
+      exprIn′ non   (l ⟨ op ⟩ r) = ∥ʳ (∥ˡ (<$> expr l ⊛ inner op ⊛∞ expr r))
       exprIn′ right e            = ∥ʳ (∥ʳ (∥ˡ (preRight⁺ e)))
       exprIn′ left  e            = ∥ʳ (∥ʳ (∥ʳ (∥ˡ (postLeft⁺ e))))
 
@@ -133,9 +133,9 @@ module Correctness where
                (args : Vec (Expr anyPrecedence) arity) →
                let i = op∈ ∙ args in
                i ⊕ s ∈⟦ Grammar.inner ops ⟧· Show.inner i s
-      helper (here refl) args = ∣ˡ (_ <$> inner′ (nameParts op) args)
+      helper (here refl) args = ∣ˡ (<$> inner′ (nameParts op) args)
       helper (there {x = _ , _} op∈) args =
-        ∣ʳ (_ <$> helper op∈ args)
+        ∣ʳ (<$> helper op∈ args)
 
     inner′ : ∀ {arity s} (ns : Vec NamePart (1 + arity)) args →
              args ⊕ s ∈⟦ Grammar.expr between ns ⟧· Show.inner′ ns args s

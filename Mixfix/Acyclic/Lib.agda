@@ -130,7 +130,9 @@ module Semantics where
   -- important reason may be that the definition below ensures that
   -- the details of ⟦_⟧ do not need to be understood.
 
-  infix 4 _∈⟦_⟧·_
+  infix  60 <$>_
+  infixl 50 _⊛_
+  infix  4  _∈⟦_⟧·_
 
   data _∈⟦_⟧·_ : ∀ {R} → R → ParserProg R → List NamePart → Set₁ where
     ∣ˡ         : ∀ {R x s}
@@ -145,7 +147,7 @@ module Semantics where
                  (f∈p₁ : f ∈⟦ p₁ ⟧· s₁)
                  (x∈p₂ : x ∈⟦ p₂ ⟧· s₂) →
                  f x ∈⟦ p₁ ⊛ p₂ ⟧· s₁ ++ s₂
-    _<$>_      : ∀ {s R₁ R₂ x} (f : R₁ → R₂) {p : ParserProg R₁}
+    <$>_       : ∀ {s R₁ R₂ x} {f : R₁ → R₂} {p : ParserProg R₁}
                  (x∈p : x ∈⟦ p ⟧· s) → f x ∈⟦ f <$> p ⟧· s
     +-[]       : ∀ {R x s} {p : ParserProg R}
                  (x∈p : x ∈⟦ p ⟧· s) → [ x ] ∈⟦ p + ⟧· s
@@ -208,7 +210,7 @@ module Semantics where
   sound (∣ˡ x∈p₁)      = ∣ˡ       (sound x∈p₁)
   sound (∣ʳ x∈p₂)      = ∣ʳ false (sound x∈p₂)
   sound (f∈p₁ ⊛ x∈p₂)  = ⊛-complete (sound f∈p₁) (sound x∈p₂)
-  sound (f <$> x∈p)    = drop-[] (sound x∈p !>>= return)
+  sound (<$> x∈p)      = drop-[] (sound x∈p !>>= return)
   sound (+-[] x∈p)     = drop-[] (sound x∈p !>>= ∣ʳ false return)
   sound (+-∷ x∈p xs∈p) = sound x∈p !>>= ∣ˡ (drop-[] (sound xs∈p !>>= return))
   sound (∥ˡ x∈p₁)      = drop-[] (∣ˡ (sound x∈p₁ !>>= return))
@@ -228,7 +230,7 @@ module Semantics where
   complete (p₁ ⊛ p₂) (f∈p₁ !>>= (y∈p₂ !>>= return)) =
     complete p₁ f∈p₁ ⊛ add-[] (complete p₂ y∈p₂)
 
-  complete (f <$> p) (x∈p !>>= return) = add-[] (f <$> complete p x∈p)
+  complete (f <$> p) (x∈p !>>= return) = add-[] (<$> complete p x∈p)
 
   complete (p +) (x∈p !>>= ∣ˡ (xs∈p+ !>>= return)) = +-∷ (complete p x∈p) (add-[] (complete (p +) xs∈p+))
   complete (p +) (x∈p !>>= ∣ʳ .false return)       = add-[] (+-[] (complete p x∈p))
@@ -253,7 +255,9 @@ module Semantics where
 
 module Semantics-⊕ where
 
-  infix 4 _⊕_∈⟦_⟧·_
+  infix  60 <$>_
+  infixl 50 _⊛_
+  infix  4  _⊕_∈⟦_⟧·_
 
   data _⊕_∈⟦_⟧·_ : ∀ {R} →
                    R → List NamePart → ParserProg R → List NamePart → Set1 where
@@ -267,7 +271,7 @@ module Semantics-⊕ where
                    {p₁ : ParserProg (R₁ → R₂)} {p₂ : ParserProg R₁}
                  (f∈p₁ : f ⊕ s₁ ∈⟦ p₁ ⟧· s) (x∈p₂ : x ⊕ s₂ ∈⟦ p₂ ⟧· s₁) →
                  f x ⊕ s₂ ∈⟦ p₁ ⊛ p₂ ⟧· s
-    _<$>_      : ∀ {s s′ R₁ R₂ x} (f : R₁ → R₂) {p : ParserProg R₁}
+    <$>_       : ∀ {s s′ R₁ R₂ x} {f : R₁ → R₂} {p : ParserProg R₁}
                  (x∈p : x ⊕ s′ ∈⟦ p ⟧· s) → f x ⊕ s′ ∈⟦ f <$> p ⟧· s
     +-[]       : ∀ {R x s s₁} {p : ParserProg R}
                  (x∈p : x ⊕ s₁ ∈⟦ p ⟧· s) → [ x ] ⊕ s₁ ∈⟦ p + ⟧· s
@@ -314,7 +318,7 @@ module Semantics-⊕ where
   sound (∣ˡ x∈p₁)      = ∣ˡ       (sound x∈p₁)
   sound (∣ʳ x∈p₂)      = ∣ʳ false (sound x∈p₂)
   sound (f∈p₁ ⊛ x∈p₂)  = ⊛-complete (sound f∈p₁) (sound x∈p₂)
-  sound (f <$> x∈p)    = sound x∈p !>>= return
+  sound (<$> x∈p)      = sound x∈p !>>= return
   sound (+-[] x∈p)     = sound x∈p !>>= ∣ʳ false return
   sound (+-∷ x∈p xs∈p) = sound x∈p !>>= ∣ˡ (sound xs∈p !>>= return)
   sound (∥ˡ x∈p₁)      = ∣ˡ (sound x∈p₁ !>>= return)
@@ -334,7 +338,7 @@ module Semantics-⊕ where
   complete (p₁ ⊛ p₂) (f∈p₁ !>>= (y∈p₂ !>>= return)) =
     complete p₁ f∈p₁ ⊛ complete p₂ y∈p₂
 
-  complete (f <$> p) (x∈p !>>= return) = f <$> complete p x∈p
+  complete (f <$> p) (x∈p !>>= return) = <$> complete p x∈p
 
   complete (p +) (x∈p !>>= ∣ˡ (xs∈p+ !>>= return)) = +-∷  (complete p x∈p) (complete (p +) xs∈p+)
   complete (p +) (x∈p !>>= ∣ʳ .false return)       = +-[] (complete p x∈p)
