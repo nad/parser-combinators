@@ -60,7 +60,10 @@ import Mixfix.Acyclic.Lemma
 
 -- Linearisation of operators, and a proof showing that all the
 -- generated strings are syntactically correct (although perhaps
--- ambiguous).
+-- ambiguous). If the result is combined with the one in
+-- Mixfix.Cyclic.Uniqueness we get that every expression has a unique
+-- representation. (Two different expressions may have the same
+-- representation, though.)
 
 import Mixfix.Acyclic.Show
 
@@ -85,11 +88,15 @@ import Mixfix.Cyclic.PrecedenceGraph
 
 import Mixfix.Cyclic.Grammar
 
--- Linearisation of operators, and a proof showing that all the
--- generated strings are syntactically correct (although perhaps
--- ambiguous).
+-- A constructive proof (i.e. a "show" function) showing that every
+-- expression has at least one representation.
 
 import Mixfix.Cyclic.Show
+
+-- A proof showing that every expression has at most one
+-- representation.
+
+import Mixfix.Cyclic.Uniqueness
 
 -- An example.
 
