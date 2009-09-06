@@ -12,7 +12,8 @@ module Mixfix.README where
 -- left nor right recursive. The other uses precedence graphs which
 -- may be cyclic and grammars which can be both left and right
 -- recursive (following an alternative definition of grammars given in
--- the paper).
+-- the paper). The two grammar schemes are equivalent when restricted
+-- to acyclic precedence graphs.
 
 -- The grammars which use DAGs have the advantage that they can be
 -- implemented using a larger variety of parser combinator libraries.
