@@ -4,6 +4,7 @@
 
 module StructurallyRecursiveDescentParsing.Unambiguity where
 
+open import Coinduction
 open import Data.Bool
 open import Data.List hiding (map)
 open import Relation.Binary.PropositionalEquality
@@ -63,6 +64,14 @@ data Unambiguous′ {Tok} : ∀ {R xs} → Parser Tok R xs → Set1 where
                 x₂ ∈ p₁ · s₃ → y₂ ∈ ♭? (p₂ x₂) · s₄ → s₃ ++ s₄ ≡ s →
                 y₁ ≡ y₂) →
              Unambiguous′ (p₁ >>= p₂)
+  bind′    : ∀ {R₁ R₂ xs}
+               {p₁ : ∞₁ (Parser Tok R₁ xs)}
+               {p₂ : R₁ → ∞? (Parser Tok R₂ []) xs}
+             (u : ∀ {x₁ x₂ y₁ y₂ s s₁ s₂ s₃ s₄} →
+                x₁ ∈ ♭₁ p₁ · s₁ → y₁ ∈ ♭? (p₂ x₁) · s₂ → s₁ ++ s₂ ≡ s →
+                x₂ ∈ ♭₁ p₁ · s₃ → y₂ ∈ ♭? (p₂ x₂) · s₄ → s₃ ++ s₄ ≡ s →
+                y₁ ≡ y₂) →
+             Unambiguous′ (p₁ >>=! p₂)
   nonempty : ∀ {R xs} {p : Parser Tok R xs}
              (u : ∀ {x₁ x₂ t s} →
                   x₁ ∈ p · t ∷ s → x₂ ∈ p · t ∷ s → x₁ ≡ x₂) →
@@ -96,6 +105,13 @@ sound (bind   {p₁ = p₁} {p₂} u) x∈p y∈p = helper x∈p y∈p refl
            s₁ ≡ s₂ → x₁ ≡ x₂
   helper (x∈p₁ >>= y∈p₂x) (x′∈p₁ >>= y′∈p₂x′) eq =
     u x∈p₁ y∈p₂x eq x′∈p₁ y′∈p₂x′ refl
+sound (bind′  {p₁ = p₁} {p₂} u) x∈p y∈p = helper x∈p y∈p refl
+  where
+  helper : ∀ {x₁ x₂ s₁ s₂} →
+           x₁ ∈ p₁ >>=! p₂ · s₁ → x₂ ∈ p₁ >>=! p₂ · s₂ →
+           s₁ ≡ s₂ → x₁ ≡ x₂
+  helper (x∈p₁ >>=! y∈p₂x) (x′∈p₁ >>=! y′∈p₂x′) eq =
+    u x∈p₁ y∈p₂x eq x′∈p₁ y′∈p₂x′ refl
 sound (nonempty u) (nonempty x∈p) (nonempty y∈p) = u x∈p y∈p
 sound (cast u)     (cast x∈p)     (cast y∈p)     = sound u x∈p y∈p
 
@@ -114,5 +130,8 @@ complete (_⊛_ {xs = xs} p₁ p₂)   u = app xs (λ f₁∈ x₁∈ eq₁ f₂
 complete (p₁ >>= p₂)             u = bind (λ x₁∈ y₁∈ eq₁ x₂∈ y₂∈ eq₂ →
                                              u (cast∈ refl refl eq₁ (_>>=_ {p₁ = p₁} x₁∈ y₁∈))
                                                (cast∈ refl refl eq₂ (_>>=_           x₂∈ y₂∈)))
+complete (p₁ >>=! p₂)            u = bind′ (λ x₁∈ y₁∈ eq₁ x₂∈ y₂∈ eq₂ →
+                                              u (cast∈ refl refl eq₁ (_>>=!_ {p₁ = p₁} x₁∈ y₁∈))
+                                                (cast∈ refl refl eq₂ (_>>=!_           x₂∈ y₂∈)))
 complete (nonempty p)            u = nonempty (λ x₁∈ x₂∈ → u (nonempty x₁∈) (nonempty x₂∈))
 complete (cast refl p)           u = cast (complete p (λ x₁∈ x₂∈ → u (cast x₁∈) (cast x₂∈)))

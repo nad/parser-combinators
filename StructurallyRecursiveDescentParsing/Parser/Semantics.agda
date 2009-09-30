@@ -6,6 +6,7 @@ module StructurallyRecursiveDescentParsing.Parser.Semantics where
 
 open import Algebra
 import Algebra.Props.BooleanAlgebra as BAProp
+open import Coinduction
 open import Data.Bool
 import Data.Bool.Properties as BoolProp
 private
@@ -42,7 +43,7 @@ open import StructurallyRecursiveDescentParsing.Parser
 
 infix  60 <$>_
 infixl 50 _⊛_
-infixl 10 _>>=_
+infixl 10 _>>=_ _>>=!_
 infix   4 _∈_·_
 
 data _∈_·_ {Tok} :
@@ -69,6 +70,12 @@ data _∈_·_ {Tok} :
              (x∈p₁ : x ∈ p₁ · s₁)
              (y∈p₂x : y ∈ ♭? (p₂ x) · s₂) →
              y ∈ p₁ >>= p₂ · s₁ ++ s₂
+  _>>=!_   : ∀ {R₁ R₂ x y s₁ s₂ xs}
+               {p₁ : ∞₁ (Parser Tok R₁ xs)}
+               {p₂ : R₁ → ∞? (Parser Tok R₂ []) xs}
+             (x∈p₁ : x ∈ ♭₁ p₁ · s₁)
+             (y∈p₂x : y ∈ ♭? (p₂ x) · s₂) →
+             y ∈ p₁ >>=! p₂ · s₁ ++ s₂
   nonempty : ∀ {R xs x y s} {p : Parser Tok R xs}
              (x∈p : y ∈ p · x ∷ s) → y ∈ nonempty p · x ∷ s
   cast     : ∀ {R xs₁ xs₂ x s} {eq : xs₁ ≡ xs₂} {p : Parser Tok R xs₁}
@@ -112,13 +119,16 @@ initial-complete x∈p = initial-complete′ x∈p refl
                                                                                   (initial-complete y∈p₂x)
   initial-complete′ (cast {eq = refl} x∈p)                        refl = initial-complete x∈p
 
-  initial-complete′ (_>>=_ {s₁ = []} {xs = []}  x∈p₁ y∈p₂x) refl with initial-complete x∈p₁
+  initial-complete′ (_>>=_  {s₁ = []} {xs = []} x∈p₁ y∈p₂x) refl with initial-complete x∈p₁
+  ... | ()
+  initial-complete′ (_>>=!_ {s₁ = []}           x∈p₁ y∈p₂x) refl with initial-complete y∈p₂x
   ... | ()
 
-  initial-complete′ token                    ()
-  initial-complete′ (_⊛_   {s₁ = _ ∷ _} _ _) ()
-  initial-complete′ (_>>=_ {s₁ = _ ∷ _} _ _) ()
-  initial-complete′ (nonempty _)             ()
+  initial-complete′ token                     ()
+  initial-complete′ (_⊛_    {s₁ = _ ∷ _} _ _) ()
+  initial-complete′ (_>>=_  {s₁ = _ ∷ _} _ _) ()
+  initial-complete′ (_>>=!_ {s₁ = _ ∷ _} _ _) ()
+  initial-complete′ (nonempty _)              ()
 
 initial-sound : ∀ {Tok R xs x} (p : Parser Tok R xs) →
                 x ∈ xs → x ∈ p · []
@@ -150,6 +160,7 @@ initial-sound (return _)   (there ())
 initial-sound fail         ()
 initial-sound token        ()
 initial-sound (⟪ _ ⟫ ⊛ _)  ()
+initial-sound (_ >>=! _)   ()
 initial-sound (nonempty _) ()
 
 ------------------------------------------------------------------------
@@ -186,6 +197,12 @@ data _⊕_∈_·_ {Tok} : ∀ {R xs} → R → List Tok →
              (x∈p₁ : x ⊕ s₁ ∈ p₁ · s)
              (y∈p₂x : y ⊕ s₂ ∈ ♭? (p₂ x) · s₁) →
              y ⊕ s₂ ∈ p₁ >>= p₂ · s
+  _>>=!_   : ∀ {R₁ R₂ x y s s₁ s₂ xs}
+               {p₁ : ∞₁ (Parser Tok R₁ xs)}
+               {p₂ : R₁ → ∞? (Parser Tok R₂ []) xs}
+             (x∈p₁ : x ⊕ s₁ ∈ ♭₁ p₁ · s)
+             (y∈p₂x : y ⊕ s₂ ∈ ♭? (p₂ x) · s₁) →
+             y ⊕ s₂ ∈ p₁ >>=! p₂ · s
   nonempty : ∀ {R xs x y s₂} s₁ {p : Parser Tok R xs}
              (x∈p : y ⊕ s₂ ∈ p · x ∷ s₁ ++ s₂) →
              y ⊕ s₂ ∈ nonempty p · x ∷ s₁ ++ s₂
@@ -213,9 +230,12 @@ sound′ (<$> x∈p)         = Prod1.map id (Prod1.map id <$>_) (sound′ x∈p)
 sound′ (f∈p₁ ⊛ x∈p₂)     with sound′ f∈p₁ | sound′ x∈p₂
 sound′ (f∈p₁ ⊛ x∈p₂)     | (s₁ , refl , f∈p₁′) | (s₂ , refl , x∈p₂′) =
   (s₁ ++ s₂ , sym (LM.assoc s₁ s₂ _) , f∈p₁′ ⊛ x∈p₂′)
-sound′ (x∈p₁ >>= y∈p₂x)  with sound′ x∈p₁ | sound′ y∈p₂x
-sound′ (x∈p₁ >>= y∈p₂x)  | (s₁ , refl , x∈p₁′) | (s₂ , refl , y∈p₂x′) =
+sound′ (x∈p₁ >>=  y∈p₂x) with sound′ x∈p₁ | sound′ y∈p₂x
+sound′ (x∈p₁ >>=  y∈p₂x) | (s₁ , refl , x∈p₁′) | (s₂ , refl , y∈p₂x′) =
   (s₁ ++ s₂ , sym (LM.assoc s₁ s₂ _) , x∈p₁′ >>= y∈p₂x′)
+sound′ (x∈p₁ >>=! y∈p₂x) with sound′ x∈p₁ | sound′ y∈p₂x
+sound′ (x∈p₁ >>=! y∈p₂x) | (s₁ , refl , x∈p₁′) | (s₂ , refl , y∈p₂x′) =
+  (s₁ ++ s₂ , sym (LM.assoc s₁ s₂ _) , x∈p₁′ >>=! y∈p₂x′)
 sound′ (nonempty s₁ x∈p) with sound′ x∈p
 sound′ (nonempty s₁ x∈p) | (y ∷ s , eq , x∈p′) = (y ∷ s , eq , nonempty x∈p′)
 sound′ (nonempty s₁ x∈p) | ([]    , eq , x∈p′)
@@ -237,7 +257,8 @@ extend (∣ˡ x∈p₁)         = ∣ˡ    (extend x∈p₁)
 extend (∣ʳ e₁ x∈p₂)      = ∣ʳ e₁ (extend x∈p₂)
 extend (     <$> x∈p)    =             <$> extend x∈p
 extend (f∈p₁ ⊛   x∈p₂)   = extend f∈p₁ ⊛   extend x∈p₂
-extend (x∈p₁ >>= y∈p₂x)  = extend x∈p₁ >>= extend y∈p₂x
+extend (x∈p₁ >>=  y∈p₂x) = extend x∈p₁ >>=  extend y∈p₂x
+extend (x∈p₁ >>=! y∈p₂x) = extend x∈p₁ >>=! extend y∈p₂x
 extend (cast x∈p)        = cast (extend x∈p)
 extend (nonempty s₁ x∈p) = cast₂ (nonempty s₁ (cast₁ (extend x∈p)))
   where
@@ -253,7 +274,8 @@ complete (∣ˡ x∈p₁)              = ∣ˡ    (complete x∈p₁)
 complete (∣ʳ e₁ x∈p₂)           = ∣ʳ e₁ (complete x∈p₂)
 complete (     <$> x∈p)         =                        <$> complete x∈p
 complete (f∈p₁ ⊛   x∈p₂)        = extend (complete f∈p₁) ⊛   complete x∈p₂
-complete (x∈p₁ >>= y∈p₂x)       = extend (complete x∈p₁) >>= complete y∈p₂x
+complete (x∈p₁ >>=  y∈p₂x)      = extend (complete x∈p₁) >>=  complete y∈p₂x
+complete (x∈p₁ >>=! y∈p₂x)      = extend (complete x∈p₁) >>=! complete y∈p₂x
 complete (cast x∈p)             = cast (complete x∈p)
 complete (nonempty {s = s} x∈p) = cast₂ (nonempty s (cast₁ (complete x∈p)))
   where

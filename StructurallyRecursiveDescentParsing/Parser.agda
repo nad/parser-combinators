@@ -39,7 +39,7 @@ private
 -- Parsers
 
 infixl 50 _⊛_ _<$>_
-infixl 10 _>>=_
+infixl 10 _>>=_ _>>=!_
 infixl  5 _∣_
 
 -- The list index is the "initial set"; it contains the results which
@@ -65,13 +65,23 @@ data Parser (Tok : Set) : (R : Set) → List R → Set1 where
              (p₁ : ∞? (Parser Tok (R₁ → R₂)  fs      ) xs)
              (p₂ : ∞? (Parser Tok  R₁              xs) fs) →
                        Parser Tok       R₂  (fs ⊛′ xs)
-  _>>=_    : ∀ {R₁ R₂} {xs} {f : R₁ → List R₂}
+  _>>=_    : ∀ {R₁ R₂ xs} {f : R₁ → List R₂}
              (p₁ :                Parser Tok R₁  xs              )
              (p₂ : (x : R₁) → ∞? (Parser Tok R₂         (f x)) xs) →
                                   Parser Tok R₂ (xs >>=′ f)
+  _>>=!_   : ∀ {R₁ R₂ xs}
+             (p₁ :      ∞₁ (Parser Tok R₁ xs))
+             (p₂ : R₁ → ∞? (Parser Tok R₂ fail′) xs) →
+                            Parser Tok R₂ fail′
   nonempty : ∀ {R xs} (p : Parser Tok R xs) → Parser Tok R []
   cast     : ∀ {R xs₁ xs₂}
              (eq : xs₁ ≡ xs₂) (p : Parser Tok R xs₁) → Parser Tok R xs₂
+
+-- The difference between the _>>=_ and _>>=!_ combinators is that the
+-- latter one accepts a delayed left parser, but requires the index of
+-- the right parser to be fail′ ([]). Another option would perhaps be
+-- to require the index to be a function f such that f x ≡ [] for all
+-- x in xs, but this seems complicated.
 
 -- Note that it would be reasonable to generalise the casts to accept
 -- /set/ equality instead of just list equality. However, I have not

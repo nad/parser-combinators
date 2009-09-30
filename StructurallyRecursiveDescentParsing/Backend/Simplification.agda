@@ -27,6 +27,9 @@ open import StructurallyRecursiveDescentParsing.Simplified.Lemmas
 
 private
 
+  force : ∀ {Tok R xs} (p : ∞₁ (Parser Tok R xs)) → ∃₁₁ λ p′ → ♭₁ p ≈ p′
+  force p = (♭₁ p , (λ x∈ → x∈) , λ x∈ → x∈)
+
   -- A variant of cast.
 
   cast′ : ∀ {Tok R xs₁ xs₂} →
@@ -58,6 +61,8 @@ private
 -- return f ⊛ return x         → return (f x)
 -- fail     >>= p              → fail
 -- return x >>= p              → p x
+-- fail     >>=! p             → fail
+-- return x >>=! p             → p x
 -- nonempty fail               → fail
 -- cast eq p                   → p
 --
@@ -266,6 +271,41 @@ mutual
 
     helper₂ : p₁′ >>= p₂ ⊑ p₁ >>= p₂
     helper₂ (x∈p₁ >>= y∈p₂x) = proj₁₁₂ p₁≈p₁′ x∈p₁ >>= y∈p₂x
+
+  -- • _>>=!_:
+
+  simplify₁ (p₁ >>=! p₂) with force p₁
+  simplify₁ (p₁ >>=! p₂) | (fail , p₁≈∅) = (fail , (λ {_} → helper) , λ ())
+    where
+    helper : p₁ >>=! p₂ ⊑ fail
+    helper (x∈p₁ >>=! y∈p₂x) with proj₁₁₁ p₁≈∅ x∈p₁
+    ... | ()
+  simplify₁ (p₁ >>=! p₂) | (return x , p₁≈ε) with simplify₁′ (p₂ x)
+  simplify₁ (p₁ >>=! p₂) | (return x , p₁≈ε) | (p₂′ , p₂x≈p₂′) =
+    (cast′ lem p₂′ , (λ {_} → helper₁) , λ {_} → helper₂)
+    where
+    lem = sym (proj₂ LM.identity _)
+
+    helper₁ : p₁ >>=! p₂ ⊑ cast′ lem p₂′
+    helper₁ (_>>=!_ {y = y} {s₂ = s₂} x∈p₁ y∈p₂x) =
+      cast⁺ lem (helper (proj₁₁₁ p₁≈ε x∈p₁) y∈p₂x)
+      where
+      helper : ∀ {x′ s₁} → x′ ∈ return x · s₁ → y ∈ ♭? (p₂ x′) · s₂ →
+               y ∈ p₂′ · s₁ ++ s₂
+      helper return x∈p₂ = proj₁₁₁ p₂x≈p₂′ x∈p₂
+
+    helper₂ : cast′ lem p₂′ ⊑ p₁ >>=! p₂
+    helper₂ y∈p₂′ =
+      _>>=!_ {x = x} {p₂ = p₂} (proj₁₁₂ p₁≈ε (return {x = x}))
+                               (proj₁₁₂ p₂x≈p₂′ (cast⁻ lem y∈p₂′))
+  simplify₁ (p₁ >>=! p₂) | (p₁′ , p₁≈p₁′) =
+    (♯₁ p₁′ >>=! p₂ , (λ {_} → helper₁) , λ {_} → helper₂)
+    where
+    helper₁ : p₁ >>=! p₂ ⊑ _ >>=! p₂
+    helper₁ (x∈p₁ >>=! y∈p₂x) = proj₁₁₁ p₁≈p₁′ x∈p₁ >>=! y∈p₂x
+
+    helper₂ : _ >>=! p₂ ⊑ p₁ >>=! p₂
+    helper₂ (x∈p₁ >>=! y∈p₂x) = proj₁₁₂ p₁≈p₁′ x∈p₁ >>=! y∈p₂x
 
   -- • nonempty:
 
