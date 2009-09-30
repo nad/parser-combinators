@@ -16,10 +16,9 @@ open import Data.Nat using (ℕ; zero; suc)
 open import Data.Fin using (Fin; #_; zero; suc)
 import Data.String as String
 open String using (String; _++_)
-import Data.List.Equality as ListEq
 open import Relation.Binary
-open DecSetoid (ListEq.DecidableEquality.decSetoid String.decSetoid)
-  using (_≟_)
+import Relation.Binary.List.Pointwise as ListEq
+open DecSetoid (ListEq.decSetoid String.decSetoid) using (_≟_)
 open import Data.Function using (_∘_)
 open import Data.Bool using (Bool; if_then_else_)
 open import Relation.Nullary.Decidable using (decToBool)
