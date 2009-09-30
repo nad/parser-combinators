@@ -9,7 +9,7 @@ open import Data.Bool
 open import Data.List
 open import Relation.Binary.PropositionalEquality1
 
--- Possibly coinductive if the argument list is empty.
+-- Coinductive if the argument list is empty.
 
 data ∞? (A : Set₁) {B : Set} : List B → Set₁ where
   ⟪_⟫ :          (x : ∞₁ A) → ∞? A []
