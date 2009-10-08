@@ -2,18 +2,17 @@
 -- James McKinna, as presented in the talk Seeing and Doing at the
 -- Workshop on Termination and Type Theory, Hindås, Sweden, 2002.
 
-{-# OPTIONS --type-in-type
-  #-}
+{-# OPTIONS --type-in-type #-}
 
 module SeeingAndDoing where
 
 open import Data.Unit
 open import Data.Bool
 open import Data.List
-open import Data.Maybe
+open import Data.Maybe as Maybe
 open import Data.String renaming (_==_ to _=S=_)
 open import Category.Monad
-open RawMonadPlus MaybeMonadPlus
+open RawMonadPlus Maybe.monadPlus
 open import Data.Function using (_∘_; const)
 open import Relation.Binary.PropositionalEquality
 
@@ -122,7 +121,7 @@ grammar = for var ∙ vart
 test₁ : let open Parser grammar in
         parse (IF ∷ V "x" ∷ THEN ∷ TRUE ∷ ELSE ∷ FALSE ∷ []) ≡
         just (if (var "x") (val true) (val false))
-test₁ = ≡-refl
+test₁ = refl
 
 -- Takes ages to type check:
 
@@ -132,4 +131,4 @@ test₁ = ≡-refl
 --                     ELSE ∷ FALSE ∷ []) ≡
 --         just (if (var "x") (if (var "y") (var "z") (var "x"))
 --                            (val false))
--- test₂ = ≡-refl
+-- test₂ = refl
