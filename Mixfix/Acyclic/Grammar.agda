@@ -40,8 +40,8 @@ mutual
 
   -- Expressions.
 
-  expr : ∞₁ (Parser (Expr g))
-  expr = ♯₁ precs g
+  expr : ∞ (Parser (Expr g))
+  expr = ♯ precs g
 
   -- Expressions corresponding to zero or more nodes in the precedence
   -- graph: operator applications where the outermost operator has one
@@ -102,4 +102,4 @@ mutual
 -- Expression parsers.
 
 expression : Simplified.Parser NamePart false (Expr g)
-expression = ⟦ ♭₁ expr ⟧
+expression = ⟦ ♭ expr ⟧

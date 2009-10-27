@@ -85,9 +85,9 @@ pbm =
    w∣c ⋆ ⊛>
    theString (String.toVec "P1") ⊛>
    w∣c ⋆ ⊛>
-   number !>>= λ cols → ♯₁ -- _>>=_ works just as well.
+   number !>>= λ cols → ♯ -- _>>=_ works just as well.
   (w∣c + ⊛>
-   number >>=  λ rows →    -- _!>>=_ works just as well.
+   number >>=  λ rows →   -- _!>>=_ works just as well.
    w∣c ⊛>
    (makePBM <$> exactly rows (exactly cols (w∣c ⋆ ⊛> colour))) <⊛
    any ⋆)

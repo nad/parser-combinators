@@ -133,16 +133,16 @@ parseExpr backend = List.map (fromNameParts ∘ show) ∘
 backend = depthFirst
 
 runTest : String → List String → IO ⊤
-runTest s₁ s₂ = ♯₁
-  putStrLn ("Testing: " ++ s₁)           >> ♯₁ (♯₁
-  mapM′ putStrLn (Colist.fromList p₁)    >> ♯₁
+runTest s₁ s₂ = ♯
+  putStrLn ("Testing: " ++ s₁)           >> ♯ (♯
+  mapM′ putStrLn (Colist.fromList p₁)    >> ♯
   putStrLn (if decToBool (p₁ ≟ s₂)
             then "Passed" else "Failed") )
   where p₁ = parseExpr backend s₁
 
-main = run (♯₁
-  runTest "•+•⊢•∶"      []                               >> ♯₁ (♯₁
-  runTest "•,•⊢∶"       []                               >> ♯₁ (♯₁
-  runTest "•⊢•∶"        L[ "•⊢•∶" ]                      >> ♯₁ (♯₁
-  runTest "•,i•t•+•⊢•∶" L[ "•,i•t•+•⊢•∶" ]               >> ♯₁
+main = run (♯
+  runTest "•+•⊢•∶"      []                               >> ♯ (♯
+  runTest "•,•⊢∶"       []                               >> ♯ (♯
+  runTest "•⊢•∶"        L[ "•⊢•∶" ]                      >> ♯ (♯
+  runTest "•,i•t•+•⊢•∶" L[ "•,i•t•+•⊢•∶" ]               >> ♯
   runTest "i•ti•t•e•"   ("i•ti•t•e•" ∷ "i•ti•t•e•" ∷ []) ))))

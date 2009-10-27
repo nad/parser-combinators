@@ -24,7 +24,7 @@ open import Relation.Binary.PropositionalEquality
 open ≡-Reasoning
 
 >>=-∅ : ∀ {A B} (xs : List A) →
-        (xs >>=′ const {List B} []) ≡ []
+        (xs >>=′ const {A = List B} []) ≡ []
 >>=-∅ []       = refl
 >>=-∅ (x ∷ xs) = >>=-∅ xs
 

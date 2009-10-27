@@ -8,7 +8,6 @@ open import Coinduction
 open import Data.Bool
 open import Data.List hiding (map)
 open import Relation.Binary.PropositionalEquality
-open import Relation.Binary.PropositionalEquality1 using (refl)
 
 open import StructurallyRecursiveDescentParsing.Coinduction
 open import StructurallyRecursiveDescentParsing.Parser
@@ -65,11 +64,11 @@ data Unambiguous′ {Tok} : ∀ {R xs} → Parser Tok R xs → Set1 where
                 y₁ ≡ y₂) →
              Unambiguous′ (p₁ >>= p₂)
   bind′    : ∀ {R₁ R₂ xs}
-               {p₁ : ∞₁ (Parser Tok R₁ xs)}
+               {p₁ : ∞ (Parser Tok R₁ xs)}
                {p₂ : R₁ → ∞? (Parser Tok R₂ []) xs}
              (u : ∀ {x₁ x₂ y₁ y₂ s s₁ s₂ s₃ s₄} →
-                x₁ ∈ ♭₁ p₁ · s₁ → y₁ ∈ ♭? (p₂ x₁) · s₂ → s₁ ++ s₂ ≡ s →
-                x₂ ∈ ♭₁ p₁ · s₃ → y₂ ∈ ♭? (p₂ x₂) · s₄ → s₃ ++ s₄ ≡ s →
+                x₁ ∈ ♭ p₁ · s₁ → y₁ ∈ ♭? (p₂ x₁) · s₂ → s₁ ++ s₂ ≡ s →
+                x₂ ∈ ♭ p₁ · s₃ → y₂ ∈ ♭? (p₂ x₂) · s₄ → s₃ ++ s₄ ≡ s →
                 y₁ ≡ y₂) →
              Unambiguous′ (p₁ >>=! p₂)
   nonempty : ∀ {R xs} {p : Parser Tok R xs}

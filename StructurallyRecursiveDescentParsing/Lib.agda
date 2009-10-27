@@ -40,7 +40,7 @@ _>>=_ : ∀ {NT Tok e₁ c₁ i₂ R₁ R₂} → let i₁ = e₁ ◇ c₁ in
         (R₁ → Parser NT Tok i₂ R₂) →
         Parser NT Tok (i₁ · i₂) R₂
 _>>=_ {e₁ = true } p₁ p₂ = p₁ ?>>= p₂
-_>>=_ {e₁ = false} p₁ p₂ = p₁ !>>= λ x → ♯₁ p₂ x
+_>>=_ {e₁ = false} p₁ p₂ = p₁ !>>= λ x → ♯ p₂ x
 
 cast : ∀ {NT Tok e₁ e₂ c₁ c₂ R} →
        e₁ ≡ e₂ → c₁ ≡ c₂ →
@@ -139,7 +139,7 @@ mutual
   _+ : ∀ {NT Tok R c} →
        Parser NT Tok (false ◇ c) R        →
        Parser NT Tok _           (List R)
-  p + =  p   !>>= λ x  → ♯₁
+  p + =  p   !>>= λ x  → ♯
         (p ⋆ ?>>= λ xs →
          return (x ∷ xs))
 
@@ -151,8 +151,8 @@ _sepBy⟨_⟩_ : ∀ {NT Tok i i′ R R′} →
              (empty i′ ∧ true) ∧ (empty i ∧ true) ≡ false →
              Parser NT Tok i′ R′ →
              Parser NT Tok _ (List R)
-p sepBy⟨ nonEmpty ⟩ sep = _∷_ <$> p ⊛ cast₁ (sep ⊛> p) ⋆
-  where cast₁ = cast nonEmpty refl
+p sepBy⟨ non-empty ⟩ sep = _∷_ <$> p ⊛ cast₁ (sep ⊛> p) ⋆
+  where cast₁ = cast non-empty refl
 
 -- _sepBy_ could be implemented by using _sepBy⟨_⟩_, but the following
 -- definition is handled more efficiently by the current version of
@@ -303,7 +303,7 @@ choiceMap f (x ∷ xs) = f x ∣ choiceMap f xs
 -- sat and friends
 
 sat : ∀ {NT Tok R} → (Tok → Maybe R) → Parser NT Tok (0I · 1I) R
-sat {NT} {Tok} {R} p = token !>>= λ c → ♯₁ ok (p c)
+sat {NT} {Tok} {R} p = token !>>= λ c → ♯ ok (p c)
   where
   okIndex : Maybe R → Index
   okIndex nothing  = _

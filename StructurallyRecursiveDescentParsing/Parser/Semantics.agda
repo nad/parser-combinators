@@ -19,17 +19,13 @@ open Membership-≡
 private module LM {Tok} = Monoid (List.monoid Tok)
 open import Data.List.Any.Properties as AnyProp
 open AnyProp.Membership-≡
-import Data.Product as Prod
-open Prod using (_,_)
-import Data.Product1 as Prod1 renaming (∃₀₁ to ∃; map₀₁ to map)
-open Prod1
+open import Data.Product as Prod
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Function hiding (_∶_)
 open import Data.Empty
 open import Relation.Nullary.Negation
 open import Relation.Binary.PropositionalEquality
 open ≡-Reasoning
-open import Relation.Binary.PropositionalEquality1 using (_≡₁_; refl)
 
 open import StructurallyRecursiveDescentParsing.Coinduction
 open import StructurallyRecursiveDescentParsing.Parser
@@ -71,9 +67,9 @@ data _∈_·_ {Tok} :
              (y∈p₂x : y ∈ ♭? (p₂ x) · s₂) →
              y ∈ p₁ >>= p₂ · s₁ ++ s₂
   _>>=!_   : ∀ {R₁ R₂ x y s₁ s₂ xs}
-               {p₁ : ∞₁ (Parser Tok R₁ xs)}
+               {p₁ : ∞ (Parser Tok R₁ xs)}
                {p₂ : R₁ → ∞? (Parser Tok R₂ []) xs}
-             (x∈p₁ : x ∈ ♭₁ p₁ · s₁)
+             (x∈p₁ : x ∈ ♭ p₁ · s₁)
              (y∈p₂x : y ∈ ♭? (p₂ x) · s₂) →
              y ∈ p₁ >>=! p₂ · s₁ ++ s₂
   nonempty : ∀ {R xs x y s} {p : Parser Tok R xs}
@@ -85,11 +81,11 @@ data _∈_·_ {Tok} :
 
 infix 4 _⊑_ _≈_
 
-_⊑_ : ∀ {Tok R xs} (p₁ p₂ : Parser Tok R xs) → Set1
+_⊑_ : ∀ {Tok R xs} (p₁ p₂ : Parser Tok R xs) → Set₁
 p₁ ⊑ p₂ = ∀ {x s} → x ∈ p₁ · s → x ∈ p₂ · s
 
-_≈_ : ∀ {Tok R xs} (p₁ p₂ : Parser Tok R xs) → Set1
-p₁ ≈ p₂ = Σ₁₁ (p₁ ⊑ p₂) λ _ → p₂ ⊑ p₁
+_≈_ : ∀ {Tok R xs} (p₁ p₂ : Parser Tok R xs) → Set₁
+p₁ ≈ p₂ = p₁ ⊑ p₂ × p₂ ⊑ p₁
 
 ------------------------------------------------------------------------
 -- Some lemmas
@@ -97,7 +93,7 @@ p₁ ≈ p₂ = Σ₁₁ (p₁ ⊑ p₂) λ _ → p₂ ⊑ p₁
 -- A simple cast lemma.
 
 cast∈ : ∀ {Tok R xs} {p p′ : Parser Tok R xs} {x x′ s s′} →
-        x ≡ x′ → p ≡₁ p′ → s ≡ s′ → x ∈ p · s → x′ ∈ p′ · s′
+        x ≡ x′ → p ≡ p′ → s ≡ s′ → x ∈ p · s → x′ ∈ p′ · s′
 cast∈ refl refl refl x∈ = x∈
 
 -- Sanity check: The initial set is correctly defined.
@@ -198,9 +194,9 @@ data _⊕_∈_·_ {Tok} : ∀ {R xs} → R → List Tok →
              (y∈p₂x : y ⊕ s₂ ∈ ♭? (p₂ x) · s₁) →
              y ⊕ s₂ ∈ p₁ >>= p₂ · s
   _>>=!_   : ∀ {R₁ R₂ x y s s₁ s₂ xs}
-               {p₁ : ∞₁ (Parser Tok R₁ xs)}
+               {p₁ : ∞ (Parser Tok R₁ xs)}
                {p₂ : R₁ → ∞? (Parser Tok R₂ []) xs}
-             (x∈p₁ : x ⊕ s₁ ∈ ♭₁ p₁ · s)
+             (x∈p₁ : x ⊕ s₁ ∈ ♭ p₁ · s)
              (y∈p₂x : y ⊕ s₂ ∈ ♭? (p₂ x) · s₁) →
              y ⊕ s₂ ∈ p₁ >>=! p₂ · s
   nonempty : ∀ {R xs x y s₂} s₁ {p : Parser Tok R xs}
@@ -221,12 +217,12 @@ private
 -- The definition is sound and complete with respect to the one above.
 
 sound′ : ∀ {Tok R xs x s₂ s} {p : Parser Tok R xs} →
-         x ⊕ s₂ ∈ p · s → ∃ λ s₁ → Σ₀₁ (s ≡ s₁ ++ s₂) λ _ → x ∈ p · s₁
+         x ⊕ s₂ ∈ p · s → ∃ λ s₁ → s ≡ s₁ ++ s₂ × x ∈ p · s₁
 sound′ return            = ([]    , refl , return)
 sound′ {x = x} token     = ([ x ] , refl , token)
-sound′ (∣ˡ x∈p₁)         = Prod1.map id (Prod1.map id ∣ˡ)        (sound′ x∈p₁)
-sound′ (∣ʳ e₁ x∈p₁)      = Prod1.map id (Prod1.map id (∣ʳ e₁))   (sound′ x∈p₁)
-sound′ (<$> x∈p)         = Prod1.map id (Prod1.map id <$>_) (sound′ x∈p)
+sound′ (∣ˡ x∈p₁)         = Prod.map id (Prod.map id ∣ˡ)        (sound′ x∈p₁)
+sound′ (∣ʳ e₁ x∈p₁)      = Prod.map id (Prod.map id (∣ʳ e₁))   (sound′ x∈p₁)
+sound′ (<$> x∈p)         = Prod.map id (Prod.map id <$>_) (sound′ x∈p)
 sound′ (f∈p₁ ⊛ x∈p₂)     with sound′ f∈p₁ | sound′ x∈p₂
 sound′ (f∈p₁ ⊛ x∈p₂)     | (s₁ , refl , f∈p₁′) | (s₂ , refl , x∈p₂′) =
   (s₁ ++ s₂ , sym (LM.assoc s₁ s₂ _) , f∈p₁′ ⊛ x∈p₂′)
@@ -241,7 +237,7 @@ sound′ (nonempty s₁ x∈p) | (y ∷ s , eq , x∈p′) = (y ∷ s , eq , non
 sound′ (nonempty s₁ x∈p) | ([]    , eq , x∈p′)
   with ListProp.left-identity-unique (_ ∷ s₁) (sym eq)
 sound′ (nonempty s₁ x∈p) | ([]    , eq , x∈p′) | ()
-sound′ (cast x∈p)        = Prod1.map id (Prod1.map id cast) (sound′ x∈p)
+sound′ (cast x∈p)        = Prod.map id (Prod.map id cast) (sound′ x∈p)
 
 sound : ∀ {Tok R xs x s} {p : Parser Tok R xs} →
         x ⊕ [] ∈ p · s → x ∈ p · s
@@ -284,6 +280,6 @@ complete (nonempty {s = s} x∈p) = cast₂ (nonempty s (cast₁ (complete x∈p
   cast₂ = cast∈′      lem
 
 complete′ : ∀ {Tok R xs x s₂ s} {p : Parser Tok R xs} →
-            (∃ λ s₁ → Σ₀₁ (s ≡ s₁ ++ s₂) λ _ → x ∈ p · s₁) →
+            (∃ λ s₁ → s ≡ s₁ ++ s₂ × x ∈ p · s₁) →
             x ⊕ s₂ ∈ p · s
 complete′ (s₁ , refl , x∈p) = extend (complete x∈p)

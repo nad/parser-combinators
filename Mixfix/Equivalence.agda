@@ -11,7 +11,7 @@ module Mixfix.Equivalence
   (g : PrecedenceGraphInterface.PrecedenceGraph acyclic)
   where
 
-open import Data.Function using (_∘₁_)
+open import Data.Function using (_∘_)
 open import Data.List using (List; []; _∷_)
 open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.Product
@@ -191,20 +191,20 @@ acyclicToCyclic
   : ∀ {e s} → e ∈ Simplified.⟦_⟧ Acyclic.expression · s →
               e ∈                 Cyclic.expression · s
 acyclicToCyclic =
-  Sem.sound                   ∘₁
-  CLib.Semantics-⊕.sound      ∘₁
-  AcyclicToCyclic.precs _     ∘₁
-  ALib.Semantics-⊕.complete _ ∘₁
-  SSem.⊕-complete             ∘₁
+  Sem.sound                   ∘
+  CLib.Semantics-⊕.sound      ∘
+  AcyclicToCyclic.precs _     ∘
+  ALib.Semantics-⊕.complete _ ∘
+  SSem.⊕-complete             ∘
   SSem.complete _
 
 cyclicToAcyclic
   : ∀ {e s} → e ∈                 Cyclic.expression · s →
               e ∈ Simplified.⟦_⟧ Acyclic.expression · s
 cyclicToAcyclic =
-  SSem.sound                  ∘₁
-  SSem.⊕-sound                ∘₁
-  ALib.Semantics-⊕.sound      ∘₁
-  CyclicToAcyclic.precs _     ∘₁
-  CLib.Semantics-⊕.complete _ ∘₁
+  SSem.sound                  ∘
+  SSem.⊕-sound                ∘
+  ALib.Semantics-⊕.sound      ∘
+  CyclicToAcyclic.precs _     ∘
+  CLib.Semantics-⊕.complete _ ∘
   Sem.complete

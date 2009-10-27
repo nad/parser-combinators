@@ -9,13 +9,13 @@ module Mixfix.Cyclic.Uniqueness
          (g : PrecedenceGraphInterface.PrecedenceGraph i)
          where
 
-open import Coinduction using (♭₁)
+open import Coinduction using (♭)
 open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.List using (List; []; _∷_)
 open import Data.Vec using (Vec; []; _∷_)
 open import Data.Product using (_,_; ,_)
-open import Relation.Binary.PropositionalEquality using (_≡_;  refl)
-open import Relation.Binary.HeterogeneousEquality using (_≅₁_; refl)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl)
+open import Relation.Binary.HeterogeneousEquality using (_≅_; refl)
 
 open PrecedenceCorrect i g
 open import StructurallyRecursiveDescentParsing.Parser.Semantics
@@ -33,7 +33,7 @@ module Unique where
   precs : ∀ ps {s₁ s₂} {e₁ e₂ : Expr ps}
           (∈₁ : e₁ ∈⟦ Grammar.precs ps ⟧· s₁)
           (∈₂ : e₂ ∈⟦ Grammar.precs ps ⟧· s₂) →
-          e₁ ≡ e₂ → ∈₁ ≅₁ ∈₂
+          e₁ ≡ e₂ → ∈₁ ≅ ∈₂
   precs [] () () _
   precs (p ∷ ps) (∣ˡ (<$>_ {x = ( _ ,  _)}  ∈₁))
                  (∣ˡ (<$>_ {x = (._ , ._)}  ∈₂)) refl with prec ∈₁ ∈₂
@@ -49,7 +49,7 @@ module Unique where
   prec : ∀ {p assoc s₁ s₂} {e : ExprIn p assoc}
          (∈₁ : (, e) ∈⟦ Grammar.prec p ⟧· s₁)
          (∈₂ : (, e) ∈⟦ Grammar.prec p ⟧· s₂) →
-         ∈₁ ≅₁ ∈₂
+         ∈₁ ≅ ∈₂
   prec {p} ∈₁′ ∈₂′ = prec′ ∈₁′ ∈₂′ refl
     where
     module P = Grammar.Prec p
@@ -57,7 +57,7 @@ module Unique where
     preRight⁺ : ∀ {s₁ s₂} {e₁ e₂ : ExprIn p right}
                 (∈₁ : e₁ ∈⟦ P.preRight⁺ ⟧· s₁)
                 (∈₂ : e₂ ∈⟦ P.preRight⁺ ⟧· s₂) →
-                e₁ ≡ e₂ → ∈₁ ≅₁ ∈₂
+                e₁ ≡ e₂ → ∈₁ ≅ ∈₂
     preRight⁺ (∣ˡ (<$>  ∈₁)       ⊛∞ ∣ˡ (<$>  ∈₂))
               (∣ˡ (<$> ∈₁′)       ⊛∞ ∣ˡ (<$> ∈₂′)) refl with inner _   ∈₁ ∈₁′ refl | preRight⁺ ∈₂ ∈₂′ refl
     preRight⁺ (∣ˡ (<$>  ∈₁)       ⊛∞ ∣ˡ (<$>  ∈₂))
@@ -91,7 +91,7 @@ module Unique where
     postLeft⁺ : ∀ {s₁ s₂} {e₁ e₂ : ExprIn p left}
                 (∈₁ : e₁ ∈⟦ P.postLeft⁺ ⟧· s₁)
                 (∈₂ : e₂ ∈⟦ P.postLeft⁺ ⟧· s₂) →
-                e₁ ≡ e₂ → ∈₁ ≅₁ ∈₂
+                e₁ ≡ e₂ → ∈₁ ≅ ∈₂
     postLeft⁺ (<$> (∣ˡ (<$>  ∈₁)) ⊛∞ ∣ˡ (<$>  ∈₂))
               (<$> (∣ˡ (<$> ∈₁′)) ⊛∞ ∣ˡ (<$> ∈₂′))       refl with postLeft⁺ ∈₁ ∈₁′ refl | inner _ ∈₂ ∈₂′ refl
     postLeft⁺ (<$> (∣ˡ (<$>  ∈₁)) ⊛∞ ∣ˡ (<$>  ∈₂))
@@ -125,7 +125,7 @@ module Unique where
     prec′ : ∀ {assoc s₁ s₂} {e₁ e₂ : ExprIn p assoc} →
             (∈₁ : (, e₁) ∈⟦ Grammar.prec p ⟧· s₁)
             (∈₂ : (, e₂) ∈⟦ Grammar.prec p ⟧· s₂) →
-            e₁ ≡ e₂ → ∈₁ ≅₁ ∈₂
+            e₁ ≡ e₂ → ∈₁ ≅ ∈₂
     prec′ (∥ˡ (<$> ∈₁)) (∥ˡ (<$>  ∈₂)) refl with inner _ ∈₁ ∈₂ refl
     prec′ (∥ˡ (<$> ∈₁)) (∥ˡ (<$> .∈₁)) refl | refl = refl
 
@@ -149,7 +149,7 @@ module Unique where
   inner : ∀ {fix s₁ s₂} ops {e₁ e₂ : Inner {fix} ops}
           (∈₁ : e₁ ∈⟦ Grammar.inner ops ⟧· s₁)
           (∈₂ : e₂ ∈⟦ Grammar.inner ops ⟧· s₂) →
-          e₁ ≡ e₂ → ∈₁ ≅₁ ∈₂
+          e₁ ≡ e₂ → ∈₁ ≅ ∈₂
   inner [] () () _
   inner ((_ , op) ∷ ops) (∣ˡ (<$>  ∈₁))
                          (∣ˡ (<$>  ∈₂)) refl with inner′ _ _ ∈₁ ∈₂
@@ -167,7 +167,7 @@ module Unique where
            (args : Vec (Expr anyPrecedence) arity)
            (∈₁ : args ∈⟦ Grammar.expr between ns ⟧· s₁)
            (∈₂ : args ∈⟦ Grammar.expr between ns ⟧· s₂) →
-           ∈₁ ≅₁ ∈₂
+           ∈₁ ≅ ∈₂
   inner′ (n ∷ [])      []           between-[] between-[] = refl
   inner′ (n ∷ n′ ∷ ns) (arg ∷ args)
          (between-∷ ∈₁ ∈⋯₁) (between-∷ ∈₂ ∈⋯₂)
@@ -183,6 +183,6 @@ unique : ∀ {e s₁ s₂} →
          s₁ ≡ s₂
 unique ∈₁ ∈₂ with ∈₁′ | ∈₂′ | Unique.precs _ ∈₁′ ∈₂′ refl
   where
-  ∈₁′ = Lib.Semantics.complete (♭₁ Grammar.expr) ∈₁
-  ∈₂′ = Lib.Semantics.complete (♭₁ Grammar.expr) ∈₂
+  ∈₁′ = Lib.Semantics.complete (♭ Grammar.expr) ∈₁
+  ∈₂′ = Lib.Semantics.complete (♭ Grammar.expr) ∈₂
 ... | ∈ | .∈ | refl = refl

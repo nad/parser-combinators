@@ -117,7 +117,7 @@ module Ex₄′ where
   -- A monadic variant of Ex₄.
 
   aⁿbⁿcⁿ = return 0
-         ∣ theToken 'a' +           !>>= λ as → ♯₁
+         ∣ theToken 'a' +           !>>= λ as → ♯
            (let n = length as in
             exactly n (theToken 'b') ⊛>
             exactly n (theToken 'c') ⊛>

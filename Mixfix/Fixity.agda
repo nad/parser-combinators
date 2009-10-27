@@ -58,6 +58,6 @@ Fixity-is-finite = record
   left-inverse postfx       = refl
   left-inverse closed       = refl
 
-_≟_ : Decidable (_≡_ {Fixity})
+_≟_ : Decidable (_≡_ {A = Fixity})
 _≟_ = eq? injection
   where open LeftInverse Fixity-is-finite

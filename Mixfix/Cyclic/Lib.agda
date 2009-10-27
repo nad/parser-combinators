@@ -15,14 +15,12 @@ open import Data.List.NonEmpty using (List⁺; [_]; _∷_; _∷ʳ_)
 open import Data.Maybe using (Maybe; just; nothing; maybe)
 open import Data.Vec using (Vec; []; _∷_)
 open import Data.Product
-open import Data.Product1 using (_,_)
 import Data.String as String
 open import Relation.Binary
 open DecSetoid String.decSetoid using (_≟_)
 open import Relation.Nullary
 open import Relation.Binary.PropositionalEquality
   using (_≡_; refl; sym)
-open import Relation.Binary.PropositionalEquality1 using (refl)
 
 open import StructurallyRecursiveDescentParsing.Coinduction
 open import StructurallyRecursiveDescentParsing.Parser
@@ -56,16 +54,16 @@ data ParserProg : Set → Set1 where
               (p₂ : ParserProg R₁) →
                     ParserProg R₂
   _⊛∞_      : ∀ {R₁ R₂}
-              (p₁ : ∞₁ (ParserProg (R₁ → R₂)))
-              (p₂ : ∞₁ (ParserProg R₁)) →
-                        ParserProg R₂
+              (p₁ : ∞ (ParserProg (R₁ → R₂)))
+              (p₂ : ∞ (ParserProg R₁)) →
+                       ParserProg R₂
   _<$>_     : ∀ {R₁ R₂} (f : R₁ → R₂)
               (p : ParserProg R₁) →
                    ParserProg R₂
   _+        : ∀ {R} (p : ParserProg R) →
                          ParserProg (List⁺ R)
   _between_ : ∀ {R n}
-              (p : ∞₁ (ParserProg R)) (toks : Vec NamePart (1 + n)) →
+              (p : ∞ (ParserProg R)) (toks : Vec NamePart (1 + n)) →
               ParserProg (Vec R n)
   _∥_       : ∀ {I i} {R : I → Set}
               (p₁ : ParserProg (R i))
@@ -92,16 +90,16 @@ theToken tok = token >>= λ tok′ → ♯? (ok tok′)
 ⟦_⟧ : ∀ {R} → ParserProg R → Parser NamePart R []
 ⟦ fail               ⟧ = fail
 ⟦ p₁ ∣ p₂            ⟧ = ⟦ p₁ ⟧ ∣ ⟦ p₂ ⟧
-⟦ p₁ ⊛  p₂           ⟧ = ⟪ ♯₁ ⟦    p₁ ⟧ ⟫ ⊛ ⟪ ♯₁ ⟦    p₂ ⟧ ⟫
-⟦ p₁ ⊛∞ p₂           ⟧ = ⟪ ♯₁ ⟦ ♭₁ p₁ ⟧ ⟫ ⊛ ⟪ ♯₁ ⟦ ♭₁ p₂ ⟧ ⟫
+⟦ p₁ ⊛  p₂           ⟧ = ⟪ ♯ ⟦   p₁ ⟧ ⟫ ⊛ ⟪ ♯ ⟦   p₂ ⟧ ⟫
+⟦ p₁ ⊛∞ p₂           ⟧ = ⟪ ♯ ⟦ ♭ p₁ ⟧ ⟫ ⊛ ⟪ ♯ ⟦ ♭ p₂ ⟧ ⟫
 ⟦ f <$> p            ⟧ = f <$> ⟦ p ⟧
 ⟦ p +                ⟧ = ⟨ (λ x → maybe (_∷_ x) [ x ]) <$> ⟦ p ⟧ ⟩ ⊛
-                         ⟪ ♯₁ (⟦ just <$> p + ⟧ ∣ return nothing) ⟫
+                         ⟪ ♯ (⟦ just <$> p + ⟧ ∣ return nothing) ⟫
 ⟦ p between (t ∷ []) ⟧ = const [] <$> theToken t
 ⟦ p between
-       (t ∷ t′ ∷ ts) ⟧ = ⟪ ♯₁ ♯? (const _∷_ <$> theToken t) ⊛
-                         ⟪ ♯₁ ⟦ ♭₁ p ⟧ ⟫ ⟫ ⊛
-                         ⟪ ♯₁ ⟦ p between (t′ ∷ ts) ⟧ ⟫
+       (t ∷ t′ ∷ ts) ⟧ = ⟪ ♯ ♯? (const _∷_ <$> theToken t) ⊛
+                         ⟪ ♯ ⟦ ♭ p ⟧ ⟫ ⟫ ⊛
+                         ⟪ ♯ ⟦ p between (t′ ∷ ts) ⟧ ⟫
 ⟦ p₁ ∥ p₂            ⟧ = ,_ <$> ⟦ p₁ ⟧
                        ∣        ⟦ p₂ ⟧
 
@@ -138,10 +136,10 @@ module Semantics where
                  (x∈p₂ : x ∈⟦ p₂ ⟧· s₂) →
                  f x ∈⟦ p₁ ⊛ p₂ ⟧· s₁ ++ s₂
     _⊛∞_       : ∀ {s₁ s₂ R₁ R₂ f x}
-                   {p₁ : ∞₁ (ParserProg (R₁ → R₂))}
-                   {p₂ : ∞₁ (ParserProg R₁)}
-                 (f∈p₁ : f ∈⟦ ♭₁ p₁ ⟧· s₁)
-                 (x∈p₂ : x ∈⟦ ♭₁ p₂ ⟧· s₂) →
+                   {p₁ : ∞ (ParserProg (R₁ → R₂))}
+                   {p₂ : ∞ (ParserProg R₁)}
+                 (f∈p₁ : f ∈⟦ ♭ p₁ ⟧· s₁)
+                 (x∈p₂ : x ∈⟦ ♭ p₂ ⟧· s₂) →
                  f x ∈⟦ p₁ ⊛∞ p₂ ⟧· s₁ ++ s₂
     <$>_       : ∀ {s R₁ R₂ x} {f : R₁ → R₂} {p : ParserProg R₁}
                  (x∈p : x ∈⟦ p ⟧· s) → f x ∈⟦ f <$> p ⟧· s
@@ -150,11 +148,11 @@ module Semantics where
     +-∷        : ∀ {R x s₁ s₂ xs} {p : ParserProg R}
                  (x∈p : x ∈⟦ p ⟧· s₁) (xs∈p : xs ∈⟦ p + ⟧· s₂) →
                  x ∷ xs ∈⟦ p + ⟧· s₁ ++ s₂
-    between-[] : ∀ {R t} {p : ∞₁ (ParserProg R)} →
+    between-[] : ∀ {R t} {p : ∞ (ParserProg R)} →
                  [] ∈⟦ p between (t ∷ []) ⟧· t ∷ []
     between-∷  : ∀ {R n t x xs s₁ s₂}
-                   {p : ∞₁ (ParserProg R)} {ts : Vec NamePart (suc n)}
-                 (x∈p : x ∈⟦ ♭₁ p ⟧· s₁)
+                   {p : ∞ (ParserProg R)} {ts : Vec NamePart (suc n)}
+                 (x∈p : x ∈⟦ ♭ p ⟧· s₁)
                  (xs∈⋯ : xs ∈⟦ p between ts ⟧· s₂) →
                  x ∷ xs ∈⟦ p between (t ∷ ts) ⟧· t ∷ s₁ ++ s₂
     ∥ˡ         : ∀ {I i} {R : I → Set} {x s}
@@ -208,8 +206,8 @@ module Semantics where
   complete (p₁ ∣ p₂) (∣ˡ     x∈p₁) = ∣ˡ (complete p₁ x∈p₁)
   complete (p₁ ∣ p₂) (∣ʳ .[] x∈p₂) = ∣ʳ (complete p₂ x∈p₂)
 
-  complete (p₁ ⊛  p₂) (f∈p₁ ⊛ y∈p₂) = complete     p₁  f∈p₁ ⊛  complete     p₂  y∈p₂
-  complete (p₁ ⊛∞ p₂) (f∈p₁ ⊛ y∈p₂) = complete (♭₁ p₁) f∈p₁ ⊛∞ complete (♭₁ p₂) y∈p₂
+  complete (p₁ ⊛  p₂) (f∈p₁ ⊛ y∈p₂) = complete    p₁  f∈p₁ ⊛  complete    p₂  y∈p₂
+  complete (p₁ ⊛∞ p₂) (f∈p₁ ⊛ y∈p₂) = complete (♭ p₁) f∈p₁ ⊛∞ complete (♭ p₂) y∈p₂
 
   complete (f <$> p) (<$> x∈p) = <$> complete p x∈p
 
@@ -224,7 +222,7 @@ module Semantics where
   complete (p between (t ∷ t′ ∷ ts)) (<$> t∈ ⊛ x∈p ⊛ xs∈)
     with theToken-sound t∈
   ... | (refl , refl) =
-    between-∷ (complete (♭₁ p) x∈p) (complete (p between (t′ ∷ ts)) xs∈)
+    between-∷ (complete (♭ p) x∈p) (complete (p between (t′ ∷ ts)) xs∈)
 
   complete (p₁ ∥ p₂) (∣ˡ (<$> x∈p₁)) = ∥ˡ (complete p₁ x∈p₁)
   complete (p₁ ∥ p₂) (∣ʳ .[] x∈p₂)   = ∥ʳ (complete p₂ x∈p₂)
@@ -258,10 +256,10 @@ module Semantics-⊕ where
                  (x∈p₂ : x ⊕ s₂ ∈⟦ p₂ ⟧· s₁) →
                  f x ⊕ s₂ ∈⟦ p₁ ⊛ p₂ ⟧· s
     _⊛∞_       : ∀ {s s₁ s₂ R₁ R₂ f x}
-                   {p₁ : ∞₁ (ParserProg (R₁ → R₂))}
-                   {p₂ : ∞₁ (ParserProg R₁)}
-                 (f∈p₁ : f ⊕ s₁ ∈⟦ ♭₁ p₁ ⟧· s)
-                 (x∈p₂ : x ⊕ s₂ ∈⟦ ♭₁ p₂ ⟧· s₁) →
+                   {p₁ : ∞ (ParserProg (R₁ → R₂))}
+                   {p₂ : ∞ (ParserProg R₁)}
+                 (f∈p₁ : f ⊕ s₁ ∈⟦ ♭ p₁ ⟧· s)
+                 (x∈p₂ : x ⊕ s₂ ∈⟦ ♭ p₂ ⟧· s₁) →
                  f x ⊕ s₂ ∈⟦ p₁ ⊛∞ p₂ ⟧· s
     <$>_       : ∀ {s s′ R₁ R₂ x} {f : R₁ → R₂} {p : ParserProg R₁}
                  (x∈p : x ⊕ s′ ∈⟦ p ⟧· s) → f x ⊕ s′ ∈⟦ f <$> p ⟧· s
@@ -270,11 +268,11 @@ module Semantics-⊕ where
     +-∷        : ∀ {R x s s₁ s₂ xs} {p : ParserProg R}
                  (x∈p : x ⊕ s₁ ∈⟦ p ⟧· s) (xs∈p : xs ⊕ s₂ ∈⟦ p + ⟧· s₁) →
                  x ∷ xs ⊕ s₂ ∈⟦ p + ⟧· s
-    between-[] : ∀ {R t s} {p : ∞₁ (ParserProg R)} →
+    between-[] : ∀ {R t s} {p : ∞ (ParserProg R)} →
                  [] ⊕ s ∈⟦ p between (t ∷ []) ⟧· t ∷ s
     between-∷  : ∀ {R n t x xs s s₁ s₂}
-                   {p : ∞₁ (ParserProg R)} {ts : Vec NamePart (suc n)}
-                 (x∈p : x ⊕ s₁ ∈⟦ ♭₁ p ⟧· s)
+                   {p : ∞ (ParserProg R)} {ts : Vec NamePart (suc n)}
+                 (x∈p : x ⊕ s₁ ∈⟦ ♭ p ⟧· s)
                  (xs∈⋯ : xs ⊕ s₂ ∈⟦ p between ts ⟧· s₁) →
                  x ∷ xs ⊕ s₂ ∈⟦ p between (t ∷ ts) ⟧· t ∷ s
     ∥ˡ         : ∀ {I i} {R : I → Set} {x s s′}
@@ -320,8 +318,8 @@ module Semantics-⊕ where
   complete (p₁ ∣ p₂) (∣ˡ     x∈p₁) = ∣ˡ (complete p₁ x∈p₁)
   complete (p₁ ∣ p₂) (∣ʳ .[] x∈p₂) = ∣ʳ (complete p₂ x∈p₂)
 
-  complete (p₁ ⊛  p₂) (f∈p₁ ⊛ y∈p₂) = complete     p₁  f∈p₁ ⊛  complete     p₂  y∈p₂
-  complete (p₁ ⊛∞ p₂) (f∈p₁ ⊛ y∈p₂) = complete (♭₁ p₁) f∈p₁ ⊛∞ complete (♭₁ p₂) y∈p₂
+  complete (p₁ ⊛  p₂) (f∈p₁ ⊛ y∈p₂) = complete    p₁  f∈p₁ ⊛  complete    p₂  y∈p₂
+  complete (p₁ ⊛∞ p₂) (f∈p₁ ⊛ y∈p₂) = complete (♭ p₁) f∈p₁ ⊛∞ complete (♭ p₂) y∈p₂
 
   complete (f <$> p) (<$> x∈p) = <$> complete p x∈p
 
@@ -333,7 +331,7 @@ module Semantics-⊕ where
   complete (p between (t ∷ t′ ∷ ts)) (<$> t∈ ⊛ x∈p ⊛ xs∈)
     with theToken-sound t∈
   ... | (refl , refl) =
-    between-∷ (complete (♭₁ p) x∈p) (complete (p between (t′ ∷ ts)) xs∈)
+    between-∷ (complete (♭ p) x∈p) (complete (p between (t′ ∷ ts)) xs∈)
 
   complete (p₁ ∥ p₂) (∣ˡ (<$> x∈p₁)) = ∥ˡ (complete p₁ x∈p₁)
   complete (p₁ ∥ p₂) (∣ʳ .[] x∈p₂)   = ∥ʳ (complete p₂ x∈p₂)

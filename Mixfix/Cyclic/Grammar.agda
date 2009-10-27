@@ -12,7 +12,6 @@ module Mixfix.Cyclic.Grammar
          where
 
 open import Coinduction
-  using () renaming (∞₁ to ∞; ♯₁_ to ♯_; ♭₁ to ♭)
 open import Data.Function using (flip; _$_)
 open import Data.List using (List; []; _∷_)
 open import Data.List.Any as Any using (here; there)

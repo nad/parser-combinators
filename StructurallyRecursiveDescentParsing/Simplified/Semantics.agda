@@ -10,12 +10,10 @@ open import Data.Bool
 open import Data.List as List
 private
   module LM {Tok} = Monoid (List.monoid Tok)
-import Data.Product as Prod
-open import Data.Product1 as Prod1 renaming (∃₀₁ to ∃; map₀₁ to map)
+open import Data.Product as Prod
 open import Data.Function
 open import Data.Empty
 open import Relation.Binary.PropositionalEquality
-open import Relation.Binary.PropositionalEquality1 using (_≡₁_; refl)
 
 open import StructurallyRecursiveDescentParsing.Coinduction
 open import StructurallyRecursiveDescentParsing.Simplified
@@ -47,8 +45,8 @@ data _∈_·_ {Tok} : ∀ {R e} → R → Parser Tok e R → List Tok → Set1 w
            y ∈ p₁ ?>>= p₂ · s₁ ++ s₂
   _!>>=_ : ∀ {R₁ R₂ x y} {e₂ : R₁ → Bool} {s₁ s₂}
              {p₁ : Parser Tok false R₁}
-             {p₂ : (x : R₁) → ∞₁ (Parser Tok (e₂ x) R₂)}
-           (x∈p₁ : x ∈ p₁ · s₁) (y∈p₂x : y ∈ ♭₁ (p₂ x) · s₂) →
+             {p₂ : (x : R₁) → ∞ (Parser Tok (e₂ x) R₂)}
+           (x∈p₁ : x ∈ p₁ · s₁) (y∈p₂x : y ∈ ♭ (p₂ x) · s₂) →
            y ∈ p₁ !>>= p₂ · s₁ ++ s₂
 
 ------------------------------------------------------------------------
@@ -76,7 +74,7 @@ complete (p₁ ?>>= p₂)    (cast
                            (x∈p₁ >>= y∈p₂x))  = complete p₁ x∈p₁ ?>>=
                                                 complete (p₂ _) y∈p₂x
 complete (p₁ !>>= p₂)      (x∈p₁ >>= y∈p₂x)   = complete p₁ x∈p₁ !>>=
-                                                complete (♭₁ (p₂ _)) y∈p₂x
+                                                complete (♭ (p₂ _)) y∈p₂x
 
 ------------------------------------------------------------------------
 -- A lemma
@@ -84,7 +82,7 @@ complete (p₁ !>>= p₂)      (x∈p₁ >>= y∈p₂x)   = complete p₁ x∈p�
 -- A simple cast lemma.
 
 cast∈ : ∀ {Tok e R} {p p′ : Parser Tok e R} {x x′ s s′} →
-        x ≡ x′ → p ≡₁ p′ → s ≡ s′ → x ∈ p · s → x′ ∈ p′ · s′
+        x ≡ x′ → p ≡ p′ → s ≡ s′ → x ∈ p · s → x′ ∈ p′ · s′
 cast∈ refl refl refl x∈ = x∈
 
 ------------------------------------------------------------------------
@@ -113,14 +111,14 @@ data _⊕_∈_·_ {Tok} : ∀ {R e} → R → List Tok →
            y ⊕ s₂ ∈ p₁ ?>>= p₂ · s
   _!>>=_ : ∀ {R₁ R₂ x y} {e₂ : R₁ → Bool} {s s₁ s₂}
              {p₁ : Parser Tok false R₁}
-             {p₂ : (x : R₁) → ∞₁ (Parser Tok (e₂ x) R₂)}
-           (x∈p₁ : x ⊕ s₁ ∈ p₁ · s) (y∈p₂x : y ⊕ s₂ ∈ ♭₁ (p₂ x) · s₁) →
+             {p₂ : (x : R₁) → ∞ (Parser Tok (e₂ x) R₂)}
+           (x∈p₁ : x ⊕ s₁ ∈ p₁ · s) (y∈p₂x : y ⊕ s₂ ∈ ♭ (p₂ x) · s₁) →
            y ⊕ s₂ ∈ p₁ !>>= p₂ · s
 
 -- The definition is sound and complete with respect to the one above.
 
 ⊕-sound′ : ∀ {Tok R e x s₂ s} {p : Parser Tok e R} →
-           x ⊕ s₂ ∈ p · s → ∃ λ s₁ → Σ₀₁ (s ≡ s₁ ++ s₂) λ _ → x ∈ p · s₁
+           x ⊕ s₂ ∈ p · s → ∃ λ s₁ → (s ≡ s₁ ++ s₂) × (x ∈ p · s₁)
 ⊕-sound′ return            = ([]    , refl , return)
 ⊕-sound′ {x = x} token     = ([ x ] , refl , token)
 ⊕-sound′ (∣ˡ x∈p₁)         with ⊕-sound′ x∈p₁
@@ -139,7 +137,7 @@ data _⊕_∈_·_ {Tok} : ∀ {R e} → R → List Tok →
 ⊕-sound : ∀ {Tok R e x s} {p : Parser Tok e R} →
           x ⊕ [] ∈ p · s → x ∈ p · s
 ⊕-sound x∈p with ⊕-sound′ x∈p
-⊕-sound x∈p | (s , refl , x∈p′) with s ++ [] | Prod.proj₂ LM.identity s
+⊕-sound x∈p | (s , refl , x∈p′) with s ++ [] | proj₂ LM.identity s
 ⊕-sound x∈p | (s , refl , x∈p′) | .s | refl = x∈p′
 
 extend : ∀ {Tok R e x s s′ s″} {p : Parser Tok e R} →
@@ -163,6 +161,6 @@ extend (x∈p₁ !>>= y∈p₂x) = extend x∈p₁ !>>= extend y∈p₂x
                                        ⊕-complete y∈p₂x
 
 ⊕-complete′ : ∀ {Tok R e x s₂ s} {p : Parser Tok e R} →
-              (∃ λ s₁ → Σ₀₁ (s ≡ s₁ ++ s₂) λ _ → x ∈ p · s₁) →
+              (∃ λ s₁ → s ≡ s₁ ++ s₂ × x ∈ p · s₁) →
               x ⊕ s₂ ∈ p · s
 ⊕-complete′ (s₁ , refl , x∈p) = extend (⊕-complete x∈p)
