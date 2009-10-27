@@ -33,7 +33,6 @@ open import Relation.Binary.PropositionalEquality
   using (_≡_; refl; cong)
 
 open import StructurallyRecursiveDescentParsing.Coinduction
-import StructurallyRecursiveDescentParsing.Parser as Parser
 import StructurallyRecursiveDescentParsing.Simplified as Simplified
 open Simplified hiding (⟦_⟧)
 open import StructurallyRecursiveDescentParsing.Simplified.Semantics
