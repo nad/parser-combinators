@@ -4,11 +4,11 @@
 ------------------------------------------------------------------------
 
 -- This is obvious given the proof in
--- TotalRecognisers.ExpressiveStrength but the code below
--- provides a non-trivial example of the use of the parser
+-- TotalRecognisers.LeftRecursion.ExpressiveStrength but the code
+-- below provides a non-trivial example of the use of the parser
 -- combinators.
 
-module TotalRecognisers.NotOnlyContextFree where
+module TotalRecognisers.LeftRecursion.NotOnlyContextFree where
 
 open import Algebra
 open import Coinduction
@@ -28,7 +28,7 @@ open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
 open ≡-Reasoning
 
-import TotalRecognisers
+import TotalRecognisers.LeftRecursion
 
 ------------------------------------------------------------------------
 -- The alphabet
@@ -47,7 +47,7 @@ c ≟ a = no λ()
 c ≟ b = no λ()
 c ≟ c = yes refl
 
-open TotalRecognisers Tok _≟_
+open TotalRecognisers.LeftRecursion Tok _≟_
 
 ------------------------------------------------------------------------
 -- An auxiliary definition and a boring lemma

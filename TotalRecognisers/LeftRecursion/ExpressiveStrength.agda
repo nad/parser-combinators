@@ -1,12 +1,12 @@
 ------------------------------------------------------------------------
--- This module proves that the parser combinators correspond exactly
--- to decidable predicates of type List Bool → Bool (when the alphabet
--- is Bool)
+-- This module proves that the recognisers correspond exactly to
+-- decidable predicates of type List Bool → Bool (when the alphabet is
+-- Bool)
 ------------------------------------------------------------------------
 
--- This result could be generalised to other alphabets.
+-- This result could be generalised to other finite alphabets.
 
-module TotalRecognisers.ExpressiveStrength where
+module TotalRecognisers.LeftRecursion.ExpressiveStrength where
 
 open import Coinduction
 open import Data.Bool hiding (_∧_)
@@ -19,8 +19,8 @@ open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
 open import Relation.Nullary.Decidable
 
-import TotalRecognisers
-open TotalRecognisers Bool _≟_
+import TotalRecognisers.LeftRecursion
+open TotalRecognisers.LeftRecursion Bool _≟_
 
 ------------------------------------------------------------------------
 -- A boring lemma
@@ -37,11 +37,11 @@ private
 -- Expressive strength
 
 -- One direction of the correspondence has already been established:
--- For every parser there is an equivalent decidable predicate.
+-- For every grammar there is an equivalent decidable predicate.
 
-parser⇒pred : ∀ {n} (p : P n) →
-              ∃ λ (f : List Bool → Bool) → ∀ s → s ∈ p ⇔ f s ≡ true
-parser⇒pred p = (λ s → decToBool (s ∈? p))
+grammar⇒pred : ∀ {n} (p : P n) →
+               ∃ λ (f : List Bool → Bool) → ∀ s → s ∈ p ⇔ f s ≡ true
+grammar⇒pred p = (λ s → decToBool (s ∈? p))
               , λ s → (helper₁ s , helper₂ s)
   where
   helper₁ : ∀ s → s ∈ p → decToBool (s ∈? p) ≡ true
@@ -54,12 +54,12 @@ parser⇒pred p = (λ s → decToBool (s ∈? p))
   helper₂ s refl | yes s∈p = s∈p
   helper₂ s ()   | no  _
 
--- For every decidable predicate there is a corresponding parser. Note
--- that these parsers are all "infinite LL(0)".
+-- For every decidable predicate there is a corresponding grammar.
+-- Note that these grammars are all "infinite LL(0)".
 
-pred⇒parser : (f : List Bool → Bool) →
-              ∃ λ (p : P (f [])) → ∀ s → s ∈ p ⇔ f s ≡ true
-pred⇒parser f = (p f , λ s → (p-sound f , p-complete f s))
+pred⇒grammar : (f : List Bool → Bool) →
+               ∃ λ (p : P (f [])) → ∀ s → s ∈ p ⇔ f s ≡ true
+pred⇒grammar f = (p f , λ s → (p-sound f , p-complete f s))
   where
   accept-if-true : ∀ b → P b
   accept-if-true true  = ε
@@ -106,9 +106,9 @@ pred⇒parser f = (p f , λ s → (p-sound f , p-complete f s))
 -- An alternative proof which uses a less complicated, but left
 -- recursive, definition of the grammar.
 
-pred⇒parser′ : (f : List Bool → Bool) →
-               ∃ λ (p : P (f [])) → ∀ s → s ∈ p ⇔ f s ≡ true
-pred⇒parser′ f = (p f , λ s → (p-sound f , p-complete f s))
+pred⇒grammar′ : (f : List Bool → Bool) →
+                ∃ λ (p : P (f [])) → ∀ s → s ∈ p ⇔ f s ≡ true
+pred⇒grammar′ f = (p f , λ s → (p-sound f , p-complete f s))
   where
   extend : ∀ {A B} → (List A → B) → A → (List A → B)
   extend f x = λ xs → f (xs ∷ʳ x)
