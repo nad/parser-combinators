@@ -74,12 +74,12 @@ show i = "P1 # Generated using Agda.\n" <+>
 ------------------------------------------------------------------------
 -- Parsing PBM images
 
-comment = tt <$ theToken '#'
+comment = tt <$ tok '#'
              <⊛ sat' (not ∘ _==_ '\n') ⋆
-             <⊛ theToken '\n'
+             <⊛ tok '\n'
 
-colour = white <$ theToken '0'
-       ∣ black <$ theToken '1'
+colour = white <$ tok '0'
+       ∣ black <$ tok '1'
 
 pbm =
    w∣c ⋆ ⊛>

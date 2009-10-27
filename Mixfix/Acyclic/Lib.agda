@@ -79,8 +79,8 @@ data ParserProg : Set → Set1 where
 
 -- Parses a given token.
 
-theToken : NamePart → Parser NamePart false NamePart
-theToken tok = token !>>= λ tok′ → ♯ ok tok′
+tok : NamePart → Parser NamePart false NamePart
+tok tok = token !>>= λ tok′ → ♯ ok tok′
   module TheToken where
   okIndex : NamePart → Bool
   okIndex tok′ with tok ≟ tok′
@@ -107,8 +107,8 @@ private
 ⟦ f <$> p                 ⟧ = ⟦ p  ⟧ !>>= λ x → ♯′ return (f x)
 ⟦ p +                     ⟧ = ⟦ p  ⟧ !>>= λ x → ♯
                               (⟦ _∷_ x <$> p + ⟧ ∣ return [ x ])
-⟦ p between (t ∷ [])      ⟧ = theToken t !>>= λ _ → ♯′ return []
-⟦ p between (t ∷ t′ ∷ ts) ⟧ = theToken t !>>= λ _ → ♯
+⟦ p between (t ∷ [])      ⟧ = tok t !>>= λ _ → ♯′ return []
+⟦ p between (t ∷ t′ ∷ ts) ⟧ = tok t !>>= λ _ → ♯
                               ⟦ _∷_ <$> ♭ p ⊛ (p between (t′ ∷ ts)) ⟧
 ⟦ p₁ ∥ p₂                 ⟧ = (⟦ p₁ ⟧ !>>= λ x → ♯′ return (, x)) ∣ ⟦ p₂ ⟧
 
@@ -186,15 +186,15 @@ module Semantics where
                f x ∈ ⟦ p₁ ⊛ p₂ ⟧ · s₁ ++ s₂
   ⊛-complete f∈p₁ x∈p₂ = f∈p₁ !>>= drop-[] (x∈p₂ !>>= return)
 
-  theToken-sound : ∀ {t t′ s} →
-                   t′ ∈ theToken t · s →
-                   t ≡ t′ × s ≡ t′ ∷ []
-  theToken-sound {t} (_!>>=_ {x = t″} token t′∈) with t ≟ t″
-  theToken-sound (token !>>= return) | yes t≈t″ = (t≈t″ , refl)
-  theToken-sound (token !>>= ())     | no  t≉t″
+  tok-sound : ∀ {t t′ s} →
+              t′ ∈ tok t · s →
+              t ≡ t′ × s ≡ t′ ∷ []
+  tok-sound {t} (_!>>=_ {x = t″} token t′∈) with t ≟ t″
+  tok-sound (token !>>= return) | yes t≈t″ = (t≈t″ , refl)
+  tok-sound (token !>>= ())     | no  t≉t″
 
-  theToken-complete : ∀ {t} → t ∈ theToken t · t ∷ []
-  theToken-complete {t} = token !>>= ok-lemma
+  tok-complete : ∀ {t} → t ∈ tok t · t ∷ []
+  tok-complete {t} = token !>>= ok-lemma
     where
     ok-lemma : t ∈ TheToken.ok t t · []
     ok-lemma with t ≟ t
@@ -212,9 +212,9 @@ module Semantics where
   sound (+-∷ x∈p xs∈p) = sound x∈p !>>= ∣ˡ (drop-[] (sound xs∈p !>>= return))
   sound (∥ˡ x∈p₁)      = drop-[] (∣ˡ (sound x∈p₁ !>>= return))
   sound (∥ʳ x∈p₂)      = ∣ʳ false (sound x∈p₂)
-  sound between-[]     = theToken-complete !>>= return
+  sound between-[]     = tok-complete !>>= return
   sound (between-∷ {s₁ = s₁} {ts = _ ∷ _} x∈p xs∈⋯) =
-    theToken-complete !>>=
+    tok-complete !>>=
     ⊛-complete (drop-[] {s = s₁} (sound x∈p !>>= return)) (sound xs∈⋯)
 
   complete : ∀ {R x s} (p : ParserProg R) →
@@ -232,10 +232,10 @@ module Semantics where
   complete (p +) (x∈p !>>= ∣ˡ (xs∈p+ !>>= return)) = +-∷ (complete p x∈p) (add-[] (complete (p +) xs∈p+))
   complete (p +) (x∈p !>>= ∣ʳ .false return)       = add-[] (+-[] (complete p x∈p))
 
-  complete (p between (t ∷ [])) (t∈ !>>= return) with theToken-sound t∈
+  complete (p between (t ∷ [])) (t∈ !>>= return) with tok-sound t∈
   ... | (refl , refl) = between-[]
   complete (p between (t ∷ t′ ∷ ts))
-           (t∈ !>>= (x∈p !>>= return !>>= (xs∈ !>>= return))) with theToken-sound t∈
+           (t∈ !>>= (x∈p !>>= return !>>= (xs∈ !>>= return))) with tok-sound t∈
   ... | (refl , refl) =
     between-∷ (add-[] (complete (♭ p) x∈p))
               (add-[] (complete (p between (t′ ∷ ts)) xs∈))
@@ -299,16 +299,15 @@ module Semantics-⊕ where
                f x ⊕ s₂ ∈ ⟦ p₁ ⊛ p₂ ⟧ · s
   ⊛-complete f∈p₁ x∈p₂ = f∈p₁ !>>= (x∈p₂ !>>= return)
 
-  theToken-sound : ∀ {t t′ s₁ s} →
-                   t′ ⊕ s₁ ∈ theToken t · s →
-                   t ≡ t′ × s ≡ t′ ∷ s₁
-  theToken-sound     ∈ with Sem.⊕-sound′ ∈
-  theToken-sound     ∈ | (s         , refl , ∈′) with Semantics.theToken-sound ∈′
-  theToken-sound {t} ∈ | (.(t ∷ []) , refl , ∈′) | (refl , refl) = (refl , refl)
+  tok-sound : ∀ {t t′ s₁ s} →
+              t′ ⊕ s₁ ∈ tok t · s →
+              t ≡ t′ × s ≡ t′ ∷ s₁
+  tok-sound     ∈ with Sem.⊕-sound′ ∈
+  tok-sound     ∈ | (s         , refl , ∈′) with Semantics.tok-sound ∈′
+  tok-sound {t} ∈ | (.(t ∷ []) , refl , ∈′) | (refl , refl) = (refl , refl)
 
-  theToken-complete : ∀ {t s} → t ⊕ s ∈ theToken t · t ∷ s
-  theToken-complete =
-    Sem.⊕-complete′ (_ , refl , Semantics.theToken-complete)
+  tok-complete : ∀ {t s} → t ⊕ s ∈ tok t · t ∷ s
+  tok-complete = Sem.⊕-complete′ (_ , refl , Semantics.tok-complete)
 
   sound : ∀ {R x s s′} {p : ParserProg R} →
           x ⊕ s′ ∈⟦ p ⟧· s → x ⊕ s′ ∈ ⟦ p ⟧ · s
@@ -320,9 +319,9 @@ module Semantics-⊕ where
   sound (+-∷ x∈p xs∈p) = sound x∈p !>>= ∣ˡ (sound xs∈p !>>= return)
   sound (∥ˡ x∈p₁)      = ∣ˡ (sound x∈p₁ !>>= return)
   sound (∥ʳ x∈p₂)      = ∣ʳ false (sound x∈p₂)
-  sound between-[]     = theToken-complete !>>= return
+  sound between-[]     = tok-complete !>>= return
   sound (between-∷ {ts = _ ∷ _} x∈p xs∈⋯) =
-    theToken-complete !>>=
+    tok-complete !>>=
     ⊛-complete (sound x∈p !>>= return) (sound xs∈⋯)
 
   complete : ∀ {R x s s′} (p : ParserProg R) →
@@ -340,10 +339,10 @@ module Semantics-⊕ where
   complete (p +) (x∈p !>>= ∣ˡ (xs∈p+ !>>= return)) = +-∷  (complete p x∈p) (complete (p +) xs∈p+)
   complete (p +) (x∈p !>>= ∣ʳ .false return)       = +-[] (complete p x∈p)
 
-  complete (p between (t ∷ [])) (t∈ !>>= return) with theToken-sound t∈
+  complete (p between (t ∷ [])) (t∈ !>>= return) with tok-sound t∈
   ... | (refl , refl) = between-[]
   complete (p between (t ∷ t′ ∷ ts))
-           (t∈ !>>= (x∈p !>>= return !>>= (xs∈ !>>= return))) with theToken-sound t∈
+           (t∈ !>>= (x∈p !>>= return !>>= (xs∈ !>>= return))) with tok-sound t∈
   ... | (refl , refl) =
     between-∷ (complete (♭ p) x∈p) (complete (p between (t′ ∷ ts)) xs∈)
 

@@ -329,8 +329,8 @@ module Token (A : DecSetoid) where
   -- Parses a given token (or, really, a given equivalence class of
   -- tokens).
 
-  theToken : ∀ {NT} → Tok → Parser NT Tok _ Tok
-  theToken tok = sat p
+  tok : ∀ {NT} → Tok → Parser NT Tok _ Tok
+  tok tok = sat p
     where
     p : Tok → Maybe Tok
     p tok′ with tok ≟ tok′
@@ -340,22 +340,22 @@ module Token (A : DecSetoid) where
   -- Parses a sequence of tokens.
 
   theString : ∀ {NT n} → Vec Tok n → Parser NT Tok _ (Vec Tok n)
-  theString cs = sequence (map₀₁ theToken cs)
+  theString cs = sequence (map₀₁ tok cs)
 
 ------------------------------------------------------------------------
 -- Character parsers
 
 digit : ∀ {NT} → Parser NT Char _ ℕ
-digit = 0 <$ theToken '0'
-      ∣ 1 <$ theToken '1'
-      ∣ 2 <$ theToken '2'
-      ∣ 3 <$ theToken '3'
-      ∣ 4 <$ theToken '4'
-      ∣ 5 <$ theToken '5'
-      ∣ 6 <$ theToken '6'
-      ∣ 7 <$ theToken '7'
-      ∣ 8 <$ theToken '8'
-      ∣ 9 <$ theToken '9'
+digit = 0 <$ tok '0'
+      ∣ 1 <$ tok '1'
+      ∣ 2 <$ tok '2'
+      ∣ 3 <$ tok '3'
+      ∣ 4 <$ tok '4'
+      ∣ 5 <$ tok '5'
+      ∣ 6 <$ tok '6'
+      ∣ 7 <$ tok '7'
+      ∣ 8 <$ tok '8'
+      ∣ 9 <$ tok '9'
   where open Token Char.decSetoid
 
 number : ∀ {NT} → Parser NT Char _ ℕ

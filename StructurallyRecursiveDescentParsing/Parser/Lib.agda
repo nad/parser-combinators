@@ -33,17 +33,16 @@ module Token
     ... | yes _ = return tok′
     ... | no  _ = fail
 
-  theToken : Tok → Parser Tok Tok []
-  theToken tok = token >>= λ tok′ → ♯? (ok tok tok′)
+  tok : Tok → Parser Tok Tok []
+  tok tok = token >>= λ tok′ → ♯? (ok tok tok′)
 
   sound : ∀ {t t′ s} →
-          t′ ∈ theToken t · s →
-          t ≡ t′ × s ≡ [ t′ ]
+          t′ ∈ tok t · s → t ≡ t′ × s ≡ [ t′ ]
   sound {t} (_>>=_ {x = t″} token t′∈) with t ≟ t″
   sound (token >>= return) | yes t≈t″ = (t≈t″ , refl)
   sound (token >>= ())     | no  t≉t″
 
-  complete : ∀ {t} → t ∈ theToken t · [ t ]
+  complete : ∀ {t} → t ∈ tok t · [ t ]
   complete {t} = token >>= ok-lemma
     where
     ok-lemma : t ∈ ok t t · []

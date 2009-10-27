@@ -35,8 +35,8 @@ module Ex₁ where
     e : Nonterminal _ Char
 
   grammar : Grammar Nonterminal Char
-  grammar e = theToken '0' ⊛> theToken '+' ⊛> ! e
-            ∣ theToken '0'
+  grammar e = tok '0' ⊛> tok '+' ⊛> ! e
+            ∣ tok '0'
 
   ex₁ : "0+0" ∈? ! e / grammar ≡ [ '0' ]
   ex₁ = refl
@@ -51,11 +51,11 @@ module Ex₂ where
     factor : Nonterminal _ Char
 
   grammar : Grammar Nonterminal Char
-  grammar expr   = ! factor ⊛> theToken '+' ⊛> ! expr
+  grammar expr   = ! factor ⊛> tok '+' ⊛> ! expr
                  ∣ ! factor
-  grammar factor = theToken '0'
-                 ∣ theToken '0' ⊛> theToken '*' ⊛> ! factor
-                 ∣ theToken '(' ⊛> ! expr <⊛ theToken ')'
+  grammar factor = tok '0'
+                 ∣ tok '0' ⊛> tok '*' ⊛> ! factor
+                 ∣ tok '(' ⊛> ! expr <⊛ tok ')'
 
   ex₁ : "(0*)" ∈? ! expr / grammar ≡ []
   ex₁ = refl
@@ -76,11 +76,11 @@ module Ex₃ where
     factor : Nonterminal _ Char
 
   grammar : Grammar Nonterminal Char
-  grammar expr   = ! factor ⊛> theToken '+' ⊛> ! expr
+  grammar expr   = ! factor ⊛> tok '+' ⊛> ! expr
                  ∣ ! factor
-  grammar factor = theToken '0'
-                 ∣ ! factor ⊛> theToken '*' ⊛> theToken '0'
-                 ∣ theToken '(' ⊛> ! expr <⊛ theToken ')'
+  grammar factor = tok '0'
+                 ∣ ! factor ⊛> tok '*' ⊛> tok '0'
+                 ∣ tok '(' ⊛> ! expr <⊛ tok ')'
 -}
 
 module Ex₄ where
@@ -99,12 +99,12 @@ module Ex₄ where
 
   grammar : Grammar NT Char
   grammar top             = return 0 ∣ ! (as zero)
-  grammar (as n)          = suc <$ theToken 'a' ⊛
+  grammar (as n)          = suc <$ tok 'a' ⊛
                             ( ! (as (suc n))
                             ∣ _+_ <$> ! (bcs 'b' n) ⊛ ! (bcs 'c' n)
                             )
-  grammar (bcs c zero)    = theToken c ⊛> return 0
-  grammar (bcs c (suc n)) = theToken c ⊛> ! (bcs c n)
+  grammar (bcs c zero)    = tok c ⊛> return 0
+  grammar (bcs c (suc n)) = tok c ⊛> ! (bcs c n)
 
   ex₁ : "aaabbbccc" ∈? ! top / grammar ≡ [ 3 ]
   ex₁ = refl
@@ -117,10 +117,10 @@ module Ex₄′ where
   -- A monadic variant of Ex₄.
 
   aⁿbⁿcⁿ = return 0
-         ∣ theToken 'a' +           !>>= λ as → ♯
+         ∣ tok 'a' +            !>>= λ as → ♯
            (let n = length as in
-            exactly n (theToken 'b') ⊛>
-            exactly n (theToken 'c') ⊛>
+            exactly n (tok 'b') ⊛>
+            exactly n (tok 'c') ⊛>
             return n)
 
   ex₁ : "aaabbbccc" ∈? aⁿbⁿcⁿ ≡ [ 3 ]
@@ -138,7 +138,7 @@ module Ex₅ where
     as : NT _ ℕ
 
   grammar : Grammar NT Char
-  grammar a  = theToken 'a'
+  grammar a  = tok 'a'
   grammar as = length <$> ! a ⋆
 
   ex₁ : "aaaaa" ∈? ! as / grammar ≡ [ 5 ]
@@ -153,9 +153,9 @@ module Ex₆ where
     expr : (a : Assoc) → NT _ ℕ
 
   grammar : Grammar NT Char
-  grammar op       = _+_ <$ theToken '+'
-                   ∣ _*_ <$ theToken '*'
-                   ∣ _∸_ <$ theToken '∸'
+  grammar op       = _+_ <$ tok '+'
+                   ∣ _*_ <$ tok '*'
+                   ∣ _∸_ <$ tok '∸'
   grammar (expr a) = chain≥ 0 a number (! op)
 
   ex₁ : "12345" ∈? number / grammar ≡ [ 12345 ]
@@ -181,11 +181,11 @@ module Ex₇ where
   grammar : Grammar NT Char
   grammar expr   = chain≥ 0 left (! term)   (! addOp)
   grammar term   = chain≥ 0 left (! factor) (! mulOp)
-  grammar factor = theToken '(' ⊛> ! expr <⊛ theToken ')'
+  grammar factor = tok '(' ⊛> ! expr <⊛ tok ')'
                  ∣ number
-  grammar addOp  = _+_ <$ theToken '+'
-                 ∣ _∸_ <$ theToken '∸'
-  grammar mulOp  = _*_ <$ theToken '*'
+  grammar addOp  = _+_ <$ tok '+'
+                 ∣ _∸_ <$ tok '∸'
+  grammar mulOp  = _*_ <$ tok '*'
 
   ex₁ : "1+5*2∸3" ∈? ! expr / grammar ≡ [ 8 ]
   ex₁ = refl
@@ -205,7 +205,7 @@ module Ex₈ where
 
   grammar : Grammar NT Char
   grammar (lib nt) = mapNT lib (Ex₇.grammar nt)
-  grammar exprs    = ! expr sepBy theToken ','
+  grammar exprs    = ! expr sepBy tok ','
 
   ex₁ : "1,2∸1" ∈? ! exprs / grammar ≡ [ 1 ∷ 1 ∷ [] ]
   ex₁ = refl
@@ -240,7 +240,7 @@ module Ex₉ where
 
   grammar : Grammar NT Char
   grammar (lib nt) = library lib nt
-  grammar a        = theToken 'a'
+  grammar a        = tok 'a'
   grammar as       = ! (lib (! a ★))
 
   ex₁ : "aa" ∈? ! as / grammar ≡ [ 'a' ∷ 'a' ∷ [] ]
