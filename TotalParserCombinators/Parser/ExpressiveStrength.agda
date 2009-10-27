@@ -6,8 +6,7 @@
 
 -- This result could be generalised to arbitrary finite token types.
 
-module TotalParserCombinators.Parser.ExpressiveStrength
-  where
+module TotalParserCombinators.Parser.ExpressiveStrength where
 
 open import Coinduction
 open import Data.Bool hiding (_∧_)
