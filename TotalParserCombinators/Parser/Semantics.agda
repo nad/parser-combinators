@@ -2,7 +2,7 @@
 -- Semantics of the parsers
 ------------------------------------------------------------------------
 
-module StructurallyRecursiveDescentParsing.Parser.Semantics where
+module TotalParserCombinators.Parser.Semantics where
 
 open import Algebra
 import Algebra.Props.BooleanAlgebra as BAProp
@@ -27,8 +27,8 @@ open import Relation.Nullary.Negation
 open import Relation.Binary.PropositionalEquality
 open ≡-Reasoning
 
-open import StructurallyRecursiveDescentParsing.Coinduction
-open import StructurallyRecursiveDescentParsing.Parser
+open import TotalParserCombinators.Coinduction
+open import TotalParserCombinators.Parser
 
 ------------------------------------------------------------------------
 -- Semantics

@@ -6,21 +6,21 @@
 -- to use. See Everything.agda for an overview of the different
 -- modules.
 
-module StructurallyRecursiveDescentParsing where
+module TotalParserCombinators where
 
 -- Parser indices.
 
-open import StructurallyRecursiveDescentParsing.Index public
+open import TotalParserCombinators.Index public
 
 -- Grammars.
 
-open import StructurallyRecursiveDescentParsing.Grammar public
+open import TotalParserCombinators.Grammar public
 
 -- Derived parser combinators.
 
-open import StructurallyRecursiveDescentParsing.Lib public
+open import TotalParserCombinators.Lib public
 
 -- A depth-first parser backend.
 
-open import StructurallyRecursiveDescentParsing.Backend.DepthFirst
+open import TotalParserCombinators.Backend.DepthFirst
   public

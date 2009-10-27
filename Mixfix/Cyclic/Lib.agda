@@ -22,10 +22,10 @@ open import Relation.Nullary
 open import Relation.Binary.PropositionalEquality
   using (_≡_; refl; sym)
 
-open import StructurallyRecursiveDescentParsing.Coinduction
-open import StructurallyRecursiveDescentParsing.Parser
-import StructurallyRecursiveDescentParsing.Parser.Lib as Lib
-open import StructurallyRecursiveDescentParsing.Parser.Semantics as Sem
+open import TotalParserCombinators.Coinduction
+open import TotalParserCombinators.Parser
+import TotalParserCombinators.Parser.Lib as Lib
+open import TotalParserCombinators.Parser.Semantics as Sem
   hiding (sound; complete)
 open import Mixfix.Operator using (NamePart)
 

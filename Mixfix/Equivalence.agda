@@ -17,11 +17,11 @@ open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.Product
 open import Data.Vec using (Vec; []; _∷_)
 
-open import StructurallyRecursiveDescentParsing.Parser
-open import StructurallyRecursiveDescentParsing.Parser.Semantics
+open import TotalParserCombinators.Parser
+open import TotalParserCombinators.Parser.Semantics
   as Sem
-import StructurallyRecursiveDescentParsing.Simplified as Simplified
-import StructurallyRecursiveDescentParsing.Simplified.Semantics
+import TotalParserCombinators.Simplified as Simplified
+import TotalParserCombinators.Simplified.Semantics
   as SSem
 
 open import Mixfix.Fixity

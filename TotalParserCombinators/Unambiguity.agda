@@ -2,16 +2,16 @@
 -- Unambiguity
 ------------------------------------------------------------------------
 
-module StructurallyRecursiveDescentParsing.Unambiguity where
+module TotalParserCombinators.Unambiguity where
 
 open import Coinduction
 open import Data.Bool
 open import Data.List hiding (map)
 open import Relation.Binary.PropositionalEquality
 
-open import StructurallyRecursiveDescentParsing.Coinduction
-open import StructurallyRecursiveDescentParsing.Parser
-open import StructurallyRecursiveDescentParsing.Parser.Semantics
+open import TotalParserCombinators.Coinduction
+open import TotalParserCombinators.Parser
+open import TotalParserCombinators.Parser.Semantics
   hiding (sound; complete)
 
 ------------------------------------------------------------------------

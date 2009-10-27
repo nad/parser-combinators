@@ -5,7 +5,7 @@
 -- Based on the parser combinators in Wadler's "How to Replace Failure
 -- by a List of Successes".
 
-module StructurallyRecursiveDescentParsing.Backend.DepthFirst where
+module TotalParserCombinators.Backend.DepthFirst where
 
 open import Data.Bool
 open import Data.Product as Prod
@@ -18,7 +18,7 @@ open import Category.Monad.Indexed
 open import Category.Monad.State
 open import Coinduction
 
-open import StructurallyRecursiveDescentParsing.Simplified
+open import TotalParserCombinators.Simplified
 
 ------------------------------------------------------------------------
 -- Parser monad
@@ -61,7 +61,7 @@ private
 
 -- Note that this function cannot /trivially/ be adapted to handle the
 -- more general parsers from
--- StructurallyRecursiveDescentParsing.Parser. The reason is that p₂
+-- TotalParserCombinators.Parser. The reason is that p₂
 -- in the (_>>=_ {true} p₁ p₂) case would have a dependent type, so
 -- the type of parse↓ n (p₂ x) would depend on x, but _>>=′_ is not
 -- dependent. I suspect that this problem could be fixed by making the

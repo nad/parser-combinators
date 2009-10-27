@@ -2,7 +2,7 @@
 -- Some boring lemmas
 ------------------------------------------------------------------------
 
-module StructurallyRecursiveDescentParsing.Simplified.Lemmas where
+module TotalParserCombinators.Simplified.Lemmas where
 
 open import Algebra
 open import Category.Monad

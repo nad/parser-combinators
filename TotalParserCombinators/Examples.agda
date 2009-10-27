@@ -2,7 +2,7 @@
 -- Examples
 ------------------------------------------------------------------------
 
-module StructurallyRecursiveDescentParsing.Examples where
+module TotalParserCombinators.Examples where
 
 open import Data.List
 open import Data.Vec using ([]; _∷_)
@@ -15,7 +15,7 @@ open S using (String)
 open import Coinduction
 open import Relation.Binary.PropositionalEquality
 
-open import StructurallyRecursiveDescentParsing
+open import TotalParserCombinators
 open Token C.decSetoid
 
 -- Some functions used to simplify the examples a little.

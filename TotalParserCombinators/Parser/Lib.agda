@@ -2,7 +2,7 @@
 -- A very small library of derived parser combinators
 ------------------------------------------------------------------------
 
-module StructurallyRecursiveDescentParsing.Parser.Lib where
+module TotalParserCombinators.Parser.Lib where
 
 open import Data.List
 open import Data.Product
@@ -10,9 +10,9 @@ open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
 
-open import StructurallyRecursiveDescentParsing.Coinduction
-open import StructurallyRecursiveDescentParsing.Parser
-open import StructurallyRecursiveDescentParsing.Parser.Semantics
+open import TotalParserCombinators.Coinduction
+open import TotalParserCombinators.Parser
+open import TotalParserCombinators.Parser.Semantics
   hiding (sound; complete)
 
 -- A parser for a given token.

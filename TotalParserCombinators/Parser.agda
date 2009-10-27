@@ -2,7 +2,7 @@
 -- The parser type
 ------------------------------------------------------------------------
 
-module StructurallyRecursiveDescentParsing.Parser where
+module TotalParserCombinators.Parser where
 
 open import Category.Monad
 open import Coinduction
@@ -18,7 +18,7 @@ open RawMonadPlus List.monadPlus
 open import Data.Function
 open import Relation.Binary.PropositionalEquality
 
-open import StructurallyRecursiveDescentParsing.Coinduction
+open import TotalParserCombinators.Coinduction
 
 ------------------------------------------------------------------------
 -- A variant of _⊛_ (for lists)
@@ -47,7 +47,7 @@ infixl  5 _∣_
 --   p : Parser Tok R xs
 -- we have
 --   x ∈ xs  iff  x ∈ p · []
--- (see StructurallyRecursiveDescentParsing.Parser.Semantics).
+-- (see TotalParserCombinators.Parser.Semantics).
 
 data Parser (Tok : Set) : (R : Set) → List R → Set1 where
   return   : ∀ {R} (x : R) → Parser Tok R (return′ x)

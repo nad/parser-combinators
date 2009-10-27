@@ -2,7 +2,7 @@
 -- Semantics of the simplified parsers
 ------------------------------------------------------------------------
 
-module StructurallyRecursiveDescentParsing.Simplified.Semantics where
+module TotalParserCombinators.Simplified.Semantics where
 
 open import Algebra
 open import Coinduction
@@ -15,9 +15,9 @@ open import Data.Function
 open import Data.Empty
 open import Relation.Binary.PropositionalEquality
 
-open import StructurallyRecursiveDescentParsing.Coinduction
-open import StructurallyRecursiveDescentParsing.Simplified
-import StructurallyRecursiveDescentParsing.Parser.Semantics
+open import TotalParserCombinators.Coinduction
+open import TotalParserCombinators.Simplified
+import TotalParserCombinators.Parser.Semantics
   as Semantics
 open Semantics using (return; token; ∣ˡ; ∣ʳ; _>>=_; cast)
                renaming (_∈_·_ to _∈′_·_)

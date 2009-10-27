@@ -2,7 +2,7 @@
 -- Parser indices
 ------------------------------------------------------------------------
 
-module StructurallyRecursiveDescentParsing.Index where
+module TotalParserCombinators.Index where
 
 open import Data.Bool
 open import Relation.Nullary
@@ -19,7 +19,7 @@ Empty : Set
 Empty = Bool
 
 -- The proper left corners of the parser, represented as a tree. See
--- StructurallyRecursiveDescentParsing.Grammars.
+-- TotalParserCombinators.Grammars.
 
 infix 5 _∪_
 

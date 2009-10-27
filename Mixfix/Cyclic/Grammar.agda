@@ -21,7 +21,7 @@ open import Relation.Binary.PropositionalEquality
 
 open PrecedenceCorrect i g
 
-import StructurallyRecursiveDescentParsing.Parser as Parser
+import TotalParserCombinators.Parser as Parser
 open import Mixfix.Fixity
 open import Mixfix.Operator
 open import Mixfix.Cyclic.Lib renaming (ParserProg to Parser)

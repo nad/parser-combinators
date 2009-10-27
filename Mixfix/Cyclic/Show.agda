@@ -22,8 +22,8 @@ open import Relation.Binary.PropositionalEquality
   using (_≡_; refl)
 
 open PrecedenceCorrect i g
-open import StructurallyRecursiveDescentParsing.Parser
-open import StructurallyRecursiveDescentParsing.Parser.Semantics as Sem
+open import TotalParserCombinators.Parser
+open import TotalParserCombinators.Parser.Semantics as Sem
 open import Mixfix.Fixity
 open import Mixfix.Operator
 open import Mixfix.Cyclic.Lib as Lib

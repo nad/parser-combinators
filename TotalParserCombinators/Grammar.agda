@@ -2,7 +2,7 @@
 -- Parsers containing non-terminals, and grammars using such parsers
 ------------------------------------------------------------------------
 
-module StructurallyRecursiveDescentParsing.Grammar where
+module TotalParserCombinators.Grammar where
 
 open import Data.Bool
 open import Data.Empty1
@@ -10,8 +10,8 @@ open import Data.Product
 open import Relation.Binary.PropositionalEquality
 open import Coinduction
 
-open import StructurallyRecursiveDescentParsing.Index
-import StructurallyRecursiveDescentParsing.Simplified as Simplified
+open import TotalParserCombinators.Index
+import TotalParserCombinators.Simplified as Simplified
 open Simplified hiding (Parser; ⟦_⟧)
 
 infixl 10 _!>>=_ _?>>=_

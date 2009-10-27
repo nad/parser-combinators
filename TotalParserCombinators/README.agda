@@ -4,7 +4,7 @@
 -- Nils Anders Danielsson and Ulf Norell
 ------------------------------------------------------------------------
 
-module StructurallyRecursiveDescentParsing.README where
+module TotalParserCombinators.README where
 
 ------------------------------------------------------------------------
 -- The modules most related to the paper "Mixing Induction and
@@ -12,18 +12,18 @@ module StructurallyRecursiveDescentParsing.README where
 
 -- Helper functions related to coinduction.
 
-import StructurallyRecursiveDescentParsing.Coinduction
+import TotalParserCombinators.Coinduction
 
 -- The parser type, along with its semantics.
 
-import StructurallyRecursiveDescentParsing.Parser
-import StructurallyRecursiveDescentParsing.Parser.Semantics
+import TotalParserCombinators.Parser
+import TotalParserCombinators.Parser.Semantics
 
 -- A breadth-first backend. The backend uses code which simplifies
 -- parsers.
 
-import StructurallyRecursiveDescentParsing.Backend.BreadthFirst
-import StructurallyRecursiveDescentParsing.Backend.Simplification
+import TotalParserCombinators.Backend.BreadthFirst
+import TotalParserCombinators.Backend.Simplification
 
 -- An extended example: mixfix operator parsing.
 
@@ -35,46 +35,46 @@ import Mixfix.README
 -- A proof showing that all functions of type List Bool → List R can
 -- be realised using parser combinators (for any R).
 
-import StructurallyRecursiveDescentParsing.Parser.ExpressiveStrength
+import TotalParserCombinators.Parser.ExpressiveStrength
 
 -- A very small library of derived parser combinators.
 
-import StructurallyRecursiveDescentParsing.Parser.Lib
+import TotalParserCombinators.Parser.Lib
 
 -- Definition of unambiguity.
 
-import StructurallyRecursiveDescentParsing.Unambiguity
+import TotalParserCombinators.Unambiguity
 
 -- A simplified parser type, along with its semantics.
 
-import StructurallyRecursiveDescentParsing.Simplified
-import StructurallyRecursiveDescentParsing.Simplified.Semantics
-import StructurallyRecursiveDescentParsing.Simplified.Lemmas
+import TotalParserCombinators.Simplified
+import TotalParserCombinators.Simplified.Semantics
+import TotalParserCombinators.Simplified.Lemmas
 
 -- Parser type indices, used by the grammars below.
 
-import StructurallyRecursiveDescentParsing.Index
+import TotalParserCombinators.Index
 
 -- Grammars.
 
-import StructurallyRecursiveDescentParsing.Grammar
+import TotalParserCombinators.Grammar
 
 -- A depth-first backend.
 
-import StructurallyRecursiveDescentParsing.Backend.DepthFirst
+import TotalParserCombinators.Backend.DepthFirst
 
 -- A library of derived parser combinators.
 
-import StructurallyRecursiveDescentParsing.Lib
+import TotalParserCombinators.Lib
 
 -- A module which reexports some of the modules above.
 
-import StructurallyRecursiveDescentParsing
+import TotalParserCombinators
 
 -- Some small examples.
 
-import StructurallyRecursiveDescentParsing.Examples
+import TotalParserCombinators.Examples
 
 -- An example: parsing PBM image files.
 
-import StructurallyRecursiveDescentParsing.PBM
+import TotalParserCombinators.PBM

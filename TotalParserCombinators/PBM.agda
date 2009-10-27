@@ -11,7 +11,7 @@
 -- I got the idea to write this particular parser from "The Power of
 -- Pi" by Oury and Swierstra.
 
-module StructurallyRecursiveDescentParsing.PBM where
+module TotalParserCombinators.PBM where
 
 import Data.Vec as Vec
 open Vec using (Vec; _++_; [_])
@@ -30,7 +30,7 @@ open import Coinduction
 open import Relation.Nullary
 open import Relation.Binary.PropositionalEquality
 
-open import StructurallyRecursiveDescentParsing
+open import TotalParserCombinators
 open Token Char.decSetoid
 
 ------------------------------------------------------------------------

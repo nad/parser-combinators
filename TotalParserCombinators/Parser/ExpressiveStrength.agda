@@ -6,7 +6,7 @@
 
 -- This result could be generalised to arbitrary finite token types.
 
-module StructurallyRecursiveDescentParsing.Parser.ExpressiveStrength
+module TotalParserCombinators.Parser.ExpressiveStrength
   where
 
 open import Coinduction
@@ -22,14 +22,14 @@ open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
 open import Relation.Nullary.Decidable
 
-open import StructurallyRecursiveDescentParsing.Coinduction
-open import StructurallyRecursiveDescentParsing.Parser
-open import StructurallyRecursiveDescentParsing.Parser.Semantics
+open import TotalParserCombinators.Coinduction
+open import TotalParserCombinators.Parser
+open import TotalParserCombinators.Parser.Semantics
   hiding (sound; complete; complete′)
-open import StructurallyRecursiveDescentParsing.Parser.Lib
+open import TotalParserCombinators.Parser.Lib
 private
   open module Tok = Token Bool _≟_ using (tok)
-import StructurallyRecursiveDescentParsing.Backend.BreadthFirst
+import TotalParserCombinators.Backend.BreadthFirst
   as Backend
 
 ------------------------------------------------------------------------

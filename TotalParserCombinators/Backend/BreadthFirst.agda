@@ -7,7 +7,7 @@
 -- TODO: Examine if the use of simplification really is an
 -- optimisation.
 
-module StructurallyRecursiveDescentParsing.Backend.BreadthFirst where
+module TotalParserCombinators.Backend.BreadthFirst where
 
 open import Category.Monad
 open import Coinduction
@@ -21,11 +21,11 @@ open RawMonad List.monad
 open import Data.Product as Prod
 open import Relation.Binary.PropositionalEquality
 
-open import StructurallyRecursiveDescentParsing.Coinduction
-open import StructurallyRecursiveDescentParsing.Parser
-open import StructurallyRecursiveDescentParsing.Parser.Semantics
+open import TotalParserCombinators.Coinduction
+open import TotalParserCombinators.Parser
+open import TotalParserCombinators.Parser.Semantics
   hiding (sound; complete)
-open import StructurallyRecursiveDescentParsing.Backend.Simplification
+open import TotalParserCombinators.Backend.Simplification
   as Simplification using (simplify)
 
 ------------------------------------------------------------------------

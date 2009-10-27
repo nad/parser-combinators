@@ -2,7 +2,7 @@
 -- Helper functions related to coinduction
 ------------------------------------------------------------------------
 
-module StructurallyRecursiveDescentParsing.Coinduction where
+module TotalParserCombinators.Coinduction where
 
 open import Coinduction
 open import Data.Bool

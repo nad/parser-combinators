@@ -4,7 +4,7 @@
 
 -- Less general, but sometimes easier to use.
 
-module StructurallyRecursiveDescentParsing.Simplified where
+module TotalParserCombinators.Simplified where
 
 open import Category.Monad
 open import Coinduction
@@ -22,10 +22,10 @@ open RawMonad List.monad using () renaming (_>>=_ to _>>=′_)
 open import Relation.Binary.PropositionalEquality
 open ≡-Reasoning
 
-open import StructurallyRecursiveDescentParsing.Coinduction
-import StructurallyRecursiveDescentParsing.Parser as Parser
+open import TotalParserCombinators.Coinduction
+import TotalParserCombinators.Parser as Parser
 open Parser hiding (Parser)
-open import StructurallyRecursiveDescentParsing.Simplified.Lemmas
+open import TotalParserCombinators.Simplified.Lemmas
 
 ------------------------------------------------------------------------
 -- Parsers

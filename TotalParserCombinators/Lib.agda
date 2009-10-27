@@ -5,10 +5,10 @@
 -- This module also provides examples of parsers for which the indices
 -- cannot be inferred.
 
-module StructurallyRecursiveDescentParsing.Lib where
+module TotalParserCombinators.Lib where
 
-open import StructurallyRecursiveDescentParsing.Grammar
-open import StructurallyRecursiveDescentParsing.Index
+open import TotalParserCombinators.Grammar
+open import TotalParserCombinators.Index
 
 open import Data.Nat hiding (_≟_)
 open import Data.Vec  using (Vec;  []; _∷_)

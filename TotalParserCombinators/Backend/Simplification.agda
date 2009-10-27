@@ -2,7 +2,7 @@
 -- Simplification of parsers
 ------------------------------------------------------------------------
 
-module StructurallyRecursiveDescentParsing.Backend.Simplification where
+module TotalParserCombinators.Backend.Simplification where
 
 open import Algebra
 open import Coinduction
@@ -13,11 +13,11 @@ private module LM {Tok} = Monoid (List.monoid Tok)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym)
 open import Relation.Binary.HeterogeneousEquality using (_≅_; refl)
 
-open import StructurallyRecursiveDescentParsing.Coinduction
-open import StructurallyRecursiveDescentParsing.Parser
-open import StructurallyRecursiveDescentParsing.Parser.Semantics
+open import TotalParserCombinators.Coinduction
+open import TotalParserCombinators.Parser
+open import TotalParserCombinators.Parser.Semantics
   hiding (sound; complete)
-open import StructurallyRecursiveDescentParsing.Simplified.Lemmas
+open import TotalParserCombinators.Simplified.Lemmas
 
 ------------------------------------------------------------------------
 -- Helpers
