@@ -32,6 +32,11 @@ import Mixfix.README
 ------------------------------------------------------------------------
 -- Remaining modules
 
+-- A proof showing that all functions of type List Bool → List R can
+-- be realised using parser combinators (for any R).
+
+import StructurallyRecursiveDescentParsing.Parser.ExpressiveStrength
+
 -- A very small library of derived parser combinators.
 
 import StructurallyRecursiveDescentParsing.Parser.Lib
