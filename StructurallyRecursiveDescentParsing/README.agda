@@ -32,6 +32,10 @@ import Mixfix.README
 ------------------------------------------------------------------------
 -- Remaining modules
 
+-- A very small library of derived parser combinators.
+
+import StructurallyRecursiveDescentParsing.Parser.Lib
+
 -- Definition of unambiguity.
 
 import StructurallyRecursiveDescentParsing.Unambiguity
