@@ -83,11 +83,9 @@ pred⇒grammar f = (p f , λ s → (p-sound f , p-complete f s))
   p-sound : ∀ f {s} → s ∈ p f → f s ≡ true
   p-sound f (cast (∣ʳ s∈)) with accept-if-true-sound (f []) s∈
   ... | (refl , eq) = eq
-  p-sound f (cast (∣ˡ (∣ˡ (t∈ · s∈))))
-    with cast∈ refl (♭?♯? (f [ true  ])) t∈
+  p-sound f (cast (∣ˡ (∣ˡ (t∈ · s∈)))) with drop-♭♯ (f [ true  ]) t∈
   ... | tok = p-sound (f ∘ _∷_ true ) s∈
-  p-sound f (cast (∣ˡ (∣ʳ (t∈ · s∈))))
-    with cast∈ refl (♭?♯? (f [ false ])) t∈
+  p-sound f (cast (∣ˡ (∣ʳ (t∈ · s∈)))) with drop-♭♯ (f [ false ]) t∈
   ... | tok = p-sound (f ∘ _∷_ false) s∈
 
   p-complete : ∀ f s → f s ≡ true → s ∈ p f
@@ -96,11 +94,11 @@ pred⇒grammar f = (p f , λ s → (p-sound f , p-complete f s))
       accept-if-true-complete eq)
   p-complete f (true  ∷ bs) eq =
     cast (∣ˡ $ ∣ˡ $
-      cast∈ refl (sym (♭?♯? (f [ true  ]))) tok ·
+      add-♭♯ (f [ true  ]) tok ·
       p-complete (f ∘ _∷_ true ) bs eq)
   p-complete f (false ∷ bs) eq =
     cast (∣ˡ $ ∣ʳ {n₁ = false ∧ f [ true ]} $
-      cast∈ refl (sym (♭?♯? (f [ false ]))) tok ·
+      add-♭♯ (f [ false ]) tok ·
       p-complete (f ∘ _∷_ false) bs eq)
 
 -- An alternative proof which uses a less complicated, but left
@@ -133,9 +131,9 @@ pred⇒grammar′ f = (p f , λ s → (p-sound f , p-complete f s))
   p-sound : ∀ f {s} → s ∈ p f → f s ≡ true
   p-sound f (∣ʳ s∈) with accept-if-true-sound (f []) s∈
   ... | (refl , eq) = eq
-  p-sound f (∣ˡ (∣ˡ (s∈ · t∈))) with cast∈ refl (♭?♯? (f [ true  ])) t∈
+  p-sound f (∣ˡ (∣ˡ (s∈ · t∈))) with drop-♭♯ (f [ true  ]) t∈
   ... | tok = p-sound (extend f true ) s∈
-  p-sound f (∣ˡ (∣ʳ (s∈ · t∈))) with cast∈ refl (♭?♯? (f [ false ])) t∈
+  p-sound f (∣ˡ (∣ʳ (s∈ · t∈))) with drop-♭♯ (f [ false ]) t∈
   ... | tok = p-sound (extend f false) s∈
 
   p-complete′ : ∀ f {s} → Reverse s → f s ≡ true → s ∈ p f
@@ -144,11 +142,11 @@ pred⇒grammar′ f = (p f , λ s → (p-sound f , p-complete f s))
   p-complete′ f (bs ∶ rs ∶ʳ true ) eq =
     ∣ˡ {n₁ = false} $ ∣ˡ {n₁ = false} $
       p-complete′ (extend f true ) rs eq ·
-      cast∈ refl (sym (♭?♯? (f [ true  ]))) tok
+      add-♭♯ (f [ true  ]) tok
   p-complete′ f (bs ∶ rs ∶ʳ false) eq =
     ∣ˡ {n₁ = false} $ ∣ʳ {n₁ = false} $
       p-complete′ (extend f false) rs eq ·
-      cast∈ refl (sym (♭?♯? (f [ false ]))) tok
+      add-♭♯ (f [ false ]) tok
 
   p-complete : ∀ f s → f s ≡ true → s ∈ p f
   p-complete f s eq = p-complete′ f (reverseView s) eq

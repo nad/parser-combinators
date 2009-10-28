@@ -81,13 +81,12 @@ exactly (suc i) p = ♯? p · ♯? (exactly i p)
 exactly-tok-complete : ∀ t i → t ^ i ∈ exactly i (tok t)
 exactly-tok-complete t zero    = ε
 exactly-tok-complete t (suc i) =
-  cast∈ refl lem tok · exactly-tok-complete t i
-  where lem = sym (♭?♯? (exactly-index false i))
+  add-♭♯ (exactly-index false i) tok · exactly-tok-complete t i
 
 exactly-tok-sound : ∀ t i {s} → s ∈ exactly i (tok t) → s ≡ t ^ i
 exactly-tok-sound t zero    ε         = refl
 exactly-tok-sound t (suc i) (t∈ · s∈)
-  with cast∈ refl (♭?♯? (exactly-index false i)) t∈
+  with drop-♭♯ (exactly-index false i) t∈
 ... | tok = cong (_∷_ t) (exactly-tok-sound t i s∈)
 
 ------------------------------------------------------------------------
@@ -127,12 +126,11 @@ aⁿbⁿcⁿ-complete n = aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-complete n 0
   ... | .i | refl = ∣ʳ {n₁ = false} (helper b · helper c)
     where
     helper = λ (t : Tok) →
-      cast∈ refl (sym (♭?♯? (exactly-index false i)))
-            (exactly-tok-complete t i)
+      add-♭♯ (exactly-index false i) (exactly-tok-complete t i)
   aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-complete (suc n) i with i + suc n | shallow-comm i n
   ... | .(suc i + n) | refl =
     ∣ˡ $ cast {eq = lem} (
-      cast∈ refl (sym (♭?♯? (aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-index (suc i)))) tok ·
+      add-♭♯ (aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-index (suc i)) tok ·
       aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-complete n (suc i))
     where lem = left-zero (aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-index (suc i))
 
@@ -142,7 +140,7 @@ aⁿbⁿcⁿ-sound = aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound 0
   aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound : ∀ {s} i → s ∈ aⁿbⁱ⁺ⁿcⁱ⁺ⁿ i →
                      ∃ λ n → s ≡ aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-string n i
   aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound i (∣ˡ (cast (t∈ · s∈)))
-    with cast∈ refl (♭?♯? (aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-index (suc i))) t∈
+    with drop-♭♯ (aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-index (suc i)) t∈
   ... | tok with aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound (suc i) s∈
   ... | (n , refl) = suc n , (begin
     a ^ suc n ++ b ^ (suc i + n) ++ c ^ (suc i + n)
@@ -153,9 +151,9 @@ aⁿbⁿcⁿ-sound = aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound 0
   aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound i (∣ʳ (_·_ {s₁} {s₂} s₁∈ s₂∈)) = 0 , (begin
     s₁ ++ s₂
       ≡⟨ cong₂ _++_ (exactly-tok-sound b i
-                      (cast∈ refl (♭?♯? (exactly-index false i)) s₁∈))
+                      (drop-♭♯ (exactly-index false i) s₁∈))
                     (exactly-tok-sound c i
-                      (cast∈ refl (♭?♯? (exactly-index false i)) s₂∈)) ⟩
+                      (drop-♭♯ (exactly-index false i) s₂∈)) ⟩
     b ^ i ++ c ^ i
       ≡⟨ cong (λ i → b ^ i ++ c ^ i) (sym (proj₂ NatCS.+-identity i)) ⟩
     b ^ (i + 0) ++ c ^ (i + 0)

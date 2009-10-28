@@ -122,10 +122,16 @@ data _∈_ : ∀ {n} → List Tok → P n → Set where
   cast     : ∀ {n₁ n₂ s} {p : P n₁} {eq : n₁ ≡ n₂} →
              s ∈ p → s ∈ cast eq p
 
--- A lemma.
+-- Some lemmas.
 
 cast∈ : ∀ {n} {p p′ : P n} {s s′} → s ≡ s′ → p ≡ p′ → s ∈ p → s′ ∈ p′
 cast∈ refl refl s∈ = s∈
+
+drop-♭♯ : ∀ n {s n′} {p : P n′} → s ∈ ♭? (♯? {n} p) → s ∈ p
+drop-♭♯ n = cast∈ refl (♭?♯? n)
+
+add-♭♯ : ∀ n {s n′} {p : P n′} → s ∈ p → s ∈ ♭? (♯? {n} p)
+add-♭♯ n = cast∈ refl (sym $ ♭?♯? n)
 
 ------------------------------------------------------------------------
 -- Example: A definition which is left and right recursive
@@ -296,12 +302,12 @@ nullable? {false} p = no helper
   ∂-sound′ (tok t′)          t ()             | no  t′≢t
   ∂-sound′ (p₁ ∣ p₂)         t (∣ˡ ∈₁)        = ∣ˡ (∂-sound′ p₁ t ∈₁)
   ∂-sound′ (p₁ ∣ p₂)         t (∣ʳ ∈₂)        = ∣ʳ {p₁ = p₁} (∂-sound′ p₂ t ∈₂)
-  ∂-sound′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) t (∣ˡ (∈₁ · ∈₂)) = ∂-sound ∈₁ · cast∈ refl (♭?♯? (∂n p₁ t)) ∈₂
+  ∂-sound′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) t (∣ˡ (∈₁ · ∈₂)) = ∂-sound ∈₁ · drop-♭♯ (∂n p₁ t) ∈₂
   ∂-sound′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) t (∣ʳ ∈₂)        = ⇐ p₁ refl · ∂-sound′ p₂ t ∈₂
-  ∂-sound′ (⟨ p₁ ⟩ · ⟪ p₂ ⟫) t (∈₁ · ∈₂)      = ∂-sound ∈₁ · cast∈ refl (♭?♯? (∂n p₁ t)) ∈₂
-  ∂-sound′ (⟪ p₁ ⟫ · ⟨ p₂ ⟩) t (∣ˡ (∈₁ · ∈₂)) = ∂-sound ∈₁ · cast∈ refl (♭?♯? (∂n (♭ p₁) t)) ∈₂
+  ∂-sound′ (⟨ p₁ ⟩ · ⟪ p₂ ⟫) t (∈₁ · ∈₂)      = ∂-sound ∈₁ · drop-♭♯ (∂n p₁ t) ∈₂
+  ∂-sound′ (⟪ p₁ ⟫ · ⟨ p₂ ⟩) t (∣ˡ (∈₁ · ∈₂)) = ∂-sound ∈₁ · drop-♭♯ (∂n (♭ p₁) t) ∈₂
   ∂-sound′ (⟪ p₁ ⟫ · ⟨ p₂ ⟩) t (∣ʳ ∈₂)        = ⇐ (♭ p₁) refl · ∂-sound′ p₂ t ∈₂
-  ∂-sound′ (⟪ p₁ ⟫ · ⟪ p₂ ⟫) t (∈₁ · ∈₂)      = ∂-sound ∈₁ · cast∈ refl (♭?♯? (∂n (♭ p₁) t)) ∈₂
+  ∂-sound′ (⟪ p₁ ⟫ · ⟪ p₂ ⟫) t (∈₁ · ∈₂)      = ∂-sound ∈₁ · drop-♭♯ (∂n (♭ p₁) t) ∈₂
   ∂-sound′ (nonempty p)      t ∈              = nonempty (∂-sound ∈)
   ∂-sound′ (cast _ p)        t ∈              = cast (∂-sound ∈)
 
@@ -319,15 +325,15 @@ nullable? {false} p = no helper
   ∂-complete′ (p₁ ∣ p₂)         (∣ˡ ∈₁)              refl = ∣ˡ (∂-complete ∈₁)
   ∂-complete′ (p₁ ∣ p₂)         (∣ʳ ∈₂)              refl = ∣ʳ {p₁ = ∂ p₁ t} (∂-complete ∈₂)
   ∂-complete′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) (_·_ {[]}     ∈₁ ∈₂) refl = ∣ʳ {p₁ = ⟨ ∂ p₁ t ⟩ · _} (∂-complete ∈₂)
-  ∂-complete′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∣ˡ (∂-complete ∈₁ · cast∈ refl (sym (♭?♯? (∂n p₁ t))) ∈₂)
+  ∂-complete′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∣ˡ (∂-complete ∈₁ · add-♭♯ (∂n p₁ t) ∈₂)
   ∂-complete′ (⟨ p₁ ⟩ · ⟪ p₂ ⟫) (_·_ {[]}     ∈₁ ∈₂) refl with ⇒ ∈₁
   ∂-complete′ (⟨ p₁ ⟩ · ⟪ p₂ ⟫) (_·_ {[]}     ∈₁ ∈₂) refl | ()
-  ∂-complete′ (⟨ p₁ ⟩ · ⟪ p₂ ⟫) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∂-complete ∈₁ · cast∈ refl (sym (♭?♯? (∂n p₁ t))) ∈₂
+  ∂-complete′ (⟨ p₁ ⟩ · ⟪ p₂ ⟫) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∂-complete ∈₁ · add-♭♯ (∂n p₁ t) ∈₂
   ∂-complete′ (⟪ p₁ ⟫ · ⟨ p₂ ⟩) (_·_ {[]}     ∈₁ ∈₂) refl = ∣ʳ {p₁ = ⟪ _ ⟫ · _} (∂-complete ∈₂)
-  ∂-complete′ (⟪ p₁ ⟫ · ⟨ p₂ ⟩) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∣ˡ (∂-complete ∈₁ · cast∈ refl (sym (♭?♯? (∂n (♭ p₁) t))) ∈₂)
+  ∂-complete′ (⟪ p₁ ⟫ · ⟨ p₂ ⟩) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∣ˡ (∂-complete ∈₁ · add-♭♯ (∂n (♭ p₁) t) ∈₂)
   ∂-complete′ (⟪ p₁ ⟫ · ⟪ p₂ ⟫) (_·_ {[]}     ∈₁ ∈₂) refl with ⇒ ∈₁
   ∂-complete′ (⟪ p₁ ⟫ · ⟪ p₂ ⟫) (_·_ {[]}     ∈₁ ∈₂) refl | ()
-  ∂-complete′ (⟪ p₁ ⟫ · ⟪ p₂ ⟫) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∂-complete ∈₁ · cast∈ refl (sym (♭?♯? (∂n (♭ p₁) t))) ∈₂
+  ∂-complete′ (⟪ p₁ ⟫ · ⟪ p₂ ⟫) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∂-complete ∈₁ · add-♭♯ (∂n (♭ p₁) t) ∈₂
   ∂-complete′ (nonempty p)      (nonempty ∈)         refl = ∂-complete ∈
   ∂-complete′ (cast _ p)        (cast ∈)             refl = ∂-complete ∈
 
