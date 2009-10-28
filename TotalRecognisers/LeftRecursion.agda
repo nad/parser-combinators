@@ -176,7 +176,7 @@ module Variant₂ where
   -- This definition works for any argument recogniser.
 
   _⋆ : ∀ {n} → P n → P true
-  p ⋆ = ε ∣ ⟨ nonempty p ⟩ · ⟪ ♯ (p ⋆) ⟫
+  _⋆ = Variant₁._⋆ ∘ nonempty
 
   -- The definition of _⋆ above is correct.
 
