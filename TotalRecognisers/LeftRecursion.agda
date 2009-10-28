@@ -153,6 +153,8 @@ data _∈[_]⋆ {n} : List Tok → P n → Set where
 
 module Variant₁ where
 
+  infix 15 _⋆
+
   -- This definition requires that the argument recognisers are not
   -- nullable.
 
@@ -172,6 +174,8 @@ module Variant₁ where
     ∣ʳ {n₁ = true} (pr₁ · ⋆-complete pr₂)
 
 module Variant₂ where
+
+  infix 15 _⋆
 
   -- This definition works for any argument recogniser.
 
