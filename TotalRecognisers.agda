@@ -32,6 +32,10 @@ import TotalRecognisers.LeftRecursion
 
 import TotalRecognisers.LeftRecursion.ExpressiveStrength
 
+-- The recognisers form a Kleene algebra.
+
+import TotalRecognisers.LeftRecursion.KleeneAlgebra
+
 -- A direct proof which shows that the context-sensitive language
 -- { aⁿbⁿcⁿ | n ∈ ℕ } can be decided.
 
