@@ -15,7 +15,7 @@ module TotalRecognisers.LeftRecursion
 
 open import Algebra
 open import Coinduction
-open import Data.Bool using (Bool; true; false; _∨_)
+open import Data.Bool as Bool using (Bool; true; false; _∨_)
 import Data.Bool.Properties as Bool
 private
   module BoolCS = CommutativeSemiring Bool.commutativeSemiring-∧-∨
@@ -306,6 +306,55 @@ _∈?_ : ∀ {n} (s : List Tok) (p : P n) → Dec (s ∈ p)
 t ∷ s ∈? p with s ∈? ∂ p t
 t ∷ s ∈? p | yes s∈∂pt = yes (∂-sound s∈∂pt)
 t ∷ s ∈? p | no  s∉∂pt = no  (s∉∂pt ∘ ∂-complete)
+
+------------------------------------------------------------------------
+-- Alternative characterisation of equality
+
+infix 5 _∷_
+infix 4 _≋_
+
+-- Two recognisers/languages are equal if their nullability indices
+-- are equal and all their derivatives are equal (coinductively). Note
+-- that the members of this type are bisimulations.
+
+data _≋_ {n₁ n₂} (p₁ : P n₁) (p₂ : P n₂) : Set where
+  _∷_ : n₁ ≡ n₂ → (∀ t → ∞ (∂ p₁ t ≋ ∂ p₂ t)) → p₁ ≋ p₂
+
+-- This definition is equivalent to the one above.
+
+same-nullability : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
+                   p₁ ≈ p₂ → n₁ ≡ n₂
+same-nullability {n₁ = true}  p₁≈p₂ = sym $ ⇒ $ proj₁ p₁≈p₂ $ ⇐ _ refl
+same-nullability {n₁ = false} p₁≈p₂ = sym $ Bool.¬-not $ helper p₁≈p₂
+  where
+  helper : ∀ {n₂} {p₁ : P false} {p₂ : P n₂} →
+           p₁ ≈ p₂ → n₂ ≢ true
+  helper p₁≈p₂ refl with ⇒ $ proj₂ p₁≈p₂ $ ⇐ _ refl
+  ... | ()
+
+∂-cong : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} {t} →
+         p₁ ≤ p₂ → ∂ p₁ t ≤ ∂ p₂ t
+∂-cong p₁≤p₂ s∈∂p₁t = ∂-complete (p₁≤p₂ (∂-sound s∈∂p₁t))
+
+≋-sym : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} → p₁ ≋ p₂ → p₂ ≋ p₁
+≋-sym (refl ∷ rest) = refl ∷ λ t → ♯ ≋-sym (♭ (rest t))
+
+≋-sound : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} → p₁ ≋ p₂ → p₁ ≈ p₂
+≋-sound p₁≋p₂ = ((λ {_} → lemma p₁≋p₂) , λ {_} → lemma (≋-sym p₁≋p₂))
+  where
+  lemma : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} → p₁ ≋ p₂ → p₁ ≤ p₂
+  lemma (refl ∷ rest) {[]}    []∈p₁  = ⇐ _ (⇒ []∈p₁)
+  lemma (refl ∷ rest) {t ∷ s} t∷s∈p₁ =
+    ∂-sound (lemma (♭ (rest t)) (∂-complete t∷s∈p₁))
+
+≋-complete : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} → p₁ ≈ p₂ → p₁ ≋ p₂
+≋-complete {n₁} {n₂} p₁≈p₂ with Bool._≟_ n₁ n₂
+≋-complete p₁≈p₂ | yes refl =
+  refl ∷ λ t → ♯ ≋-complete ((λ {_} → ∂-cong (proj₁ p₁≈p₂))
+                            , λ {_} → ∂-cong (proj₂ p₁≈p₂)
+                            )
+≋-complete p₁≈p₂ | no n₁≢n₂ with n₁≢n₂ $ same-nullability p₁≈p₂
+... | ()
 
 ------------------------------------------------------------------------
 -- The combinator nonempty does not need to be primitive
