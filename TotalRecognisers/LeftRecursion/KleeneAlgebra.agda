@@ -16,7 +16,8 @@ open import Data.Function
 open import Data.List as List
 private
   module ListMonoid {A} = Monoid (List.monoid A)
-open import Data.Product
+open import Data.Nat using (ℕ; zero; suc)
+open import Data.Product as Prod
 open import Relation.Binary.HeterogeneousEquality using (_≅_; refl)
 open import Relation.Nullary
 
@@ -73,12 +74,45 @@ _⊙_ : ∀ {n₁ n₂} → P n₁ → P n₂ → P (n₁ ∧ n₂)
 p₁ ⊙ p₂ = ♯? p₁ · ♯? p₂
 
 ------------------------------------------------------------------------
--- Recognisers form a Kleene algebra
+-- A combinator which repeats a recogniser a fixed number of times
 
--- The definition of Kleene algebras used is due to Kozen (see "On
--- Kleene Algebras and Closed Semirings"), except for the presence of
--- the recogniser indices. Kozen used the order _≲_, but as shown
--- above this order is equivalent to _≤_.
+infixl 15 _^_
+
+^-nullable : Bool → ℕ → Bool
+^-nullable _ zero    = _
+^-nullable _ (suc _) = _
+
+_^_ : ∀ {n} → P n → (i : ℕ) → P (^-nullable n i)
+p ^ 0     = ε
+p ^ suc i = p ⊙ p ^ i
+
+-- Some lemmas relating _^_ to _⋆.
+
+^≤⋆ : ∀ {n} {p : P n} i → p ^ i ≤ p ⋆
+^≤⋆ {n} {p} i s∈ = ⋆-complete $ helper i s∈
+  where
+  helper : ∀ i {s} → s ∈ p ^ i → s ∈[ p ]⋆
+  helper zero    ε              = []
+  helper (suc i) (s₁∈p · s₂∈pⁱ) =
+    drop-♭♯ (^-nullable n i) s₁∈p ∷ helper i (drop-♭♯ n s₂∈pⁱ)
+
+⋆≤^ : ∀ {n} {p : P n} {s} → s ∈ p ⋆ → ∃ λ i → s ∈ p ^ i
+⋆≤^ {n} {p} s∈p⋆ = helper (⋆-sound s∈p⋆)
+  where
+  helper : ∀ {s} → s ∈[ p ]⋆ → ∃ λ i → s ∈ p ^ i
+  helper []             = (0 , ε)
+  helper (s₁∈p ∷ s₂∈p⋆) =
+    Prod.map suc (λ {i} s₂∈pⁱ → add-♭♯ (^-nullable n i) s₁∈p ·
+                                add-♭♯ n                s₂∈pⁱ)
+             (helper s₂∈p⋆)
+
+------------------------------------------------------------------------
+-- Recognisers form a *-continuous Kleene algebra
+
+-- The definition of *-continuous Kleene algebras used here is the one
+-- given by Kozen in "On Kleene Algebras and Closed Semirings", except
+-- for the presence of the recogniser indices. Kozen used the order
+-- _≲_, but as shown above this order is equivalent to _≤_.
 
 -- Additive idempotent commutative monoid. (One of the identity lemmas
 -- could be omitted.)
@@ -232,54 +266,26 @@ right-zero {n} p = ((λ {_} → helper) , λ {_} ())
   helper (_ · s∈∅) with drop-♭♯ n s∈∅
   ... | ()
 
--- Laws for the Kleene star.
+-- *-continuity.
 
-unfold-left : ∀ {n} (p : P n) → ε ∣ p ⋆ ⊙ p ≤ p ⋆
-unfold-left     p (∣ˡ ε)              = ∣ˡ ε
-unfold-left {n} p (∣ʳ (s₁∈p⋆ · s₂∈p)) =
-  ⋆-complete (snoc (⋆-sound $ drop-♭♯ n s₁∈p⋆) s₂∈p)
-  where
-  cast⋆ : ∀ {s₁ s₂} → s₁ ≡ s₂ → s₁ ∈[ p ]⋆ → s₂ ∈[ p ]⋆
-  cast⋆ refl = id
+*-continuity-upper-bound :
+  ∀ {n₁ n₂ n₃} (p₁ : P n₁) (p₂ : P n₂) (p₃ : P n₃) →
+  ∀ i → p₁ ⊙ (p₂ ^ i ⊙ p₃) ≤ p₁ ⊙ (p₂ ⋆ ⊙ p₃)
+*-continuity-upper-bound {n₁} {n₂} {n₃} _ _ _ i (s₁∈p₁ · s∈p₂ⁱ⊙p₃)
+  with drop-♭♯ n₁ s∈p₂ⁱ⊙p₃
+... | s₂∈p₂ⁱ · s₃∈p₃ =
+  add-♭♯ (true ∧ n₃) (drop-♭♯ (^-n ∧ n₃) s₁∈p₁) ·
+  add-♭♯ n₁ (add-♭♯ n₃ (^≤⋆ i (drop-♭♯ n₃ s₂∈p₂ⁱ)) · drop-♭♯ ^-n s₃∈p₃)
+  where ^-n = ^-nullable n₂ i
 
-  snoc : ∀ {s₁ s₂} → s₁ ∈[ p ]⋆ → s₂ ∈ p → s₁ ++ s₂ ∈[ p ]⋆
-  snoc [] s₂∈p =
-    cast⋆ (proj₂ ListMonoid.identity _) (s₂∈p ∷ [])
-  snoc (_∷_ {s₁} s₁∈p s∈p⋆) s₂∈p =
-    cast⋆ (sym $ ListMonoid.assoc s₁ _ _) (s₁∈p ∷ snoc s∈p⋆ s₂∈p)
-
-unfold-right : ∀ {n} (p : P n) → ε ∣ p ⊙ p ⋆ ≤ p ⋆
-unfold-right     p (∣ˡ ε)       = ∣ˡ ε
-unfold-right {n} p (∣ʳ s₁++s₂∈) = helper s₁++s₂∈ refl
-  where
-  helper : ∀ {s n′} {p′ : P n′} →
-           s ∈ p ⊙ p′ → p′ ≅ (P _ ∶ p ⋆) → s ∈ p ⋆
-  helper (s₁∈p · s₂∈p⋆) refl =
-    ⋆-complete (s₁∈p ∷ ⋆-sound (drop-♭♯ n s₂∈p⋆))
-
-iterate-left : ∀ {n₁ n₂} (p₁ : P n₁) (p₂ : P n₂) →
-               p₁ ⊙ p₂ ≤ p₂ → p₁ ⋆ ⊙ p₂ ≤ p₂
-iterate-left {n₁} {n₂} p₁ p₂ p₁⊙p₂≤p₂ (s₁∈p₁⋆ · s₂∈p₂) =
-  helper (⋆-sound (drop-♭♯ n₂ s₁∈p₁⋆)) s₂∈p₂
-  where
-  helper : ∀ {s₁ s₂} → s₁ ∈[ p₁ ]⋆ → s₂ ∈ p₂ → s₁ ++ s₂ ∈ p₂
-  helper []                        s₂∈p₂ = s₂∈p₂
-  helper (_∷_ {s₁} s₁₁∈p₁ s₁₂∈p₂⋆) s₂∈p₂ =
-    cast∈ (sym $ ListMonoid.assoc s₁ _ _) refl $
-      p₁⊙p₂≤p₂ (add-♭♯ n₂ s₁₁∈p₁ · add-♭♯ n₁ (helper s₁₂∈p₂⋆ s₂∈p₂))
-
-iterate-right : ∀ {n₁ n₂} (p₁ : P n₁) (p₂ : P n₂) →
-                p₁ ⊙ p₂ ≤ p₁ → p₁ ⊙ p₂ ⋆ ≤ p₁
-iterate-right {n₁} {n₂} p₁ p₂ p₁⊙p₂≤p₁ = flip helper₁ refl
-  where
-  helper₂ : ∀ {s₁ s₂} → s₁ ∈ p₁ → s₂ ∈[ p₂ ]⋆ → s₁ ++ s₂ ∈ p₁
-  helper₂ s₁∈p₁ [] =
-    cast∈ (sym $ proj₂ ListMonoid.identity _) refl s₁∈p₁
-  helper₂ {s₁} s₁∈p₁ (s₂₁∈p₂ ∷ s₂₂∈p₂⋆) =
-    cast∈ (ListMonoid.assoc s₁ _ _) refl $
-      helper₂ (p₁⊙p₂≤p₁ (add-♭♯ n₂ s₁∈p₁ · add-♭♯ n₁ s₂₁∈p₂)) s₂₂∈p₂⋆
-
-  helper₁ : ∀ {s n} {p : P n} →
-            s ∈ p₁ ⊙ p → p ≅ (P _ ∶ p₂ ⋆) → s ∈ p₁
-  helper₁ (s₁∈p₁ · s₂∈p₂⋆) refl =
-    helper₂ s₁∈p₁ (⋆-sound (drop-♭♯ n₁ s₂∈p₂⋆))
+*-continuity-least-upper-bound :
+  ∀ {n₁ n₂ n₃ n} (p₁ : P n₁) (p₂ : P n₂) (p₃ : P n₃) (p : P n) →
+  (∀ i → p₁ ⊙ (p₂ ^ i ⊙ p₃) ≤ p) → p₁ ⊙ (p₂ ⋆ ⊙ p₃) ≤ p
+*-continuity-least-upper-bound
+  {n₁} {n₂} {n₃} _ _ _ _ ub (s₁∈p₁ · s∈p₂⋆⊙p₃)
+  with drop-♭♯ n₁ s∈p₂⋆⊙p₃
+... | s₂∈p₂⋆ · s₃∈p₃ with ⋆≤^ (drop-♭♯ n₃ s₂∈p₂⋆)
+... | (i , s₂∈p₂ⁱ) =
+  ub i $ add-♭♯ (^-n ∧ n₃) (drop-♭♯ (true ∧ n₃) s₁∈p₁) ·
+         add-♭♯ n₁ (add-♭♯ n₃ s₂∈p₂ⁱ · add-♭♯ ^-n s₃∈p₃)
+  where ^-n = ^-nullable n₂ i

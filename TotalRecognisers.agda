@@ -32,7 +32,7 @@ import TotalRecognisers.LeftRecursion
 
 import TotalRecognisers.LeftRecursion.ExpressiveStrength
 
--- The recognisers form a Kleene algebra.
+-- The recognisers form a *-continuous Kleene algebra.
 
 import TotalRecognisers.LeftRecursion.KleeneAlgebra
 
