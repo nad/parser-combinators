@@ -96,8 +96,8 @@ data P : Bool → Set where
 -- convenient when constructing other recognisers.
 
 -- For an example of the use of nonempty, see the Kleene star example
--- below. For examples of the use of cast, see
--- TotalRecognisers.LeftRecursion.ExpressiveStrength and
+-- in TotalRecognisers.LeftRecursion.Lib. For examples of the use of
+-- cast, see TotalRecognisers.LeftRecursion.ExpressiveStrength and
 -- TotalRecognisers.LeftRecursion.NotOnlyContextFree.
 
 ------------------------------------------------------------------------
@@ -122,15 +122,28 @@ data _∈_ : ∀ {n} → List Tok → P n → Set where
   cast     : ∀ {n₁ n₂ s} {p : P n₁} {eq : n₁ ≡ n₂} →
              s ∈ p → s ∈ cast eq p
 
+infix 4 _≤_ _≈_
+
+-- p₁ ≤ p₂ iff the language (defined by) p₂ contains all the strings
+-- in the language p₁.
+
+_≤_ : ∀ {n₁ n₂} → P n₁ → P n₂ → Set
+p₁ ≤ p₂ = ∀ {s} → s ∈ p₁ → s ∈ p₂
+
+-- p₁ ≈ p₂ iff the languages p₁ and p₂ contain the same strings.
+
+_≈_ : ∀ {n₁ n₂} → P n₁ → P n₂ → Set
+p₁ ≈ p₂ = p₁ ≤ p₂ × p₂ ≤ p₁
+
 -- Some lemmas.
 
 cast∈ : ∀ {n} {p p′ : P n} {s s′} → s ≡ s′ → p ≡ p′ → s ∈ p → s′ ∈ p′
 cast∈ refl refl s∈ = s∈
 
-drop-♭♯ : ∀ n {s n′} {p : P n′} → s ∈ ♭? (♯? {n} p) → s ∈ p
+drop-♭♯ : ∀ n {n′} {p : P n′} → ♭? (♯? {n} p) ≤ p
 drop-♭♯ n = cast∈ refl (♭?♯? n)
 
-add-♭♯ : ∀ n {s n′} {p : P n′} → s ∈ p → s ∈ ♭? (♯? {n} p)
+add-♭♯ : ∀ n {n′} {p : P n′} → p ≤ ♭? (♯? {n} p)
 add-♭♯ n = cast∈ refl (sym $ ♭?♯? n)
 
 ------------------------------------------------------------------------
@@ -142,70 +155,13 @@ leftRight = ⟪ ♯ leftRight ⟫ · ⟪ ♯ leftRight ⟫
 -- Note that leftRight is equivalent to ∅, so ∅ does not need to be a
 -- primitive combinator.
 
-leftRight≈∅ : ∀ {s} → ¬ s ∈ leftRight
-leftRight≈∅ (∈₁ · ∈₂) = leftRight≈∅ ∈₁
+leftRight≈∅ : leftRight ≈ ∅
+leftRight≈∅ = ((λ {_} → ≤∅) , λ ())
+  where
+  ≤∅ : ∀ {s A} → s ∈ leftRight → A
+  ≤∅ (∈₁ · ∈₂) = ≤∅ ∈₁
 
-------------------------------------------------------------------------
--- Example: Kleene star
-
--- The intended semantics of the Kleene star.
-
-infixr 5 _∷_
-infix  4 _∈[_]⋆
-
-data _∈[_]⋆ {n} : List Tok → P n → Set where
-  []  : ∀ {p}       → [] ∈[ p ]⋆
-  _∷_ : ∀ {s₁ s₂ p} → s₁ ∈ p → s₂ ∈[ p ]⋆ → s₁ ++ s₂ ∈[ p ]⋆
-
-module Variant₁ where
-
-  infix 15 _⋆
-
-  -- This definition requires that the argument recognisers are not
-  -- nullable.
-
-  _⋆ : P false → P true
-  p ⋆ = ε ∣ ⟨ p ⟩ · ⟪ ♯ (p ⋆) ⟫
-
-  -- The definition of _⋆ above is correct.
-
-  ⋆-sound : ∀ {s p} → s ∈ p ⋆ → s ∈[ p ]⋆
-  ⋆-sound (∣ˡ ε)           = []
-  ⋆-sound (∣ʳ (pr₁ · pr₂)) = pr₁ ∷ ⋆-sound pr₂
-
-  ⋆-complete : ∀ {s p} → s ∈[ p ]⋆ → s ∈ p ⋆
-  ⋆-complete []                    = ∣ˡ ε
-  ⋆-complete (_∷_ {[]}    pr₁ pr₂) = ⋆-complete pr₂
-  ⋆-complete (_∷_ {_ ∷ _} pr₁ pr₂) =
-    ∣ʳ {n₁ = true} (pr₁ · ⋆-complete pr₂)
-
-module Variant₂ where
-
-  infix 15 _⋆
-
-  -- This definition works for any argument recogniser.
-
-  _⋆ : ∀ {n} → P n → P true
-  _⋆ = Variant₁._⋆ ∘ nonempty
-
-  -- The definition of _⋆ above is correct.
-
-  ⋆-sound : ∀ {s n} {p : P n} → s ∈ p ⋆ → s ∈[ p ]⋆
-  ⋆-sound (∣ˡ ε)                    = []
-  ⋆-sound (∣ʳ (nonempty pr₁ · pr₂)) = pr₁ ∷ ⋆-sound pr₂
-
-  ⋆-complete : ∀ {s n} {p : P n} → s ∈[ p ]⋆ → s ∈ p ⋆
-  ⋆-complete []                    = ∣ˡ ε
-  ⋆-complete (_∷_ {[]}    pr₁ pr₂) = ⋆-complete pr₂
-  ⋆-complete (_∷_ {_ ∷ _} pr₁ pr₂) =
-    ∣ʳ {n₁ = true} (nonempty pr₁ · ⋆-complete pr₂)
-
-  -- Note, however, that for actual parsing the corresponding
-  -- definition would not be correct. The reason is that p would give
-  -- a result also when the empty string was accepted, and these
-  -- results are ignored by the definition above. In the case of
-  -- actual parsing the result of p ⋆, when p is nullable, should be a
-  -- stream and not a finite list.
+-- For more examples, see TotalRecognisers.LeftRecursion.Lib.
 
 ------------------------------------------------------------------------
 -- Nullability
@@ -371,7 +327,7 @@ module AlternativeNonempty where
   nonempty′ (nonempty p)      = nonempty′ p
   nonempty′ (cast eq p)       = nonempty′ p
 
-  sound : ∀ {n s} {p : P n} → s ∈ nonempty′ p → s ∈ nonempty p
+  sound : ∀ {n} {p : P n} → nonempty′ p ≤ nonempty p
   sound {s = []}    pr with ⇒ pr
   ... | ()
   sound {s = _ ∷ _} pr = nonempty (sound′ _ pr refl)
@@ -395,7 +351,7 @@ module AlternativeNonempty where
     sound′ (nonempty p)      pr                         refl = nonempty (sound′ p pr refl)
     sound′ (cast _ p)        pr                         refl = cast (sound′ p pr refl)
 
-  complete : ∀ {n s} {p : P n} → s ∈ nonempty p → s ∈ nonempty′ p
+  complete : ∀ {n} {p : P n} → nonempty p ≤ nonempty′ p
   complete (nonempty pr) = complete′ _ pr refl
     where
     complete′ : ∀ {n t s s′} (p : P n) →

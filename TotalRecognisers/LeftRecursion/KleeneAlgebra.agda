@@ -16,30 +16,20 @@ open import Data.Function
 open import Data.List as List
 private
   module ListMonoid {A} = Monoid (List.monoid A)
-open import Data.Nat using (ℕ; zero; suc)
-open import Data.Product as Prod
+open import Data.Product
 open import Relation.Binary.HeterogeneousEquality using (_≅_; refl)
 open import Relation.Nullary
 
 import TotalRecognisers.LeftRecursion
 open TotalRecognisers.LeftRecursion Tok _≟_ hiding (left-zero)
-open Variant₂
+import TotalRecognisers.LeftRecursion.Lib
+open TotalRecognisers.LeftRecursion.Lib Tok _≟_
+open KleeneStar₂
 
 ------------------------------------------------------------------------
--- Relations on recognisers
+-- A variant of _≤_
 
-infix 4 _≤_ _≲_ _≈_
-
--- p₁ ≤ p₂ iff the language (defined by) p₂ contains all the strings
--- in the language p₁.
-
-_≤_ : ∀ {n₁ n₂} → P n₁ → P n₂ → Set
-p₁ ≤ p₂ = ∀ {s} → s ∈ p₁ → s ∈ p₂
-
--- p₁ ≈ p₂ iff the languages p₁ and p₂ contain the same strings.
-
-_≈_ : ∀ {n₁ n₂} → P n₁ → P n₂ → Set
-p₁ ≈ p₂ = p₁ ≤ p₂ × p₂ ≤ p₁
+infix 4 _≲_
 
 -- If _∣_ is viewed as the join operation of a join-semilattice, then
 -- the following definition of order is natural.
@@ -47,7 +37,7 @@ p₁ ≈ p₂ = p₁ ≤ p₂ × p₂ ≤ p₁
 _≲_ : ∀ {n₁ n₂} → P n₁ → P n₂ → Set
 p₁ ≲ p₂ = p₁ ∣ p₂ ≈ p₂
 
--- The two definitions of order above coincide.
+-- The order above coincides with _≤_.
 
 ≤⇔≲ : ∀ {n₁ n₂} (p₁ : P n₁) (p₂ : P n₂) → p₁ ≤ p₂ ⇔ p₁ ≲ p₂
 ≤⇔≲ {n₁} p₁ p₂ =
@@ -63,56 +53,13 @@ p₁ ≲ p₂ = p₁ ∣ p₂ ≈ p₂
   helper₂ (p₁∣p₂≤p₂ , _) s∈p₁ = p₁∣p₂≤p₂ (∣ˡ s∈p₁)
 
 ------------------------------------------------------------------------
--- Variant of a combinator defined in TotalRecognisers.LeftRecursion
-
-infixl 10 _⊙_
-
--- The following sequencing operator takes operators rather than
--- potentially delayed operators as arguments.
-
-_⊙_ : ∀ {n₁ n₂} → P n₁ → P n₂ → P (n₁ ∧ n₂)
-p₁ ⊙ p₂ = ♯? p₁ · ♯? p₂
-
-------------------------------------------------------------------------
--- A combinator which repeats a recogniser a fixed number of times
-
-infixl 15 _^_
-
-^-nullable : Bool → ℕ → Bool
-^-nullable _ zero    = _
-^-nullable _ (suc _) = _
-
-_^_ : ∀ {n} → P n → (i : ℕ) → P (^-nullable n i)
-p ^ 0     = ε
-p ^ suc i = p ⊙ p ^ i
-
--- Some lemmas relating _^_ to _⋆.
-
-^≤⋆ : ∀ {n} {p : P n} i → p ^ i ≤ p ⋆
-^≤⋆ {n} {p} i s∈ = ⋆-complete $ helper i s∈
-  where
-  helper : ∀ i {s} → s ∈ p ^ i → s ∈[ p ]⋆
-  helper zero    ε              = []
-  helper (suc i) (s₁∈p · s₂∈pⁱ) =
-    drop-♭♯ (^-nullable n i) s₁∈p ∷ helper i (drop-♭♯ n s₂∈pⁱ)
-
-⋆≤^ : ∀ {n} {p : P n} {s} → s ∈ p ⋆ → ∃ λ i → s ∈ p ^ i
-⋆≤^ {n} {p} s∈p⋆ = helper (⋆-sound s∈p⋆)
-  where
-  helper : ∀ {s} → s ∈[ p ]⋆ → ∃ λ i → s ∈ p ^ i
-  helper []             = (0 , ε)
-  helper (s₁∈p ∷ s₂∈p⋆) =
-    Prod.map suc (λ {i} s₂∈pⁱ → add-♭♯ (^-nullable n i) s₁∈p ·
-                                add-♭♯ n                s₂∈pⁱ)
-             (helper s₂∈p⋆)
-
-------------------------------------------------------------------------
 -- Recognisers form a *-continuous Kleene algebra
 
 -- The definition of *-continuous Kleene algebras used here is the one
 -- given by Kozen in "On Kleene Algebras and Closed Semirings", except
 -- for the presence of the recogniser indices. Kozen used the order
--- _≲_, but as shown above this order is equivalent to _≤_.
+-- _≲_ in his definition, but as shown above this order is equivalent
+-- to _≤_.
 
 -- Additive idempotent commutative monoid. (One of the identity lemmas
 -- could be omitted.)

@@ -29,6 +29,7 @@ open import Relation.Nullary
 open ≡-Reasoning
 
 import TotalRecognisers.LeftRecursion
+import TotalRecognisers.LeftRecursion.Lib
 
 ------------------------------------------------------------------------
 -- The alphabet
@@ -47,15 +48,16 @@ c ≟ a = no λ()
 c ≟ b = no λ()
 c ≟ c = yes refl
 
-open TotalRecognisers.LeftRecursion Tok _≟_
+open TotalRecognisers.LeftRecursion     Tok _≟_
+open TotalRecognisers.LeftRecursion.Lib Tok _≟_
 
 ------------------------------------------------------------------------
 -- An auxiliary definition and a boring lemma
 
-infixr 8 _^_
+infixr 8 _^^_
 
-_^_ : Tok → ℕ → List Tok
-_^_ = flip List.replicate
+_^^_ : Tok → ℕ → List Tok
+_^^_ = flip List.replicate
 
 private
 
@@ -64,30 +66,18 @@ private
     solve 2 (λ i n → i :+ (con 1 :+ n) := con 1 :+ i :+ n) refl i n
 
 ------------------------------------------------------------------------
--- Recognising exactly i "things"
+-- Some lemmas relating _^^_, _^_ and tok
 
--- exactly i p defines the language { s₁s₂…s_i | s_j ∈ p, 1 ≤ j ≤ i }.
+tok-^-complete : ∀ t i → t ^^ i ∈ tok t ^ i
+tok-^-complete t zero    = ε
+tok-^-complete t (suc i) =
+  add-♭♯ (^-nullable false i) tok · tok-^-complete t i
 
-exactly-index : Bool → ℕ → Bool
-exactly-index _ zero    = _
-exactly-index _ (suc _) = _
-
-exactly : ∀ {n} (i : ℕ) → P n → P (exactly-index n i)
-exactly zero    p = ε
-exactly (suc i) p = ♯? p · ♯? (exactly i p)
-
--- Some lemmas relating _^_, exactly and tok.
-
-exactly-tok-complete : ∀ t i → t ^ i ∈ exactly i (tok t)
-exactly-tok-complete t zero    = ε
-exactly-tok-complete t (suc i) =
-  add-♭♯ (exactly-index false i) tok · exactly-tok-complete t i
-
-exactly-tok-sound : ∀ t i {s} → s ∈ exactly i (tok t) → s ≡ t ^ i
-exactly-tok-sound t zero    ε         = refl
-exactly-tok-sound t (suc i) (t∈ · s∈)
-  with drop-♭♯ (exactly-index false i) t∈
-... | tok = cong (_∷_ t) (exactly-tok-sound t i s∈)
+tok-^-sound : ∀ t i {s} → s ∈ tok t ^ i → s ≡ t ^^ i
+tok-^-sound t zero    ε         = refl
+tok-^-sound t (suc i) (t∈ · s∈)
+  with drop-♭♯ (^-nullable false i) t∈
+... | tok = cong (_∷_ t) (tok-^-sound t i s∈)
 
 ------------------------------------------------------------------------
 -- aⁿbⁿcⁿ
@@ -102,7 +92,7 @@ private
 
   aⁿbⁱ⁺ⁿcⁱ⁺ⁿ : (i : ℕ) → P (aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-index i)
   aⁿbⁱ⁺ⁿcⁱ⁺ⁿ i = cast lem (♯? (tok a) · ⟪ ♯ aⁿbⁱ⁺ⁿcⁱ⁺ⁿ (suc i) ⟫)
-               ∣ ♯? (exactly i (tok b)) · ♯? (exactly i (tok c))
+               ∣ ♯? (tok b ^ i) · ♯? (tok c ^ i)
     where lem = left-zero (aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-index (suc i))
 
 aⁿbⁿcⁿ : P true
@@ -111,12 +101,12 @@ aⁿbⁿcⁿ = aⁿbⁱ⁺ⁿcⁱ⁺ⁿ 0
 -- Let us prove that aⁿbⁿcⁿ is correctly defined.
 
 aⁿbⁿcⁿ-string : ℕ → List Tok
-aⁿbⁿcⁿ-string n = a ^ n ++ b ^ n ++ c ^ n
+aⁿbⁿcⁿ-string n = a ^^ n ++ b ^^ n ++ c ^^ n
 
 private
 
   aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-string : ℕ → ℕ → List Tok
-  aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-string n i = a ^ n ++ b ^ (i + n) ++ c ^ (i + n)
+  aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-string n i = a ^^ n ++ b ^^ (i + n) ++ c ^^ (i + n)
 
 aⁿbⁿcⁿ-complete : ∀ n → aⁿbⁿcⁿ-string n ∈ aⁿbⁿcⁿ
 aⁿbⁿcⁿ-complete n = aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-complete n 0
@@ -126,7 +116,7 @@ aⁿbⁿcⁿ-complete n = aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-complete n 0
   ... | .i | refl = ∣ʳ {n₁ = false} (helper b · helper c)
     where
     helper = λ (t : Tok) →
-      add-♭♯ (exactly-index false i) (exactly-tok-complete t i)
+      add-♭♯ (^-nullable false i) (tok-^-complete t i)
   aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-complete (suc n) i with i + suc n | shallow-comm i n
   ... | .(suc i + n) | refl =
     ∣ˡ $ cast {eq = lem} (
@@ -143,18 +133,19 @@ aⁿbⁿcⁿ-sound = aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound 0
     with drop-♭♯ (aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-index (suc i)) t∈
   ... | tok with aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound (suc i) s∈
   ... | (n , refl) = suc n , (begin
-    a ^ suc n ++ b ^ (suc i + n) ++ c ^ (suc i + n)
-      ≡⟨ cong (λ i → a ^ suc n ++ b ^ i ++ c ^ i)
+    a ^^ suc n ++ b ^^ (suc i + n) ++ c ^^ (suc i + n)
+      ≡⟨ cong (λ i → a ^^ suc n ++ b ^^ i ++ c ^^ i)
               (sym (shallow-comm i n)) ⟩
-    a ^ suc n ++ b ^ (i + suc n) ++ c ^ (i + suc n)
+    a ^^ suc n ++ b ^^ (i + suc n) ++ c ^^ (i + suc n)
       ∎)
   aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound i (∣ʳ (_·_ {s₁} {s₂} s₁∈ s₂∈)) = 0 , (begin
     s₁ ++ s₂
-      ≡⟨ cong₂ _++_ (exactly-tok-sound b i
-                      (drop-♭♯ (exactly-index false i) s₁∈))
-                    (exactly-tok-sound c i
-                      (drop-♭♯ (exactly-index false i) s₂∈)) ⟩
-    b ^ i ++ c ^ i
-      ≡⟨ cong (λ i → b ^ i ++ c ^ i) (sym (proj₂ NatCS.+-identity i)) ⟩
-    b ^ (i + 0) ++ c ^ (i + 0)
+      ≡⟨ cong₂ _++_ (tok-^-sound b i
+                      (drop-♭♯ (^-nullable false i) s₁∈))
+                    (tok-^-sound c i
+                      (drop-♭♯ (^-nullable false i) s₂∈)) ⟩
+    b ^^ i ++ c ^^ i
+      ≡⟨ cong (λ i → b ^^ i ++ c ^^ i)
+              (sym (proj₂ NatCS.+-identity i)) ⟩
+    b ^^ (i + 0) ++ c ^^ (i + 0)
       ∎)

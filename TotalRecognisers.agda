@@ -32,6 +32,10 @@ import TotalRecognisers.LeftRecursion
 
 import TotalRecognisers.LeftRecursion.ExpressiveStrength
 
+-- A tiny library of derived combinators.
+
+import TotalRecognisers.LeftRecursion.Lib
+
 -- The recognisers form a *-continuous Kleene algebra.
 
 import TotalRecognisers.LeftRecursion.KleeneAlgebra
