@@ -11,7 +11,13 @@ module TotalRecognisers.LeftRecursion.KleeneAlgebra
          where
 
 open import Algebra
+import Algebra.Props.BooleanAlgebra
+open import Coinduction
 open import Data.Bool hiding (_∧_)
+import Data.Bool.Properties as Bool
+private
+  module BoolCS = CommutativeSemiring Bool.commutativeSemiring-∨-∧
+  module BoolBA = Algebra.Props.BooleanAlgebra Bool.booleanAlgebra
 open import Data.Function
 open import Data.List as List
 private
@@ -64,48 +70,26 @@ p₁ ≲ p₂ = p₁ ∣ p₂ ≈ p₂
 -- Additive idempotent commutative monoid. (One of the identity lemmas
 -- could be omitted.)
 
-∣-commutative : ∀ {n₁ n₂} (p₁ : P n₁) (p₂ : P n₂) → p₁ ∣ p₂ ≈ p₂ ∣ p₁
-∣-commutative p₁ p₂ = ((λ {_} → helper p₁ p₂) , λ {_} → helper p₂ p₁)
-  where
-  helper : ∀ {n₁ n₂} (p₁ : P n₁) (p₂ : P n₂) → p₁ ∣ p₂ ≤ p₂ ∣ p₁
-  helper _ _ (∣ˡ {n₂ = n₂} s∈p₁) = ∣ʳ {n₁ = n₂} s∈p₁
-  helper _ _ (∣ʳ           s∈p₂) = ∣ˡ s∈p₂
+∣-commutative : ∀ {n₁ n₂} (p₁ : P n₁) (p₂ : P n₂) → p₁ ∣ p₂ ≋ p₂ ∣ p₁
+∣-commutative {n₁} {n₂} p₁ p₂ =
+  BoolCS.+-comm n₁ n₂ ∷ λ t → ♯ ∣-commutative (∂ p₁ t) (∂ p₂ t)
 
-∅-left-identity : ∀ {n} (p : P n) → ∅ ∣ p ≈ p
-∅-left-identity p = ((λ {_} → helper) , λ {_} s∈p → ∣ʳ {p₁ = ∅} s∈p)
-  where
-  helper : ∅ ∣ p ≤ p
-  helper (∣ˡ ())
-  helper (∣ʳ s∈p) = s∈p
+∅-left-identity : ∀ {n} (p : P n) → ∅ ∣ p ≋ p
+∅-left-identity p = refl ∷ λ t → ♯ ∅-left-identity (∂ p t)
 
-∅-right-identity : ∀ {n} (p : P n) → p ∣ ∅ ≈ p
-∅-right-identity p = ((λ {_} → helper) , λ {_} s∈p → ∣ˡ s∈p)
-  where
-  helper : p ∣ ∅ ≤ p
-  helper (∣ˡ s∈p) = s∈p
-  helper (∣ʳ ())
+∅-right-identity : ∀ {n} (p : P n) → p ∣ ∅ ≋ p
+∅-right-identity {n} p =
+  proj₂ BoolCS.+-identity n ∷ λ t → ♯ ∅-right-identity (∂ p t)
 
 ∣-associative : ∀ {n₁ n₂ n₃} (p₁ : P n₁) (p₂ : P n₂) (p₃ : P n₃) →
-                p₁ ∣ (p₂ ∣ p₃) ≈ (p₁ ∣ p₂) ∣ p₃
-∣-associative {n₁} {n₂} p₁ p₂ p₃ =
-  ((λ {_} → helper₁) , λ {_} → helper₂)
-  where
-  helper₁ : p₁ ∣ (p₂ ∣ p₃) ≤ (p₁ ∣ p₂) ∣ p₃
-  helper₁ (∣ˡ s∈p₁)      = ∣ˡ (∣ˡ s∈p₁)
-  helper₁ (∣ʳ (∣ˡ s∈p₂)) = ∣ˡ (∣ʳ {n₁ = n₁} s∈p₂)
-  helper₁ (∣ʳ (∣ʳ s∈p₃)) = ∣ʳ {n₁ = n₁ ∨ n₂} s∈p₃
+                p₁ ∣ (p₂ ∣ p₃) ≋ (p₁ ∣ p₂) ∣ p₃
+∣-associative {n₁} {n₂} {n₃} p₁ p₂ p₃ =
+  sym (BoolCS.+-assoc n₁ n₂ n₃) ∷ λ t →
+    ♯ ∣-associative (∂ p₁ t) (∂ p₂ t) (∂ p₃ t)
 
-  helper₂ : (p₁ ∣ p₂) ∣ p₃ ≤ p₁ ∣ (p₂ ∣ p₃)
-  helper₂ (∣ˡ (∣ˡ s∈p₁)) = ∣ˡ s∈p₁
-  helper₂ (∣ˡ (∣ʳ s∈p₂)) = ∣ʳ {n₁ = n₁} (∣ˡ s∈p₂)
-  helper₂ (∣ʳ s∈p₃)      = ∣ʳ {n₁ = n₁} (∣ʳ {n₁ = n₂} s∈p₃)
-
-∣-idempotent : ∀ {n} (p : P n) → p ∣ p ≈ p
-∣-idempotent p = ((λ {_} → helper) , λ {_} → ∣ˡ)
-  where
-  helper : p ∣ p ≤ p
-  helper (∣ˡ s∈p) = s∈p
-  helper (∣ʳ s∈p) = s∈p
+∣-idempotent : ∀ {n} (p : P n) → p ∣ p ≋ p
+∣-idempotent {n} p =
+  BoolBA.∨-idempotent n ∷ λ t → ♯ ∣-idempotent (∂ p t)
 
 -- Multiplicative monoid.
 
