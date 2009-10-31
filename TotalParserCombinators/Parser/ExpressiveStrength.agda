@@ -1,7 +1,6 @@
 ------------------------------------------------------------------------
 -- This module proves that the parser combinators correspond exactly
--- to functions of type List Bool → List R (when the token type is
--- Bool)
+-- to functions of type List Tok → List R
 ------------------------------------------------------------------------
 
 -- This result could be generalised to arbitrary finite token types.
@@ -9,17 +8,15 @@
 module TotalParserCombinators.Parser.ExpressiveStrength where
 
 open import Coinduction
-open import Data.Bool hiding (_∧_)
-open import Data.Empty
+open import Data.Bool
 open import Data.Function
 open import Data.List as List
 open import Data.List.Any
 open Membership-≡
 open import Data.List.Reverse
-open import Data.Product as Prod
+open import Data.Product
 open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
-open import Relation.Nullary.Decidable
 
 open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Parser
@@ -28,8 +25,7 @@ open import TotalParserCombinators.Parser.Semantics
 open import TotalParserCombinators.Parser.Lib
 private
   open module Tok = Token Bool _≟_ using (tok)
-import TotalParserCombinators.Backend.BreadthFirst
-  as Backend
+import TotalParserCombinators.Backend.BreadthFirst as Backend
 
 ------------------------------------------------------------------------
 -- Expressive strength
@@ -47,33 +43,41 @@ parser⇒fun p =
 
 -- For every function there is a corresponding parser.
 
-fun⇒parser : ∀ {R} (f : List Bool → List R) →
-             ∃ λ (p : Parser Bool R (f [])) →
+fun⇒parser : ∀ {Tok R} (f : List Tok → List R) →
+             ∃ λ (p : Parser Tok R (f [])) →
                ∀ x s → x ∈ p · s ⇔ x ∈ f s
-fun⇒parser {R} f = (p f , λ _ s → (sound f , complete f s))
+fun⇒parser {Tok} {R} f = (p f , λ _ s → (sound f , complete f s))
+  where
+  p : (f : List Tok → List R) → Parser Tok R (f [])
+  p f = token >>= (λ t → ⟪ ♯ p (f ∘ _∷_ t) ⟫)
+      ∣ return⋆ (f [])
+
+  sound : ∀ {x s} f → x ∈ p f · s → x ∈ f s
+  sound f (∣ʳ ._ x∈) with return⋆-sound (f []) x∈
+  ... | (refl , x∈′) = x∈′
+  sound f (∣ˡ (token {t} >>= x∈)) = sound (f ∘ _∷_ t) x∈
+
+  complete : ∀ {x} f s → x ∈ f s → x ∈ p f · s
+  complete f []      x∈ = ∣ʳ [] (return⋆-complete x∈)
+  complete f (t ∷ s) x∈ = ∣ˡ (token >>= complete (f ∘ _∷_ t) s x∈)
+
+-- If the token type is finite (in this case Bool), then the result
+-- above can be established without the use of bind (_>>=_). (The
+-- definition of tok uses bind, but if bind were removed tok would be
+-- added as a primitive combinator.)
+
+fun⇒parser′ : ∀ {R} (f : List Bool → List R) →
+              ∃ λ (p : Parser Bool R (f [])) →
+                ∀ x s → x ∈ p · s ⇔ x ∈ f s
+fun⇒parser′ {R} f = (p f , λ _ s → (sound f , complete f s))
   where
   specialise : ∀ {A B} → (List A → B) → A → (List A → B)
   specialise f x = λ xs → f (xs ∷ʳ x)
-
-  return⋆ : (xs : List R) → Parser Bool R xs
-  return⋆ []       = fail
-  return⋆ (x ∷ xs) = return x ∣ return⋆ xs
 
   p : (f : List Bool → List R) → Parser Bool R (f [])
   p f = ⟪ ♯ (const <$> p (specialise f true )) ⟫ ⊛ ♯? (tok true )
       ∣ ⟪ ♯ (const <$> p (specialise f false)) ⟫ ⊛ ♯? (tok false)
       ∣ return⋆ (f [])
-
-  return⋆-sound : ∀ {x s} xs → x ∈ return⋆ xs · s → s ≡ [] × x ∈ xs
-  return⋆-sound []       ()
-  return⋆-sound (y ∷ ys) (∣ˡ return)        = (refl , here refl)
-  return⋆-sound (y ∷ ys) (∣ʳ .([ y ]) x∈ys) =
-    Prod.map id there $ return⋆-sound ys x∈ys
-
-  return⋆-complete : ∀ {x xs} → x ∈ xs → x ∈ return⋆ xs · []
-  return⋆-complete (here refl)  = ∣ˡ return
-  return⋆-complete (there x∈xs) =
-    ∣ʳ [ _ ] (return⋆-complete x∈xs)
 
   sound : ∀ {x s} f → x ∈ p f · s → x ∈ f s
   sound f (∣ʳ ._ x∈) with return⋆-sound (f []) x∈
