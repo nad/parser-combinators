@@ -70,7 +70,7 @@ data Parser (Tok : Set) : (R : Set) → List R → Set1 where
              (p₂ : (x : R₁) → ∞? (Parser Tok R₂         (f x)) xs) →
                                   Parser Tok R₂ (xs >>=′ f)
   _>>=!_   : ∀ {R₁ R₂ xs}
-             (p₁ :      ∞ (Parser Tok R₁ xs))
+             (p₁ :      ∞  (Parser Tok R₁ xs))
              (p₂ : R₁ → ∞? (Parser Tok R₂ fail′) xs) →
                             Parser Tok R₂ fail′
   nonempty : ∀ {R xs} (p : Parser Tok R xs) → Parser Tok R []
