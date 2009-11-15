@@ -6,6 +6,7 @@ module TotalRecognisers.LeftRecursion.Lib (Tok : Set) where
 
 open import Coinduction
 open import Data.Bool hiding (_∧_)
+open import Data.Bool.Properties
 open import Data.Function
 open import Data.List
 open import Data.Nat using (ℕ; zero; suc)
@@ -135,3 +136,21 @@ module Tok (dec : Decidable (_≡_ {A = Tok})) where
 
   complete : ∀ {t} → [ t ] ∈ tok t
   complete = sat (fromWitness refl)
+
+------------------------------------------------------------------------
+-- A recogniser which accepts the empty string iff the argument is
+-- true (and never accepts non-empty strings)
+
+accept-if-true : ∀ b → P b
+accept-if-true true  = ε
+accept-if-true false = ∅
+
+module AcceptIfTrue where
+
+  sound : ∀ b {s} → s ∈ accept-if-true b → s ≡ [] × T b
+  sound true  ε  = (refl , _)
+  sound false ()
+
+  complete : ∀ {b} → T b → [] ∈ accept-if-true b
+  complete ok with proj₁ T-≡ ok
+  ... | refl = ε

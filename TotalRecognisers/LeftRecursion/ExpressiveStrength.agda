@@ -10,7 +10,6 @@ module TotalRecognisers.LeftRecursion.ExpressiveStrength where
 open import Algebra
 open import Coinduction
 open import Data.Bool as Bool hiding (_∧_)
-open import Data.Bool.Properties
 open import Data.Empty
 open import Data.Function
 open import Data.List as List
@@ -34,11 +33,10 @@ private
     hiding (P)
   P : Set → Bool → Set
   P Tok = LR.P {Tok}
-import TotalRecognisers.LeftRecursion.Lib
+import TotalRecognisers.LeftRecursion.Lib as Lib
+open Lib Bool hiding (module Tok)
 private
-  open module Tok =
-         TotalRecognisers.LeftRecursion.Lib.Tok Bool Bool._≟_
-           using (tok)
+  open module Tok = Lib.Tok Bool Bool._≟_ using (tok)
 
 ------------------------------------------------------------------------
 -- A boring lemma
@@ -71,10 +69,6 @@ pred⇒grammar : (f : List Bool → Bool) →
                ∃ λ (p : P Bool (f [])) → ∀ {s} → s ∈ p ⇔ T (f s)
 pred⇒grammar f = (p f , λ {s} → (p-sound f , p-complete f s))
   where
-  accept-if-true : ∀ b → P Bool b
-  accept-if-true true  = ε
-  accept-if-true false = ∅
-
   p : (f : List Bool → Bool) → P Bool (f [])
   p f = cast (lemma f)
       ( ♯? (tok true ) · ⟪ ♯ p (f ∘ _∷_ true ) ⟫
@@ -82,17 +76,8 @@ pred⇒grammar f = (p f , λ {s} → (p-sound f , p-complete f s))
       ∣ accept-if-true (f [])
       )
 
-  accept-if-true-sound :
-    ∀ b {s} → s ∈ accept-if-true b → s ≡ [] × T b
-  accept-if-true-sound true  ε  = (refl , _)
-  accept-if-true-sound false ()
-
-  accept-if-true-complete : ∀ {b} → T b → [] ∈ accept-if-true b
-  accept-if-true-complete ok with proj₁ T-≡ ok
-  ... | refl = ε
-
   p-sound : ∀ f {s} → s ∈ p f → T (f s)
-  p-sound f (cast (∣ʳ s∈)) with accept-if-true-sound (f []) s∈
+  p-sound f (cast (∣ʳ s∈)) with AcceptIfTrue.sound (f []) s∈
   ... | (refl , ok) = ok
   p-sound f (cast (∣ˡ (∣ˡ (t∈ · s∈)))) with Tok.sound (drop-♭♯ (f [ true  ]) t∈)
   ... | refl = p-sound (f ∘ _∷_ true ) s∈
@@ -102,7 +87,7 @@ pred⇒grammar f = (p f , λ {s} → (p-sound f , p-complete f s))
   p-complete : ∀ f s → T (f s) → s ∈ p f
   p-complete f [] ok =
     cast (∣ʳ {n₁ = false ∧ f [ true ] ∨ false ∧ f [ false ]} $
-      accept-if-true-complete ok)
+      AcceptIfTrue.complete ok)
   p-complete f (true  ∷ bs) ok =
     cast (∣ˡ $ ∣ˡ $
       add-♭♯ (f [ true  ]) Tok.complete ·
@@ -122,26 +107,13 @@ pred⇒grammar′ f = (p f , λ {s} → (p-sound f , p-complete f s))
   extend : ∀ {A B} → (List A → B) → A → (List A → B)
   extend f x = λ xs → f (xs ∷ʳ x)
 
-  accept-if-true : ∀ b → P Bool b
-  accept-if-true true  = ε
-  accept-if-true false = ∅
-
   p : (f : List Bool → Bool) → P Bool (f [])
   p f = ⟪ ♯ p (extend f true ) ⟫ · ♯? (tok true )
       ∣ ⟪ ♯ p (extend f false) ⟫ · ♯? (tok false)
       ∣ accept-if-true (f [])
 
-  accept-if-true-sound :
-    ∀ b {s} → s ∈ accept-if-true b → s ≡ [] × T b
-  accept-if-true-sound true  ε  = (refl , _)
-  accept-if-true-sound false ()
-
-  accept-if-true-complete : ∀ {b} → T b → [] ∈ accept-if-true b
-  accept-if-true-complete ok with proj₁ T-≡ ok
-  ... | refl = ε
-
   p-sound : ∀ f {s} → s ∈ p f → T (f s)
-  p-sound f (∣ʳ s∈) with accept-if-true-sound (f []) s∈
+  p-sound f (∣ʳ s∈) with AcceptIfTrue.sound (f []) s∈
   ... | (refl , ok) = ok
   p-sound f (∣ˡ (∣ˡ (s∈ · t∈))) with Tok.sound (drop-♭♯ (f [ true  ]) t∈)
   ... | refl = p-sound (extend f true ) s∈
@@ -150,7 +122,7 @@ pred⇒grammar′ f = (p f , λ {s} → (p-sound f , p-complete f s))
 
   p-complete′ : ∀ f {s} → Reverse s → T (f s) → s ∈ p f
   p-complete′ f [] ok =
-    ∣ʳ {n₁ = false} $ accept-if-true-complete ok
+    ∣ʳ {n₁ = false} $ AcceptIfTrue.complete ok
   p-complete′ f (bs ∶ rs ∶ʳ true ) ok =
     ∣ˡ {n₁ = false} $ ∣ˡ {n₁ = false} $
       p-complete′ (extend f true ) rs ok ·
