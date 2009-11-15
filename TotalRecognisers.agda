@@ -28,9 +28,9 @@ import TotalRecognisers.Simple.ExpressiveStrength
 
 import TotalRecognisers.LeftRecursion
 
--- These recognisers have the same expressive strength as the ones
--- above, as long as the alphabet is finite. (For infinite alphabets
--- the increased expressive power of sat comes into play.)
+-- These recognisers have the same (maximal) expressive strength as
+-- the simple ones, as long as the alphabet is finite. For infinite
+-- alphabets it is shown that the expressive strength is not maximal.
 
 import TotalRecognisers.LeftRecursion.ExpressiveStrength
 
