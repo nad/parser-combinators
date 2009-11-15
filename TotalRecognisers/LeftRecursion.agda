@@ -2,28 +2,22 @@
 -- Total recognisers which can handle left recursion
 ------------------------------------------------------------------------
 
-open import Relation.Binary
-open import Relation.Binary.PropositionalEquality
-
 -- The recognisers are parametrised on the alphabet.
 
-module TotalRecognisers.LeftRecursion
-         (Tok : Set)
-         (_≟_ : Decidable (_≡_ {A = Tok}))
-         -- The tokens must come with decidable equality.
-         where
+module TotalRecognisers.LeftRecursion (Tok : Set) where
 
 open import Algebra
 open import Coinduction
-open import Data.Bool as Bool using (Bool; true; false; _∨_)
+open import Data.Bool as Bool hiding (_∧_)
 import Data.Bool.Properties as Bool
 private
   module BoolCS = CommutativeSemiring Bool.commutativeSemiring-∧-∨
-open import Data.Function using (_∘_; _$_)
+open import Data.Function
 open import Data.List as List using (List; []; _∷_; _++_; [_])
 private
   module ListMonoid {A} = Monoid (List.monoid A)
 open import Data.Product
+open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
 
 ------------------------------------------------------------------------
@@ -81,7 +75,7 @@ infixl  5 _∣_
 data P : Bool → Set where
   ∅        : P false
   ε        : P true
-  tok      : Tok → P false
+  sat      : (Tok → Bool) → P false
   _∣_      : ∀ {n₁ n₂} →     P n₁     →     P n₂     → P (n₁ ∨ n₂)
   _·_      : ∀ {n₁ n₂} → ∞? (P n₁) n₂ → ∞? (P n₂) n₁ → P (n₁ ∧ n₂)
   nonempty : ∀ {n} → P n → P false
@@ -110,7 +104,7 @@ infix 4 _∈_
 
 data _∈_ : ∀ {n} → List Tok → P n → Set where
   ε        : [] ∈ ε
-  tok      : ∀ {t} → [ t ] ∈ tok t
+  sat      : ∀ {f t} → T (f t) → [ t ] ∈ sat f
   ∣ˡ       : ∀ {s n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
              s ∈ p₁ → s ∈ p₁ ∣ p₂
   ∣ʳ       : ∀ {s n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
@@ -173,7 +167,7 @@ leftRight≈∅ = ((λ {_} → ≤∅) , λ ())
   where
   ⇒′ : ∀ {n s} {p : P n} → s ∈ p → s ≡ [] → n ≡ true
   ⇒′ ε                     refl = refl
-  ⇒′ tok                   ()
+  ⇒′ (sat _)               ()
   ⇒′ (∣ˡ pr₁)              refl with ⇒ pr₁
   ⇒′ (∣ˡ pr₁)              refl | refl = refl
   ⇒′ (∣ʳ pr₂)              refl with ⇒ pr₂
@@ -186,7 +180,7 @@ leftRight≈∅ = ((λ {_} → ≤∅) , λ ())
 ⇐ : ∀ {n} (p : P n) → n ≡ true → [] ∈ p
 ⇐ ∅                            ()
 ⇐ ε                            refl = ε
-⇐ (tok t)                      ()
+⇐ (sat f)                      ()
 ⇐ (_∣_ {true}           p₁ p₂) refl = ∣ˡ (⇐ p₁ refl)
 ⇐ (_∣_ {false} {true}   p₁ p₂) refl = ∣ʳ {p₁ = p₁} (⇐ p₂ refl)
 ⇐ (_∣_ {false} {false}  p₁ p₂) ()
@@ -210,16 +204,14 @@ nullable? {false} p = no helper
 ------------------------------------------------------------------------
 -- Derivative
 
--- The index of the derivative. The right-hand sides (excluding
--- t′ ≟ t) are inferable, but included here so that they can easily be
+-- The index of the derivative. Most of the right-hand sides are
+-- inferable, but they are included here so that they can easily be
 -- inspected.
 
 ∂n : ∀ {n} → P n → Tok → Bool
 ∂n ∅                 t = false
 ∂n ε                 t = false
-∂n (tok t′)          t with t′ ≟ t
-∂n (tok t′)          t | yes t′≡t = true
-∂n (tok t′)          t | no  t′≢t = false
+∂n (sat f)           t = f t
 ∂n (p₁ ∣ p₂)         t = ∂n p₁ t ∨ ∂n p₂ t
 ∂n (⟨ p₁ ⟩ · ⟨ p₂ ⟩) t = ∂n p₁ t ∨ ∂n p₂ t
 ∂n (⟪ p₁ ⟫ · ⟨ p₂ ⟩) t = ∂n p₂ t
@@ -234,9 +226,9 @@ nullable? {false} p = no helper
 ∂ : ∀ {n} (p : P n) (t : Tok) → P (∂n p t)
 ∂ ∅                 t = ∅
 ∂ ε                 t = ∅
-∂ (tok t′)          t with t′ ≟ t
-∂ (tok t′)          t | yes t′≡t = ε
-∂ (tok t′)          t | no  t′≢t = ∅
+∂ (sat f)           t with f t
+...                   | true  = ε
+...                   | false = ∅
 ∂ (p₁ ∣ p₂)         t = ∂ p₁ t ∣ ∂ p₂ t
 ∂ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) t = ⟨   ∂    p₁  t ⟩ · ♯?    p₂ ∣ ∂ p₂  t
 ∂ (⟪ p₁ ⟫ · ⟨ p₂ ⟩) t = ⟪ ♯ ∂ (♭ p₁) t ⟫ · ♯?    p₂ ∣ ∂ p₂  t
@@ -250,12 +242,16 @@ nullable? {false} p = no helper
 ∂-sound : ∀ {s n} {p : P n} {t} → s ∈ ∂ p t → t ∷ s ∈ p
 ∂-sound s∈ = ∂-sound′ _ _ s∈
   where
+  sat-lemma : ∀ {s} f t → s ∈ ∂ (sat f) t → T (f t) × s ≡ []
+  sat-lemma f t ∈ with f t
+  sat-lemma f t ε  | true  = (_ , refl)
+  sat-lemma f t () | false
+
   ∂-sound′ : ∀ {s n} (p : P n) t → s ∈ ∂ p t → t ∷ s ∈ p
   ∂-sound′ ∅                 t ()
   ∂-sound′ ε                 t ()
-  ∂-sound′ (tok t′)          t _              with t′ ≟ t
-  ∂-sound′ (tok .t)          t ε              | yes refl = tok
-  ∂-sound′ (tok t′)          t ()             | no  t′≢t
+  ∂-sound′ (sat f)           t s∈             with sat-lemma f t s∈
+  ...                                         | (ok , refl) = sat ok
   ∂-sound′ (p₁ ∣ p₂)         t (∣ˡ ∈₁)        = ∣ˡ (∂-sound′ p₁ t ∈₁)
   ∂-sound′ (p₁ ∣ p₂)         t (∣ʳ ∈₂)        = ∣ʳ {p₁ = p₁} (∂-sound′ p₂ t ∈₂)
   ∂-sound′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) t (∣ˡ (∈₁ · ∈₂)) = ∂-sound ∈₁ · drop-♭♯ (∂n p₁ t) ∈₂
@@ -271,13 +267,11 @@ nullable? {false} p = no helper
 ∂-complete {t = t} t∷s∈ = ∂-complete′ _ t∷s∈ refl
   where
   ∂-complete′ : ∀ {s s′ n} (p : P n) → s′ ∈ p → s′ ≡ t ∷ s → s ∈ ∂ p t
-  ∂-complete′         ∅        ()  refl
-  ∂-complete′         ε        ()  refl
-  ∂-complete′         (tok t′) _   refl with t′ ≟ t
-  ∂-complete′         (tok .t) tok refl | yes refl = ε
-  ∂-complete′ {[]}    (tok .t) tok refl | no  t′≢t with t′≢t refl
-  ∂-complete′ {[]}    (tok .t) tok refl | no  t′≢t | ()
-  ∂-complete′ {_ ∷ _} (tok t′) ()  refl | no  t′≢t
+  ∂-complete′ ∅                 ()                   refl
+  ∂-complete′ ε                 ()                   refl
+  ∂-complete′ (sat f)           (sat ok)             refl with f t
+  ∂-complete′ (sat f)           (sat ok)             refl | true  = ε
+  ∂-complete′ (sat f)           (sat ())             refl | false
   ∂-complete′ (p₁ ∣ p₂)         (∣ˡ ∈₁)              refl = ∣ˡ (∂-complete ∈₁)
   ∂-complete′ (p₁ ∣ p₂)         (∣ʳ ∈₂)              refl = ∣ʳ {p₁ = ∂ p₁ t} (∂-complete ∈₂)
   ∂-complete′ (⟨ p₁ ⟩ · ⟨ p₂ ⟩) (_·_ {[]}     ∈₁ ∈₂) refl = ∣ʳ {p₁ = ⟨ ∂ p₁ t ⟩ · _} (∂-complete ∈₂)
@@ -367,7 +361,7 @@ module AlternativeNonempty where
   nonempty′ : ∀ {n} → P n → P false
   nonempty′ ∅                 = ∅
   nonempty′ ε                 = ∅
-  nonempty′ (tok t)           = tok t
+  nonempty′ (sat f)           = sat f
   nonempty′ (p₁ ∣ p₂)         = nonempty′ p₁ ∣ nonempty′ p₂
   nonempty′ (⟪ p₁ ⟫ ·   p₂  ) = ⟪ p₁ ⟫ ·   p₂
   nonempty′ (⟨ p₁ ⟩ · ⟪ p₂ ⟫) = ⟨ p₁ ⟩ · ⟪ p₂ ⟫
@@ -385,7 +379,7 @@ module AlternativeNonempty where
              s′ ∈ nonempty′ p → s′ ≡ t ∷ s → t ∷ s ∈ p
     sound′ ∅                 ()                         refl
     sound′ ε                 ()                         refl
-    sound′ (tok t)           tok                        refl = tok
+    sound′ (sat f)           (sat ok)                   refl = sat ok
     sound′ (p₁ ∣ p₂)         (∣ˡ pr)                    refl = ∣ˡ           (sound′ p₁ pr refl)
     sound′ (p₁ ∣ p₂)         (∣ʳ pr)                    refl = ∣ʳ {p₁ = p₁} (sound′ p₂ pr refl)
     sound′ (⟪ p₁ ⟫ ·   p₂  ) pr                         refl = pr
@@ -407,7 +401,7 @@ module AlternativeNonempty where
                 s ∈ p → s ≡ t ∷ s′ → t ∷ s′ ∈ nonempty′ p
     complete′ ∅                 ()                            refl
     complete′ ε                 ()                            refl
-    complete′ (tok t)           tok                           refl = tok
+    complete′ (sat f)           (sat ok)                      refl = sat ok
     complete′ (p₁ ∣ p₂)         (∣ˡ pr)                       refl = ∣ˡ              (complete′ p₁ pr refl)
     complete′ (p₁ ∣ p₂)         (∣ʳ pr)                       refl = ∣ʳ {n₁ = false} (complete′ p₂ pr refl)
     complete′ (⟪ p₁ ⟫ ·   p₂  ) pr                            refl = pr

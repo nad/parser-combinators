@@ -2,13 +2,7 @@
 -- Recognisers form a Kleene algebra
 ------------------------------------------------------------------------
 
-open import Relation.Binary
-open import Relation.Binary.PropositionalEquality
-
-module TotalRecognisers.LeftRecursion.KleeneAlgebra
-         (Tok : Set)
-         (_≟_ : Decidable (_≡_ {A = Tok}))
-         where
+module TotalRecognisers.LeftRecursion.KleeneAlgebra (Tok : Set) where
 
 open import Algebra
 import Algebra.Props.BooleanAlgebra
@@ -24,12 +18,13 @@ private
   module ListMonoid {A} = Monoid (List.monoid A)
 open import Data.Product
 open import Relation.Binary.HeterogeneousEquality using (_≅_; refl)
+open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
 
 import TotalRecognisers.LeftRecursion
-open TotalRecognisers.LeftRecursion Tok _≟_ hiding (left-zero)
+open TotalRecognisers.LeftRecursion Tok hiding (left-zero)
 import TotalRecognisers.LeftRecursion.Lib
-open TotalRecognisers.LeftRecursion.Lib Tok _≟_
+open TotalRecognisers.LeftRecursion.Lib Tok
 open KleeneStar₂
 
 ------------------------------------------------------------------------

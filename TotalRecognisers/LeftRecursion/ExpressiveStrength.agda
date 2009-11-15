@@ -20,7 +20,11 @@ open import Relation.Nullary
 open import Relation.Nullary.Decidable
 
 import TotalRecognisers.LeftRecursion
-open TotalRecognisers.LeftRecursion Bool _≟_
+open TotalRecognisers.LeftRecursion Bool
+import TotalRecognisers.LeftRecursion.Lib
+private
+  open module Tok = TotalRecognisers.LeftRecursion.Lib.Tok Bool _≟_
+         using (tok)
 
 ------------------------------------------------------------------------
 -- A boring lemma
@@ -83,10 +87,10 @@ pred⇒grammar f = (p f , λ s → (p-sound f , p-complete f s))
   p-sound : ∀ f {s} → s ∈ p f → f s ≡ true
   p-sound f (cast (∣ʳ s∈)) with accept-if-true-sound (f []) s∈
   ... | (refl , eq) = eq
-  p-sound f (cast (∣ˡ (∣ˡ (t∈ · s∈)))) with drop-♭♯ (f [ true  ]) t∈
-  ... | tok = p-sound (f ∘ _∷_ true ) s∈
-  p-sound f (cast (∣ˡ (∣ʳ (t∈ · s∈)))) with drop-♭♯ (f [ false ]) t∈
-  ... | tok = p-sound (f ∘ _∷_ false) s∈
+  p-sound f (cast (∣ˡ (∣ˡ (t∈ · s∈)))) with Tok.sound (drop-♭♯ (f [ true  ]) t∈)
+  ... | refl = p-sound (f ∘ _∷_ true ) s∈
+  p-sound f (cast (∣ˡ (∣ʳ (t∈ · s∈)))) with Tok.sound (drop-♭♯ (f [ false ]) t∈)
+  ... | refl = p-sound (f ∘ _∷_ false) s∈
 
   p-complete : ∀ f s → f s ≡ true → s ∈ p f
   p-complete f [] eq =
@@ -94,11 +98,11 @@ pred⇒grammar f = (p f , λ s → (p-sound f , p-complete f s))
       accept-if-true-complete eq)
   p-complete f (true  ∷ bs) eq =
     cast (∣ˡ $ ∣ˡ $
-      add-♭♯ (f [ true  ]) tok ·
+      add-♭♯ (f [ true  ]) Tok.complete ·
       p-complete (f ∘ _∷_ true ) bs eq)
   p-complete f (false ∷ bs) eq =
     cast (∣ˡ $ ∣ʳ {n₁ = false ∧ f [ true ]} $
-      add-♭♯ (f [ false ]) tok ·
+      add-♭♯ (f [ false ]) Tok.complete ·
       p-complete (f ∘ _∷_ false) bs eq)
 
 -- An alternative proof which uses a less complicated, but left
@@ -131,10 +135,10 @@ pred⇒grammar′ f = (p f , λ s → (p-sound f , p-complete f s))
   p-sound : ∀ f {s} → s ∈ p f → f s ≡ true
   p-sound f (∣ʳ s∈) with accept-if-true-sound (f []) s∈
   ... | (refl , eq) = eq
-  p-sound f (∣ˡ (∣ˡ (s∈ · t∈))) with drop-♭♯ (f [ true  ]) t∈
-  ... | tok = p-sound (extend f true ) s∈
-  p-sound f (∣ˡ (∣ʳ (s∈ · t∈))) with drop-♭♯ (f [ false ]) t∈
-  ... | tok = p-sound (extend f false) s∈
+  p-sound f (∣ˡ (∣ˡ (s∈ · t∈))) with Tok.sound (drop-♭♯ (f [ true  ]) t∈)
+  ... | refl = p-sound (extend f true ) s∈
+  p-sound f (∣ˡ (∣ʳ (s∈ · t∈))) with Tok.sound (drop-♭♯ (f [ false ]) t∈)
+  ... | refl = p-sound (extend f false) s∈
 
   p-complete′ : ∀ f {s} → Reverse s → f s ≡ true → s ∈ p f
   p-complete′ f [] eq =
@@ -142,11 +146,11 @@ pred⇒grammar′ f = (p f , λ s → (p-sound f , p-complete f s))
   p-complete′ f (bs ∶ rs ∶ʳ true ) eq =
     ∣ˡ {n₁ = false} $ ∣ˡ {n₁ = false} $
       p-complete′ (extend f true ) rs eq ·
-      add-♭♯ (f [ true  ]) tok
+      add-♭♯ (f [ true  ]) Tok.complete
   p-complete′ f (bs ∶ rs ∶ʳ false) eq =
     ∣ˡ {n₁ = false} $ ∣ʳ {n₁ = false} $
       p-complete′ (extend f false) rs eq ·
-      add-♭♯ (f [ false ]) tok
+      add-♭♯ (f [ false ]) Tok.complete
 
   p-complete : ∀ f s → f s ≡ true → s ∈ p f
   p-complete f s eq = p-complete′ f (reverseView s) eq

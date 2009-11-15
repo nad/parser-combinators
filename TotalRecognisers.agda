@@ -22,13 +22,15 @@ import TotalRecognisers.Simple
 
 import TotalRecognisers.Simple.ExpressiveStrength
 
--- More complicated recognisers, which can handle left recursion.
--- (Some extra combinators have also been added: nonempty and cast.)
+-- More complicated recognisers, which can handle left recursion. (The
+-- set of basic combinators is also different: tok has been replaced
+-- by sat, and nonempty and cast have been added.)
 
 import TotalRecognisers.LeftRecursion
 
 -- These recognisers have the same expressive strength as the ones
--- above (for finite alphabets).
+-- above, as long as the alphabet is finite. (For infinite alphabets
+-- the increased expressive power of sat comes into play.)
 
 import TotalRecognisers.LeftRecursion.ExpressiveStrength
 

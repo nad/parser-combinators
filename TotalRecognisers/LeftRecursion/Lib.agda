@@ -2,13 +2,7 @@
 -- A tiny library of derived combinators
 ------------------------------------------------------------------------
 
-open import Relation.Binary
-open import Relation.Binary.PropositionalEquality
-
-module TotalRecognisers.LeftRecursion.Lib
-         (Tok : Set)
-         (_≟_ : Decidable (_≡_ {A = Tok}))
-         where
+module TotalRecognisers.LeftRecursion.Lib (Tok : Set) where
 
 open import Coinduction
 open import Data.Bool hiding (_∧_)
@@ -16,9 +10,12 @@ open import Data.Function
 open import Data.List
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Product as Prod
+open import Relation.Binary
+open import Relation.Binary.PropositionalEquality
+open import Relation.Nullary.Decidable
 
 import TotalRecognisers.LeftRecursion
-open TotalRecognisers.LeftRecursion Tok _≟_ hiding (left-zero)
+open TotalRecognisers.LeftRecursion Tok hiding (left-zero)
 
 ------------------------------------------------------------------------
 -- Kleene star
@@ -124,3 +121,17 @@ open KleeneStar₂
     Prod.map suc (λ {i} s₂∈pⁱ → add-♭♯ (^-nullable n i) s₁∈p ·
                                 add-♭♯ n                s₂∈pⁱ)
              (helper s₂∈p⋆)
+
+------------------------------------------------------------------------
+-- A recogniser which only accepts a given token
+
+module Tok (dec : Decidable (_≡_ {A = Tok})) where
+
+  tok : Tok → P false
+  tok t = sat (decToBool ∘ dec t)
+
+  sound : ∀ {s t} → s ∈ tok t → s ≡ [ t ]
+  sound (sat ok) = cong [_] $ sym $ toWitness ok
+
+  complete : ∀ {t} → [ t ] ∈ tok t
+  complete = sat (fromWitness refl)

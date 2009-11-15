@@ -48,8 +48,10 @@ c ≟ a = no λ()
 c ≟ b = no λ()
 c ≟ c = yes refl
 
-open TotalRecognisers.LeftRecursion     Tok _≟_
-open TotalRecognisers.LeftRecursion.Lib Tok _≟_
+open TotalRecognisers.LeftRecursion     Tok
+open TotalRecognisers.LeftRecursion.Lib Tok
+private
+  open module TokTok = Tok _≟_ using (tok)
 
 ------------------------------------------------------------------------
 -- An auxiliary definition and a boring lemma
@@ -71,13 +73,13 @@ private
 tok-^-complete : ∀ t i → t ^^ i ∈ tok t ^ i
 tok-^-complete t zero    = ε
 tok-^-complete t (suc i) =
-  add-♭♯ (^-nullable false i) tok · tok-^-complete t i
+  add-♭♯ (^-nullable false i) TokTok.complete · tok-^-complete t i
 
 tok-^-sound : ∀ t i {s} → s ∈ tok t ^ i → s ≡ t ^^ i
 tok-^-sound t zero    ε         = refl
 tok-^-sound t (suc i) (t∈ · s∈)
-  with drop-♭♯ (^-nullable false i) t∈
-... | tok = cong (_∷_ t) (tok-^-sound t i s∈)
+  with TokTok.sound (drop-♭♯ (^-nullable false i) t∈)
+... | refl = cong (_∷_ t) (tok-^-sound t i s∈)
 
 ------------------------------------------------------------------------
 -- aⁿbⁿcⁿ
@@ -120,7 +122,7 @@ aⁿbⁿcⁿ-complete n = aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-complete n 0
   aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-complete (suc n) i with i + suc n | shallow-comm i n
   ... | .(suc i + n) | refl =
     ∣ˡ $ cast {eq = lem} (
-      add-♭♯ (aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-index (suc i)) tok ·
+      add-♭♯ (aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-index (suc i)) TokTok.complete ·
       aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-complete n (suc i))
     where lem = left-zero (aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-index (suc i))
 
@@ -130,8 +132,8 @@ aⁿbⁿcⁿ-sound = aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound 0
   aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound : ∀ {s} i → s ∈ aⁿbⁱ⁺ⁿcⁱ⁺ⁿ i →
                      ∃ λ n → s ≡ aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-string n i
   aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound i (∣ˡ (cast (t∈ · s∈)))
-    with drop-♭♯ (aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-index (suc i)) t∈
-  ... | tok with aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound (suc i) s∈
+    with TokTok.sound (drop-♭♯ (aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-index (suc i)) t∈)
+  ... | refl with aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound (suc i) s∈
   ... | (n , refl) = suc n , (begin
     a ^^ suc n ++ b ^^ (suc i + n) ++ c ^^ (suc i + n)
       ≡⟨ cong (λ i → a ^^ suc n ++ b ^^ i ++ c ^^ i)
