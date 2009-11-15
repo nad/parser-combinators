@@ -10,7 +10,7 @@ module TotalRecognisers.Simple.ExpressiveStrength where
 
 open import Coinduction
 open import Data.Bool
-open import Data.Empty
+open import Data.Bool.Properties
 open import Data.Function
 open import Data.List
 open import Data.Product
@@ -25,25 +25,15 @@ open TotalRecognisers.Simple Bool _≟_
 -- For every grammar there is an equivalent decidable predicate.
 
 grammar⇒pred : ∀ {n} (p : P n) →
-               ∃ λ (f : List Bool → Bool) → ∀ s → s ∈ p ⇔ f s ≡ true
-grammar⇒pred p = (λ s → decToBool (s ∈? p))
-              , λ s → (helper₁ s , helper₂ s)
-  where
-  helper₁ : ∀ s → s ∈ p → decToBool (s ∈? p) ≡ true
-  helper₁ s s∈p with s ∈? p
-  ... | yes _  = refl
-  ... | no s∉p = ⊥-elim (s∉p s∈p)
-
-  helper₂ : ∀ s → decToBool (s ∈? p) ≡ true → s ∈ p
-  helper₂ s eq   with s ∈? p
-  helper₂ s refl | yes s∈p = s∈p
-  helper₂ s ()   | no  _
+               ∃ λ (f : List Bool → Bool) → ∀ s → s ∈ p ⇔ T (f s)
+grammar⇒pred p =
+  ((λ s → decToBool (s ∈? p)) , λ _ → (fromWitness , toWitness))
 
 -- For every decidable predicate there is a corresponding grammar.
 -- Note that these grammars are all "infinite LL(0)".
 
 pred⇒grammar : (f : List Bool → Bool) →
-               ∃ λ (p : P (f [])) → ∀ s → s ∈ p ⇔ f s ≡ true
+               ∃ λ (p : P (f [])) → ∀ s → s ∈ p ⇔ T (f s)
 pred⇒grammar f = (grammar f , λ s → (sound f , complete f s))
   where
   accept-if-true : ∀ b → P b
@@ -56,25 +46,26 @@ pred⇒grammar f = (grammar f , λ s → (sound f , complete f s))
             ∣ accept-if-true (f [])
 
   accept-if-true-sound :
-    ∀ b {s} → s ∈ accept-if-true b → s ≡ [] × b ≡ true
-  accept-if-true-sound true  ε  = (refl , refl)
+    ∀ b {s} → s ∈ accept-if-true b → s ≡ [] × T b
+  accept-if-true-sound true  ε  = (refl , _)
   accept-if-true-sound false ()
 
-  accept-if-true-complete : ∀ {b} → b ≡ true → [] ∈ accept-if-true b
-  accept-if-true-complete refl = ε
+  accept-if-true-complete : ∀ {b} → T b → [] ∈ accept-if-true b
+  accept-if-true-complete ok with proj₁ T-≡ ok
+  ... | refl = ε
 
-  sound : ∀ f {s} → s ∈ grammar f → f s ≡ true
+  sound : ∀ f {s} → s ∈ grammar f → T (f s)
   sound f (∣ʳ s∈) with accept-if-true-sound (f []) s∈
-  ... | (refl , eq) = eq
+  ... | (refl , ok) = ok
   sound f (∣ˡ (∣ˡ (tok · s∈))) = sound (f ∘ _∷_ true ) s∈
   sound f (∣ˡ (∣ʳ (tok · s∈))) = sound (f ∘ _∷_ false) s∈
 
-  complete : ∀ f s → f s ≡ true → s ∈ grammar f
-  complete f [] eq =
-    ∣ʳ {n₁ = false} $ accept-if-true-complete eq
-  complete f (true ∷ bs) eq =
+  complete : ∀ f s → T (f s) → s ∈ grammar f
+  complete f [] ok =
+    ∣ʳ {n₁ = false} $ accept-if-true-complete ok
+  complete f (true ∷ bs) ok =
     ∣ˡ {n₁ = false} $ ∣ˡ {n₁ = false} $
-      tok · complete (f ∘ _∷_ true ) bs eq
-  complete f (false ∷ bs) eq =
+      tok · complete (f ∘ _∷_ true ) bs ok
+  complete f (false ∷ bs) ok =
     ∣ˡ {n₁ = false} $ ∣ʳ {n₁ = false} $
-      tok · complete (f ∘ _∷_ false) bs eq
+      tok · complete (f ∘ _∷_ false) bs ok
