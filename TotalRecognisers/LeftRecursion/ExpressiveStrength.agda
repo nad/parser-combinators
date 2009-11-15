@@ -96,8 +96,8 @@ pred⇒grammar f = (p f , λ s → (p-sound f , p-complete f s))
       add-♭♯ (f [ false ]) Tok.complete ·
       p-complete (f ∘ _∷_ false) bs ok)
 
--- An alternative proof which uses a less complicated, but left
--- recursive, definition of the grammar.
+-- An alternative proof which uses a left recursive definition of the
+-- grammar to avoid the use of a cast.
 
 pred⇒grammar′ : (f : List Bool → Bool) →
                 ∃ λ (p : P (f [])) → ∀ s → s ∈ p ⇔ T (f s)
