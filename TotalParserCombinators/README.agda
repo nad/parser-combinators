@@ -37,6 +37,10 @@ import Mixfix.README
 
 import TotalParserCombinators.Parser.ExpressiveStrength
 
+-- An alternative, coinductive definition of equality between parsers.
+
+import TotalParserCombinators.Parser.CoinductiveEquality
+
 -- A very small library of derived parser combinators.
 
 import TotalParserCombinators.Parser.Lib
