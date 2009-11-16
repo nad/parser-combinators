@@ -18,26 +18,30 @@ open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Parser.Semantics
   hiding (sound; complete)
 
--- Returns any element in the list.
+------------------------------------------------------------------------
+-- A parser which returns any element in a given list
 
 return⋆ : ∀ {Tok R} (xs : List R) → Parser Tok R xs
 return⋆ []       = fail
 return⋆ (x ∷ xs) = return x ∣ return⋆ xs
 
-return⋆-sound : ∀ {Tok R x} {s : List Tok}
-                (xs : List R) → x ∈ return⋆ xs · s → s ≡ [] × x ∈ xs
-return⋆-sound []       ()
-return⋆-sound (y ∷ ys) (∣ˡ return)        = (refl , here refl)
-return⋆-sound (y ∷ ys) (∣ʳ .([ y ]) x∈ys) =
-  Prod.map id there $ return⋆-sound ys x∈ys
+module Return⋆ where
 
-return⋆-complete : ∀ {Tok R x} {xs : List R} →
-                   x ∈ xs → x ∈ return⋆ {Tok} xs · []
-return⋆-complete (here refl)  = ∣ˡ return
-return⋆-complete (there x∈xs) =
-  ∣ʳ [ _ ] (return⋆-complete x∈xs)
+  sound : ∀ {Tok R x} {s : List Tok}
+          (xs : List R) → x ∈ return⋆ xs · s → s ≡ [] × x ∈ xs
+  sound []       ()
+  sound (y ∷ ys) (∣ˡ return)        = (refl , here refl)
+  sound (y ∷ ys) (∣ʳ .([ y ]) x∈ys) =
+    Prod.map id there $ sound ys x∈ys
 
--- A parser for a given token.
+  complete : ∀ {Tok R x} {xs : List R} →
+             x ∈ xs → x ∈ return⋆ {Tok} xs · []
+  complete (here refl)  = ∣ˡ return
+  complete (there x∈xs) =
+    ∣ʳ [ _ ] (complete x∈xs)
+
+------------------------------------------------------------------------
+-- A parser for a given token
 
 module Token
          (Tok : Set)

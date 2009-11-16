@@ -53,12 +53,12 @@ fun⇒parser {Tok} {R} f = (p f , λ _ s → (sound f , complete f s))
       ∣ return⋆ (f [])
 
   sound : ∀ {x s} f → x ∈ p f · s → x ∈ f s
-  sound f (∣ʳ ._ x∈) with return⋆-sound (f []) x∈
+  sound f (∣ʳ ._ x∈) with Return⋆.sound (f []) x∈
   ... | (refl , x∈′) = x∈′
   sound f (∣ˡ (token {t} >>= x∈)) = sound (f ∘ _∷_ t) x∈
 
   complete : ∀ {x} f s → x ∈ f s → x ∈ p f · s
-  complete f []      x∈ = ∣ʳ [] (return⋆-complete x∈)
+  complete f []      x∈ = ∣ʳ [] (Return⋆.complete x∈)
   complete f (t ∷ s) x∈ = ∣ˡ (token >>= complete (f ∘ _∷_ t) s x∈)
 
 -- If the token type is finite (in this case Bool), then the result
@@ -80,7 +80,7 @@ fun⇒parser′ {R} f = (p f , λ _ s → (sound f , complete f s))
       ∣ return⋆ (f [])
 
   sound : ∀ {x s} f → x ∈ p f · s → x ∈ f s
-  sound f (∣ʳ ._ x∈) with return⋆-sound (f []) x∈
+  sound f (∣ʳ ._ x∈) with Return⋆.sound (f []) x∈
   ... | (refl , x∈′) = x∈′
   sound f (∣ˡ (∣ˡ (<$> x∈ ⊛ t∈))) with
     Tok.sound (cast∈ refl (♭?♯? (List.map const (f [ true  ]))) refl t∈)
@@ -90,7 +90,7 @@ fun⇒parser′ {R} f = (p f , λ _ s → (sound f , complete f s))
   ... | (refl , refl) = sound (specialise f false) x∈
 
   complete′ : ∀ {x s} f → Reverse s → x ∈ f s → x ∈ p f · s
-  complete′ f []                 x∈ = ∣ʳ [] (return⋆-complete x∈)
+  complete′ f []                 x∈ = ∣ʳ [] (Return⋆.complete x∈)
   complete′ f (bs ∶ rs ∶ʳ true ) x∈ =
     ∣ˡ {xs₁ = []} (∣ˡ (
       <$> complete′ (specialise f true ) rs x∈ ⊛
