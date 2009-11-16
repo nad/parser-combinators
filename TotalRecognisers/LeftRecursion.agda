@@ -16,7 +16,7 @@ open import Data.Function
 open import Data.List as List using (List; []; _∷_; _++_; [_])
 private
   module ListMonoid {A} = Monoid (List.monoid A)
-open import Data.Product
+open import Data.Product as Prod
 open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
 
@@ -326,9 +326,13 @@ same-nullability {n₁ = false} p₁≈p₂ = sym $ Bool.¬-not $ helper p₁≈
   helper p₁≈p₂ refl with ⇒ $ proj₂ p₁≈p₂ $ ⇐ _ refl
   ... | ()
 
-∂-cong : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} {t} →
+∂-mono : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} {t} →
          p₁ ≤ p₂ → ∂ p₁ t ≤ ∂ p₂ t
-∂-cong p₁≤p₂ s∈∂p₁t = ∂-complete (p₁≤p₂ (∂-sound s∈∂p₁t))
+∂-mono p₁≤p₂ = ∂-complete ∘ p₁≤p₂ ∘ ∂-sound
+
+∂-cong : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} {t} →
+         p₁ ≈ p₂ → ∂ p₁ t ≈ ∂ p₂ t
+∂-cong = Prod.map ∂-mono ∂-mono
 
 ≋-sym : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} → p₁ ≋ p₂ → p₂ ≋ p₁
 ≋-sym (refl ∷ rest) = refl ∷ λ t → ♯ ≋-sym (♭ (rest t))
@@ -342,13 +346,8 @@ same-nullability {n₁ = false} p₁≈p₂ = sym $ Bool.¬-not $ helper p₁≈
     ∂-sound (lemma (♭ (rest t)) (∂-complete t∷s∈p₁))
 
 ≋-complete : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} → p₁ ≈ p₂ → p₁ ≋ p₂
-≋-complete {n₁} {n₂} p₁≈p₂ with Bool._≟_ n₁ n₂
-≋-complete p₁≈p₂ | yes refl =
-  refl ∷ λ t → ♯ ≋-complete ((λ {_} → ∂-cong (proj₁ p₁≈p₂))
-                            , λ {_} → ∂-cong (proj₂ p₁≈p₂)
-                            )
-≋-complete p₁≈p₂ | no n₁≢n₂ with n₁≢n₂ $ same-nullability p₁≈p₂
-... | ()
+≋-complete p₁≈p₂ =
+  same-nullability p₁≈p₂ ∷ λ _ → ♯ ≋-complete (∂-cong p₁≈p₂)
 
 ------------------------------------------------------------------------
 -- The combinator nonempty does not need to be primitive
