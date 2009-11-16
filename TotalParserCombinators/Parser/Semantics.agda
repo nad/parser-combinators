@@ -9,23 +9,26 @@ import Algebra.Props.BooleanAlgebra as BAProp
 open import Coinduction
 open import Data.Bool
 import Data.Bool.Properties as BoolProp
-private
-  module BCS = CommutativeSemiring BoolProp.commutativeSemiring-∨-∧
-  module BA  = BAProp BoolProp.booleanAlgebra
 open import Data.List as List
 import Data.List.Properties as ListProp
-open import Data.List.Any
-open Membership-≡
-private module LM {Tok} = Monoid (List.monoid Tok)
+open import Data.List.Any as Any
 open import Data.List.Any.Properties as AnyProp
-open AnyProp.Membership-≡
 open import Data.Product as Prod
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Function hiding (_∶_)
 open import Data.Empty
-open import Relation.Nullary.Negation
+open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
+open import Relation.Nullary.Negation
+open Any.Membership-≡
+open AnyProp.Membership-≡
 open ≡-Reasoning
+private
+  module BCS = CommutativeSemiring BoolProp.commutativeSemiring-∨-∧
+  module BA = BAProp BoolProp.booleanAlgebra
+  module LM {Tok : Set} = Monoid (List.monoid Tok)
+  open module Eq {R : Set} = Setoid (set-equality {R})
+    using () renaming (_≈_ to _≛_)
 
 open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Parser
@@ -81,10 +84,10 @@ data _∈_·_ {Tok} :
 
 infix 4 _⊑_ _≈_
 
-_⊑_ : ∀ {Tok R xs} (p₁ p₂ : Parser Tok R xs) → Set₁
+_⊑_ : ∀ {Tok R xs₁ xs₂} → Parser Tok R xs₁ → Parser Tok R xs₂ → Set₁
 p₁ ⊑ p₂ = ∀ {x s} → x ∈ p₁ · s → x ∈ p₂ · s
 
-_≈_ : ∀ {Tok R xs} (p₁ p₂ : Parser Tok R xs) → Set₁
+_≈_ : ∀ {Tok R xs₁ xs₂} → Parser Tok R xs₁ → Parser Tok R xs₂ → Set₁
 p₁ ≈ p₂ = p₁ ⊑ p₂ × p₂ ⊑ p₁
 
 ------------------------------------------------------------------------
@@ -158,6 +161,15 @@ initial-sound token        ()
 initial-sound (⟪ _ ⟫ ⊛ _)  ()
 initial-sound (_ >>=! _)   ()
 initial-sound (nonempty _) ()
+
+same-initial-set : ∀ {Tok R xs₁ xs₂}
+                     {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
+                   p₁ ≈ p₂ → xs₁ ≛ xs₂
+same-initial-set {Tok} {R} = Prod.map lemma lemma
+  where
+  lemma : ∀ {xs₁ xs₂} {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
+          p₁ ⊑ p₂ → xs₁ ⊆ xs₂
+  lemma p₁⊑p₂ = initial-complete ∘ p₁⊑p₂ ∘ initial-sound _
 
 ------------------------------------------------------------------------
 -- A variant of the semantics

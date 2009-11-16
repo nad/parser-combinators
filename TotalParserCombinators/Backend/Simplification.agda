@@ -24,6 +24,13 @@ open import TotalParserCombinators.Simplified.Lemmas
 
 private
 
+  -- A specialised variant of _≈_.
+
+  infix 4 _≈_
+
+  _≈′_ : ∀ {Tok R xs} (p₁ p₂ : Parser Tok R xs) → Set₁
+  _≈′_ = _≈_
+
   -- Agda has trouble inferring the levels…
 
   infixr 4 _◇_
@@ -31,7 +38,7 @@ private
   _◇_ : ∀ {A : Set₁} {B : A → Set₁} (x : A) → B x → Σ A B
   _◇_ = _,_
 
-  force : ∀ {Tok R xs} (p : ∞ (Parser Tok R xs)) → ∃ λ p′ → ♭ p ≈ p′
+  force : ∀ {Tok R xs} (p : ∞ (Parser Tok R xs)) → ∃ λ p′ → ♭ p ≈′ p′
   force p = (♭ p ◇ (λ x∈ → x∈) ◇ λ x∈ → x∈)
 
   -- A variant of cast.
@@ -76,7 +83,7 @@ private
 
 mutual
 
-  simplify₁ : ∀ {Tok R xs} (p : Parser Tok R xs) → ∃ λ p′ → p ≈ p′
+  simplify₁ : ∀ {Tok R xs} (p : Parser Tok R xs) → ∃ λ p′ → p ≈′ p′
 
   -- • return:
 
@@ -182,11 +189,11 @@ mutual
     helper : ∀ {Tok R₁ R₁′ R₂ fs xs xs′}
                (p₁ : ∞? (Parser Tok (R₁ → R₂) fs ) xs)
                (p₂ : ∞? (Parser Tok  R₁′      xs′) fs) →
-             (∃ λ p₁′ → ♭? p₁ ≈ p₁′) →
-             (∃ λ p₂′ → ♭? p₂ ≈ p₂′) →
+             (∃ λ p₁′ → ♭? p₁ ≈′ p₁′) →
+             (∃ λ p₂′ → ♭? p₂ ≈′ p₂′) →
              (R≡  : R₁ ≡ R₁′) →
              (xs≅ : xs ≅ xs′) →
-             ∃ λ p′ → p₁ ⊛ cast₁ R≡ xs≅ p₂ ≈ p′
+             ∃ λ p′ → p₁ ⊛ cast₁ R≡ xs≅ p₂ ≈′ p′
     helper {xs = xs} p₁ p₂ (fail , p₁≈∅) _ refl refl =
       (cast′ lem fail ◇ (λ {_} → helper₁) ◇ λ {_} → helper₂)
       where
@@ -220,11 +227,11 @@ mutual
       helper′ : ∀ {Tok R₁ R₁′ R₂ fs xs xs′}
                   (p₁ : ∞? (Parser Tok (R₁ → R₂) fs ) xs)
                   (p₂ : ∞? (Parser Tok  R₁′      xs′) fs) →
-                (∃ λ p₁′ → ♭? p₁ ≈ p₁′) →
-                (∃ λ p₂′ → ♭? p₂ ≈ p₂′) →
+                (∃ λ p₁′ → ♭? p₁ ≈′ p₁′) →
+                (∃ λ p₂′ → ♭? p₂ ≈′ p₂′) →
                 (R≡  : R₁ ≡ R₁′) →
                 (xs≅ : xs ≅ xs′) →
-                ∃ λ p′ → p₁ ⊛ cast₁ R≡ xs≅ p₂ ≈ p′
+                ∃ λ p′ → p₁ ⊛ cast₁ R≡ xs≅ p₂ ≈′ p′
       helper′ {fs = fs} {xs} p₁ p₂ (p₁′ , p₁≈p₁′) (p₂′ , p₂≈p₂′)
               refl refl =
         ( ♯? p₁′ ⊛ ♯? p₂′
@@ -345,7 +352,7 @@ mutual
   -- delayed parsers are simply forced and returned.
 
   simplify₁′ : ∀ {Tok R R′ xs} {ys : List R′}
-               (p : ∞? (Parser Tok R xs) ys) → ∃ λ p′ → ♭? p ≈ p′
+               (p : ∞? (Parser Tok R xs) ys) → ∃ λ p′ → ♭? p ≈′ p′
   simplify₁′ ⟪ p ⟫ = (♭ p ◇ (λ x∈ → x∈) ◇ λ x∈ → x∈)
   simplify₁′ ⟨ p ⟩ = simplify₁ p
 
