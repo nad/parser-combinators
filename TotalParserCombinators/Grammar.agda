@@ -81,13 +81,13 @@ private
 
   only-plain : Simplified.Parser Bool false Bool
   only-plain = return true ?>>= λ x →
-               if₁ x then token else token ∣ token
+               if x then token else token ∣ token
 
   -- The following code does not type-check.
 
   -- doesnt-work : Parser EmptyNT Bool (false ◇ _) Bool
   -- doesnt-work = return true ?>>= λ x →
-  --               if₁ x then token else token ∣ token
+  --               if x then token else token ∣ token
 
 -- A map function which can be useful when combining grammars.
 
