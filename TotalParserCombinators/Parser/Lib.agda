@@ -12,6 +12,7 @@ open Membership-≡
 open import Data.List.Any.Properties as AnyProp
 open import Data.Nat
 open import Data.Product as Prod
+open import Data.Vec as Vec using (Vec; []; _∷_)
 open import Relation.Binary
 open import Relation.Binary.FunctionSetoid
 open import Relation.Binary.HeterogeneousEquality
@@ -120,6 +121,57 @@ module KleeneStar where
     lemma : ∀ i → replicate i x ∈[ return x ]⋆· []
     lemma zero    = []
     lemma (suc i) = return ∷ lemma i
+
+------------------------------------------------------------------------
+-- A combinator for recognising a string a fixed number of times
+
+infixl 55 _^_ _↑_
+
+^-initial : ∀ {R} → List R → (n : ℕ) → List (Vec R n)
+^-initial _ zero    = _
+^-initial _ (suc _) = _
+
+_^_ : ∀ {Tok R xs} →
+      Parser Tok R xs → (n : ℕ) → Parser Tok (Vec R n) (^-initial xs n)
+p ^ 0     = return []
+p ^ suc n = ♯? (_∷_ <$> p) ⊛ ♯? (p ^ n)
+
+-- A variant.
+
+↑-initial : ∀ {R} → List R → ℕ → List (List R)
+↑-initial _ _ = _
+
+_↑_ : ∀ {Tok R xs} →
+      Parser Tok R xs → (n : ℕ) → Parser Tok (List R) (↑-initial xs n)
+p ↑ n = Vec.toList <$> p ^ n
+
+-- Some lemmas relating _↑_ to _⋆.
+
+module Exactly where
+
+  ↑⊑⋆ : ∀ {Tok R} {p : Parser Tok R []} n → p ↑ n ⊑ p ⋆
+  ↑⊑⋆ {R = R} {p} n (<$> ∈pⁿ) = KleeneStar.complete $ helper n ∈pⁿ
+    where
+    helper : ∀ n {xs s} → xs ∈ p ^ n · s → Vec.toList xs ∈[ p ]⋆· s
+    helper zero    return     = []
+    helper (suc n) (∈p ⊛ ∈pⁿ) with drop-♭♯ (^-initial [] n) ∈p
+    ... | <$> ∈p′ = ∈p′ ∷ helper n (drop-♭♯ (List R ∶ []) ∈pⁿ)
+
+  ⋆⊑↑ : ∀ {Tok R} {p : Parser Tok R []} {xs s} →
+        xs ∈ p ⋆ · s → ∃ λ i → xs ∈ p ↑ i · s
+  ⋆⊑↑ {R = R} {p} ∈p⋆ with helper $ KleeneStar.sound ∈p⋆
+    where
+    helper : ∀ {xs s} → xs ∈[ p ]⋆· s →
+             ∃₂ λ i (ys : Vec R i) →
+                  xs ≡ Vec.toList ys × ys ∈ p ^ i · s
+    helper []         = (0 , [] , refl , return)
+    helper (∈p ∷ ∈p⋆) =
+      Prod.map suc (λ {i} →
+        Prod.map (_∷_ _) (
+          Prod.map (PropEq.cong (_∷_ _))
+                   (λ ∈pⁱ → add-♭♯ (^-initial [] i) (<$> ∈p) ⊛ ∈pⁱ)))
+       (helper ∈p⋆)
+  ... | (i , ys , refl , ∈pⁱ) = (i , <$> ∈pⁱ)
 
 ------------------------------------------------------------------------
 -- A parser which returns any element in a given list
