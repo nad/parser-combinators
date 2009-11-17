@@ -16,9 +16,11 @@ open import Data.Function
 open import Data.List as List
 private
   module ListMonoid {A} = Monoid (List.monoid A)
-open import Data.Product
+open import Data.Nat using (ℕ; zero; suc)
+open import Data.Product as Prod
 open import Relation.Binary.HeterogeneousEquality using (_≅_; refl)
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality as PropEq
+  using (_≡_; refl; _≗_)
 open import Relation.Nullary
 
 import TotalRecognisers.LeftRecursion
@@ -26,6 +28,111 @@ open TotalRecognisers.LeftRecursion Tok hiding (left-zero)
 import TotalRecognisers.LeftRecursion.Lib
 open TotalRecognisers.LeftRecursion.Lib Tok
 open KleeneStar₂
+
+------------------------------------------------------------------------
+-- The relation _≤_ is a preorder
+
+module Preorder where
+
+  reflexive : ∀ {n} {p : P n} → p ≤ p
+  reflexive = id
+
+  trans : ∀ {n₁ n₂ n₃} {p₁ : P n₁} {p₂ : P n₂} {p₃ : P n₃} →
+          p₁ ≤ p₂ → p₂ ≤ p₃ → p₁ ≤ p₃
+  trans p₁≤p₂ p₂≤p₃ = p₂≤p₃ ∘ p₁≤p₂
+
+------------------------------------------------------------------------
+-- The relation _≈_ is an equality, i.e. a congruential equivalence
+-- relation
+
+module Equivalence where
+
+  reflexive : ∀ {n} {p : P n} → p ≈ p
+  reflexive =
+    ((λ {_} → Preorder.reflexive) , λ {_} → Preorder.reflexive)
+
+  sym : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} → p₁ ≈ p₂ → p₂ ≈ p₁
+  sym = swap
+
+  trans : ∀ {n₁ n₂ n₃} {p₁ : P n₁} {p₂ : P n₂} {p₃ : P n₃} →
+          p₁ ≈ p₂ → p₂ ≈ p₃ → p₁ ≈ p₃
+  trans = Prod.zip Preorder.trans (flip Preorder.trans)
+
+♭♯-cong : ∀ {n₁ n₂} b₁ b₂ {p₁ : P n₁} {p₂ : P n₂} →
+          p₁ ≈ p₂ → ♭? (♯? {b₁} p₁) ≈ ♭? (♯? {b₂} p₂)
+♭♯-cong b₁ b₂ = Prod.map (helper b₁ b₂) (helper b₂ b₁)
+  where
+  helper : ∀ {n₁ n₂} b₁ b₂ {p₁ : P n₁} {p₂ : P n₂} →
+           p₁ ≤ p₂ → ♭? (♯? {b₁} p₁) ≤ ♭? (♯? {b₂} p₂)
+  helper b₁ b₂ p₁≤p₂ ∈p₁ = add-♭♯ b₂ $ p₁≤p₂ $ drop-♭♯ b₁ ∈p₁
+
+∅-cong : ∅ ≈ ∅
+∅-cong = Equivalence.reflexive
+
+ε-cong : ε ≈ ε
+ε-cong = Equivalence.reflexive
+
+sat-cong : {f₁ f₂ : Tok → Bool} → f₁ ≗ f₂ → sat f₁ ≈ sat f₂
+sat-cong f₁≗f₂ = ((λ {_} → helper f₁≗f₂)
+                 , λ {_} → helper (PropEq.sym ∘ f₁≗f₂))
+  where
+  helper : {f₁ f₂ : Tok → Bool} → f₁ ≗ f₂ → sat f₁ ≤ sat f₂
+  helper f₁≗f₂ (sat ok) = sat (PropEq.subst T (f₁≗f₂ _) ok)
+
+∣-cong : ∀ {n₁ n₂ n₃ n₄}
+           {p₁ : P n₁} {p₂ : P n₂} {p₃ : P n₃} {p₄ : P n₄} →
+         p₁ ≋ p₃ → p₂ ≋ p₄ → p₁ ∣ p₂ ≋ p₃ ∣ p₄
+∣-cong (refl ∷ rest₁) (refl ∷ rest₂) =
+  refl ∷ λ t → ♯ ∣-cong (♭ (rest₁ t)) (♭ (rest₂ t))
+
+·-cong : ∀ {n₁ n₂ n₃ n₄}
+           {p₁ : ∞? (P n₁) n₂} {p₂ : ∞? (P n₂) n₁}
+           {p₃ : ∞? (P n₃) n₄} {p₄ : ∞? (P n₄) n₃} →
+         ♭? p₁ ≈ ♭? p₃ → ♭? p₂ ≈ ♭? p₄ → p₁ · p₂ ≈ p₃ · p₄
+·-cong = Prod.zip helper helper
+  where
+  helper : ∀ {n₁ n₂ n₃ n₄}
+             {p₁ : ∞? (P n₁) n₂} {p₂ : ∞? (P n₂) n₁}
+             {p₃ : ∞? (P n₃) n₄} {p₄ : ∞? (P n₄) n₃} →
+           ♭? p₁ ≤ ♭? p₃ → ♭? p₂ ≤ ♭? p₄ → p₁ · p₂ ≤ p₃ · p₄
+  helper ₁≤₃ ₂≤₄ (∈p₁ · ∈p₂) = ₁≤₃ ∈p₁ · ₂≤₄ ∈p₂
+
+⊙-cong : ∀ {n₁ n₂ n₃ n₄}
+           {p₁ : P n₁} {p₂ : P n₂} {p₃ : P n₃} {p₄ : P n₄} →
+         p₁ ≈ p₃ → p₂ ≈ p₄ → p₁ ⊙ p₂ ≈ p₃ ⊙ p₄
+⊙-cong {n₁} {n₂} {n₃} {n₄} ₁≈₃ ₂≈₄ =
+  ·-cong (♭♯-cong n₂ n₄ ₁≈₃) (♭♯-cong n₁ n₃ ₂≈₄)
+
+nonempty-cong : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
+                p₁ ≋ p₂ → nonempty p₁ ≋ nonempty p₂
+nonempty-cong (_ ∷ rest) = refl ∷ rest
+
+cast-cong : ∀ {n₁ n₂ n₁′ n₂′}
+              {p₁ : P n₁} {p₂ : P n₂}
+              {eq₁ : n₁ ≡ n₁′} {eq₂ : n₂ ≡ n₂′} →
+            p₁ ≋ p₂ → cast eq₁ p₁ ≋ cast eq₂ p₂
+cast-cong {eq₁ = refl} {refl} (init ∷ rest) = init ∷ rest
+
+⋆-cong : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
+         p₁ ≈ p₂ → p₁ ⋆ ≈ p₂ ⋆
+⋆-cong = Prod.map helper helper
+  where
+  helper : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
+           p₁ ≤ p₂ → p₁ ⋆ ≤ p₂ ⋆
+  helper p₁≤p₂ (∣ˡ ε)                     = ∣ˡ ε
+  helper p₁≤p₂ (∣ʳ (nonempty ∈p₁ · ∈p₁⋆)) =
+    ∣ʳ {p₁ = ε} (nonempty (p₁≤p₂ ∈p₁) · helper p₁≤p₂ ∈p₁⋆)
+
+^-cong : ∀ {n₁ n₂ i₁ i₂} {p₁ : P n₁} {p₂ : P n₂} →
+         p₁ ≈ p₂ → i₁ ≡ i₂ → p₁ ^ i₁ ≈ p₂ ^ i₂
+^-cong {i₁ = i} p₁≈p₂ refl = Prod.map (helper i) (helper i) p₁≈p₂
+  where
+  helper : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} i →
+           p₁ ≤ p₂ → p₁ ^ i ≤ p₂ ^ i
+  helper           zero    p₁≤p₂ ε            = ε
+  helper {n₁} {n₂} (suc i) p₁≤p₂ (∈p₁ · ∈p₁ⁱ) =
+    add-♭♯ (^-nullable n₂ i) (p₁≤p₂ (drop-♭♯ (^-nullable n₁ i) ∈p₁)) ·
+    add-♭♯ n₂ (helper i p₁≤p₂ (drop-♭♯ n₁ ∈p₁ⁱ))
 
 ------------------------------------------------------------------------
 -- A variant of _≤_
@@ -79,7 +186,7 @@ p₁ ≲ p₂ = p₁ ∣ p₂ ≈ p₂
 ∣-associative : ∀ {n₁ n₂ n₃} (p₁ : P n₁) (p₂ : P n₂) (p₃ : P n₃) →
                 p₁ ∣ (p₂ ∣ p₃) ≋ (p₁ ∣ p₂) ∣ p₃
 ∣-associative {n₁} {n₂} {n₃} p₁ p₂ p₃ =
-  sym (BoolCS.+-assoc n₁ n₂ n₃) ∷ λ t →
+  PropEq.sym (BoolCS.+-assoc n₁ n₂ n₃) ∷ λ t →
     ♯ ∣-associative (∂ p₁ t) (∂ p₂ t) (∂ p₃ t)
 
 ∣-idempotent : ∀ {n} (p : P n) → p ∣ p ≋ p
@@ -107,7 +214,7 @@ p₁ ≲ p₂ = p₁ ∣ p₂ ≈ p₂
   helper : ∀ {s n′} {p′ : P n′} →
            s ∈ p ⊙ p′ → p′ ≅ (P _ ∶ ε) → s ∈ p
   helper (s∈p · []∈ε) refl with drop-♭♯ n []∈ε
-  ... | ε = cast∈ (sym (proj₂ ListMonoid.identity _)) refl s∈p
+  ... | ε = cast∈ (PropEq.sym (proj₂ ListMonoid.identity _)) refl s∈p
 
 ·-associative : ∀ {n₁ n₂ n₃} (p₁ : P n₁) (p₂ : P n₂) (p₃ : P n₃) →
                 p₁ ⊙ (p₂ ⊙ p₃) ≈ (p₁ ⊙ p₂) ⊙ p₃
@@ -125,7 +232,7 @@ p₁ ≲ p₂ = p₁ ∣ p₂ ≈ p₂
   helper₂ : (p₁ ⊙ p₂) ⊙ p₃ ≤ p₁ ⊙ (p₂ ⊙ p₃)
   helper₂ (s₁++s₂∈ · s₃∈) with drop-♭♯ n₃ s₁++s₂∈
   ... | _·_ {s₁ = s₁} s₁∈ s₂∈ =
-    cast∈ (sym $ ListMonoid.assoc s₁ _ _) refl $
+    cast∈ (PropEq.sym $ ListMonoid.assoc s₁ _ _) refl $
       add-♭♯ (n₂ ∧ n₃) (drop-♭♯ n₂ s₁∈) ·
       add-♭♯ n₁ (add-♭♯ n₃ (drop-♭♯ n₁        s₂∈) ·
                  add-♭♯ n₂ (drop-♭♯ (n₁ ∧ n₂) s₃∈))
