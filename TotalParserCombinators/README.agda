@@ -45,6 +45,10 @@ import TotalParserCombinators.Parser.CoinductiveEquality
 
 import TotalParserCombinators.Parser.Lib
 
+-- Proofs of various laws, for instance the monad laws.
+
+import TotalParserCombinators.Parser.Laws
+
 -- Definition of unambiguity.
 
 import TotalParserCombinators.Unambiguity
