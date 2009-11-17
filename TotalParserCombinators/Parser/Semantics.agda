@@ -91,13 +91,22 @@ _≈_ : ∀ {Tok R xs₁ xs₂} → Parser Tok R xs₁ → Parser Tok R xs₂ �
 p₁ ≈ p₂ = p₁ ⊑ p₂ × p₂ ⊑ p₁
 
 ------------------------------------------------------------------------
--- Some lemmas
-
--- A simple cast lemma.
+-- Simple cast lemmas
 
 cast∈ : ∀ {Tok R xs} {p p′ : Parser Tok R xs} {x x′ s s′} →
         x ≡ x′ → p ≡ p′ → s ≡ s′ → x ∈ p · s → x′ ∈ p′ · s′
 cast∈ refl refl refl x∈ = x∈
+
+drop-♭♯ : ∀ {Tok R R′ xs′} {p : Parser Tok R′ xs′} (xs : List R) →
+          ♭? (♯? {xs = xs} p) ⊑ p
+drop-♭♯ xs = cast∈ refl (♭?♯? xs) refl
+
+add-♭♯ : ∀ {Tok R R′ xs′} {p : Parser Tok R′ xs′} (xs : List R) →
+         p ⊑ ♭? (♯? {xs = xs} p)
+add-♭♯ xs = cast∈ refl (sym $ ♭?♯? xs) refl
+
+------------------------------------------------------------------------
+-- Initial set lemmas
 
 -- Sanity check: The initial set is correctly defined.
 
