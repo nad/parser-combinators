@@ -59,9 +59,9 @@ _⟫=_ : ∀ {Tok R₁ R₂ xs} {f : R₁ → List R₂} →
 p₁ ⟫= p₂ = p₁ >>= λ x → ♯? (p₂ x)
 
 ------------------------------------------------------------------------
--- The relation _⊑_ is a preorder
+-- The relation _⊑_ is a partial order with respect to _≈_
 
-module Preorder where
+module PartialOrder where
 
   refl : ∀ {Tok R xs} {p : Parser Tok R xs} → p ⊑ p
   refl = id
@@ -73,6 +73,12 @@ module Preorder where
           p₁ ⊑ p₂ → p₂ ⊑ p₃ → p₁ ⊑ p₃
   trans p₁⊑p₂ p₂⊑p₃ = p₂⊑p₃ ∘ p₁⊑p₂
 
+  antisym : ∀ {Tok R xs₁ xs₂}
+              {p₁ : Parser Tok R xs₁}
+              {p₂ : Parser Tok R xs₂} →
+            p₁ ⊑ p₂ → p₂ ⊑ p₁ → p₁ ≈ p₂
+  antisym p₁⊑p₂ p₂⊑p₁ = ((λ {_} → p₁⊑p₂) , λ {_} → p₂⊑p₁)
+
 ------------------------------------------------------------------------
 -- The relation _≈_ is an equality, i.e. a congruential equivalence
 -- relation
@@ -80,7 +86,7 @@ module Preorder where
 module Equivalence where
 
   refl : ∀ {Tok R xs} {p : Parser Tok R xs} → p ≈ p
-  refl = ((λ {_} → Preorder.refl) , λ {_} → Preorder.refl)
+  refl = ((λ {_} → PartialOrder.refl) , λ {_} → PartialOrder.refl)
 
   sym : ∀ {Tok R xs₁ xs₂}
           {p₁ : Parser Tok R xs₁}
@@ -93,7 +99,7 @@ module Equivalence where
             {p₂ : Parser Tok R xs₂}
             {p₃ : Parser Tok R xs₃} →
           p₁ ≈ p₂ → p₂ ≈ p₃ → p₁ ≈ p₃
-  trans = Prod.zip Preorder.trans (flip Preorder.trans)
+  trans = Prod.zip PartialOrder.trans (flip PartialOrder.trans)
 
 ♭♯-cong : ∀ {Tok R R₁ R₂ xs₁ xs₂} (ys₁ : List R₁) (ys₂ : List R₂)
             {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
