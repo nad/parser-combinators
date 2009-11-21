@@ -30,9 +30,9 @@ open TotalRecognisers.LeftRecursion.Lib Tok
 open KleeneStar₂
 
 ------------------------------------------------------------------------
--- The relation _≤_ is a preorder
+-- The relation _≤_ is a partial order with respect to _≈_
 
-module Preorder where
+module PartialOrder where
 
   reflexive : ∀ {n} {p : P n} → p ≤ p
   reflexive = id
@@ -40,6 +40,10 @@ module Preorder where
   trans : ∀ {n₁ n₂ n₃} {p₁ : P n₁} {p₂ : P n₂} {p₃ : P n₃} →
           p₁ ≤ p₂ → p₂ ≤ p₃ → p₁ ≤ p₃
   trans p₁≤p₂ p₂≤p₃ = p₂≤p₃ ∘ p₁≤p₂
+
+  antisym : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
+            p₁ ≤ p₂ → p₂ ≤ p₁ → p₁ ≈ p₂
+  antisym p₁≤p₂ p₂≤p₁ = ((λ {_} → p₁≤p₂) , λ {_} → p₂≤p₁)
 
 ------------------------------------------------------------------------
 -- The relation _≈_ is an equality, i.e. a congruential equivalence
@@ -49,14 +53,14 @@ module Equivalence where
 
   reflexive : ∀ {n} {p : P n} → p ≈ p
   reflexive =
-    ((λ {_} → Preorder.reflexive) , λ {_} → Preorder.reflexive)
+    ((λ {_} → PartialOrder.reflexive) , λ {_} → PartialOrder.reflexive)
 
   sym : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} → p₁ ≈ p₂ → p₂ ≈ p₁
   sym = swap
 
   trans : ∀ {n₁ n₂ n₃} {p₁ : P n₁} {p₂ : P n₂} {p₃ : P n₃} →
           p₁ ≈ p₂ → p₂ ≈ p₃ → p₁ ≈ p₃
-  trans = Prod.zip Preorder.trans (flip Preorder.trans)
+  trans = Prod.zip PartialOrder.trans (flip PartialOrder.trans)
 
 ♭♯-cong : ∀ {n₁ n₂} b₁ b₂ {p₁ : P n₁} {p₂ : P n₂} →
           p₁ ≈ p₂ → ♭? (♯? {b₁} p₁) ≈ ♭? (♯? {b₂} p₂)
