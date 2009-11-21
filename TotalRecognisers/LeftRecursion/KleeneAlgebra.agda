@@ -303,22 +303,27 @@ right-zero {n} p = ((λ {_} → helper) , λ {_} ())
 
 *-continuity-upper-bound :
   ∀ {n₁ n₂ n₃} (p₁ : P n₁) (p₂ : P n₂) (p₃ : P n₃) →
-  ∀ i → p₁ ⊙ (p₂ ^ i ⊙ p₃) ≤ p₁ ⊙ (p₂ ⋆ ⊙ p₃)
-*-continuity-upper-bound {n₁} {n₂} {n₃} _ _ _ i (s₁∈p₁ · s∈p₂ⁱ⊙p₃)
-  with drop-♭♯ n₁ s∈p₂ⁱ⊙p₃
-... | s₂∈p₂ⁱ · s₃∈p₃ =
-  add-♭♯ (true ∧ n₃) (drop-♭♯ (^-n ∧ n₃) s₁∈p₁) ·
-  add-♭♯ n₁ (add-♭♯ n₃ (^≤⋆ i (drop-♭♯ n₃ s₂∈p₂ⁱ)) · drop-♭♯ ^-n s₃∈p₃)
+  ∀ i → p₁ ⊙ p₂ ^ i ⊙ p₃ ≤ p₁ ⊙ p₂ ⋆ ⊙ p₃
+*-continuity-upper-bound {n₁} {n₂} {n₃} _ _ _ i (∈p₁p₂ⁱ · ∈p₃)
+  with drop-♭♯ n₃ ∈p₁p₂ⁱ
+... | ∈p₁ · ∈p₂ⁱ =
+  add-♭♯ n₃ (drop-♭♯ ^-n ∈p₁ · add-♭♯ n₁ (^≤⋆ i (drop-♭♯ n₁  ∈p₂ⁱ))) ·
+  add-♭♯ n₁ (drop-♭♯ (n₁ ∧ ^-n) ∈p₃)
   where ^-n = ^-nullable n₂ i
 
 *-continuity-least-upper-bound :
   ∀ {n₁ n₂ n₃ n} (p₁ : P n₁) (p₂ : P n₂) (p₃ : P n₃) (p : P n) →
-  (∀ i → p₁ ⊙ (p₂ ^ i ⊙ p₃) ≤ p) → p₁ ⊙ (p₂ ⋆ ⊙ p₃) ≤ p
-*-continuity-least-upper-bound
-  {n₁} {n₂} {n₃} _ _ _ _ ub (s₁∈p₁ · s∈p₂⋆⊙p₃)
-  with drop-♭♯ n₁ s∈p₂⋆⊙p₃
-... | s₂∈p₂⋆ · s₃∈p₃ with ⋆≤^ (drop-♭♯ n₃ s₂∈p₂⋆)
-... | (i , s₂∈p₂ⁱ) =
-  ub i $ add-♭♯ (^-n ∧ n₃) (drop-♭♯ (true ∧ n₃) s₁∈p₁) ·
-         add-♭♯ n₁ (add-♭♯ n₃ s₂∈p₂ⁱ · add-♭♯ ^-n s₃∈p₃)
-  where ^-n = ^-nullable n₂ i
+  (∀ i → p₁ ⊙ p₂ ^ i ⊙ p₃ ≤ p) → p₁ ⊙ p₂ ⋆ ⊙ p₃ ≤ p
+*-continuity-least-upper-bound {n₁} {n₂} {n₃} {n} p₁ p₂ p₃ p ub =
+  helper ∘ proj₂ (·-associative p₁ (p₂ ⋆) p₃)
+  where
+  helper : p₁ ⊙ (p₂ ⋆ ⊙ p₃) ≤ p
+  helper (_·_ {s₁ = s₁} ∈p₁ ∈p₂⋆p₃)
+    with drop-♭♯ n₁ ∈p₂⋆p₃
+  ... | ∈p₂⋆ · ∈p₃ with ⋆≤^ (drop-♭♯ n₃ ∈p₂⋆)
+  ... | (i , ∈p₂ⁱ) =
+    cast∈ (ListMonoid.assoc s₁ _ _) refl $
+    ub i $ add-♭♯ n₃ (add-♭♯ ^-n (drop-♭♯ (true ∧ n₃) ∈p₁) ·
+                      add-♭♯ n₁ ∈p₂ⁱ) ·
+           add-♭♯ (n₁ ∧ ^-n) ∈p₃
+    where ^-n = ^-nullable n₂ i
