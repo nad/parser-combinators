@@ -224,7 +224,7 @@ data Assoc : Set where
 
 -- Application.
 
-appʳ : ∀ {R} → R × (R → R → R) → R → R
+appʳ : {R : Set} → R × (R → R → R) → R → R
 appʳ (x , _•_) y = x • y
 
 appˡ : ∀ {R} → R → (R → R → R) × R → R
@@ -239,7 +239,7 @@ shiftʳ x₁ ((x₂ , x₃) ∷ xs₄) = ((x₁ , x₂) ∷ proj₁ xs₃x₄ , 
 
 -- Post-processing for the chain≥ parser.
 
-chain≥-combine : ∀ {R} → Assoc → R → List ((R → R → R) × R) → R
+chain≥-combine : {R : Set} → Assoc → R → List ((R → R → R) × R) → R
 chain≥-combine left  x ys = foldl appˡ x ys
 chain≥-combine right x ys with shiftʳ x ys
 ... | (xs , y) = foldr appʳ y xs
@@ -288,11 +288,11 @@ choice (p ∷ ps) = p ∣ choice ps
 -- choiceMap f xs ≈ choice (map f xs), but avoids use of Vec₁ and
 -- fromList.
 
-choiceMap-corners : ∀ {A} → (A → Corners) → List A → Corners
+choiceMap-corners : {A : Set} → (A → Corners) → List A → Corners
 choiceMap-corners c []       = _
 choiceMap-corners c (x ∷ xs) = _
 
-choiceMap : ∀ {NT Tok R A} {c : A → Corners} →
+choiceMap : ∀ {NT Tok R} {A : Set} {c : A → Corners} →
             ((x : A) → Parser NT Tok (false ◇ c x) R) →
             (xs : List A) →
             Parser NT Tok (false ◇ choiceMap-corners c xs) R
