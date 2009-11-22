@@ -73,12 +73,12 @@ private
 tok-^-complete : ∀ t i → t ^^ i ∈ tok t ^ i
 tok-^-complete t zero    = ε
 tok-^-complete t (suc i) =
-  add-♭♯ (^-nullable false i) TokTok.complete · tok-^-complete t i
+  add-♭♯ (false ^ⁿ i) TokTok.complete · tok-^-complete t i
 
 tok-^-sound : ∀ t i {s} → s ∈ tok t ^ i → s ≡ t ^^ i
 tok-^-sound t zero    ε         = refl
 tok-^-sound t (suc i) (t∈ · s∈)
-  with TokTok.sound (drop-♭♯ (^-nullable false i) t∈)
+  with TokTok.sound (drop-♭♯ (false ^ⁿ i) t∈)
 ... | refl = cong (_∷_ t) (tok-^-sound t i s∈)
 
 ------------------------------------------------------------------------
@@ -118,7 +118,7 @@ aⁿbⁿcⁿ-complete n = aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-complete n 0
   ... | .i | refl = ∣ʳ {n₁ = false} (helper b · helper c)
     where
     helper = λ (t : Tok) →
-      add-♭♯ (^-nullable false i) (tok-^-complete t i)
+      add-♭♯ (false ^ⁿ i) (tok-^-complete t i)
   aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-complete (suc n) i with i + suc n | shallow-comm i n
   ... | .(suc i + n) | refl =
     ∣ˡ $ cast {eq = lem} (
@@ -143,9 +143,9 @@ aⁿbⁿcⁿ-sound = aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound 0
   aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound i (∣ʳ (_·_ {s₁} {s₂} s₁∈ s₂∈)) = 0 , (begin
     s₁ ++ s₂
       ≡⟨ cong₂ _++_ (tok-^-sound b i
-                      (drop-♭♯ (^-nullable false i) s₁∈))
+                      (drop-♭♯ (false ^ⁿ i) s₁∈))
                     (tok-^-sound c i
-                      (drop-♭♯ (^-nullable false i) s₂∈)) ⟩
+                      (drop-♭♯ (false ^ⁿ i) s₂∈)) ⟩
     b ^^ i ++ c ^^ i
       ≡⟨ cong (λ i → b ^^ i ++ c ^^ i)
               (sym (proj₂ NatCS.+-identity i)) ⟩

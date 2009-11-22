@@ -91,13 +91,13 @@ p₁ ⊙ p₂ = ♯? p₁ · ♯? p₂
 ------------------------------------------------------------------------
 -- A combinator which repeats a recogniser a fixed number of times
 
-infixl 15 _^_
+infixl 15 _^_ _^ⁿ_
 
-^-nullable : Bool → ℕ → Bool
-^-nullable _ zero    = _
-^-nullable _ (suc _) = _
+_^ⁿ_ : Bool → ℕ → Bool
+_ ^ⁿ zero   = _
+_ ^ⁿ suc _  = _
 
-_^_ : ∀ {n} → P n → (i : ℕ) → P (^-nullable n i)
+_^_ : ∀ {n} → P n → (i : ℕ) → P (n ^ⁿ i)
 p ^ 0     = ε
 p ^ suc i = p ⊙ p ^ i
 
@@ -111,7 +111,7 @@ open KleeneStar₂
   helper : ∀ i {s} → s ∈ p ^ i → s ∈[ p ]⋆
   helper zero    ε              = []
   helper (suc i) (s₁∈p · s₂∈pⁱ) =
-    drop-♭♯ (^-nullable n i) s₁∈p ∷ helper i (drop-♭♯ n s₂∈pⁱ)
+    drop-♭♯ (n ^ⁿ i) s₁∈p ∷ helper i (drop-♭♯ n s₂∈pⁱ)
 
 ⋆≤^ : ∀ {n} {p : P n} {s} → s ∈ p ⋆ → ∃ λ i → s ∈ p ^ i
 ⋆≤^ {n} {p} s∈p⋆ = helper (⋆-sound s∈p⋆)
@@ -119,8 +119,8 @@ open KleeneStar₂
   helper : ∀ {s} → s ∈[ p ]⋆ → ∃ λ i → s ∈ p ^ i
   helper []             = (0 , ε)
   helper (s₁∈p ∷ s₂∈p⋆) =
-    Prod.map suc (λ {i} s₂∈pⁱ → add-♭♯ (^-nullable n i) s₁∈p ·
-                                add-♭♯ n                s₂∈pⁱ)
+    Prod.map suc (λ {i} s₂∈pⁱ → add-♭♯ (n ^ⁿ i) s₁∈p ·
+                                add-♭♯ n        s₂∈pⁱ)
              (helper s₂∈p⋆)
 
 ------------------------------------------------------------------------

@@ -135,7 +135,7 @@ cast-cong {eq₁ = refl} {refl} (init ∷ rest) = init ∷ rest
            p₁ ≤ p₂ → p₁ ^ i ≤ p₂ ^ i
   helper           zero    p₁≤p₂ ε            = ε
   helper {n₁} {n₂} (suc i) p₁≤p₂ (∈p₁ · ∈p₁ⁱ) =
-    add-♭♯ (^-nullable n₂ i) (p₁≤p₂ (drop-♭♯ (^-nullable n₁ i) ∈p₁)) ·
+    add-♭♯ (n₂ ^ⁿ i) (p₁≤p₂ (drop-♭♯ (n₁ ^ⁿ i) ∈p₁)) ·
     add-♭♯ n₂ (helper i p₁≤p₂ (drop-♭♯ n₁ ∈p₁ⁱ))
 
 ------------------------------------------------------------------------
@@ -311,9 +311,9 @@ right-zero {n} p = ((λ {_} → helper) , λ {_} ())
 *-continuity-upper-bound {n₁} {n₂} {n₃} _ _ _ i (∈p₁p₂ⁱ · ∈p₃)
   with drop-♭♯ n₃ ∈p₁p₂ⁱ
 ... | ∈p₁ · ∈p₂ⁱ =
-  add-♭♯ n₃ (drop-♭♯ ^-n ∈p₁ · add-♭♯ n₁ (^≤⋆ i (drop-♭♯ n₁  ∈p₂ⁱ))) ·
-  add-♭♯ n₁ (drop-♭♯ (n₁ ∧ ^-n) ∈p₃)
-  where ^-n = ^-nullable n₂ i
+  add-♭♯ n₃ (drop-♭♯ (n₂ ^ⁿ i) ∈p₁ ·
+             add-♭♯ n₁ (^≤⋆ i (drop-♭♯ n₁  ∈p₂ⁱ))) ·
+  add-♭♯ n₁ (drop-♭♯ (n₁ ∧ n₂ ^ⁿ i) ∈p₃)
 
 *-continuity-least-upper-bound :
   ∀ {n₁ n₂ n₃ n} (p₁ : P n₁) (p₂ : P n₂) (p₃ : P n₃) (p : P n) →
@@ -327,7 +327,6 @@ right-zero {n} p = ((λ {_} → helper) , λ {_} ())
   ... | ∈p₂⋆ · ∈p₃ with ⋆≤^ (drop-♭♯ n₃ ∈p₂⋆)
   ... | (i , ∈p₂ⁱ) =
     cast∈ (ListMonoid.assoc s₁ _ _) refl $
-    ub i $ add-♭♯ n₃ (add-♭♯ ^-n (drop-♭♯ (true ∧ n₃) ∈p₁) ·
+    ub i $ add-♭♯ n₃ (add-♭♯ (n₂ ^ⁿ i) (drop-♭♯ (true ∧ n₃) ∈p₁) ·
                       add-♭♯ n₁ ∈p₂ⁱ) ·
-           add-♭♯ (n₁ ∧ ^-n) ∈p₃
-    where ^-n = ^-nullable n₂ i
+           add-♭♯ (n₁ ∧ n₂ ^ⁿ i) ∈p₃
