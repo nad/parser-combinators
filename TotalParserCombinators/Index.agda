@@ -81,7 +81,7 @@ private
   drop-∪₂ : ∀ {c₁ c₂ c₃ c₄} → c₁ ∪ c₂ ≡ c₃ ∪ c₄ → c₂ ≡ c₄
   drop-∪₂ refl = refl
 
-_Corners-≟_ : Decidable {Corners} _≡_
+_Corners-≟_ : Decidable {A = Corners} _≡_
 ε         Corners-≟ ε           = yes refl
 (c₁ ∪ c₂) Corners-≟ ( c₃ ∪  c₄) with c₁ Corners-≟ c₃ | c₂ Corners-≟ c₄
 (c₁ ∪ c₂) Corners-≟ (.c₁ ∪ .c₂) | yes refl | yes refl = yes refl
@@ -90,7 +90,7 @@ _Corners-≟_ : Decidable {Corners} _≡_
 ε         Corners-≟ (_ ∪ _)     = no λ()
 (_ ∪ _)   Corners-≟ ε           = no λ()
 
-_Index-≟_ : Decidable {Index} _≡_
+_Index-≟_ : Decidable {A = Index} _≡_
 i₁ Index-≟ i₂ with empty i₁ ≟ empty i₂
                  | corners i₁ Corners-≟ corners i₂
 ... | yes e₁≡e₂ | yes c₁≡c₂ = yes (cong₂ _◇_ e₁≡e₂ c₁≡c₂)

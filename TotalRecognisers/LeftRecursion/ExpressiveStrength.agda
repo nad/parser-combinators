@@ -57,7 +57,7 @@ private
 grammar⇒pred : ∀ {Tok n} (p : P Tok n) →
                ∃ λ (f : List Tok → Bool) → ∀ {s} → s ∈ p ⇔ T (f s)
 grammar⇒pred p =
-  ((λ s → decToBool (s ∈? p)) , λ {_} → (fromWitness , toWitness))
+  ((λ s → ⌊ s ∈? p ⌋) , λ {_} → (fromWitness , toWitness))
 
 -- When the alphabet is Bool the other direction holds: for every
 -- decidable predicate there is a corresponding grammar.
@@ -303,7 +303,7 @@ module NotExpressible where
   -- Note that it is easy to decide whether a string is a pair or not.
 
   pair? : List ℕ → Bool
-  pair? (m ∷ n ∷ []) = decToBool (Nat._≟_ m n)
+  pair? (m ∷ n ∷ []) = ⌊ Nat._≟_ m n ⌋
   pair? _            = false
 
   -- This means that there are decidable predicates over token strings

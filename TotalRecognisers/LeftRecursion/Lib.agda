@@ -129,7 +129,7 @@ open KleeneStar₂
 module Tok (dec : Decidable (_≡_ {A = Tok})) where
 
   tok : Tok → P false
-  tok t = sat (decToBool ∘ dec t)
+  tok t = sat (⌊_⌋ ∘ dec t)
 
   sound : ∀ {s t} → s ∈ tok t → s ≡ [ t ]
   sound (sat ok) = cong [_] $ sym $ toWitness ok

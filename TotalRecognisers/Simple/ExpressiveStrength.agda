@@ -27,7 +27,7 @@ open TotalRecognisers.Simple Bool _≟_
 grammar⇒pred : ∀ {n} (p : P n) →
                ∃ λ (f : List Bool → Bool) → ∀ s → s ∈ p ⇔ T (f s)
 grammar⇒pred p =
-  ((λ s → decToBool (s ∈? p)) , λ _ → (fromWitness , toWitness))
+  ((λ s → ⌊ s ∈? p ⌋) , λ _ → (fromWitness , toWitness))
 
 -- For every decidable predicate there is a corresponding grammar.
 -- Note that these grammars are all "infinite LL(0)".
