@@ -33,7 +33,8 @@ import Mixfix.README
 -- Remaining modules
 
 -- A proof showing that all functions of type List Bool → List R can
--- be realised using parser combinators (for any R).
+-- be realised using parser combinators (for any R, assuming that set
+-- equality is used for the lists of results).
 
 import TotalParserCombinators.Parser.ExpressiveStrength
 

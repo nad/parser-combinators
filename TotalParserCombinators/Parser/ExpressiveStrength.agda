@@ -1,9 +1,8 @@
 ------------------------------------------------------------------------
 -- This module proves that the parser combinators correspond exactly
--- to functions of type List Tok → List R
+-- to functions of type List Tok → List R (if set equality is used for
+-- the lists of results)
 ------------------------------------------------------------------------
-
--- This result could be generalised to arbitrary finite token types.
 
 module TotalParserCombinators.Parser.ExpressiveStrength where
 
@@ -63,8 +62,8 @@ fun⇒parser {Tok} {R} f = (p f , λ _ s → (sound f , complete f s))
 
 -- If the token type is finite (in this case Bool), then the result
 -- above can be established without the use of bind (_>>=_). (The
--- definition of tok uses bind, but if bind were removed tok would be
--- added as a primitive combinator.)
+-- definition of tok uses bind, but if bind were removed it would be
+-- reasonable to add tok as a primitive combinator.)
 
 fun⇒parser′ : ∀ {R} (f : List Bool → List R) →
               ∃ λ (p : Parser Bool R (f [])) →
