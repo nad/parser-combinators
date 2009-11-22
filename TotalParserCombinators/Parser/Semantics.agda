@@ -65,15 +65,15 @@ data _∈_·_ {Tok} :
              f x ∈ p₁ ⊛ p₂ · s₁ ++ s₂
   _>>=_    : ∀ {R₁ R₂ x y s₁ s₂ xs} {f : R₁ → List R₂}
                {p₁ : Parser Tok R₁ xs}
-               {p₂ : ∞? ((x : R₁) → Parser Tok R₂ (f x)) xs}
+               {p₂ : (x : R₁) → ∞? (Parser Tok R₂ (f x)) xs}
              (x∈p₁ : x ∈ p₁ · s₁)
-             (y∈p₂x : y ∈ ♭? p₂ x · s₂) →
+             (y∈p₂x : y ∈ ♭? (p₂ x) · s₂) →
              y ∈ p₁ >>= p₂ · s₁ ++ s₂
   _>>=!_   : ∀ {R₁ R₂ x y s₁ s₂ xs}
                {p₁ : ∞ (Parser Tok R₁ xs)}
-               {p₂ : ∞? (R₁ → Parser Tok R₂ []) xs}
+               {p₂ : R₁ → ∞? (Parser Tok R₂ []) xs}
              (x∈p₁ : x ∈ ♭ p₁ · s₁)
-             (y∈p₂x : y ∈ ♭? p₂ x · s₂) →
+             (y∈p₂x : y ∈ ♭? (p₂ x) · s₂) →
              y ∈ p₁ >>=! p₂ · s₁ ++ s₂
   nonempty : ∀ {R xs x y s} {p : Parser Tok R xs}
              (x∈p : y ∈ p · x ∷ s) → y ∈ nonempty p · x ∷ s
@@ -152,19 +152,24 @@ initial-sound (_⊛_ {fs = fs} {x ∷ xs} ⟨ p₁ ⟩ p₂) y∈ys
 initial-sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟪ p₂ ⟫) y∈ys | (x′ , x′∈x∷xs , (f′ , ()    , refl))
 initial-sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟨ p₂ ⟩) y∈ys | (x′ , x′∈x∷xs , (f′ , f′∈fs , refl)) =
   initial-sound p₁ f′∈fs ⊛ initial-sound p₂ x′∈x∷xs
-initial-sound (_>>=_ {xs = z ∷ zs} {f} p₁ ⟨ p₂ ⟩) y∈ys
-  with >>=-∈⁻ f (z ∷ zs) y∈ys
-... | (x , x∈z∷zs , y∈fx) =
-  _>>=_ {f = f} (initial-sound p₁ x∈z∷zs) (initial-sound (p₂ x) y∈fx)
+initial-sound (_>>=_ {xs = zs} {f} p₁ p₂) y∈ys
+  with >>=-∈⁻ f zs y∈ys
+... | (x , x∈zs , y∈fx) =
+  _>>=_ {f = f} (initial-sound p₁ x∈zs) (helper (p₂ x) x∈zs y∈fx)
+  where
+  helper : ∀ {Tok R₁ R₂ x y xs} {zs : List R₁}
+           (p : ∞? (Parser Tok R₂ xs) zs) →
+           x ∈ zs → y ∈ xs → y ∈ ♭? p · []
+  helper ⟨ p ⟩ _  = initial-sound p
+  helper ⟪ p ⟫ ()
 initial-sound (cast refl p) x∈xs = cast (initial-sound p x∈xs)
 
-initial-sound (return _)                (there ())
-initial-sound fail                      ()
-initial-sound token                     ()
-initial-sound (⟪ _ ⟫ ⊛ _)               ()
-initial-sound (_>>=_ {xs = []} _ ⟪ _ ⟫) ()
-initial-sound (_ >>=! _)                ()
-initial-sound (nonempty _)              ()
+initial-sound (return _)   (there ())
+initial-sound fail         ()
+initial-sound token        ()
+initial-sound (⟪ _ ⟫ ⊛ _)  ()
+initial-sound (_ >>=! _)   ()
+initial-sound (nonempty _) ()
 
 same-initial-set : ∀ {Tok R xs₁ xs₂}
                      {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
@@ -205,15 +210,15 @@ data _⊕_∈_·_ {Tok} : ∀ {R xs} → R → List Tok →
              f x ⊕ s₂ ∈ p₁ ⊛ p₂ · s
   _>>=_    : ∀ {R₁ R₂ x y s s₁ s₂ xs} {f : R₁ → List R₂}
                {p₁ : Parser Tok R₁ xs}
-               {p₂ : ∞? ((x : R₁) → Parser Tok R₂ (f x)) xs}
+               {p₂ : (x : R₁) → ∞? (Parser Tok R₂ (f x)) xs}
              (x∈p₁ : x ⊕ s₁ ∈ p₁ · s)
-             (y∈p₂x : y ⊕ s₂ ∈ ♭? p₂ x · s₁) →
+             (y∈p₂x : y ⊕ s₂ ∈ ♭? (p₂ x) · s₁) →
              y ⊕ s₂ ∈ p₁ >>= p₂ · s
   _>>=!_   : ∀ {R₁ R₂ x y s s₁ s₂ xs}
                {p₁ : ∞ (Parser Tok R₁ xs)}
-               {p₂ : ∞? (R₁ → Parser Tok R₂ []) xs}
+               {p₂ : R₁ → ∞? (Parser Tok R₂ []) xs}
              (x∈p₁ : x ⊕ s₁ ∈ ♭ p₁ · s)
-             (y∈p₂x : y ⊕ s₂ ∈ ♭? p₂ x · s₁) →
+             (y∈p₂x : y ⊕ s₂ ∈ ♭? (p₂ x) · s₁) →
              y ⊕ s₂ ∈ p₁ >>=! p₂ · s
   nonempty : ∀ {R xs x y s₂} s₁ {p : Parser Tok R xs}
              (x∈p : y ⊕ s₂ ∈ p · x ∷ s₁ ++ s₂) →

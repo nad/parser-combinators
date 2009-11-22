@@ -45,8 +45,8 @@ data _∈_·_ {Tok} : ∀ {R e} → R → Parser Tok e R → List Tok → Set1 w
            y ∈ p₁ ?>>= p₂ · s₁ ++ s₂
   _!>>=_ : ∀ {R₁ R₂ x y} {e₂ : R₁ → Bool} {s₁ s₂}
              {p₁ : Parser Tok false R₁}
-             {p₂ : ∞ ((x : R₁) → Parser Tok (e₂ x) R₂)}
-           (x∈p₁ : x ∈ p₁ · s₁) (y∈p₂x : y ∈ ♭ p₂ x · s₂) →
+             {p₂ : (x : R₁) → ∞ (Parser Tok (e₂ x) R₂)}
+           (x∈p₁ : x ∈ p₁ · s₁) (y∈p₂x : y ∈ ♭ (p₂ x) · s₂) →
            y ∈ p₁ !>>= p₂ · s₁ ++ s₂
 
 ------------------------------------------------------------------------
@@ -59,7 +59,7 @@ sound token               = token
 sound (∣ˡ x∈p₁)           = cast (∣ˡ              (sound x∈p₁))
 sound (∣ʳ _ {p₁} x∈p₂)    = cast (∣ʳ (initial p₁) (sound x∈p₂))
 sound (_?>>=_ {p₂ = p₂}
-              x∈p₁ y∈p₂x) = cast (_>>=_ {p₂ = ⟨ (λ x → ⟦ p₂ x ⟧) ⟩}
+              x∈p₁ y∈p₂x) = cast (_>>=_ {p₂ = λ x → ⟨ ⟦ p₂ x ⟧ ⟩}
                                         (sound x∈p₁) (sound y∈p₂x))
 sound (x∈p₁ !>>= y∈p₂x)   = sound x∈p₁ >>= sound y∈p₂x
 
@@ -74,7 +74,7 @@ complete (p₁ ?>>= p₂)    (cast
                            (x∈p₁ >>= y∈p₂x))  = complete p₁ x∈p₁ ?>>=
                                                 complete (p₂ _) y∈p₂x
 complete (p₁ !>>= p₂)      (x∈p₁ >>= y∈p₂x)   = complete p₁ x∈p₁ !>>=
-                                                complete (♭ p₂ _) y∈p₂x
+                                                complete (♭ (p₂ _)) y∈p₂x
 
 ------------------------------------------------------------------------
 -- A lemma
@@ -111,8 +111,8 @@ data _⊕_∈_·_ {Tok} : ∀ {R e} → R → List Tok →
            y ⊕ s₂ ∈ p₁ ?>>= p₂ · s
   _!>>=_ : ∀ {R₁ R₂ x y} {e₂ : R₁ → Bool} {s s₁ s₂}
              {p₁ : Parser Tok false R₁}
-             {p₂ : ∞ ((x : R₁) → Parser Tok (e₂ x) R₂)}
-           (x∈p₁ : x ⊕ s₁ ∈ p₁ · s) (y∈p₂x : y ⊕ s₂ ∈ ♭ p₂ x · s₁) →
+             {p₂ : (x : R₁) → ∞ (Parser Tok (e₂ x) R₂)}
+           (x∈p₁ : x ⊕ s₁ ∈ p₁ · s) (y∈p₂x : y ⊕ s₂ ∈ ♭ (p₂ x) · s₁) →
            y ⊕ s₂ ∈ p₁ !>>= p₂ · s
 
 -- The definition is sound and complete with respect to the one above.

@@ -57,18 +57,18 @@ data Unambiguous′ {Tok} : ∀ {R xs} → Parser Tok R xs → Set1 where
              Unambiguous′ (p₁ ⊛ p₂)
   bind     : ∀ {R₁ R₂ xs} {f : R₁ → List R₂}
                {p₁ : Parser Tok R₁ xs}
-               {p₂ : ∞? ((x : R₁) → Parser Tok R₂ (f x)) xs}
+               {p₂ : (x : R₁) → ∞? (Parser Tok R₂ (f x)) xs}
              (u : ∀ {x₁ x₂ y₁ y₂ s s₁ s₂ s₃ s₄} →
-                x₁ ∈ p₁ · s₁ → y₁ ∈ ♭? p₂ x₁ · s₂ → s₁ ++ s₂ ≡ s →
-                x₂ ∈ p₁ · s₃ → y₂ ∈ ♭? p₂ x₂ · s₄ → s₃ ++ s₄ ≡ s →
+                x₁ ∈ p₁ · s₁ → y₁ ∈ ♭? (p₂ x₁) · s₂ → s₁ ++ s₂ ≡ s →
+                x₂ ∈ p₁ · s₃ → y₂ ∈ ♭? (p₂ x₂) · s₄ → s₃ ++ s₄ ≡ s →
                 y₁ ≡ y₂) →
              Unambiguous′ (p₁ >>= p₂)
   bind′    : ∀ {R₁ R₂ xs}
                {p₁ : ∞ (Parser Tok R₁ xs)}
-               {p₂ : ∞? (R₁ → Parser Tok R₂ []) xs}
+               {p₂ : R₁ → ∞? (Parser Tok R₂ []) xs}
              (u : ∀ {x₁ x₂ y₁ y₂ s s₁ s₂ s₃ s₄} →
-                x₁ ∈ ♭ p₁ · s₁ → y₁ ∈ ♭? p₂ x₁ · s₂ → s₁ ++ s₂ ≡ s →
-                x₂ ∈ ♭ p₁ · s₃ → y₂ ∈ ♭? p₂ x₂ · s₄ → s₃ ++ s₄ ≡ s →
+                x₁ ∈ ♭ p₁ · s₁ → y₁ ∈ ♭? (p₂ x₁) · s₂ → s₁ ++ s₂ ≡ s →
+                x₂ ∈ ♭ p₁ · s₃ → y₂ ∈ ♭? (p₂ x₂) · s₄ → s₃ ++ s₄ ≡ s →
                 y₁ ≡ y₂) →
              Unambiguous′ (p₁ >>=! p₂)
   nonempty : ∀ {R xs} {p : Parser Tok R xs}

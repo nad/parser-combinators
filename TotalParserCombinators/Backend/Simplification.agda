@@ -127,18 +127,18 @@ mutual
     ... | ()
   simplify₁ (p₁ ∣ p₂) | (_>>=_ {f = f} token p₁′ , p₁≈…)
                       | (token >>= p₂′           , p₂≈…) =
-    ( token >>= ♯? (λ t → ♭? p₁′ t ∣ ♭? p₂′ t)
+    ( token >>= (λ t → ♯? (♭? (p₁′ t) ∣ ♭? (p₂′ t)))
     , (λ {_} → helper₁) , λ {_} → helper₂
     )
     where
-    helper₁ : p₁ ∣ p₂ ⊑ token >>= ♯? (λ t → ♭? p₁′ t ∣ ♭? p₂′ t)
+    helper₁ : p₁ ∣ p₂ ⊑ token >>= (λ t → ♯? (♭? (p₁′ t) ∣ ♭? (p₂′ t)))
     helper₁ (∣ˡ     x∈p₁) with proj₁ p₁≈… x∈p₁
     helper₁ (∣ˡ     x∈p₁) | token >>= x∈p₁′ = token >>= ∣ˡ x∈p₁′
     helper₁ (∣ʳ .[] x∈p₂) with proj₁ p₂≈… x∈p₂
     helper₁ (∣ʳ .[] x∈p₂) | _>>=_ {x = x} token x∈p₂′ =
       token >>= ∣ʳ (f x) x∈p₂′
 
-    helper₂ : token >>= ♯? (λ t → ♭? p₁′ t ∣ ♭? p₂′ t) ⊑ p₁ ∣ p₂
+    helper₂ : token >>= (λ t → ♯? (♭? (p₁′ t) ∣ ♭? (p₂′ t))) ⊑ p₁ ∣ p₂
     helper₂ (token >>= ∣ˡ    y∈p₁′x) = ∣ˡ    (proj₂ p₁≈… (token >>= y∈p₁′x))
     helper₂ (token >>= ∣ʳ ._ y∈p₂′x) = ∣ʳ [] (proj₂ p₂≈… (token >>= y∈p₂′x))
   simplify₁ (p₁ ∣ p₂) | (p₁′ , p₁≈p₁′) | (fail , p₂≈∅) =
@@ -249,7 +249,7 @@ mutual
     helper : p₁ >>= p₂ ⊑ fail
     helper (x∈p₁ >>= y∈p₂x) with proj₁ p₁≈∅ x∈p₁
     ... | ()
-  simplify₁ (p₁ >>= p₂) | (return x , p₁≈ε) with simplify₁″ p₂ x
+  simplify₁ (p₁ >>= p₂) | (return x , p₁≈ε) with simplify₁′ (p₂ x)
   simplify₁ (p₁ >>= p₂) | (return x , p₁≈ε) | (p₂′ , p₂x≈p₂′) =
     (cast′ lem p₂′ , (λ {_} → helper₁) , λ {_} → helper₂)
     where
@@ -259,7 +259,7 @@ mutual
     helper₁ (_>>=_ {y = y} {s₂ = s₂} x∈p₁ y∈p₂x) =
       cast⁺ lem (helper (proj₁ p₁≈ε x∈p₁) y∈p₂x)
       where
-      helper : ∀ {x′ s₁} → x′ ∈ return x · s₁ → y ∈ ♭? p₂ x′ · s₂ →
+      helper : ∀ {x′ s₁} → x′ ∈ return x · s₁ → y ∈ ♭? (p₂ x′) · s₂ →
                y ∈ p₂′ · s₁ ++ s₂
       helper return x∈p₂ = proj₁ p₂x≈p₂′ x∈p₂
 
@@ -284,7 +284,7 @@ mutual
     helper : p₁ >>=! p₂ ⊑ fail
     helper (x∈p₁ >>=! y∈p₂x) with proj₁ p₁≈∅ x∈p₁
     ... | ()
-  simplify₁ (p₁ >>=! p₂) | (return x , p₁≈ε) with simplify₁″ p₂ x
+  simplify₁ (p₁ >>=! p₂) | (return x , p₁≈ε) with simplify₁′ (p₂ x)
   simplify₁ (p₁ >>=! p₂) | (return x , p₁≈ε) | (p₂′ , p₂x≈p₂′) =
     (cast′ lem p₂′ , (λ {_} → helper₁) , λ {_} → helper₂)
     where
@@ -294,7 +294,7 @@ mutual
     helper₁ (_>>=!_ {y = y} {s₂ = s₂} x∈p₁ y∈p₂x) =
       cast⁺ lem (helper (proj₁ p₁≈ε x∈p₁) y∈p₂x)
       where
-      helper : ∀ {x′ s₁} → x′ ∈ return x · s₁ → y ∈ ♭? p₂ x′ · s₂ →
+      helper : ∀ {x′ s₁} → x′ ∈ return x · s₁ → y ∈ ♭? (p₂ x′) · s₂ →
                y ∈ p₂′ · s₁ ++ s₂
       helper return x∈p₂ = proj₁ p₂x≈p₂′ x∈p₂
 
@@ -348,12 +348,6 @@ mutual
                (p : ∞? (Parser Tok R xs) ys) → ∃ λ p′ → ♭? p ≈′ p′
   simplify₁′ ⟪ p ⟫ = (♭ p , (λ x∈ → x∈) , λ x∈ → x∈)
   simplify₁′ ⟨ p ⟩ = simplify₁ p
-
-  simplify₁″ : ∀ {Tok R₁ R₂ R′} {f : R₁ → List R₂} {xs : List R′}
-               (p : ∞? ((x : R₁) → Parser Tok R₂ (f x)) xs) (x : R₁) →
-               ∃ λ p′ → ♭? p x ≈′ p′
-  simplify₁″ ⟪ p ⟫ x = (♭ p x , (λ x∈ → x∈) , λ x∈ → x∈)
-  simplify₁″ ⟨ p ⟩ x = simplify₁ (p x)
 
 -- The projections of simplify₁.
 

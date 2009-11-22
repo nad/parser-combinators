@@ -215,7 +215,7 @@ module Token
     ... | no  _ = fail
 
   tok : Tok → Parser Tok Tok []
-  tok tok = token >>= ♯? (ok tok)
+  tok tok = token >>= λ tok′ → ♯? (ok tok tok′)
 
   sound : ∀ {t t′ s} →
           t′ ∈ tok t · s → t ≡ t′ × s ≡ [ t′ ]

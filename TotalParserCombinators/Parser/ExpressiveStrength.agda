@@ -49,7 +49,7 @@ fun⇒parser : ∀ {Tok R} (f : List Tok → List R) →
 fun⇒parser {Tok} {R} f = (p f , λ _ s → (sound f , complete f s))
   where
   p : (f : List Tok → List R) → Parser Tok R (f [])
-  p f = token >>= ⟪ ♯ (λ t → p (f ∘ _∷_ t)) ⟫
+  p f = token >>= (λ t → ⟪ ♯ p (f ∘ _∷_ t) ⟫)
       ∣ return⋆ (f [])
 
   sound : ∀ {x s} f → x ∈ p f · s → x ∈ f s

@@ -39,8 +39,8 @@ _>>=_ : ∀ {NT Tok e₁ c₁ i₂ R₁ R₂} → let i₁ = e₁ ◇ c₁ in
         Parser NT Tok i₁ R₁ →
         (R₁ → Parser NT Tok i₂ R₂) →
         Parser NT Tok (i₁ · i₂) R₂
-_>>=_ {e₁ = true } p₁ p₂ = p₁ ?>>=   p₂
-_>>=_ {e₁ = false} p₁ p₂ = p₁ !>>= ♯ p₂
+_>>=_ {e₁ = true } p₁ p₂ = p₁ ?>>= p₂
+_>>=_ {e₁ = false} p₁ p₂ = p₁ !>>= λ x → ♯ p₂ x
 
 cast : ∀ {NT Tok e₁ e₂ c₁ c₂ R} →
        e₁ ≡ e₂ → c₁ ≡ c₂ →
@@ -139,9 +139,9 @@ mutual
   _+ : ∀ {NT Tok R c} →
        Parser NT Tok (false ◇ c) R        →
        Parser NT Tok _           (List R)
-  p + = p   !>>= ♯ λ x  →
-        p ⋆ ?>>=   λ xs →
-        return (x ∷ xs)
+  p + =  p   !>>= λ x  → ♯
+        (p ⋆ ?>>= λ xs →
+         return (x ∷ xs))
 
 -- p sepBy⟨ ne ⟩ sep and p sepBy sep parse one or more ps separated by
 -- seps.
@@ -303,7 +303,7 @@ choiceMap f (x ∷ xs) = f x ∣ choiceMap f xs
 -- sat and friends
 
 sat : ∀ {NT Tok R} → (Tok → Maybe R) → Parser NT Tok (0I · 1I) R
-sat {NT} {Tok} {R} p = token !>>= ♯ (ok ∘ p)
+sat {NT} {Tok} {R} p = token !>>= λ c → ♯ ok (p c)
   where
   okIndex : Maybe R → Index
   okIndex nothing  = _
