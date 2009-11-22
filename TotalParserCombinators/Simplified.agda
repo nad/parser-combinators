@@ -52,7 +52,7 @@ data Parser (Tok : Set) : Bool → Set → Set1 where
                       Parser Tok e₂   R₂
   _!>>=_ : ∀ {R₁ R₂} {e₂ : R₁ → Bool}
            (p₁ :               Parser Tok false  R₁)
-           (p₂ : (x : R₁) → ∞ (Parser Tok (e₂ x) R₂)) →
+           (p₂ : ∞ ((x : R₁) → Parser Tok (e₂ x) R₂)) →
                                Parser Tok false  R₂
 
 -- Note that Parser has only one coinductive recursive component.
@@ -128,6 +128,6 @@ private
 ⟦ token      ⟧ = token
 ⟦ p₁ ∣ p₂    ⟧ = cast lem (⟦ p₁ ⟧ ∣ ⟦ p₂ ⟧)
                  where lem = ∣-lemma p₁ p₂
-⟦ p₁ !>>= p₂ ⟧ =           ⟦ p₁ ⟧ >>= λ x → ⟪ ♯ ⟦ ♭ (p₂ x) ⟧ ⟫
-⟦ p₁ ?>>= p₂ ⟧ = cast lem (⟦ p₁ ⟧ >>= λ x → ⟨   ⟦    p₂ x  ⟧ ⟩)
+⟦ p₁ !>>= p₂ ⟧ =           ⟦ p₁ ⟧ >>= ⟪ ♯ (λ x → ⟦ ♭ p₂ x ⟧) ⟫
+⟦ p₁ ?>>= p₂ ⟧ = cast lem (⟦ p₁ ⟧ >>= ⟨   (λ x → ⟦   p₂ x ⟧) ⟩)
                  where lem = ?>>=-lemma p₁ p₂

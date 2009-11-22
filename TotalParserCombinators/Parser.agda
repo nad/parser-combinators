@@ -67,11 +67,11 @@ data Parser (Tok : Set) : (R : Set) → List R → Set1 where
                        Parser Tok       R₂  (fs ⊛′ xs)
   _>>=_    : ∀ {R₁ R₂ xs} {f : R₁ → List R₂}
              (p₁ :                Parser Tok R₁  xs              )
-             (p₂ : (x : R₁) → ∞? (Parser Tok R₂         (f x)) xs) →
+             (p₂ : ∞? ((x : R₁) → Parser Tok R₂         (f x)) xs) →
                                   Parser Tok R₂ (xs >>=′ f)
   _>>=!_   : ∀ {R₁ R₂ xs}
-             (p₁ :      ∞  (Parser Tok R₁ xs))
-             (p₂ : R₁ → ∞? (Parser Tok R₂ fail′) xs) →
+             (p₁ :       ∞ (Parser Tok R₁ xs))
+             (p₂ : ∞? (R₁ → Parser Tok R₂ fail′) xs) →
                             Parser Tok R₂ fail′
   nonempty : ∀ {R xs} (p : Parser Tok R xs) → Parser Tok R []
   cast     : ∀ {R xs₁ xs₂}

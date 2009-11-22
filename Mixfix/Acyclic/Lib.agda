@@ -80,7 +80,7 @@ data ParserProg : Set → Set1 where
 -- Parses a given token.
 
 tok : NamePart → Parser NamePart false NamePart
-tok tok = token !>>= λ tok′ → ♯ ok tok′
+tok tok = token !>>= ♯ ok
   module TheToken where
   okIndex : NamePart → Bool
   okIndex tok′ with tok ≟ tok′
@@ -103,14 +103,14 @@ private
 ⟦_⟧ : ∀ {R} → ParserProg R → Parser NamePart false R
 ⟦ fail                    ⟧ = fail
 ⟦ p₁ ∣ p₂                 ⟧ = ⟦ p₁ ⟧ ∣ ⟦ p₂ ⟧
-⟦ p₁ ⊛ p₂                 ⟧ = ⟦ p₁ ⟧ !>>= λ f → ♯ ⟦ f <$> p₂ ⟧
-⟦ f <$> p                 ⟧ = ⟦ p  ⟧ !>>= λ x → ♯′ return (f x)
-⟦ p +                     ⟧ = ⟦ p  ⟧ !>>= λ x → ♯
+⟦ p₁ ⊛ p₂                 ⟧ = ⟦ p₁ ⟧ !>>= ♯  λ f → ⟦ f <$> p₂ ⟧
+⟦ f <$> p                 ⟧ = ⟦ p  ⟧ !>>= ♯′ λ x → return (f x)
+⟦ p +                     ⟧ = ⟦ p  ⟧ !>>= ♯  λ x →
                               (⟦ _∷_ x <$> p + ⟧ ∣ return [ x ])
-⟦ p between (t ∷ [])      ⟧ = tok t !>>= λ _ → ♯′ return []
-⟦ p between (t ∷ t′ ∷ ts) ⟧ = tok t !>>= λ _ → ♯
+⟦ p between (t ∷ [])      ⟧ = tok t !>>= ♯′ λ _ → return []
+⟦ p between (t ∷ t′ ∷ ts) ⟧ = tok t !>>= ♯  λ _ →
                               ⟦ _∷_ <$> ♭ p ⊛ (p between (t′ ∷ ts)) ⟧
-⟦ p₁ ∥ p₂                 ⟧ = (⟦ p₁ ⟧ !>>= λ x → ♯′ return (, x)) ∣ ⟦ p₂ ⟧
+⟦ p₁ ∥ p₂                 ⟧ = (⟦ p₁ ⟧ !>>= ♯′ λ x → return (, x)) ∣ ⟦ p₂ ⟧
 
 ------------------------------------------------------------------------
 -- Semantics of the programs

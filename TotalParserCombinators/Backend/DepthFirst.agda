@@ -72,12 +72,12 @@ mutual
            P Tok n (if e then n else pred n) R
   parse↓ n       (return x)                  = return′ x
   parse↓ n       fail                        = fail′
-  parse↓ n       (_∣_ {true}          p₁ p₂) = parse↓ n       p₁   ∣′       parse↑ n     p₂
-  parse↓ n       (_∣_ {false} {true}  p₁ p₂) = parse↑ n       p₁   ∣′       parse↓ n     p₂
-  parse↓ n       (_∣_ {false} {false} p₁ p₂) = parse↓ n       p₁   ∣′       parse↓ n     p₂
-  parse↓ n       (p₁ ?>>= p₂)                = parse↓ n       p₁ >>=′ λ x → parse↓ n    (p₂ x)
+  parse↓ n       (_∣_ {true}          p₁ p₂) = parse↓ n       p₁   ∣′       parse↑ n    p₂
+  parse↓ n       (_∣_ {false} {true}  p₁ p₂) = parse↑ n       p₁   ∣′       parse↓ n    p₂
+  parse↓ n       (_∣_ {false} {false} p₁ p₂) = parse↓ n       p₁   ∣′       parse↓ n    p₂
+  parse↓ n       (p₁ ?>>= p₂)                = parse↓ n       p₁ >>=′ λ x → parse↓ n   (p₂ x)
   parse↓ zero    (p₁ !>>= p₂)                = fail′
-  parse↓ (suc n) (p₁ !>>= p₂)                = parse↓ (suc n) p₁ >>=′ λ x → parse↑ n (♭ (p₂ x))
+  parse↓ (suc n) (p₁ !>>= p₂)                = parse↓ (suc n) p₁ >>=′ λ x → parse↑ n (♭ p₂ x)
   parse↓ n       token                       = get′ >>=′ eat
     where
     eat : ∀ {Tok n} → BoundedVec Tok n → P Tok n (pred n) Tok
