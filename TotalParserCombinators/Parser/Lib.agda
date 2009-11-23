@@ -14,7 +14,7 @@ open import Data.Nat
 open import Data.Product as Prod
 open import Data.Vec as Vec using (Vec; []; _∷_)
 open import Relation.Binary
-open import Relation.Binary.FunctionSetoid
+open import Relation.Binary.FunctionSetoid using (_⟶_)
 open import Relation.Binary.HeterogeneousEquality
 open import Relation.Binary.PropositionalEquality as PropEq
 open import Relation.Nullary
