@@ -11,8 +11,7 @@ open import TotalParserCombinators.Grammar
 open import TotalParserCombinators.Index
 
 open import Data.Nat hiding (_≟_)
-open import Data.Vec  using (Vec;  []; _∷_)
-open import Data.Vec1 using (Vec₁; []; _∷_; map₀₁)
+open import Data.Vec as Vec using (Vec;  []; _∷_)
 open import Data.List using (List; []; _∷_; foldr; foldl; reverse)
 open import Data.Product
 open import Data.Bool using (Bool; true; false; _∧_; _∨_)
@@ -194,7 +193,7 @@ exactly (suc n) p = _∷_ <$> p ⊛ exactly n p
 -- A function with a similar type:
 
 sequence : ∀ {NT Tok i R n} →
-           Vec₁ (Parser NT Tok i R) n →
+           Vec (Parser NT Tok i R) n →
            Parser NT Tok (exactly-index i n) (Vec R n)
 sequence []       = return []
 sequence (p ∷ ps) = _∷_ <$> p ⊛ sequence ps
@@ -208,7 +207,7 @@ between-corners c′ (suc n) = _
 
 _between_ : ∀ {NT Tok i R c′ R′ n} →
             Parser NT Tok i R →
-            Vec₁ (Parser NT Tok (false ◇ c′) R′) (suc n) →
+            Vec (Parser NT Tok (false ◇ c′) R′) (suc n) →
             Parser NT Tok (false ◇ between-corners c′ n) (Vec R n)
 p between (x ∷ [])     = [] <$ x
 p between (x ∷ y ∷ xs) = _∷_ <$> (x ⊛> p) ⊛ (p between (y ∷ xs))
@@ -281,12 +280,12 @@ choice-corners c zero    = _
 choice-corners c (suc n) = _
 
 choice : ∀ {NT Tok c R n} →
-         Vec₁ (Parser NT Tok (false ◇ c) R) n →
+         Vec (Parser NT Tok (false ◇ c) R) n →
          Parser NT Tok (false ◇ choice-corners c n) R
 choice []       = fail
 choice (p ∷ ps) = p ∣ choice ps
 
--- choiceMap f xs ≈ choice (map f xs), but avoids use of Vec₁ and
+-- choiceMap f xs ≈ choice (map f xs), but avoids use of Vec and
 -- fromList.
 
 choiceMap-corners : {A : Set} → (A → Corners) → List A → Corners
@@ -341,7 +340,7 @@ module Token (A : DecSetoid zero zero) where
   -- Parses a sequence of tokens.
 
   theString : ∀ {NT n} → Vec Tok n → Parser NT Tok _ (Vec Tok n)
-  theString cs = sequence (map₀₁ tok cs)
+  theString cs = sequence (Vec.map tok cs)
 
 ------------------------------------------------------------------------
 -- Character parsers

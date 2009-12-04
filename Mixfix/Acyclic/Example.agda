@@ -24,7 +24,7 @@ open DecSetoid (ListEq.decSetoid String.decSetoid) using (_≟_)
 open import Data.Function using (_∘_; _$_)
 open import Data.Bool using (Bool; if_then_else_)
 import Data.Bool.Show as Bool
-open import Relation.Nullary.Decidable using (decToBool)
+open import Relation.Nullary.Decidable using (⌊_⌋)
 open import Relation.Binary.PropositionalEquality
 open import IO
 
@@ -134,10 +134,9 @@ backend = depthFirst
 
 runTest : String → List String → IO ⊤
 runTest s₁ s₂ = ♯
-  putStrLn ("Testing: " ++ s₁)           >> ♯ (♯
-  mapM′ putStrLn (Colist.fromList p₁)    >> ♯
-  putStrLn (if decToBool (p₁ ≟ s₂)
-            then "Passed" else "Failed") )
+  putStrLn ("Testing: " ++ s₁)                          >> ♯ (♯
+  mapM′ putStrLn (Colist.fromList p₁)                   >> ♯
+  putStrLn (if ⌊ p₁ ≟ s₂ ⌋ then "Passed" else "Failed") )
   where p₁ = parseExpr backend s₁
 
 main = run (♯
