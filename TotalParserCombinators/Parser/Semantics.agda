@@ -31,6 +31,7 @@ private
     using () renaming (_≈_ to _≛_)
 
 open import TotalParserCombinators.Coinduction
+open import TotalParserCombinators.Applicative
 open import TotalParserCombinators.Parser
 
 ------------------------------------------------------------------------
@@ -120,9 +121,8 @@ initial-complete x∈p = initial-complete′ x∈p refl
   initial-complete′ (∣ˡ     x∈p₁)                                 refl = ++⁺ˡ (initial-complete x∈p₁)
   initial-complete′ (∣ʳ xs₁ x∈p₂)                                 refl = ++⁺ʳ xs₁ (initial-complete x∈p₂)
   initial-complete′ (<$> x∈p)                                     refl = map-∈⁺ (initial-complete x∈p)
-  initial-complete′ (_⊛_   {s₁ = []} {fs = fs}        f∈p₁ x∈p₂)  refl = >>=-∈⁺ (λ x → List.map (λ f → f x) fs)
-                                                                                (initial-complete x∈p₂)
-                                                                                (map-∈⁺ (initial-complete f∈p₁))
+  initial-complete′ (_⊛_   {s₁ = []} {fs = fs}        f∈p₁ x∈p₂)  refl = ⊛′-∈⁺ (initial-complete f∈p₁)
+                                                                               (initial-complete x∈p₂)
   initial-complete′ (_>>=_ {s₁ = []} {xs = _ ∷ _} {f} x∈p₁ y∈p₂x) refl = >>=-∈⁺ f (initial-complete x∈p₁)
                                                                                   (initial-complete y∈p₂x)
   initial-complete′ (cast {eq = refl} x∈p)                        refl = initial-complete x∈p
@@ -138,38 +138,38 @@ initial-complete x∈p = initial-complete′ x∈p refl
   initial-complete′ (_>>=!_ {s₁ = _ ∷ _} _ _) ()
   initial-complete′ (nonempty _)              ()
 
-initial-sound : ∀ {Tok R xs x} (p : Parser Tok R xs) →
-                x ∈ xs → x ∈ p · []
-initial-sound (return x)              (here refl) = return
-initial-sound (_∣_ {xs₁ = xs₁} p₁ p₂) x∈xs with ++⁻ xs₁ x∈xs
-... | inj₁ x∈xs₁ = ∣ˡ     (initial-sound p₁ x∈xs₁)
-... | inj₂ x∈xs₂ = ∣ʳ xs₁ (initial-sound p₂ x∈xs₂)
-initial-sound (_<$>_ {xs = xs} f p) x∈xs with map-∈⁻ xs x∈xs
-... | (y , y∈xs , refl) = <$> initial-sound p y∈xs
-initial-sound (_⊛_ {fs = fs} {x ∷ xs} ⟨ p₁ ⟩ p₂) y∈ys
-  with Prod.map id (Prod.map id (map-∈⁻ fs)) $
-         >>=-∈⁻ (λ x → List.map (λ f → f x) fs) (x ∷ xs) y∈ys
-initial-sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟪ p₂ ⟫) y∈ys | (x′ , x′∈x∷xs , (f′ , ()    , refl))
-initial-sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟨ p₂ ⟩) y∈ys | (x′ , x′∈x∷xs , (f′ , f′∈fs , refl)) =
-  initial-sound p₁ f′∈fs ⊛ initial-sound p₂ x′∈x∷xs
-initial-sound (_>>=_ {xs = zs} {f} p₁ p₂) y∈ys
-  with >>=-∈⁻ f zs y∈ys
-... | (x , x∈zs , y∈fx) =
-  _>>=_ {f = f} (initial-sound p₁ x∈zs) (helper (p₂ x) x∈zs y∈fx)
-  where
-  helper : ∀ {Tok R₁ R₂ x y xs} {zs : List R₁}
-           (p : ∞? (Parser Tok R₂ xs) zs) →
-           x ∈ zs → y ∈ xs → y ∈ ♭? p · []
-  helper ⟨ p ⟩ _  = initial-sound p
-  helper ⟪ p ⟫ ()
-initial-sound (cast refl p) x∈xs = cast (initial-sound p x∈xs)
+mutual
 
-initial-sound (return _)   (there ())
-initial-sound fail         ()
-initial-sound token        ()
-initial-sound (⟪ _ ⟫ ⊛ _)  ()
-initial-sound (_ >>=! _)   ()
-initial-sound (nonempty _) ()
+  initial-sound : ∀ {Tok R xs x} (p : Parser Tok R xs) →
+                  x ∈ xs → x ∈ p · []
+  initial-sound (return x)              (here refl) = return
+  initial-sound (_∣_ {xs₁ = xs₁} p₁ p₂) x∈xs with ++⁻ xs₁ x∈xs
+  ... | inj₁ x∈xs₁ = ∣ˡ     (initial-sound p₁ x∈xs₁)
+  ... | inj₂ x∈xs₂ = ∣ʳ xs₁ (initial-sound p₂ x∈xs₂)
+  initial-sound (_<$>_ {xs = xs} f p) x∈xs with map-∈⁻ xs x∈xs
+  ... | (y , y∈xs , refl) = <$> initial-sound p y∈xs
+  initial-sound (_⊛_ {fs = fs} {x ∷ xs} ⟨ p₁ ⟩ p₂) y∈ys with ⊛′-∈⁻ fs (x ∷ xs) y∈ys
+  initial-sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟪ p₂ ⟫)  y∈ys | (f′ , x′ , ()    , x′∈x∷xs , refl)
+  initial-sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟨ p₂ ⟩)  y∈ys | (f′ , x′ , f′∈fs , x′∈x∷xs , refl) =
+    initial-sound p₁ f′∈fs ⊛ initial-sound p₂ x′∈x∷xs
+  initial-sound (_>>=_ {xs = zs} {f} p₁ p₂) y∈ys
+    with >>=-∈⁻ f zs y∈ys
+  ... | (x , x∈zs , y∈fx) =
+    _>>=_ {f = f} (initial-sound p₁ x∈zs) (initial-sound′ (p₂ x) x∈zs y∈fx)
+  initial-sound (cast refl p) x∈xs = cast (initial-sound p x∈xs)
+
+  initial-sound (return _)   (there ())
+  initial-sound fail         ()
+  initial-sound token        ()
+  initial-sound (⟪ _ ⟫ ⊛ _)  ()
+  initial-sound (_ >>=! _)   ()
+  initial-sound (nonempty _) ()
+
+  initial-sound′ : ∀ {Tok R₁ R₂ x y xs} {zs : List R₁}
+                   (p : ∞? (Parser Tok R₂ xs) zs) →
+                   x ∈ zs → y ∈ xs → y ∈ ♭? p · []
+  initial-sound′ ⟨ p ⟩ _  = initial-sound p
+  initial-sound′ ⟪ p ⟫ ()
 
 same-initial-set : ∀ {Tok R xs₁ xs₂}
                      {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →

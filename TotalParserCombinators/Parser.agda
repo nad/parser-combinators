@@ -19,21 +19,7 @@ open import Data.Function
 open import Relation.Binary.PropositionalEquality
 
 open import TotalParserCombinators.Coinduction
-
-------------------------------------------------------------------------
--- A variant of _⊛_ (for lists)
-
--- This function has the property that fs ⊛′ [] evaluates to [].
-
-infixl 50 _⊛′_
-
-_⊛′_ : ∀ {A B} → List (A → B) → List A → List B
-fs ⊛′ xs = xs >>=′ λ x → map (λ f → f x) fs
-
-private
-
-  ⊛′-[] : ∀ {A B} {fs : List (A → B)} → fs ⊛′ [] ≡ []
-  ⊛′-[] = refl
+open import TotalParserCombinators.Applicative
 
 ------------------------------------------------------------------------
 -- Parsers

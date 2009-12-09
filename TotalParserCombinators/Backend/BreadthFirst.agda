@@ -4,9 +4,6 @@
 
 -- Similar to Brzozowski's "Derivatives of Regular Expressions".
 
--- TODO: Examine if the use of simplification really is an
--- optimisation.
-
 module TotalParserCombinators.Backend.BreadthFirst where
 
 open import Category.Monad
@@ -22,11 +19,10 @@ open import Data.Product as Prod
 open import Relation.Binary.PropositionalEquality
 
 open import TotalParserCombinators.Coinduction
+open import TotalParserCombinators.Applicative
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Parser.Semantics
   hiding (sound; complete)
-open import TotalParserCombinators.Backend.Simplification
-  as Simplification using (simplify)
 
 ------------------------------------------------------------------------
 -- Parsing
@@ -85,9 +81,6 @@ mutual
 
 mutual
 
-  -- Note that simplification is currently not performed
-  -- (co)recursively under ♯_.
-
   ∂ : ∀ {Tok R xs}
       (p : Parser Tok R xs) (t : Tok) → Parser Tok R (∂-initial p t)
   ∂ (return x)                   t = fail
@@ -129,7 +122,7 @@ mutual
 
 parseComplete : ∀ {Tok R xs} → Parser Tok R xs → List Tok → List R
 parseComplete {xs = xs} p []      = xs
-parseComplete           p (t ∷ s) = parseComplete (simplify (∂ p t)) s
+parseComplete           p (t ∷ s) = parseComplete (∂ p t) s
 
 ------------------------------------------------------------------------
 -- Soundness
@@ -204,8 +197,7 @@ mutual
 sound : ∀ {Tok R xs x} {p : Parser Tok R xs} (s : List Tok) →
         x ∈ parseComplete p s → x ∈ p · s
 sound []      x∈p = initial-sound _ x∈p
-sound (t ∷ s) x∈p =
-  ∂-sound _ (Simplification.sound (sound s x∈p))
+sound (t ∷ s) x∈p = ∂-sound _ (sound s x∈p)
 
 ------------------------------------------------------------------------
 -- Completeness
@@ -307,8 +299,7 @@ mutual
 complete : ∀ {Tok R xs x} {p : Parser Tok R xs} (s : List Tok) →
            x ∈ p · s → x ∈ parseComplete p s
 complete []      x∈p = initial-complete x∈p
-complete (t ∷ s) x∈p =
-  complete s (Simplification.complete (∂-complete x∈p))
+complete (t ∷ s) x∈p = complete s (∂-complete x∈p)
 
 ------------------------------------------------------------------------
 -- Some results about ∂

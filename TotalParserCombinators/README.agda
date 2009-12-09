@@ -19,11 +19,9 @@ import TotalParserCombinators.Coinduction
 import TotalParserCombinators.Parser
 import TotalParserCombinators.Parser.Semantics
 
--- A breadth-first backend. The backend uses code which simplifies
--- parsers.
+-- A breadth-first backend.
 
 import TotalParserCombinators.Backend.BreadthFirst
-import TotalParserCombinators.Backend.Simplification
 
 -- An extended example: mixfix operator parsing.
 
@@ -31,6 +29,18 @@ import Mixfix.README
 
 ------------------------------------------------------------------------
 -- Remaining modules
+
+-- An alternative implementation of _⊛_ for lists, along with some
+-- lemmas.
+
+import TotalParserCombinators.Applicative
+
+-- A proof showing that the breadth-first backend does not introduce
+-- any unneeded ambiguity. This proof currently contains some
+-- postulates. It should be easy to remove these postulates once (what
+-- is believed to be) a bug in Agda is fixed.
+
+import TotalParserCombinators.Backend.BreadthFirst.LeftInverse
 
 -- A proof showing that all functions of type List Bool → List R can
 -- be realised using parser combinators (for any R, assuming that set
@@ -49,6 +59,10 @@ import TotalParserCombinators.Parser.Lib
 -- Proofs of various laws, for instance the monad laws.
 
 import TotalParserCombinators.Parser.Laws
+
+-- Simplification of parsers.
+
+import TotalParserCombinators.Backend.Simplification
 
 -- Definition of unambiguity.
 
