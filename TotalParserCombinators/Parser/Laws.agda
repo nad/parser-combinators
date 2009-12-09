@@ -34,6 +34,7 @@ private
          using () renaming (_≈_ to _≛_)
 
 open import TotalParserCombinators.Coinduction
+open import TotalParserCombinators.Applicative
 open import TotalParserCombinators.Backend.BreadthFirst
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Parser.CoinductiveEquality as CEq

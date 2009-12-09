@@ -6,7 +6,7 @@ module Mixfix.Fixity where
 
 open import Data.Fin using (Fin; zero; suc; #_)
 open import Data.Fin.Props using (eq?)
-open import Relation.Nullary
+open import Relation.Nullary.LeftInverse
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality as Eq
 

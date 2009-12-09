@@ -18,6 +18,7 @@ open import Relation.Binary.FunctionSetoid using (_⟶_)
 open import Relation.Binary.HeterogeneousEquality
 open import Relation.Binary.PropositionalEquality as PropEq
 open import Relation.Nullary
+open import Relation.Nullary.Injection using (Injection; Injective)
 
 open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Parser
