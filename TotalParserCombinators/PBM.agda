@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- A parser for PBM images; illustrates essential use of bind
+-- A parser for PBM images; illustrates "essential" use of bind
 ------------------------------------------------------------------------
 
 -- Note that I am using the simple "Plain PBM" format, and I try to
