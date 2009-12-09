@@ -10,9 +10,11 @@
 --
 -- • There is a translation from the parsers in Mixfix.Acyclic.Lib to
 --   the /simplified/ parsers in
---   TotalParserCombinators.Simplified; no such
+--   StructurallyRecursiveDescentParsing.Simplified; no such
 --   translation is defined for the parsers in Mixfix.Cyclic.Lib. Note
---   that the depth-first backend only handles simplified parsers.
+--   that the depth-first backend in
+--   StructurallyRecursiveDescentParsing.DepthFirst only handles
+--   simplified parsers.
 
 module Mixfix.Acyclic.Lib where
 
@@ -33,9 +35,9 @@ open import Relation.Binary.PropositionalEquality
   using (_≡_; refl; cong)
 
 open import TotalParserCombinators.Coinduction
-import TotalParserCombinators.Simplified as Simplified
+import StructurallyRecursiveDescentParsing.Simplified as Simplified
 open Simplified hiding (⟦_⟧)
-open import TotalParserCombinators.Simplified.Semantics
+open import StructurallyRecursiveDescentParsing.Simplified.Semantics
   as Sem hiding (cast∈; sound; complete)
 open import Mixfix.Operator using (NamePart)
 

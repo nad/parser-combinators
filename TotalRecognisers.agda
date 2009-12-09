@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
 -- Total recognisers based on the same principles as the parsers in
--- TotalParserCombinators.Parsers
+-- TotalParserCombinators.Parser
 --
 -- Nils Anders Danielsson
 ------------------------------------------------------------------------

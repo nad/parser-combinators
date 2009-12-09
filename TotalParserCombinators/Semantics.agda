@@ -2,7 +2,7 @@
 -- Semantics of the parsers
 ------------------------------------------------------------------------
 
-module TotalParserCombinators.Parser.Semantics where
+module TotalParserCombinators.Semantics where
 
 open import Algebra
 import Algebra.Props.BooleanAlgebra as BAProp

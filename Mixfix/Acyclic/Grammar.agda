@@ -25,7 +25,7 @@ open import Relation.Binary.PropositionalEquality
 
 open PrecedenceCorrect acyclic g
 
-import TotalParserCombinators.Simplified as Simplified
+import StructurallyRecursiveDescentParsing.Simplified as Simplified
 open Simplified hiding (Parser; ⟦_⟧)
 open import Mixfix.Fixity
 open import Mixfix.Operator

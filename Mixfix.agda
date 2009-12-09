@@ -4,7 +4,7 @@
 -- Nils Anders Danielsson
 ------------------------------------------------------------------------
 
-module Mixfix.README where
+module Mixfix where
 
 -- There are two separate developments here. One is very close to the
 -- paper "Parsing Mixfix Operators" (by me and Ulf Norell), and uses

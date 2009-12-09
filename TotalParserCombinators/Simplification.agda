@@ -2,7 +2,7 @@
 -- Simplification of parsers
 ------------------------------------------------------------------------
 
-module TotalParserCombinators.Backend.Simplification where
+module TotalParserCombinators.Simplification where
 
 open import Algebra
 open import Coinduction
@@ -15,9 +15,9 @@ open import Relation.Binary.HeterogeneousEquality using (_≅_; refl)
 
 open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Parser
-open import TotalParserCombinators.Parser.Semantics
+open import TotalParserCombinators.Semantics
   hiding (sound; complete)
-open import TotalParserCombinators.Simplified.Lemmas
+import StructurallyRecursiveDescentParsing.Simplified.Lemmas as SL
 
 ------------------------------------------------------------------------
 -- Helpers
@@ -190,7 +190,7 @@ mutual
     helper {xs = xs} p₁ p₂ (fail , p₁≈∅) _ refl refl =
       (cast′ lem fail , (λ {_} → helper₁) , λ {_} → helper₂)
       where
-      lem = sym (>>=-∅ xs)
+      lem = sym (SL.>>=-∅ xs)
 
       helper₁ : p₁ ⊛ p₂ ⊑ cast′ lem fail
       helper₁ (f∈p₁ ⊛ x∈p₂) with proj₁ p₁≈∅ f∈p₁

@@ -5,7 +5,7 @@
 -- Note that terms like "monad" and "Kleene algebra" are interpreted
 -- liberally below.
 
-module TotalParserCombinators.Parser.Laws where
+module TotalParserCombinators.Laws where
 
 open import Algebra
 open import Category.Monad
@@ -35,12 +35,12 @@ private
 
 open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Applicative
-open import TotalParserCombinators.Backend.BreadthFirst
+open import TotalParserCombinators.BreadthFirst
 open import TotalParserCombinators.Parser
-open import TotalParserCombinators.Parser.CoinductiveEquality as CEq
+open import TotalParserCombinators.CoinductiveEquality as CEq
   hiding (sym)
-open import TotalParserCombinators.Parser.Lib
-open import TotalParserCombinators.Parser.Semantics
+open import TotalParserCombinators.Lib
+open import TotalParserCombinators.Semantics
 
 ------------------------------------------------------------------------
 -- Variants of some of the parser combinators

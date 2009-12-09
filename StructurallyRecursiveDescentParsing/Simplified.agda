@@ -2,9 +2,7 @@
 -- A simplified parser type
 ------------------------------------------------------------------------
 
--- Less general, but sometimes easier to use.
-
-module TotalParserCombinators.Simplified where
+module StructurallyRecursiveDescentParsing.Simplified where
 
 open import Category.Monad
 open import Coinduction
@@ -23,9 +21,8 @@ open import Relation.Binary.PropositionalEquality
 open ≡-Reasoning
 
 open import TotalParserCombinators.Coinduction
-import TotalParserCombinators.Parser as Parser
-open Parser hiding (Parser)
-open import TotalParserCombinators.Simplified.Lemmas
+open import TotalParserCombinators.Parser as Parser hiding (Parser)
+open import StructurallyRecursiveDescentParsing.Simplified.Lemmas
 
 ------------------------------------------------------------------------
 -- Parsers

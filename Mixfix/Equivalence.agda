@@ -18,11 +18,9 @@ open import Data.Product
 open import Data.Vec using (Vec; []; _∷_)
 
 open import TotalParserCombinators.Parser
-open import TotalParserCombinators.Parser.Semantics
-  as Sem
-import TotalParserCombinators.Simplified as Simplified
-import TotalParserCombinators.Simplified.Semantics
-  as SSem
+open import TotalParserCombinators.Semantics as Sem
+import StructurallyRecursiveDescentParsing.Simplified as Simplified
+import StructurallyRecursiveDescentParsing.Simplified.Semantics as SSem
 
 open import Mixfix.Fixity
 open import Mixfix.Operator

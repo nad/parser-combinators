@@ -33,7 +33,7 @@ infixl  5 _∣_
 --   p : Parser Tok R xs
 -- we have
 --   x ∈ xs  iff  x ∈ p · []
--- (see TotalParserCombinators.Parser.Semantics).
+-- (see TotalParserCombinators.Semantics).
 
 data Parser (Tok : Set) : (R : Set) → List R → Set1 where
   return   : ∀ {R} (x : R) → Parser Tok R (return′ x)

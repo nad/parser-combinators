@@ -4,7 +4,7 @@
 -- the lists of results)
 ------------------------------------------------------------------------
 
-module TotalParserCombinators.Parser.ExpressiveStrength where
+module TotalParserCombinators.ExpressiveStrength where
 
 open import Coinduction
 open import Data.Bool
@@ -19,12 +19,12 @@ open import Relation.Nullary
 
 open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Parser
-open import TotalParserCombinators.Parser.Semantics
+open import TotalParserCombinators.Semantics
   hiding (sound; complete; complete′)
-open import TotalParserCombinators.Parser.Lib
+open import TotalParserCombinators.Lib
 private
   open module Tok = Token Bool _≟_ using (tok)
-import TotalParserCombinators.Backend.BreadthFirst as Backend
+import TotalParserCombinators.BreadthFirst as Backend
 
 ------------------------------------------------------------------------
 -- Expressive strength

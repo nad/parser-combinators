@@ -4,7 +4,7 @@
 
 -- Similar to Brzozowski's "Derivatives of Regular Expressions".
 
-module TotalParserCombinators.Backend.BreadthFirst where
+module TotalParserCombinators.BreadthFirst where
 
 open import Category.Monad
 open import Coinduction
@@ -21,7 +21,7 @@ open import Relation.Binary.PropositionalEquality
 open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Applicative
 open import TotalParserCombinators.Parser
-open import TotalParserCombinators.Parser.Semantics
+open import TotalParserCombinators.Semantics
   hiding (sound; complete)
 
 ------------------------------------------------------------------------

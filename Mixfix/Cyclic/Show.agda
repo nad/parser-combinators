@@ -23,7 +23,7 @@ open import Relation.Binary.PropositionalEquality
 
 open PrecedenceCorrect i g
 open import TotalParserCombinators.Parser
-open import TotalParserCombinators.Parser.Semantics as Sem
+open import TotalParserCombinators.Semantics as Sem
 open import Mixfix.Fixity
 open import Mixfix.Operator
 open import Mixfix.Cyclic.Lib as Lib

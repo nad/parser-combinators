@@ -32,8 +32,7 @@ open import Mixfix.Cyclic.PrecedenceGraph
   hiding (module PrecedenceGraph)
 import Mixfix.Cyclic.Grammar as Grammar
 import Mixfix.Cyclic.Show as Show
-import TotalParserCombinators.Backend.BreadthFirst
-  as BreadthFirst
+import TotalParserCombinators.BreadthFirst as BreadthFirst
 
 ------------------------------------------------------------------------
 -- Operators

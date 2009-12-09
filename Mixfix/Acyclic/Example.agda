@@ -34,12 +34,10 @@ open import Mixfix.Expr
 open import Mixfix.Acyclic.PrecedenceGraph
 import Mixfix.Acyclic.Grammar as Grammar
 import Mixfix.Acyclic.Show as Show
-import TotalParserCombinators.Simplified as Simplified
+import StructurallyRecursiveDescentParsing.Simplified as Simplified
 open Simplified using (Parser)
-import TotalParserCombinators.Backend.DepthFirst
-  as DepthFirst
-import TotalParserCombinators.Backend.BreadthFirst
-  as BreadthFirst
+import StructurallyRecursiveDescentParsing.DepthFirst as DepthFirst
+import TotalParserCombinators.BreadthFirst as BreadthFirst
 
 ------------------------------------------------------------------------
 -- Operators

@@ -1,15 +1,22 @@
 ------------------------------------------------------------------------
-A total implementation of parser combinators
-Nils Anders Danielsson and Ulf Norell
+Total parser combinators and parsing of mixfix operators
 ------------------------------------------------------------------------
 
-This implementation is partly described in "Mixing Induction and
-Coinduction" (by Nils Anders Danielsson and Thorsten Altenkirch) and
-partly described in "Structurally Recursive Descent Parsing" (by Nils
-Anders Danielsson and Ulf Norell). The latter paper may currently be a
-bit out of date.
+TotalRecognisers and TotalParserCombinators
+Author: Nils Anders Danielsson
 
-See StructurallyRecursiveDescentParsing.README for a listing and brief
-explanation of the modules making up this project.
+  Described in the paper "Total Parser Combinators". A short
+  description is also included in "Mixing Induction and Coinduction"
+  (coauthored by Thorsten Altenkirch).
 
-Tested using Agda 2.2.4 and version 0.2 of Agda's standard library.
+StructurallyRecursiveDescentParsing
+Authors: Nils Anders Danielsson and Ulf Norell
+
+  Described in the paper "Structurally Recursive Descent Parsing".
+  This paper draft may currently be a bit out of date.
+
+Mixfix
+Author: Nils Anders Danielsson
+
+  Described in the paper "Parsing Mixfix Operators" (coauthored by Ulf
+  Norell).

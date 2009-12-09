@@ -11,7 +11,7 @@ open PropEq using (_≡_)
 import Relation.Binary.Props.StrictTotalOrder as STOProps
 open import Data.Product
 
-module TotalParserCombinators.Memoised.Monad
+module StructurallyRecursiveDescentParsing.Memoised.Monad
 
   -- Input string positions.
 

@@ -3,17 +3,17 @@
 ------------------------------------------------------------------------
 
 -- This module contains a proof showing that
--- TotalParserCombinators.Backend.BreadthFirst.complete is a left
--- inverse of TotalParserCombinators.Backend.BreadthFirst.sound. This
--- implies that the (finite) type x ∈ parseComplete p s contains at
--- most as many proofs as x ∈ p · s. In other words, the output of
--- parseComplete p s can only contain n copies of x if there are at
--- least n distinct parse trees in x ∈ p · s.
+-- TotalParserCombinators.BreadthFirst.complete is a left inverse of
+-- TotalParserCombinators.BreadthFirst.sound. This implies that the
+-- (finite) type x ∈ parseComplete p s contains at most as many proofs
+-- as x ∈ p · s. In other words, the output of parseComplete p s can
+-- only contain n copies of x if there are at least n distinct parse
+-- trees in x ∈ p · s.
 
 -- It should be possible to prove that complete is also a /right/
 -- inverse of sound, but at the moment I see no need for such a proof.
 
-module TotalParserCombinators.Backend.BreadthFirst.LeftInverse where
+module TotalParserCombinators.BreadthFirst.LeftInverse where
 
 open import Category.Monad
 open import Coinduction
@@ -33,10 +33,10 @@ private
   open RawMonad List.monad using () renaming (_>>=_ to _>>=′_)
 
 open import TotalParserCombinators.Applicative
-open import TotalParserCombinators.Backend.BreadthFirst
+open import TotalParserCombinators.BreadthFirst
 open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Parser
-open import TotalParserCombinators.Parser.Semantics
+open import TotalParserCombinators.Semantics
   hiding (sound; complete)
 
 i-complete∘i-sound : ∀ {Tok R xs x}

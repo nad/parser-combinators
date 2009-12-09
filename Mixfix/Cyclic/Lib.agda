@@ -24,8 +24,8 @@ open import Relation.Binary.PropositionalEquality
 
 open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Parser
-import TotalParserCombinators.Parser.Lib as Lib
-open import TotalParserCombinators.Parser.Semantics as Sem
+import TotalParserCombinators.Lib as Lib
+open import TotalParserCombinators.Semantics as Sem
   hiding (sound; complete)
 open import Mixfix.Operator using (NamePart)
 

@@ -5,7 +5,7 @@
 -- Based on the parser combinators in Wadler's "How to Replace Failure
 -- by a List of Successes".
 
-module TotalParserCombinators.Backend.DepthFirst where
+module StructurallyRecursiveDescentParsing.DepthFirst where
 
 open import Data.Bool
 open import Data.Product as Prod
@@ -18,7 +18,7 @@ open import Category.Monad.Indexed
 open import Category.Monad.State
 open import Coinduction
 
-open import TotalParserCombinators.Simplified
+open import StructurallyRecursiveDescentParsing.Simplified
 
 ------------------------------------------------------------------------
 -- Parser monad

@@ -17,10 +17,10 @@ import Relation.Binary.PropositionalEquality  as PropEq
 import Relation.Binary.PropositionalEquality1 as PropEq1
 open PropEq  using (_≡_)
 open PropEq1 using (_≡₁_)
-open import TotalParserCombinators.Index
+open import StructurallyRecursiveDescentParsing.Index
 open import Data.Product as Prod
 
-module TotalParserCombinators.Memoised
+module StructurallyRecursiveDescentParsing.Memoised
 
   -- In order to be able to store results in a memo table (and avoid
   -- having to lift the table code to Set1) the result types have to
@@ -68,9 +68,9 @@ import Relation.Binary.On as On
 import Relation.Binary.Props.StrictTotalOrder as STOProps
 open STOProps NatProp.strictTotalOrder
 
-import TotalParserCombinators.Memoised.Monad as Monad
-open import TotalParserCombinators.Type
-open import TotalParserCombinators.Utilities
+import StructurallyRecursiveDescentParsing.Memoised.Monad as Monad
+open import StructurallyRecursiveDescentParsing.Type
+open import StructurallyRecursiveDescentParsing.Utilities
   renaming (_∘_ to _∘′_)
 
 ------------------------------------------------------------------------

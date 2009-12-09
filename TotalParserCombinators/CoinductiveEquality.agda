@@ -2,7 +2,7 @@
 -- An alternative definition of equality
 ------------------------------------------------------------------------
 
-module TotalParserCombinators.Parser.CoinductiveEquality where
+module TotalParserCombinators.CoinductiveEquality where
 
 open import Coinduction
 open import Data.List
@@ -15,9 +15,9 @@ private
     using () renaming (_≈_ to _≗_)
 
 open import TotalParserCombinators.Parser
-open import TotalParserCombinators.Parser.Semantics
+open import TotalParserCombinators.Semantics
   hiding (sound; complete)
-open import TotalParserCombinators.Backend.BreadthFirst
+open import TotalParserCombinators.BreadthFirst
   hiding (sound; complete)
 
 infix 5 _∷_
