@@ -85,7 +85,7 @@ cast∈∘cast∈ : ∀ {Tok R xs} {p p′ : Parser Tok R xs} {x x′ s s′}
               (x≡x′ : x ≡ x′) (p≡p′ : p ≡ p′) (s≡s′ : s ≡ s′)
               (x∈p : x ∈ p · s) →
               cast∈ (sym x≡x′) (sym p≡p′) (sym s≡s′)
-                    (cast∈ x≡x′ p≡p′  s≡s′ x∈p) ≡ x∈p
+                    (cast∈ x≡x′ p≡p′ s≡s′ x∈p) ≡ x∈p
 cast∈∘cast∈ refl refl refl _ = refl
 
 mutual
