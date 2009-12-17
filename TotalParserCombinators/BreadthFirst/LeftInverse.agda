@@ -49,12 +49,8 @@ i-complete∘i-sound (_∣_ {xs₁ = xs₁} p₁ p₂) .(++⁺ʳ xs₁ x∈xs₂
 i-complete∘i-sound (_<$>_ {xs = xs} f p)   x∈xs              with map-∈⁻ xs x∈xs | map-∈⁺∘map-∈⁻ x∈xs
 i-complete∘i-sound (_<$>_ {xs = xs} f p)   .(map-∈⁺ y∈xs)    | (y , y∈xs , refl) | refl = cong map-∈⁺ $ i-complete∘i-sound p y∈xs
 i-complete∘i-sound (_⊛_ {fs = fs} {x ∷ xs} ⟨ p₁ ⟩ p₂) y∈ys with ⊛′-∈⁻ fs (x ∷ xs) y∈ys | ⊛′-∈⁺∘⊛′-∈⁻ fs (x ∷ xs) y∈ys
-i-complete∘i-sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟪ p₂ ⟫) y∈ys | (f′ , x′ , ()    , x′∈x∷xs , refl) | _
-i-complete∘i-sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟨ p₂ ⟩) y∈ys | (f′ , x′ , f′∈fs , x′∈x∷xs , refl) | eq with eq′
-  where postulate eq′ : ⊛′-∈⁺ f′∈fs x′∈x∷xs ≅ y∈ys
-  -- TODO: This postulate is used because of (what appears to be) a
-  -- bug in Agda.
-i-complete∘i-sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟨ p₂ ⟩) .(⊛′-∈⁺ f′∈fs x′∈x∷xs) | (f′ , x′ , f′∈fs , x′∈x∷xs , refl) | eq | refl =
+i-complete∘i-sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟪ p₂ ⟫) y∈ys                   | (f′ , x′ , ()    , x′∈x∷xs , refl) | _
+i-complete∘i-sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟨ p₂ ⟩) .(⊛′-∈⁺ f′∈fs x′∈x∷xs) | (f′ , x′ , f′∈fs , x′∈x∷xs , refl) | refl =
   cong₂ ⊛′-∈⁺ (i-complete∘i-sound p₁ f′∈fs) (i-complete∘i-sound p₂ x′∈x∷xs)
 i-complete∘i-sound (_>>=_ {xs = zs}     {f} p₁ p₂) y∈ys                    with >>=-∈⁻ f zs y∈ys | >>=-∈⁺∘>>=-∈⁻ f zs y∈ys
 i-complete∘i-sound (_>>=_ {xs = []}     {f} p₁ p₂) ._                      | (x , ()     , y∈fx) | refl
@@ -156,13 +152,8 @@ mutual
   ∂-complete∘∂-sound (_>>=!_ {xs = x ∷ xs} p₁ p₂) (∣ʳ ._ z∈p₂′x)
     with              ∂-⋁-sound (x ∷ xs) p₂ z∈p₂′x
        | ∂-⋁-complete∘∂-⋁-sound (x ∷ xs) p₂ z∈p₂′x
-  ∂-complete∘∂-sound (_>>=!_ {xs = x ∷ xs} p₁ p₂) (∣ʳ ._ z∈p₂′x)
-    | (y , y∈x∷xs , z∈p₂′y) | eq with eq′
-    where postulate eq′ : ∂-⋁-complete p₂ y∈x∷xs z∈p₂′y ≅ z∈p₂′x
-    -- TODO: This postulate is used because of (what appears to be) a
-    -- bug in Agda.
   ∂-complete∘∂-sound (_>>=!_ {xs = x ∷ xs} p₁ p₂) (∣ʳ ._ .(∂-⋁-complete p₂ y∈x∷xs z∈p₂′y))
-    | (y , y∈x∷xs , z∈p₂′y) | eq | refl =
+    | (y , y∈x∷xs , z∈p₂′y) | refl =
     cong (λ pr → ∣ʳ [] (∂-⋁-complete p₂ pr z∈p₂′y))
          (i-complete∘i-sound (♭ p₁) y∈x∷xs)
   ∂-complete∘∂-sound (_>>=!_ {xs = x ∷ xs} p₁ p₂) (∣ˡ (x∈p₁′ >>=! y∈p₂x)) = cong₂ (λ pr₁ pr₂ → ∣ˡ (pr₁ >>=! pr₂))

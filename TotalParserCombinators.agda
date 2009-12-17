@@ -33,9 +33,7 @@ import TotalParserCombinators.Lib
 import TotalParserCombinators.BreadthFirst
 
 -- A proof showing that the breadth-first backend does not introduce
--- any unneeded ambiguity. This proof currently contains some
--- postulates. It should be easy to remove these postulates once (what
--- is believed to be) a bug in Agda is fixed.
+-- any unneeded ambiguity.
 
 import TotalParserCombinators.BreadthFirst.LeftInverse
 
