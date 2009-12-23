@@ -6,6 +6,8 @@ module TotalParserCombinators.Lib where
 
 open import Coinduction
 open import Data.Function
+open import Data.Function.Equality using (_⟶_)
+open import Data.Function.Injection using (Injection; Injective)
 open import Data.List
 open import Data.List.Any
 open Membership-≡
@@ -14,11 +16,9 @@ open import Data.Nat
 open import Data.Product as Prod
 open import Data.Vec as Vec using (Vec; []; _∷_)
 open import Relation.Binary
-open import Relation.Binary.FunctionSetoid using (_⟶_)
 open import Relation.Binary.HeterogeneousEquality
 open import Relation.Binary.PropositionalEquality as PropEq
 open import Relation.Nullary
-open import Relation.Nullary.Injection using (Injection; Injective)
 
 open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Parser

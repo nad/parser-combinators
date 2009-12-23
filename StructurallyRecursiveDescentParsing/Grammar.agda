@@ -5,10 +5,11 @@
 module StructurallyRecursiveDescentParsing.Grammar where
 
 open import Data.Bool
-open import Data.Empty1
+open import Data.Empty
 open import Data.Product
 open import Relation.Binary.PropositionalEquality
 open import Coinduction
+open import Level
 
 open import StructurallyRecursiveDescentParsing.Index
 import StructurallyRecursiveDescentParsing.Simplified as Simplified
@@ -51,12 +52,12 @@ Grammar NT Tok = ∀ {i R} → NT i R → Parser NT Tok i R
 -- An empty non-terminal type.
 
 EmptyNT : NonTerminalType
-EmptyNT _ _ = ⊥₁
+EmptyNT _ _ = Lift ⊥
 
 -- An empty grammar.
 
 emptyGrammar : ∀ {Tok} → Grammar EmptyNT Tok
-emptyGrammar ()
+emptyGrammar (lift ())
 
 -- The semantics of grammar-based parsers is defined in terms of their
 -- translation into "plain" parsers. The translation instantiates all
