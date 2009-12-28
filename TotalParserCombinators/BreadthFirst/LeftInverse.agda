@@ -10,9 +10,6 @@
 -- only contain n copies of x if there are at least n distinct parse
 -- trees in x ∈ p · s.
 
--- It should be possible to prove that complete is also a /right/
--- inverse of sound, but at the moment I see no need for such a proof.
-
 module TotalParserCombinators.BreadthFirst.LeftInverse where
 
 open import Category.Monad

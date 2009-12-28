@@ -37,6 +37,11 @@ import TotalParserCombinators.BreadthFirst
 
 import TotalParserCombinators.BreadthFirst.LeftInverse
 
+-- A proof showing that the breadth-first backend does not remove any
+-- ambiguity.
+
+import TotalParserCombinators.BreadthFirst.RightInverse
+
 -- An alternative, coinductive definition of equality between parsers.
 
 import TotalParserCombinators.CoinductiveEquality

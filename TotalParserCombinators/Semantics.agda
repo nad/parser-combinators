@@ -111,10 +111,12 @@ add-♭♯ xs = cast∈ refl (sym $ ♭?♯? xs) refl
 
 -- Sanity check: The initial set is correctly defined.
 
-initial-complete : ∀ {Tok R xs x} {p : Parser Tok R xs} →
-                   x ∈ p · [] → x ∈ xs
-initial-complete x∈p = initial-complete′ x∈p refl
-  where
+mutual
+
+  initial-complete : ∀ {Tok R xs x} {p : Parser Tok R xs} →
+                     x ∈ p · [] → x ∈ xs
+  initial-complete x∈p = initial-complete′ x∈p refl
+
   initial-complete′ : ∀ {Tok R xs x s} {p : Parser Tok R xs} →
                       x ∈ p · s → s ≡ [] → x ∈ xs
   initial-complete′ return                                        refl = here refl

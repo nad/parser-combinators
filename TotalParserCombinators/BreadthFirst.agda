@@ -213,75 +213,75 @@ mutual
   ∂-complete : ∀ {Tok R xs x s t} {p : Parser Tok R xs} →
                x ∈ p · t ∷ s → x ∈ ∂ p t · s
   ∂-complete x∈p = ∂-complete′ _ x∈p refl
-    where
-    ∂-complete′ : ∀ {Tok R xs x s s′ t} (p : Parser Tok R xs) →
-                  x ∈ p · s′ → s′ ≡ t ∷ s → x ∈ ∂ p t · s
-    ∂-complete′ token     token       refl = return
 
-    ∂-complete′ (p₁ ∣ p₂) (∣ˡ   x∈p₁) refl = ∣ˡ                  (∂-complete x∈p₁)
-    ∂-complete′ (p₁ ∣ p₂) (∣ʳ _ x∈p₂) refl = ∣ʳ (∂-initial p₁ _) (∂-complete x∈p₂)
+  ∂-complete′ : ∀ {Tok R xs x s s′ t} (p : Parser Tok R xs) →
+                x ∈ p · s′ → s′ ≡ t ∷ s → x ∈ ∂ p t · s
+  ∂-complete′ token     token       refl = return
 
-    ∂-complete′ (f <$> p) (<$> x∈p)   refl = <$> ∂-complete x∈p
+  ∂-complete′ (p₁ ∣ p₂) (∣ˡ   x∈p₁) refl = ∣ˡ                  (∂-complete x∈p₁)
+  ∂-complete′ (p₁ ∣ p₂) (∣ʳ _ x∈p₂) refl = ∣ʳ (∂-initial p₁ _) (∂-complete x∈p₂)
 
-    ∂-complete′ (⟨ p₁ ⟩ ⊛ ⟪ p₂ ⟫)
-                (_⊛_ {s₁ = _ ∷ _} f∈p₁ x∈p₂) refl =     ∂-complete f∈p₁ ⊛
-                                                        cast∈ refl (sym (♭?♯? (∂-initial p₁ _))) refl x∈p₂
-    ∂-complete′ (⟪ p₁ ⟫ ⊛ ⟪ p₂ ⟫)
-                (_⊛_ {s₁ = _ ∷ _} f∈p₁ x∈p₂) refl =     ∂-complete f∈p₁ ⊛
-                                                        cast∈ refl (sym (♭?♯? (∂-initial (♭ p₁) _))) refl x∈p₂
-    ∂-complete′ (⟨ p₁ ⟩ ⊛ ⟨ p₂ ⟩)
-                (_⊛_ {s₁ = _ ∷ _} f∈p₁ x∈p₂) refl = ∣ˡ (∂-complete f∈p₁ ⊛
-                                                        cast∈ refl (sym (♭?♯? (∂-initial p₁ _))) refl x∈p₂)
-    ∂-complete′ (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟨ p₂ ⟩)
-                (_⊛_ {s₁ = []}    f∈p₁ x∈p₂) refl = ∣ʳ (∂-initial p₁ _ ⊛′ (x ∷ xs))
-                                                       (cast∈ refl (sym (♭?♯? (∂-initial p₂ _))) refl
-                                                          (⋁-complete return (initial-complete f∈p₁) return) ⊛
-                                                        ∂-complete x∈p₂)
-    ∂-complete′ (⟪ p₁ ⟫ ⊛ ⟨ p₂ ⟩)
-                (_⊛_ {s₁ = _ ∷ _} f∈p₁ x∈p₂) refl = ∣ˡ (∂-complete f∈p₁ ⊛
-                                                        cast∈ refl (sym (♭?♯? (∂-initial (♭ p₁) _))) refl x∈p₂)
-    ∂-complete′ (⟪ p₁ ⟫ ⊛ ⟨ p₂ ⟩)
-                (_⊛_ {s₁ = []}    f∈p₁ x∈p₂) refl = ∣ʳ []
-                                                       (cast∈ refl (sym (♭?♯? (∂-initial p₂ _))) refl
-                                                          (⋁-complete return (initial-complete f∈p₁) return) ⊛
-                                                        ∂-complete x∈p₂)
+  ∂-complete′ (f <$> p) (<$> x∈p)   refl = <$> ∂-complete x∈p
 
-    ∂-complete′ (_>>=_ {xs = x ∷ xs} {f} p₁ p₂)
-                (_>>=_ {s₁ = []}    x∈p₁ y∈p₂x) refl = ∣ʳ (∂-initial p₁ _ >>=′ f)
-                                                          (∂-⋁-complete p₂ (initial-complete x∈p₁) y∈p₂x)
-    ∂-complete′ (_>>=_ {xs = x ∷ xs}     p₁ p₂)
-                (_>>=_ {s₁ = _ ∷ _} x∈p₁ y∈p₂x) refl = ∣ˡ (∂-complete x∈p₁ >>=
-                                                           cast∈ refl (sym (♭?♯? (∂-initial p₁ _))) refl
-                                                             y∈p₂x)
-    ∂-complete′ (_>>=_ {R₁} {xs = []}    p₁ p₂)
-                (_>>=_ {s₁ = _ ∷ _} x∈p₁ y∈p₂x) refl =     ∂-complete x∈p₁ >>=
-                                                           cast∈ refl (sym (♭?♯? (∂-initial p₁ _))) refl
-                                                             y∈p₂x
+  ∂-complete′ (⟨ p₁ ⟩ ⊛ ⟪ p₂ ⟫)
+              (_⊛_ {s₁ = _ ∷ _} f∈p₁ x∈p₂) refl =     ∂-complete f∈p₁ ⊛
+                                                      cast∈ refl (sym (♭?♯? (∂-initial p₁ _))) refl x∈p₂
+  ∂-complete′ (⟪ p₁ ⟫ ⊛ ⟪ p₂ ⟫)
+              (_⊛_ {s₁ = _ ∷ _} f∈p₁ x∈p₂) refl =     ∂-complete f∈p₁ ⊛
+                                                      cast∈ refl (sym (♭?♯? (∂-initial (♭ p₁) _))) refl x∈p₂
+  ∂-complete′ (⟨ p₁ ⟩ ⊛ ⟨ p₂ ⟩)
+              (_⊛_ {s₁ = _ ∷ _} f∈p₁ x∈p₂) refl = ∣ˡ (∂-complete f∈p₁ ⊛
+                                                      cast∈ refl (sym (♭?♯? (∂-initial p₁ _))) refl x∈p₂)
+  ∂-complete′ (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟨ p₂ ⟩)
+              (_⊛_ {s₁ = []}    f∈p₁ x∈p₂) refl = ∣ʳ (∂-initial p₁ _ ⊛′ (x ∷ xs))
+                                                     (cast∈ refl (sym (♭?♯? (∂-initial p₂ _))) refl
+                                                        (⋁-complete return (initial-complete f∈p₁) return) ⊛
+                                                      ∂-complete x∈p₂)
+  ∂-complete′ (⟪ p₁ ⟫ ⊛ ⟨ p₂ ⟩)
+              (_⊛_ {s₁ = _ ∷ _} f∈p₁ x∈p₂) refl = ∣ˡ (∂-complete f∈p₁ ⊛
+                                                      cast∈ refl (sym (♭?♯? (∂-initial (♭ p₁) _))) refl x∈p₂)
+  ∂-complete′ (⟪ p₁ ⟫ ⊛ ⟨ p₂ ⟩)
+              (_⊛_ {s₁ = []}    f∈p₁ x∈p₂) refl = ∣ʳ []
+                                                     (cast∈ refl (sym (♭?♯? (∂-initial p₂ _))) refl
+                                                        (⋁-complete return (initial-complete f∈p₁) return) ⊛
+                                                      ∂-complete x∈p₂)
 
-    ∂-complete′ (_>>=!_ {xs = x ∷ xs} p₁ p₂)
-                (_>>=!_ {s₁ = []}    x∈p₁ y∈p₂x) refl = ∣ʳ []
-                                                           (∂-⋁-complete p₂ (initial-complete x∈p₁) y∈p₂x)
-    ∂-complete′ (_>>=!_ {xs = x ∷ xs}     p₁ p₂)
-                (_>>=!_ {s₁ = _ ∷ _} x∈p₁ y∈p₂x) refl = ∣ˡ (∂-complete x∈p₁ >>=!
-                                                            cast∈ refl (sym (♭?♯? (∂-initial (♭ p₁) _))) refl
-                                                              y∈p₂x)
-    ∂-complete′ (_>>=!_ {R₁} {xs = []}    p₁ p₂)
-                (_>>=!_ {s₁ = _ ∷ _} x∈p₁ y∈p₂x) refl =     ∂-complete x∈p₁ >>=!
-                                                            cast∈ refl (sym (♭?♯? (∂-initial (♭ p₁) _))) refl
-                                                              y∈p₂x
+  ∂-complete′ (_>>=_ {xs = x ∷ xs} {f} p₁ p₂)
+              (_>>=_ {s₁ = []}    x∈p₁ y∈p₂x) refl = ∣ʳ (∂-initial p₁ _ >>=′ f)
+                                                        (∂-⋁-complete p₂ (initial-complete x∈p₁) y∈p₂x)
+  ∂-complete′ (_>>=_ {xs = x ∷ xs}     p₁ p₂)
+              (_>>=_ {s₁ = _ ∷ _} x∈p₁ y∈p₂x) refl = ∣ˡ (∂-complete x∈p₁ >>=
+                                                         cast∈ refl (sym (♭?♯? (∂-initial p₁ _))) refl
+                                                           y∈p₂x)
+  ∂-complete′ (_>>=_ {R₁} {xs = []}    p₁ p₂)
+              (_>>=_ {s₁ = _ ∷ _} x∈p₁ y∈p₂x) refl =     ∂-complete x∈p₁ >>=
+                                                         cast∈ refl (sym (♭?♯? (∂-initial p₁ _))) refl
+                                                           y∈p₂x
 
-    ∂-complete′ (nonempty p) (nonempty x∈p) refl = ∂-complete x∈p
+  ∂-complete′ (_>>=!_ {xs = x ∷ xs} p₁ p₂)
+              (_>>=!_ {s₁ = []}    x∈p₁ y∈p₂x) refl = ∣ʳ []
+                                                         (∂-⋁-complete p₂ (initial-complete x∈p₁) y∈p₂x)
+  ∂-complete′ (_>>=!_ {xs = x ∷ xs}     p₁ p₂)
+              (_>>=!_ {s₁ = _ ∷ _} x∈p₁ y∈p₂x) refl = ∣ˡ (∂-complete x∈p₁ >>=!
+                                                          cast∈ refl (sym (♭?♯? (∂-initial (♭ p₁) _))) refl
+                                                            y∈p₂x)
+  ∂-complete′ (_>>=!_ {R₁} {xs = []}    p₁ p₂)
+              (_>>=!_ {s₁ = _ ∷ _} x∈p₁ y∈p₂x) refl =     ∂-complete x∈p₁ >>=!
+                                                          cast∈ refl (sym (♭?♯? (∂-initial (♭ p₁) _))) refl
+                                                            y∈p₂x
 
-    ∂-complete′ (cast _ p) (cast x∈p) refl = ∂-complete x∈p
+  ∂-complete′ (nonempty p) (nonempty x∈p) refl = ∂-complete x∈p
 
-    ∂-complete′ (return _) () refl
-    ∂-complete′ fail       () refl
-    ∂-complete′ (_ ⊛ ⟪ _ ⟫)            (_⊛_    {s₁ = []} f∈p₁ _) _ with initial-complete f∈p₁
-    ... | ()
-    ∂-complete′ (_>>=_  {xs = []} _ _) (_>>=_  {s₁ = []} x∈p₁ _) _ with initial-complete x∈p₁
-    ... | ()
-    ∂-complete′ (_>>=!_ {xs = []} _ _) (_>>=!_ {s₁ = []} x∈p₁ _) _ with initial-complete x∈p₁
-    ... | ()
+  ∂-complete′ (cast _ p) (cast x∈p) refl = ∂-complete x∈p
+
+  ∂-complete′ (return _) () refl
+  ∂-complete′ fail       () refl
+  ∂-complete′ (_ ⊛ ⟪ _ ⟫)            (_⊛_    {s₁ = []} f∈p₁ _) _ with initial-complete f∈p₁
+  ... | ()
+  ∂-complete′ (_>>=_  {xs = []} _ _) (_>>=_  {s₁ = []} x∈p₁ _) _ with initial-complete x∈p₁
+  ... | ()
+  ∂-complete′ (_>>=!_ {xs = []} _ _) (_>>=!_ {s₁ = []} x∈p₁ _) _ with initial-complete x∈p₁
+  ... | ()
 
   ∂-⋁-complete : ∀ {Tok R₁ R₂ x t z s xs y} {ys : List R₁}
                    {f : R₁ → List R₂}
