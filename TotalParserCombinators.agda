@@ -19,6 +19,8 @@ import TotalParserCombinators.Coinduction
 -- An alternative implementation of _⊛_ for lists, along with some
 -- lemmas.
 
+import TotalParserCombinators.Applicative
+
 -- The parser type, and its semantics.
 
 import TotalParserCombinators.Parser
