@@ -98,6 +98,22 @@ cast∈ : ∀ {Tok R xs} {p p′ : Parser Tok R xs} {x x′ s s′} →
         x ≡ x′ → p ≡ p′ → s ≡ s′ → x ∈ p · s → x′ ∈ p′ · s′
 cast∈ refl refl refl x∈ = x∈
 
+cast∈-sym∘cast∈ :
+  ∀ {Tok R xs} {p p′ : Parser Tok R xs} {x x′ s s′}
+  (x≡x′ : x ≡ x′) (p≡p′ : p ≡ p′) (s≡s′ : s ≡ s′)
+  (x∈p : x ∈ p · s) →
+  cast∈ (sym x≡x′) (sym p≡p′) (sym s≡s′)
+        (cast∈ x≡x′ p≡p′ s≡s′ x∈p) ≡ x∈p
+cast∈-sym∘cast∈ refl refl refl _ = refl
+
+cast∈∘cast∈-sym :
+  ∀ {Tok R xs} {p p′ : Parser Tok R xs} {x x′ s s′}
+  (x≡x′ : x ≡ x′) (p≡p′ : p ≡ p′) (s≡s′ : s ≡ s′)
+  (x∈p : x′ ∈ p′ · s′) →
+  cast∈ x≡x′ p≡p′ s≡s′
+        (cast∈ (sym x≡x′) (sym p≡p′) (sym s≡s′) x∈p) ≡ x∈p
+cast∈∘cast∈-sym refl refl refl _ = refl
+
 drop-♭♯ : ∀ {Tok R R′ xs′} {p : Parser Tok R′ xs′} (xs : List R) →
           ♭? (♯? {xs = xs} p) ⊑ p
 drop-♭♯ xs = cast∈ refl (♭?♯? xs) refl

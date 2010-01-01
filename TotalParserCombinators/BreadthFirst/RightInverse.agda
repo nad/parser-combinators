@@ -95,13 +95,6 @@ i-sound∘i-complete x∈p = H.≅-to-≡ (i-sound∘i-complete′ x∈p refl)
 ⋁-sound∘⋁-complete f (there x∈xs) y∈fx
   rewrite ⋁-sound∘⋁-complete f x∈xs y∈fx = refl
 
-cast∈∘cast∈ : ∀ {Tok R xs} {p p′ : Parser Tok R xs} {x x′ s s′}
-              (x≡x′ : x ≡ x′) (p≡p′ : p ≡ p′) (s≡s′ : s ≡ s′)
-              (x∈p : x′ ∈ p′ · s′) →
-              cast∈ x≡x′ p≡p′ s≡s′
-                    (cast∈ (sym x≡x′) (sym p≡p′) (sym s≡s′) x∈p) ≡ x∈p
-cast∈∘cast∈ refl refl refl _ = refl
-
 mutual
 
   ∂-sound∘∂-complete : ∀ {Tok R xs x s t} {p : Parser Tok R xs} →
@@ -122,17 +115,17 @@ mutual
 
   ∂-sound∘∂-complete′ (⟨ p₁ ⟩ ⊛ ⟪ p₂ ⟫) (_⊛_ {s₁ = t ∷ _} f∈p₁ x∈p₂) refl
     rewrite ∂-sound∘∂-complete f∈p₁
-          | cast∈∘cast∈ refl (♭?♯? (∂-initial p₁ t)) refl x∈p₂ =
+          | cast∈∘cast∈-sym refl (♭?♯? (∂-initial p₁ t)) refl x∈p₂ =
     refl
 
   ∂-sound∘∂-complete′ (⟪ p₁ ⟫ ⊛ ⟪ p₂ ⟫) (_⊛_ {s₁ = t ∷ _} f∈p₁ x∈p₂) refl
     rewrite ∂-sound∘∂-complete f∈p₁
-          | cast∈∘cast∈ refl (♭?♯? (∂-initial (♭ p₁) t)) refl x∈p₂ =
+          | cast∈∘cast∈-sym refl (♭?♯? (∂-initial (♭ p₁) t)) refl x∈p₂ =
     refl
 
   ∂-sound∘∂-complete′ (⟨ p₁ ⟩ ⊛ ⟨ p₂ ⟩) (_⊛_ {s₁ = t ∷ _} f∈p₁ x∈p₂) refl
     rewrite ∂-sound∘∂-complete f∈p₁
-          | cast∈∘cast∈ refl (♭?♯? (∂-initial p₁ t)) refl x∈p₂ =
+          | cast∈∘cast∈-sym refl (♭?♯? (∂-initial p₁ t)) refl x∈p₂ =
     refl
 
   ∂-sound∘∂-complete′ {Tok = Tok} {t = t} (_⊛_ {fs = f ∷ fs} {xs = x ∷ xs} ⟨ p₁ ⟩ ⟨ p₂ ⟩) (_⊛_ {s₁ = []} f∈p₁ x∈p₂) refl
@@ -144,14 +137,14 @@ mutual
                cast∈ refl (♭?♯? (∂-initial p₂ t)) refl $
                  cast∈ refl (sym (♭?♯? (∂-initial p₂ t))) refl c
     lemma : lhs ≡ (_ , f∈f∷fs , return)
-    lemma rewrite cast∈∘cast∈ refl (♭?♯? (∂-initial p₂ t)) refl c =
+    lemma rewrite cast∈∘cast∈-sym refl (♭?♯? (∂-initial p₂ t)) refl c =
           ⋁-sound∘⋁-complete return f∈f∷fs return
   ... | .(_ , initial-complete f∈p₁ , return) | refl
     rewrite i-sound∘i-complete f∈p₁ | ∂-sound∘∂-complete x∈p₂ = refl
 
   ∂-sound∘∂-complete′ (⟪ p₁ ⟫ ⊛ ⟨ p₂ ⟩) (_⊛_ {s₁ = t ∷ _} f∈p₁ x∈p₂) refl
     rewrite ∂-sound∘∂-complete f∈p₁
-          | cast∈∘cast∈ refl (♭?♯? (∂-initial (♭ p₁) t)) refl x∈p₂ =
+          | cast∈∘cast∈-sym refl (♭?♯? (∂-initial (♭ p₁) t)) refl x∈p₂ =
     refl
 
   ∂-sound∘∂-complete′ {Tok = Tok} {t = t} (_⊛_ {fs = f ∷ fs} ⟪ p₁ ⟫ ⟨ p₂ ⟩) (_⊛_ {s₁ = []} f∈p₁ x∈p₂) refl
@@ -163,7 +156,7 @@ mutual
                cast∈ refl (♭?♯? (∂-initial p₂ t)) refl $
                  cast∈ refl (sym (♭?♯? (∂-initial p₂ t))) refl c
     lemma : lhs ≡ (_ , f∈f∷fs , return)
-    lemma rewrite cast∈∘cast∈ refl (♭?♯? (∂-initial p₂ t)) refl c =
+    lemma rewrite cast∈∘cast∈-sym refl (♭?♯? (∂-initial p₂ t)) refl c =
           ⋁-sound∘⋁-complete return f∈f∷fs return
   ... | .(_ , initial-complete f∈p₁ , return) | refl
     rewrite i-sound∘i-complete f∈p₁ | ∂-sound∘∂-complete x∈p₂ = refl
@@ -174,11 +167,11 @@ mutual
     refl
   ∂-sound∘∂-complete′ (_>>=_ {xs = x ∷ xs} p₁ p₂) (_>>=_ {s₁ = t ∷ _} x∈p₁ y∈p₂x) refl
     rewrite ∂-sound∘∂-complete x∈p₁
-          | cast∈∘cast∈ refl (♭?♯? (∂-initial p₁ t)) refl y∈p₂x =
+          | cast∈∘cast∈-sym refl (♭?♯? (∂-initial p₁ t)) refl y∈p₂x =
     refl
   ∂-sound∘∂-complete′ (_>>=_ {R₁} {xs = []} p₁ p₂) (_>>=_ {s₁ = t ∷ _} x∈p₁ y∈p₂x) refl
     rewrite ∂-sound∘∂-complete x∈p₁
-          | cast∈∘cast∈ refl (♭?♯? (∂-initial p₁ t)) refl y∈p₂x =
+          | cast∈∘cast∈-sym refl (♭?♯? (∂-initial p₁ t)) refl y∈p₂x =
     refl
 
   ∂-sound∘∂-complete′ (_>>=!_ {xs = x ∷ xs} p₁ p₂) (_>>=!_ {s₁ = []} x∈p₁ y∈p₂x) refl
@@ -187,11 +180,11 @@ mutual
     refl
   ∂-sound∘∂-complete′ (_>>=!_ {xs = x ∷ xs} p₁ p₂) (_>>=!_ {s₁ = t ∷ _} x∈p₁ y∈p₂x) refl
     rewrite ∂-sound∘∂-complete x∈p₁
-          | cast∈∘cast∈ refl (♭?♯? (∂-initial (♭ p₁) t)) refl y∈p₂x =
+          | cast∈∘cast∈-sym refl (♭?♯? (∂-initial (♭ p₁) t)) refl y∈p₂x =
     refl
   ∂-sound∘∂-complete′ (_>>=!_ {R₁} {xs = []} p₁ p₂) (_>>=!_ {s₁ = t ∷ _} x∈p₁ y∈p₂x) refl
     rewrite ∂-sound∘∂-complete x∈p₁
-          | cast∈∘cast∈ refl (♭?♯? (∂-initial (♭ p₁) t)) refl y∈p₂x =
+          | cast∈∘cast∈-sym refl (♭?♯? (∂-initial (♭ p₁) t)) refl y∈p₂x =
     refl
 
   ∂-sound∘∂-complete′ (nonempty p) (nonempty x∈p) refl rewrite ∂-sound∘∂-complete x∈p = refl

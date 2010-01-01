@@ -78,13 +78,6 @@ i-complete∘i-sound (nonempty _) ()
 ⋁-complete∘⋁-sound {i = i} f (x ∷ xs) (∣ʳ ._ y∈⋁fxs) =
   cong (∣ʳ (i x)) (⋁-complete∘⋁-sound f xs y∈⋁fxs)
 
-cast∈∘cast∈ : ∀ {Tok R xs} {p p′ : Parser Tok R xs} {x x′ s s′}
-              (x≡x′ : x ≡ x′) (p≡p′ : p ≡ p′) (s≡s′ : s ≡ s′)
-              (x∈p : x ∈ p · s) →
-              cast∈ (sym x≡x′) (sym p≡p′) (sym s≡s′)
-                    (cast∈ x≡x′ p≡p′ s≡s′ x∈p) ≡ x∈p
-cast∈∘cast∈ refl refl refl _ = refl
-
 mutual
 
   ∂-complete∘∂-sound : ∀ {Tok R xs x s}
@@ -95,16 +88,16 @@ mutual
   ∂-complete∘∂-sound (p₁ ∣ p₂)                  (∣ʳ ._ x∈p₂)              = cong (∣ʳ (∂-initial p₁ _)) $ ∂-complete∘∂-sound p₂ x∈p₂
   ∂-complete∘∂-sound (f <$> p)                  (<$> x∈p)                 = cong <$>_ $ ∂-complete∘∂-sound p  x∈p
   ∂-complete∘∂-sound (⟨ p₁ ⟩ ⊛ ⟪ p₂ ⟫)                 (f∈p₁′   ⊛ x∈p₂)   = cong₂ _⊛_ (∂-complete∘∂-sound p₁ f∈p₁′)
-                                                                                      (cast∈∘cast∈ refl (♭?♯? (∂-initial p₁ _)) refl x∈p₂)
+                                                                                      (cast∈-sym∘cast∈ refl (♭?♯? (∂-initial p₁ _)) refl x∈p₂)
   ∂-complete∘∂-sound (⟪ p₁ ⟫ ⊛ ⟪ p₂ ⟫)                 (f∈p₁′   ⊛ x∈p₂)   = cong₂ _⊛_
                                                                                   (∂-complete∘∂-sound (♭ p₁) f∈p₁′)
-                                                                                  (cast∈∘cast∈ refl (♭?♯? (∂-initial (♭ p₁) _)) refl x∈p₂)
+                                                                                  (cast∈-sym∘cast∈ refl (♭?♯? (∂-initial (♭ p₁) _)) refl x∈p₂)
   ∂-complete∘∂-sound (⟨ p₁ ⟩ ⊛ ⟨ p₂ ⟩)          (∣ˡ    (f∈p₁′   ⊛ x∈p₂))  = cong₂ (λ pr₁ pr₂ → ∣ˡ (pr₁ ⊛ pr₂))
                                                                                   (∂-complete∘∂-sound p₁ f∈p₁′)
-                                                                                  (cast∈∘cast∈ refl (♭?♯? (∂-initial p₁ _)) refl x∈p₂)
+                                                                                  (cast∈-sym∘cast∈ refl (♭?♯? (∂-initial p₁ _)) refl x∈p₂)
   ∂-complete∘∂-sound (⟨ p₁ ⟩ ⊛ ⟨_⟩ {f} {fs} p₂) (∣ʳ ._ (f∈⋁f∷fs ⊛ x∈p₂′))
     with                                    f∈⋁f∷fs′
-       | cast∈∘cast∈ refl (♭?♯? (∂-initial p₂ _)) refl f∈⋁f∷fs
+       | cast∈-sym∘cast∈ refl (♭?♯? (∂-initial p₂ _)) refl f∈⋁f∷fs
        |            ⋁-sound return (f ∷ fs) f∈⋁f∷fs′
        | ⋁-complete∘⋁-sound return (f ∷ fs) f∈⋁f∷fs′
     where f∈⋁f∷fs′ = cast∈ refl (♭?♯? (∂-initial p₂ _)) refl f∈⋁f∷fs
@@ -118,10 +111,10 @@ mutual
                                                          (∂-complete∘∂-sound p₂ x∈p₂′)
   ∂-complete∘∂-sound (⟪ p₁ ⟫ ⊛ ⟨ p₂ ⟩)          (∣ˡ    (f∈p₁′   ⊛ x∈p₂))  = cong₂ (λ pr₁ pr₂ → ∣ˡ (pr₁ ⊛ pr₂))
                                                                                   (∂-complete∘∂-sound (♭ p₁) f∈p₁′)
-                                                                                  (cast∈∘cast∈ refl (♭?♯? (∂-initial (♭ p₁) _)) refl x∈p₂)
+                                                                                  (cast∈-sym∘cast∈ refl (♭?♯? (∂-initial (♭ p₁) _)) refl x∈p₂)
   ∂-complete∘∂-sound (⟪ p₁ ⟫ ⊛ ⟨_⟩ {f} {fs} p₂) (∣ʳ ._ (f∈⋁f∷fs ⊛ x∈p₂′))
     with                                    f∈⋁f∷fs′
-       | cast∈∘cast∈ refl (♭?♯? (∂-initial p₂ _)) refl f∈⋁f∷fs
+       | cast∈-sym∘cast∈ refl (♭?♯? (∂-initial p₂ _)) refl f∈⋁f∷fs
        |            ⋁-sound return (f ∷ fs) f∈⋁f∷fs′
        | ⋁-complete∘⋁-sound return (f ∷ fs) f∈⋁f∷fs′
     where f∈⋁f∷fs′ = cast∈ refl (♭?♯? (∂-initial p₂ _)) refl f∈⋁f∷fs
@@ -142,10 +135,10 @@ mutual
          (i-complete∘i-sound p₁ y∈x∷xs)
   ∂-complete∘∂-sound (_>>=_  {xs = x ∷ xs} p₁ p₂) (∣ˡ (x∈p₁′ >>=  y∈p₂x)) = cong₂ (λ pr₁ pr₂ → ∣ˡ (pr₁ >>= pr₂))
                                                                                   (∂-complete∘∂-sound p₁ x∈p₁′)
-                                                                                  (cast∈∘cast∈ refl (♭?♯? (∂-initial p₁ _)) refl y∈p₂x)
+                                                                                  (cast∈-sym∘cast∈ refl (♭?♯? (∂-initial p₁ _)) refl y∈p₂x)
   ∂-complete∘∂-sound (_>>=_  {xs = []}     p₁ p₂)     (x∈p₁′ >>=  y∈p₂x)  = cong₂ _>>=_
                                                                                   (∂-complete∘∂-sound p₁ x∈p₁′)
-                                                                                  (cast∈∘cast∈ refl (♭?♯? (∂-initial p₁ _)) refl y∈p₂x)
+                                                                                  (cast∈-sym∘cast∈ refl (♭?♯? (∂-initial p₁ _)) refl y∈p₂x)
   ∂-complete∘∂-sound (_>>=!_ {xs = x ∷ xs} p₁ p₂) (∣ʳ ._ z∈p₂′x)
     with              ∂-⋁-sound (x ∷ xs) p₂ z∈p₂′x
        | ∂-⋁-complete∘∂-⋁-sound (x ∷ xs) p₂ z∈p₂′x
@@ -155,10 +148,10 @@ mutual
          (i-complete∘i-sound (♭ p₁) y∈x∷xs)
   ∂-complete∘∂-sound (_>>=!_ {xs = x ∷ xs} p₁ p₂) (∣ˡ (x∈p₁′ >>=! y∈p₂x)) = cong₂ (λ pr₁ pr₂ → ∣ˡ (pr₁ >>=! pr₂))
                                                                                   (∂-complete∘∂-sound (♭ p₁) x∈p₁′)
-                                                                                  (cast∈∘cast∈ refl (♭?♯? (∂-initial (♭ p₁) _)) refl y∈p₂x)
+                                                                                  (cast∈-sym∘cast∈ refl (♭?♯? (∂-initial (♭ p₁) _)) refl y∈p₂x)
   ∂-complete∘∂-sound (_>>=!_ {xs = []}     p₁ p₂)     (x∈p₁′ >>=! y∈p₂x)  = cong₂ _>>=!_
                                                                                   (∂-complete∘∂-sound (♭ p₁) x∈p₁′)
-                                                                                  (cast∈∘cast∈ refl (♭?♯? (∂-initial (♭ p₁) _)) refl y∈p₂x)
+                                                                                  (cast∈-sym∘cast∈ refl (♭?♯? (∂-initial (♭ p₁) _)) refl y∈p₂x)
   ∂-complete∘∂-sound (nonempty p)                 x∈p                     = ∂-complete∘∂-sound p x∈p
   ∂-complete∘∂-sound (cast _ p)                   x∈p                     = ∂-complete∘∂-sound p x∈p
 
