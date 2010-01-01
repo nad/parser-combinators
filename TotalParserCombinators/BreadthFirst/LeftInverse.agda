@@ -32,41 +32,10 @@ private
 open import TotalParserCombinators.Applicative
 open import TotalParserCombinators.BreadthFirst
 open import TotalParserCombinators.Coinduction
+import TotalParserCombinators.InitialSet as I
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
   hiding (sound; complete; _≅_)
-
-i-complete∘i-sound : ∀ {Tok R xs x}
-                     (p : Parser Tok R xs) (x∈p : x ∈ xs) →
-                     initial-complete (initial-sound p x∈p) ≡ x∈p
-i-complete∘i-sound (return x)              (here refl)       = refl
-i-complete∘i-sound (_∣_ {xs₁ = xs₁} p₁ p₂) x∈xs              with ++⁻ xs₁ x∈xs | ++⁺∘++⁻ xs₁ x∈xs
-i-complete∘i-sound (_∣_ {xs₁ = xs₁} p₁ p₂) .(++⁺ˡ     x∈xs₁) | inj₁ x∈xs₁ | refl = cong ++⁺ˡ       $ i-complete∘i-sound p₁ x∈xs₁
-i-complete∘i-sound (_∣_ {xs₁ = xs₁} p₁ p₂) .(++⁺ʳ xs₁ x∈xs₂) | inj₂ x∈xs₂ | refl = cong (++⁺ʳ xs₁) $ i-complete∘i-sound p₂ x∈xs₂
-i-complete∘i-sound (_<$>_ {xs = xs} f p)   x∈xs              with map-∈⁻ xs x∈xs | map-∈⁺∘map-∈⁻ x∈xs
-i-complete∘i-sound (_<$>_ {xs = xs} f p)   .(map-∈⁺ y∈xs)    | (y , y∈xs , refl) | refl = cong map-∈⁺ $ i-complete∘i-sound p y∈xs
-i-complete∘i-sound (_⊛_ {fs = fs} {x ∷ xs} ⟨ p₁ ⟩ p₂) y∈ys with ⊛′-∈⁻ fs (x ∷ xs) y∈ys | ⊛′-∈⁺∘⊛′-∈⁻ fs (x ∷ xs) y∈ys
-i-complete∘i-sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟪ p₂ ⟫) y∈ys                   | (f′ , x′ , ()    , x′∈x∷xs , refl) | _
-i-complete∘i-sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟨ p₂ ⟩) .(⊛′-∈⁺ f′∈fs x′∈x∷xs) | (f′ , x′ , f′∈fs , x′∈x∷xs , refl) | refl =
-  cong₂ ⊛′-∈⁺ (i-complete∘i-sound p₁ f′∈fs) (i-complete∘i-sound p₂ x′∈x∷xs)
-i-complete∘i-sound (_>>=_ {xs = zs}     {f} p₁ p₂) y∈ys                    with >>=-∈⁻ f zs y∈ys | >>=-∈⁺∘>>=-∈⁻ f zs y∈ys
-i-complete∘i-sound (_>>=_ {xs = []}     {f} p₁ p₂) ._                      | (x , ()     , y∈fx) | refl
-i-complete∘i-sound (_>>=_ {xs = z ∷ zs} {f} p₁ p₂) .(>>=-∈⁺ f x∈z∷zs y∈fx) | (x , x∈z∷zs , y∈fx) | refl =
-  cong₂ (>>=-∈⁺ f) (i-complete∘i-sound p₁ x∈z∷zs) (helper (p₂ x) x∈z∷zs y∈fx)
-  where
-  helper : ∀ {Tok R₁ R₂ x y xs z} {zs : List R₁}
-           (p : ∞? (Parser Tok R₂ xs) (z ∷ zs))
-           (x∈z∷zs : x ∈ z ∷ zs) (y∈xs : y ∈ xs) →
-           initial-complete (initial-sound′ p x∈z∷zs y∈xs) ≡ y∈xs
-  helper ⟨ p ⟩ x∈z∷zs y∈xs = i-complete∘i-sound p y∈xs
-i-complete∘i-sound (cast refl p) x∈xs = i-complete∘i-sound p x∈xs
-
-i-complete∘i-sound (return _)   (there ())
-i-complete∘i-sound fail         ()
-i-complete∘i-sound token        ()
-i-complete∘i-sound (⟪ _ ⟫ ⊛ _)  ()
-i-complete∘i-sound (_ >>=! _)   ()
-i-complete∘i-sound (nonempty _) ()
 
 ⋁-complete∘⋁-sound : ∀ {Tok R₁ R₂ y s} {i : R₁ → List R₂} →
                      (f : (x : R₁) → Parser Tok R₂ (i x)) (xs : List R₁)
@@ -107,7 +76,7 @@ mutual
     | ._ | refl | (f′ , f′∈f∷fs , return) | refl = cong₂ (λ pr₁ pr₂ → ∣ʳ (∂-initial p₁ _ ⊛′ (x ∷ xs))
                                                                          (cast∈ refl (sym (♭?♯? (∂-initial p₂ _))) refl
                                                                                 (⋁-complete return pr₁ return) ⊛ pr₂))
-                                                         (i-complete∘i-sound p₁ f′∈f∷fs)
+                                                         (I.complete∘sound p₁ f′∈f∷fs)
                                                          (∂-complete∘∂-sound p₂ x∈p₂′)
   ∂-complete∘∂-sound (⟪ p₁ ⟫ ⊛ ⟨ p₂ ⟩)          (∣ˡ    (f∈p₁′   ⊛ x∈p₂))  = cong₂ (λ pr₁ pr₂ → ∣ˡ (pr₁ ⊛ pr₂))
                                                                                   (∂-complete∘∂-sound (♭ p₁) f∈p₁′)
@@ -124,7 +93,7 @@ mutual
     | ._ | refl | (f′ , f′∈f∷fs , return) | refl = cong₂ (λ pr₁ pr₂ → ∣ʳ []
                                                                          (cast∈ refl (sym (♭?♯? (∂-initial p₂ _))) refl
                                                                                 (⋁-complete return pr₁ return) ⊛ pr₂))
-                                                         (i-complete∘i-sound (♭ p₁) f′∈f∷fs)
+                                                         (I.complete∘sound (♭ p₁) f′∈f∷fs)
                                                          (∂-complete∘∂-sound p₂ x∈p₂′)
   ∂-complete∘∂-sound (_>>=_  {xs = x ∷ xs} p₁ p₂) (∣ʳ ._ z∈p₂′x)
     with              ∂-⋁-sound (x ∷ xs) p₂ z∈p₂′x
@@ -132,7 +101,7 @@ mutual
   ∂-complete∘∂-sound (_>>=_ {xs = _ ∷ _} p₁ p₂) (∣ʳ ._ .(∂-⋁-complete p₂ y∈x∷xs z∈p₂′y))
     | (y , y∈x∷xs , z∈p₂′y) | refl =
     cong (λ pr → ∣ʳ (∂-initial p₁ _ >>=′ _) (∂-⋁-complete p₂ pr z∈p₂′y))
-         (i-complete∘i-sound p₁ y∈x∷xs)
+         (I.complete∘sound p₁ y∈x∷xs)
   ∂-complete∘∂-sound (_>>=_  {xs = x ∷ xs} p₁ p₂) (∣ˡ (x∈p₁′ >>=  y∈p₂x)) = cong₂ (λ pr₁ pr₂ → ∣ˡ (pr₁ >>= pr₂))
                                                                                   (∂-complete∘∂-sound p₁ x∈p₁′)
                                                                                   (cast∈-sym∘cast∈ refl (♭?♯? (∂-initial p₁ _)) refl y∈p₂x)
@@ -145,7 +114,7 @@ mutual
   ∂-complete∘∂-sound (_>>=!_ {xs = x ∷ xs} p₁ p₂) (∣ʳ ._ .(∂-⋁-complete p₂ y∈x∷xs z∈p₂′y))
     | (y , y∈x∷xs , z∈p₂′y) | refl =
     cong (λ pr → ∣ʳ [] (∂-⋁-complete p₂ pr z∈p₂′y))
-         (i-complete∘i-sound (♭ p₁) y∈x∷xs)
+         (I.complete∘sound (♭ p₁) y∈x∷xs)
   ∂-complete∘∂-sound (_>>=!_ {xs = x ∷ xs} p₁ p₂) (∣ˡ (x∈p₁′ >>=! y∈p₂x)) = cong₂ (λ pr₁ pr₂ → ∣ˡ (pr₁ >>=! pr₂))
                                                                                   (∂-complete∘∂-sound (♭ p₁) x∈p₁′)
                                                                                   (cast∈-sym∘cast∈ refl (♭?♯? (∂-initial (♭ p₁) _)) refl y∈p₂x)
@@ -177,6 +146,6 @@ mutual
 complete∘sound : ∀ {Tok R xs x} s
                  (p : Parser Tok R xs) (x∈p : x ∈ parseComplete p s) →
                  complete s (sound s x∈p) ≡ x∈p
-complete∘sound []      p x∈p = i-complete∘i-sound p x∈p
+complete∘sound []      p x∈p = I.complete∘sound p x∈p
 complete∘sound (t ∷ s) p x∈p rewrite ∂-complete∘∂-sound p (sound s x∈p) =
   complete∘sound s (∂ p t) x∈p

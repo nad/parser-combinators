@@ -21,6 +21,7 @@ open import Relation.Binary.PropositionalEquality as P
 open import Relation.Nullary
 
 open import TotalParserCombinators.Coinduction
+import TotalParserCombinators.InitialSet as I
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
   hiding (sound; sound′; complete; _≅_)
@@ -84,7 +85,7 @@ module KleeneStar where
   complete : ∀ {Tok R xs s} {p : Parser Tok R []} →
              xs ∈[ p ]⋆· s → xs ∈ p ⋆ · s
   complete []                           = ∣ˡ return
-  complete (_∷_ {s₁ = []}    x∈p xs∈p⋆) with initial-complete x∈p
+  complete (_∷_ {s₁ = []}    x∈p xs∈p⋆) with I.complete x∈p
   ... | ()
   complete (_∷_ {s₁ = _ ∷ _} x∈p xs∈p⋆) =
     ∣ʳ [ [] ] (<$> x∈p ⊛ complete xs∈p⋆)
@@ -104,7 +105,7 @@ module KleeneStar where
   unrestricted-incomplete {R} x f _⋆′ complete =
     AnyProp.Membership-≡.finite
       (record { to = to; injective = injective })
-      (f (return x)) (initial-complete ∘ complete ∘ lemma)
+      (f (return x)) (I.complete ∘ complete ∘ lemma)
     where
     to : P.setoid ℕ ⟶ P.setoid (List R)
     to = →-to-⟶ (flip replicate x)

@@ -17,6 +17,7 @@ private
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
   hiding (sound; complete)
+import TotalParserCombinators.InitialSet as I
 open import TotalParserCombinators.BreadthFirst
   hiding (sound; complete)
 
@@ -49,12 +50,11 @@ sound {Tok} {R} p₁≈′p₂ =
   lemma : ∀ {xs₁ xs₂} {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
           p₁ ≈′ p₂ → p₁ ⊑ p₂
   lemma ((⊆ , _) ∷ rest) {s = []}    []∈p₁  =
-    initial-sound _ (⊆ (initial-complete []∈p₁))
+    I.sound _ (⊆ (I.complete []∈p₁))
   lemma (_       ∷ rest) {s = t ∷ s} t∷s∈p₁ =
     ∂-sound _ (lemma (♭ (rest t)) (∂-complete t∷s∈p₁))
 
 complete : ∀ {Tok R xs₁ xs₂}
              {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
            p₁ ≈ p₂ → p₁ ≈′ p₂
-complete p₁≈p₂ = same-initial-set p₁≈p₂ ∷ λ t →
-  ♯ complete (∂-cong p₁≈p₂)
+complete p₁≈p₂ = I.same-set p₁≈p₂ ∷ λ t → ♯ complete (∂-cong p₁≈p₂)

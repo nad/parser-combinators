@@ -7,37 +7,20 @@
 module TotalParserCombinators.Semantics where
 
 open import Algebra
-import Algebra.Props.BooleanAlgebra as BAProp
 open import Coinduction
-open import Data.Bool
-import Data.Bool.Properties as BoolProp
 open import Data.List as List
 import Data.List.Properties as ListProp
-open import Data.List.Any as Any
-open import Data.List.Any.Properties as AnyProp
 open import Data.Product as Prod
-open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import Function hiding (_∶_)
+open import Function
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Inverse using (Inverse; module Inverse)
-open import Data.Empty
 open import Data.Unit
-open import Relation.Binary
 open import Relation.Binary.PropositionalEquality as P
 open import Relation.Nullary
-open import Relation.Nullary.Negation
-open Any.Membership-≡
-open AnyProp.Membership-≡
-open ≡-Reasoning
 private
-  module BCS = CommutativeSemiring BoolProp.commutativeSemiring-∨-∧
-  module BA = BAProp BoolProp.booleanAlgebra
   module LM {Tok : Set} = Monoid (List.monoid Tok)
-  open module Eq {R : Set} = Setoid (Set-equality {R})
-    using () renaming (_≈_ to _≛_)
 
 open import TotalParserCombinators.Coinduction
-open import TotalParserCombinators.Applicative
 open import TotalParserCombinators.Parser
 
 ------------------------------------------------------------------------
@@ -182,82 +165,6 @@ drop-♭♯ xs = cast∈ refl (♭?♯? xs) refl
 add-♭♯ : ∀ {Tok R R′ xs′} {p : Parser Tok R′ xs′} (xs : List R) →
          p ⊑ ♭? (♯? {xs = xs} p)
 add-♭♯ xs = cast∈ refl (sym $ ♭?♯? xs) refl
-
-------------------------------------------------------------------------
--- Initial set lemmas
-
--- Sanity check: The initial set is correctly defined.
-
-mutual
-
-  initial-complete : ∀ {Tok R xs x} {p : Parser Tok R xs} →
-                     x ∈ p · [] → x ∈ xs
-  initial-complete x∈p = initial-complete′ x∈p refl
-
-  initial-complete′ : ∀ {Tok R xs x s} {p : Parser Tok R xs} →
-                      x ∈ p · s → s ≡ [] → x ∈ xs
-  initial-complete′ return                                        refl = here refl
-  initial-complete′ (∣ˡ     x∈p₁)                                 refl = ++⁺ˡ (initial-complete x∈p₁)
-  initial-complete′ (∣ʳ xs₁ x∈p₂)                                 refl = ++⁺ʳ xs₁ (initial-complete x∈p₂)
-  initial-complete′ (<$> x∈p)                                     refl = map-∈⁺ (initial-complete x∈p)
-  initial-complete′ (_⊛_   {s₁ = []} {fs = fs}        f∈p₁ x∈p₂)  refl = ⊛′-∈⁺ (initial-complete f∈p₁)
-                                                                               (initial-complete x∈p₂)
-  initial-complete′ (_>>=_ {s₁ = []} {xs = _ ∷ _} {f} x∈p₁ y∈p₂x) refl = >>=-∈⁺ f (initial-complete x∈p₁)
-                                                                                  (initial-complete y∈p₂x)
-  initial-complete′ (cast {eq = refl} x∈p)                        refl = initial-complete x∈p
-
-  initial-complete′ (_>>=_  {s₁ = []} {xs = []} x∈p₁ y∈p₂x) refl with initial-complete x∈p₁
-  ... | ()
-  initial-complete′ (_>>=!_ {s₁ = []}           x∈p₁ y∈p₂x) refl with initial-complete y∈p₂x
-  ... | ()
-
-  initial-complete′ token                     ()
-  initial-complete′ (_⊛_    {s₁ = _ ∷ _} _ _) ()
-  initial-complete′ (_>>=_  {s₁ = _ ∷ _} _ _) ()
-  initial-complete′ (_>>=!_ {s₁ = _ ∷ _} _ _) ()
-  initial-complete′ (nonempty _)              ()
-
-mutual
-
-  initial-sound : ∀ {Tok R xs x} (p : Parser Tok R xs) →
-                  x ∈ xs → x ∈ p · []
-  initial-sound (return x)              (here refl) = return
-  initial-sound (_∣_ {xs₁ = xs₁} p₁ p₂) x∈xs with ++⁻ xs₁ x∈xs
-  ... | inj₁ x∈xs₁ = ∣ˡ     (initial-sound p₁ x∈xs₁)
-  ... | inj₂ x∈xs₂ = ∣ʳ xs₁ (initial-sound p₂ x∈xs₂)
-  initial-sound (_<$>_ {xs = xs} f p) x∈xs with map-∈⁻ xs x∈xs
-  ... | (y , y∈xs , refl) = <$> initial-sound p y∈xs
-  initial-sound (_⊛_ {fs = fs} {x ∷ xs} ⟨ p₁ ⟩ p₂) y∈ys with ⊛′-∈⁻ fs (x ∷ xs) y∈ys
-  initial-sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟪ p₂ ⟫)  y∈ys | (f′ , x′ , ()    , x′∈x∷xs , refl)
-  initial-sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟨ p₂ ⟩)  y∈ys | (f′ , x′ , f′∈fs , x′∈x∷xs , refl) =
-    initial-sound p₁ f′∈fs ⊛ initial-sound p₂ x′∈x∷xs
-  initial-sound (_>>=_ {xs = zs} {f} p₁ p₂) y∈ys
-    with >>=-∈⁻ f zs y∈ys
-  ... | (x , x∈zs , y∈fx) =
-    _>>=_ {f = f} (initial-sound p₁ x∈zs) (initial-sound′ (p₂ x) x∈zs y∈fx)
-  initial-sound (cast refl p) x∈xs = cast (initial-sound p x∈xs)
-
-  initial-sound (return _)   (there ())
-  initial-sound fail         ()
-  initial-sound token        ()
-  initial-sound (⟪ _ ⟫ ⊛ _)  ()
-  initial-sound (_ >>=! _)   ()
-  initial-sound (nonempty _) ()
-
-  initial-sound′ : ∀ {Tok R₁ R₂ x y xs} {zs : List R₁}
-                   (p : ∞? (Parser Tok R₂ xs) zs) →
-                   x ∈ zs → y ∈ xs → y ∈ ♭? p · []
-  initial-sound′ ⟨ p ⟩ _  = initial-sound p
-  initial-sound′ ⟪ p ⟫ ()
-
-same-initial-set : ∀ {Tok R xs₁ xs₂}
-                     {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
-                   p₁ ≈ p₂ → xs₁ ≛ xs₂
-same-initial-set {Tok} {R} = Prod.map lemma lemma
-  where
-  lemma : ∀ {xs₁ xs₂} {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
-          p₁ ⊑ p₂ → xs₁ ⊆ xs₂
-  lemma p₁⊑p₂ = initial-complete ∘ p₁⊑p₂ ∘ initial-sound _
 
 ------------------------------------------------------------------------
 -- A variant of the semantics
