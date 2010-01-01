@@ -16,8 +16,8 @@ open import Data.Nat
 open import Data.Product as Prod
 open import Data.Vec as Vec using (Vec; []; _∷_)
 open import Relation.Binary
-open import Relation.Binary.HeterogeneousEquality
-open import Relation.Binary.PropositionalEquality as PropEq
+open import Relation.Binary.HeterogeneousEquality as H
+open import Relation.Binary.PropositionalEquality as P
 open import Relation.Nullary
 
 open import TotalParserCombinators.Coinduction
@@ -106,7 +106,7 @@ module KleeneStar where
       (record { to = to; injective = injective })
       (f (return x)) (initial-complete ∘ complete ∘ lemma)
     where
-    to : PropEq.setoid ℕ ⟶ PropEq.setoid (List R)
+    to : P.setoid ℕ ⟶ P.setoid (List R)
     to = →-to-⟶ (flip replicate x)
 
     helper : ∀ {xs ys} → _≡_ {A = List R} (x ∷ xs) (x ∷ ys) → xs ≡ ys
@@ -114,7 +114,7 @@ module KleeneStar where
 
     injective : Injective to
     injective {zero}  {zero}  _  = refl
-    injective {suc m} {suc n} eq = PropEq.cong suc $
+    injective {suc m} {suc n} eq = P.cong suc $
                                      injective $ helper eq
     injective {zero}  {suc n} ()
     injective {suc m} {zero}  ()
@@ -169,7 +169,7 @@ module Exactly where
     helper (∈p ∷ ∈p⋆) =
       Prod.map suc (λ {i} →
         Prod.map (_∷_ _) (
-          Prod.map (PropEq.cong (_∷_ _))
+          Prod.map (P.cong (_∷_ _))
                    (λ ∈pⁱ → add-♭♯ (^-initial [] i) (<$> ∈p) ⊛ ∈pⁱ)))
        (helper ∈p⋆)
   ... | (i , ys , refl , ∈pⁱ) = (i , <$> ∈pⁱ)
@@ -196,6 +196,25 @@ module Return⋆ where
   complete (there x∈xs) =
     ∣ʳ [ _ ] (complete x∈xs)
 
+  complete∘sound : ∀ {Tok R x} {s : List Tok}
+                   (xs : List R) (x∈xs : x ∈ return⋆ xs · s) →
+                   complete {Tok = Tok} (proj₂ $ sound xs x∈xs) ≅ x∈xs
+  complete∘sound []       ()
+  complete∘sound (y ∷ ys) (∣ˡ return)        = refl
+  complete∘sound (y ∷ ys) (∣ʳ .([ y ]) x∈ys)
+    with sound ys x∈ys | complete∘sound ys x∈ys
+  complete∘sound (y ∷ ys) (∣ʳ .([ y ]) .(complete (proj₂ p)))
+    | p | refl = refl
+
+  sound∘complete : ∀ {Tok R x} {xs : List R} (x∈xs : x ∈ xs) →
+                   sound {Tok = Tok} {s = []} xs (complete x∈xs) ≡
+                   (refl , x∈xs)
+  sound∘complete       (here refl)            = refl
+  sound∘complete {Tok} (there {xs = xs} x∈xs)
+    with sound {Tok = Tok} xs (complete x∈xs)
+       | sound∘complete {Tok} {xs = xs} x∈xs
+  sound∘complete (there x∈xs) | .(refl , x∈xs) | refl = refl
+
 ------------------------------------------------------------------------
 -- A parser for a given token
 
@@ -205,12 +224,12 @@ module Token
          where
 
   private
-    okIndex : Tok → Tok → List Tok
-    okIndex tok tok′ with tok ≟ tok′
+    ok-index : Tok → Tok → List Tok
+    ok-index tok tok′ with tok ≟ tok′
     ... | yes _ = tok′ ∷ []
     ... | no  _ = []
 
-    ok : (tok tok′ : Tok) → Parser Tok Tok (okIndex tok tok′)
+    ok : (tok tok′ : Tok) → Parser Tok Tok (ok-index tok tok′)
     ok tok tok′ with tok ≟ tok′
     ... | yes _ = return tok′
     ... | no  _ = fail
@@ -224,11 +243,25 @@ module Token
   sound (token >>= return) | yes t≈t″ = (t≈t″ , refl)
   sound (token >>= ())     | no  t≉t″
 
-  complete : ∀ {t} → t ∈ tok t · [ t ]
-  complete {t} = token >>= ok-lemma
-    where
-    ok-lemma : t ∈ ok t t · []
-    ok-lemma with t ≟ t
+  private
+    ok-lemma : ∀ t → t ∈ ok t t · []
+    ok-lemma t with t ≟ t
     ... | yes refl = return
     ... | no  t≢t  with t≢t refl
     ...   | ()
+
+  complete : ∀ {t} → t ∈ tok t · [ t ]
+  complete {t} = token >>= ok-lemma t
+
+  η : ∀ {t} (t∈ : t ∈ tok t · [ t ]) → t∈ ≡ complete {t = t}
+  η {t = t} t∈ = H.≅-to-≡ $ helper t∈ refl
+    where
+    helper₂ : (t∈ : t ∈ ok t t · []) → t∈ ≡ ok-lemma t
+    helper₂ t∈     with t ≟ t
+    helper₂ return | yes refl = refl
+    helper₂ t∈     | no  t≢t  with t≢t refl
+    helper₂ t∈     | no  t≢t  | ()
+
+    helper : ∀ {s} (t∈ : t ∈ tok t · s) → s ≡ [ t ] →
+             t∈ ≅ complete {t = t}
+    helper (token >>= t∈) refl rewrite helper₂ t∈ = refl

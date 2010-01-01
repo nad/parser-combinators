@@ -51,7 +51,7 @@ import TotalParserCombinators.CoinductiveEquality
 import TotalParserCombinators.Laws
 
 -- A proof showing that all functions of type List Bool → List R can
--- be realised using parser combinators (for any R, assuming that set
+-- be realised using parser combinators (for any R, assuming that bag
 -- equality is used for the lists of results).
 
 import TotalParserCombinators.ExpressiveStrength
