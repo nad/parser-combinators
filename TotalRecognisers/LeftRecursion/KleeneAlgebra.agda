@@ -85,7 +85,7 @@ sat-cong f₁≗f₂ = ((λ {_} → helper f₁≗f₂)
 
 ∣-cong : ∀ {n₁ n₂ n₃ n₄}
            {p₁ : P n₁} {p₂ : P n₂} {p₃ : P n₃} {p₄ : P n₄} →
-         p₁ ≋ p₃ → p₂ ≋ p₄ → p₁ ∣ p₂ ≋ p₃ ∣ p₄
+         p₁ ≈′ p₃ → p₂ ≈′ p₄ → p₁ ∣ p₂ ≈′ p₃ ∣ p₄
 ∣-cong (refl ∷ rest₁) (refl ∷ rest₂) =
   refl ∷ λ t → ♯ ∣-cong (♭ (rest₁ t)) (♭ (rest₂ t))
 
@@ -108,13 +108,13 @@ sat-cong f₁≗f₂ = ((λ {_} → helper f₁≗f₂)
   ·-cong (♭♯-cong n₂ n₄ ₁≈₃) (♭♯-cong n₁ n₃ ₂≈₄)
 
 nonempty-cong : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
-                p₁ ≋ p₂ → nonempty p₁ ≋ nonempty p₂
+                p₁ ≈′ p₂ → nonempty p₁ ≈′ nonempty p₂
 nonempty-cong (_ ∷ rest) = refl ∷ rest
 
 cast-cong : ∀ {n₁ n₂ n₁′ n₂′}
               {p₁ : P n₁} {p₂ : P n₂}
               {eq₁ : n₁ ≡ n₁′} {eq₂ : n₂ ≡ n₂′} →
-            p₁ ≋ p₂ → cast eq₁ p₁ ≋ cast eq₂ p₂
+            p₁ ≈′ p₂ → cast eq₁ p₁ ≈′ cast eq₂ p₂
 cast-cong {eq₁ = refl} {refl} (init ∷ rest) = init ∷ rest
 
 ⋆-cong : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
@@ -176,24 +176,24 @@ p₁ ≲ p₂ = p₁ ∣ p₂ ≈ p₂
 -- Additive idempotent commutative monoid. (One of the identity lemmas
 -- could be omitted.)
 
-∣-commutative : ∀ {n₁ n₂} (p₁ : P n₁) (p₂ : P n₂) → p₁ ∣ p₂ ≋ p₂ ∣ p₁
+∣-commutative : ∀ {n₁ n₂} (p₁ : P n₁) (p₂ : P n₂) → p₁ ∣ p₂ ≈′ p₂ ∣ p₁
 ∣-commutative {n₁} {n₂} p₁ p₂ =
   BoolCS.+-comm n₁ n₂ ∷ λ t → ♯ ∣-commutative (∂ p₁ t) (∂ p₂ t)
 
-∅-left-identity : ∀ {n} (p : P n) → ∅ ∣ p ≋ p
+∅-left-identity : ∀ {n} (p : P n) → ∅ ∣ p ≈′ p
 ∅-left-identity p = refl ∷ λ t → ♯ ∅-left-identity (∂ p t)
 
-∅-right-identity : ∀ {n} (p : P n) → p ∣ ∅ ≋ p
+∅-right-identity : ∀ {n} (p : P n) → p ∣ ∅ ≈′ p
 ∅-right-identity {n} p =
   proj₂ BoolCS.+-identity n ∷ λ t → ♯ ∅-right-identity (∂ p t)
 
 ∣-associative : ∀ {n₁ n₂ n₃} (p₁ : P n₁) (p₂ : P n₂) (p₃ : P n₃) →
-                p₁ ∣ (p₂ ∣ p₃) ≋ (p₁ ∣ p₂) ∣ p₃
+                p₁ ∣ (p₂ ∣ p₃) ≈′ (p₁ ∣ p₂) ∣ p₃
 ∣-associative {n₁} {n₂} {n₃} p₁ p₂ p₃ =
   PropEq.sym (BoolCS.+-assoc n₁ n₂ n₃) ∷ λ t →
     ♯ ∣-associative (∂ p₁ t) (∂ p₂ t) (∂ p₃ t)
 
-∣-idempotent : ∀ {n} (p : P n) → p ∣ p ≋ p
+∣-idempotent : ∀ {n} (p : P n) → p ∣ p ≈′ p
 ∣-idempotent {n} p =
   BoolBA.∨-idempotent n ∷ λ t → ♯ ∣-idempotent (∂ p t)
 
