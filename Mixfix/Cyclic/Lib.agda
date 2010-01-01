@@ -153,7 +153,9 @@ module Semantics where
                    {p₂ : ParserProg (∃ R)}
                  (x∈p₂ : x ∈⟦ p₂ ⟧· s) → x ∈⟦ p₁ ∥ p₂ ⟧· s
 
-  -- The semantics is correct.
+  -- The semantics is correct. (Note that this proof only establishes
+  -- language equivalence, not parser equivalence; see
+  -- TotalParserCombinators.Semantics.)
 
   sound : ∀ {R x s} {p : ParserProg R} →
           x ∈⟦ p ⟧· s → x ∈ ⟦ p ⟧ · s
@@ -204,8 +206,8 @@ module Semantics where
 -- A variant of the semantics
 
 -- The alternative semantics defined below may be slightly harder to
--- understand, but it is equivalent to the one above, and it
--- simplifies the proof in Mixfix.Cyclic.Show.
+-- understand, but it is (language) equivalent to the one above, and
+-- it simplifies the proof in Mixfix.Cyclic.Show.
 
 module Semantics-⊕ where
 

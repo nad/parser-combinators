@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
--- The two methods used to specify the grammars are equivalent (for
--- acyclic graphs)
+-- The two methods used to specify the grammars are (language)
+-- equivalent (for acyclic graphs)
 ------------------------------------------------------------------------
 
 open import Mixfix.Expr

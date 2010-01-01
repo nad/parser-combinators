@@ -109,4 +109,19 @@ import Mixfix.Cyclic.Example
 -- For acyclic precedence graphs the two grammar definitions above are
 -- equivalent.
 
+-- Note that this proof only establishes language equivalence, not
+-- parser equivalence (see TotalParserCombinators.Semantics). In other
+-- words, the two definitions are seen as equivalent if they yield the
+-- same language, even though the number of parse trees corresponding
+-- to a certain (input string, result)-pair may vary between the two
+-- definitions. For instance, when parsing the string s using one
+-- grammar the result could contain the expression e once, whereas
+-- parsing with the other grammar could yield a result containing two
+-- copies of e. This is not a big problem: syntactic equality of
+-- expressions is decidable, so extra occurrences of e can be filtered
+-- out. The same considerations apply to the equivalence proofs in
+-- Mixfix.Acyclic.Lib and Mixfix.Cyclic.Lib. Note that I believe that
+-- it is easy (but tedious) to strengthen all these proofs so that
+-- parser equivalence is established, but I have not tried to do this.
+
 import Mixfix.Equivalence
