@@ -12,7 +12,7 @@ open import Data.Bool as Bool hiding (_∧_)
 import Data.Bool.Properties as Bool
 private
   module BoolCS = CommutativeSemiring Bool.commutativeSemiring-∧-∨
-open import Data.Function
+open import Function
 open import Data.List as List using (List; []; _∷_; _++_; [_])
 private
   module ListMonoid {A} = Monoid (List.monoid A)

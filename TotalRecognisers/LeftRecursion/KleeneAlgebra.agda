@@ -12,7 +12,7 @@ import Data.Bool.Properties as Bool
 private
   module BoolCS = CommutativeSemiring Bool.commutativeSemiring-∨-∧
   module BoolBA = Algebra.Props.BooleanAlgebra Bool.booleanAlgebra
-open import Data.Function
+open import Function
 open import Data.List as List
 private
   module ListMonoid {A} = Monoid (List.monoid A)

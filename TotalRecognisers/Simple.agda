@@ -19,7 +19,7 @@ open import Data.Bool
 import Data.Bool.Properties as Bool
 private
   module BoolCS = CommutativeSemiring Bool.commutativeSemiring-∧-∨
-open import Data.Function
+open import Function
 open import Data.List
 open import Data.Product
 open import Relation.Nullary

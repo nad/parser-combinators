@@ -11,7 +11,7 @@ open import Algebra
 open import Coinduction
 open import Data.Bool as Bool hiding (_∧_)
 open import Data.Empty
-open import Data.Function
+open import Function
 open import Data.List as List
 open import Data.List.Reverse
 open import Data.Nat as Nat

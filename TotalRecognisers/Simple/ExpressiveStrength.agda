@@ -11,7 +11,7 @@ module TotalRecognisers.Simple.ExpressiveStrength where
 open import Coinduction
 open import Data.Bool
 open import Data.Bool.Properties
-open import Data.Function
+open import Function
 open import Data.List
 open import Data.Product
 open import Relation.Binary.PropositionalEquality

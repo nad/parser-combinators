@@ -7,7 +7,7 @@ module TotalRecognisers.LeftRecursion.Lib (Tok : Set) where
 open import Coinduction
 open import Data.Bool hiding (_∧_)
 open import Data.Bool.Properties
-open import Data.Function
+open import Function
 open import Data.List
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Product as Prod
