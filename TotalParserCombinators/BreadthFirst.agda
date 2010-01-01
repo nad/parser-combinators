@@ -9,7 +9,7 @@ module TotalParserCombinators.BreadthFirst where
 open import Category.Monad
 open import Coinduction
 open import Data.Bool
-open import Data.Function hiding (_∶_)
+open import Function hiding (_∶_)
 open import Data.List as List
 open import Data.List.Any
 open Membership-≡

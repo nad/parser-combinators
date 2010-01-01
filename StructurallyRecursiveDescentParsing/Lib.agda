@@ -15,7 +15,7 @@ open import Data.Vec as Vec using (Vec;  []; _∷_)
 open import Data.List using (List; []; _∷_; foldr; foldl; reverse)
 open import Data.Product
 open import Data.Bool using (Bool; true; false; _∧_; _∨_)
-open import Data.Function
+open import Function
 open import Data.Maybe
 open import Data.Unit using (⊤)
 import Data.Char as Char

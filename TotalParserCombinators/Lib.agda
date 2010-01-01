@@ -5,9 +5,9 @@
 module TotalParserCombinators.Lib where
 
 open import Coinduction
-open import Data.Function
-open import Data.Function.Equality using (_⟶_)
-open import Data.Function.Injection using (Injection; Injective)
+open import Function
+open import Function.Equality using (_⟶_)
+open import Function.Injection using (Injection; Injective)
 open import Data.List
 open import Data.List.Any
 open Membership-≡

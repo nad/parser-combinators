@@ -21,7 +21,7 @@ import Data.String as String
 open String using (String) renaming (_++_ to _<+>_)
 import Data.Char as Char
 open Char using (Char; _==_)
-open import Data.Function
+open import Function
 open import Data.Bool
 open import Data.Unit
 open import Data.Maybe

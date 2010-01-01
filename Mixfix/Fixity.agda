@@ -6,7 +6,7 @@ module Mixfix.Fixity where
 
 open import Data.Fin using (Fin; zero; suc; #_)
 open import Data.Fin.Props using (eq?)
-open import Data.Function.LeftInverse
+open import Function.LeftInverse
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality as Eq
 
@@ -28,9 +28,9 @@ data Fixity : Set where
 
 Fixity-is-finite : LeftInverse (Eq.setoid Fixity) (Eq.setoid (Fin 6))
 Fixity-is-finite = record
-  { from         = Eq.→-to-⟶ from
-  ; to           = Eq.→-to-⟶ to
-  ; left-inverse = left-inverse
+  { from            = Eq.→-to-⟶ from
+  ; to              = Eq.→-to-⟶ to
+  ; left-inverse-of = left-inverse-of
   }
   where
   to : Fixity → Fin 6
@@ -50,13 +50,13 @@ Fixity-is-finite = record
   from (suc (suc (suc (suc (suc zero)))))     = closed
   from (suc (suc (suc (suc (suc (suc ()))))))
 
-  left-inverse : Eq.→-to-⟶ from LeftInverseOf Eq.→-to-⟶ to
-  left-inverse prefx        = refl
-  left-inverse (infx left)  = refl
-  left-inverse (infx right) = refl
-  left-inverse (infx non)   = refl
-  left-inverse postfx       = refl
-  left-inverse closed       = refl
+  left-inverse-of : Eq.→-to-⟶ from LeftInverseOf Eq.→-to-⟶ to
+  left-inverse-of prefx        = refl
+  left-inverse-of (infx left)  = refl
+  left-inverse-of (infx right) = refl
+  left-inverse-of (infx non)   = refl
+  left-inverse-of postfx       = refl
+  left-inverse-of closed       = refl
 
 _≟_ : Decidable (_≡_ {A = Fixity})
 _≟_ = eq? injection

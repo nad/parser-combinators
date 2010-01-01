@@ -8,7 +8,7 @@ module TotalParserCombinators.ExpressiveStrength where
 
 open import Coinduction
 open import Data.Bool
-open import Data.Function
+open import Function
 open import Data.List as List
 open import Data.List.Any
 open Membership-≡

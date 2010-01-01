@@ -11,7 +11,7 @@ open import Data.List as List
 private
   module LM {Tok} = Monoid (List.monoid Tok)
 open import Data.Product as Prod
-open import Data.Function
+open import Function
 open import Data.Empty
 open import Relation.Binary.PropositionalEquality
 

@@ -55,7 +55,7 @@ import Data.AVL.IndexedMap as Map renaming (Map to MemoTable)
 open import Category.Monad
 open import Category.Monad.State
 import Data.List as List; open List using (List)
-open import Data.Function using (_⟨_⟩_; _on₁_)
+open import Function using (_⟨_⟩_; _on_)
 open import Data.Maybe using (Maybe; nothing; just)
 open import Data.Unit using (⊤)
 open import Relation.Binary.Product.StrictLex
@@ -286,10 +286,10 @@ shuffle ((pos , f , r) , key k .pos) = (pos , f , r , k)
 -- Equality and ordering.
 
 Eq : Rel (∃ MemoTableKey)
-Eq = _≡_ ×-Rel _≈_  on₁  shuffle
+Eq = _≡_ ×-Rel _≈_  on  shuffle
 
 Lt : Rel (∃ MemoTableKey)
-Lt = ×-Lex _≡_ _<P_ _<_  on₁  shuffle
+Lt = ×-Lex _≡_ _<P_ _<_  on  shuffle
 
 isOrdered : IsStrictTotalOrder Eq Lt
 isOrdered = On.isStrictTotalOrder shuffle

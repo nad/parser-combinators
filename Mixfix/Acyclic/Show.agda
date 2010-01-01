@@ -19,7 +19,7 @@ import Data.DifferenceList as DiffList
 open DiffList using (DiffList; _++_)
               renaming (_∷_ to cons; [_] to singleton)
 open import Data.Product using (∃; _,_; ,_)
-open import Data.Function using (_∘_; flip)
+open import Function using (_∘_; flip)
 open import Data.Maybe using (Maybe; nothing; just)
 import Data.String as String
 open import Relation.Binary.PropositionalEquality

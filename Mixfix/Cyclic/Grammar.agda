@@ -12,7 +12,7 @@ module Mixfix.Cyclic.Grammar
          where
 
 open import Coinduction
-open import Data.Function using (flip; _$_)
+open import Function using (flip; _$_)
 open import Data.List using (List; []; _∷_)
 open import Data.List.Any as Any using (here; there)
 open Any.Membership-≡ using (_∈_)

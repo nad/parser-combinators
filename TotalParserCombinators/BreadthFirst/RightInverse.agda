@@ -13,7 +13,7 @@
 module TotalParserCombinators.BreadthFirst.RightInverse where
 
 open import Coinduction
-open import Data.Function
+open import Function
 open import Data.List
 open import Data.List.Any as Any
 open import Data.List.Any.Properties as AnyProp

@@ -57,7 +57,7 @@ open import Data.Bool renaming (true to ⊤; false to ⊥)
 import Data.Nat as Nat
 open Nat using (ℕ; zero; suc; pred; z≤n; s≤s)
 import Data.Nat.Properties as NatProp
-open import Data.Function using (_∘_; _on₁_)
+open import Function using (_∘_; _on_)
 import Data.Vec  as Vec;  open Vec  using (Vec;  []; _∷_)
 import Data.List as List; open List using (List; []; _∷_)
 open import Data.Sum
@@ -119,10 +119,10 @@ shuffle : ∃₂ Key → ∃₂ NT
 shuffle (._ , _ , key x) = (, , x)
 
 _≈K_ : Rel (∃₂ Key)
-_≈K_ = _≈_ on₁ shuffle
+_≈K_ = _≈_ on shuffle
 
 _<K_ : Rel (∃₂ Key)
-_<K_ = _<_ on₁ shuffle
+_<K_ = _<_ on shuffle
 
 ordered : IsStrictTotalOrder _≈K_ _<K_
 ordered = On.isStrictTotalOrder shuffle ntOrdered

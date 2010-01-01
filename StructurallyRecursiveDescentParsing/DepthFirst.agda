@@ -12,7 +12,7 @@ open import Data.Product as Prod
 open import Data.BoundedVec.Inefficient
 import Data.List as L; open L using (List)
 open import Data.Nat
-open import Data.Function
+open import Function
 open import Category.Applicative.Indexed
 open import Category.Monad.Indexed
 open import Category.Monad.State

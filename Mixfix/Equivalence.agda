@@ -11,7 +11,7 @@ module Mixfix.Equivalence
   (g : PrecedenceGraphInterface.PrecedenceGraph acyclic)
   where
 
-open import Data.Function using (_∘_)
+open import Function using (_∘_)
 open import Data.List using (List; []; _∷_)
 open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.Product

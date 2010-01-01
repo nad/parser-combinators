@@ -15,7 +15,7 @@ open RawMonadPlus List.monadPlus
            ; _∣_    to _∣′_
            ; _>>=_  to _>>=′_
            )
-open import Data.Function
+open import Function
 open import Relation.Binary.PropositionalEquality
 
 open import TotalParserCombinators.Coinduction

@@ -19,7 +19,7 @@ open String using (String; _++_)
 open import Relation.Binary
 import Relation.Binary.List.Pointwise as ListEq
 open DecSetoid (ListEq.decSetoid String.decSetoid) using (_≟_)
-open import Data.Function using (_∘_)
+open import Function using (_∘_)
 open import Data.Bool using (Bool; if_then_else_)
 open import Relation.Nullary.Decidable using (⌊_⌋)
 open import Relation.Binary.PropositionalEquality

@@ -6,7 +6,7 @@ module Mixfix.Cyclic.Lib where
 
 open import Algebra
 open import Coinduction
-open import Data.Function using (const)
+open import Function using (const)
 open import Data.Bool using (Bool; true; false)
 open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.List as List using (List; []; _∷_; _++_)

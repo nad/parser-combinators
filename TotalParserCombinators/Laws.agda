@@ -10,7 +10,7 @@ module TotalParserCombinators.Laws where
 open import Algebra
 open import Category.Monad
 open import Coinduction
-open import Data.Function
+open import Function
 open import Data.List as List
 import Data.List.Any as Any
 import Data.List.Any.Properties as AnyProp

@@ -15,7 +15,7 @@ open import Data.List.Any as Any
 open import Data.List.Any.Properties as AnyProp
 open import Data.Product as Prod
 open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import Data.Function hiding (_∶_)
+open import Function hiding (_∶_)
 open import Data.Empty
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality

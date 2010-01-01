@@ -17,7 +17,7 @@ open import Data.Vec using (Vec; []; _∷_)
 open import Data.DifferenceList as DiffList
   using (DiffList; _++_) renaming (_∷_ to cons; [_] to singleton)
 open import Data.Product using (∃; _,_; ,_)
-open import Data.Function using (_∘_)
+open import Function using (_∘_)
 open import Relation.Binary.PropositionalEquality
   using (_≡_; refl)
 

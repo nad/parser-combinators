@@ -6,7 +6,7 @@ module StructurallyRecursiveDescentParsing.Simplified.Lemmas where
 
 open import Algebra
 open import Category.Monad
-open import Data.Function
+open import Function
 open import Data.Product
 
 import Data.List.NonEmpty as List⁺
