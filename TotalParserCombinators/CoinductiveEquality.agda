@@ -21,32 +21,33 @@ open import TotalParserCombinators.BreadthFirst
   hiding (sound; complete)
 
 infix 5 _∷_
-infix 4 _≋_
+infix 4 _≈′_
 
 -- Two recognisers/languages are equal if their nullability indices
 -- are equal (as sets) and all their derivatives are equal
 -- (coinductively). Note that the inhabitants of this type are
 -- bisimulations.
 
-data _≋_ {Tok R xs₁ xs₂}
-         (p₁ : Parser Tok R xs₁) (p₂ : Parser Tok R xs₂) : Set where
-  _∷_ : (init : xs₁ ≗ xs₂) (rest : ∀ t → ∞ (∂ p₁ t ≋ ∂ p₂ t)) → p₁ ≋ p₂
+data _≈′_ {Tok R xs₁ xs₂}
+          (p₁ : Parser Tok R xs₁) (p₂ : Parser Tok R xs₂) : Set where
+  _∷_ : (init : xs₁ ≗ xs₂) (rest : ∀ t → ∞ (∂ p₁ t ≈′ ∂ p₂ t)) →
+        p₁ ≈′ p₂
 
 -- This equality coincides with _≈_.
 
 sym : ∀ {Tok R xs₁ xs₂}
         {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
-      p₁ ≋ p₂ → p₂ ≋ p₁
+      p₁ ≈′ p₂ → p₂ ≈′ p₁
 sym (init ∷ rest) = Eq.sym init ∷ λ t → ♯ sym (♭ (rest t))
 
 sound : ∀ {Tok R xs₁ xs₂}
           {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
-        p₁ ≋ p₂ → p₁ ≈ p₂
-sound {Tok} {R} p₁≋p₂ =
-  ((λ {_} → lemma p₁≋p₂) , λ {_} → lemma (sym p₁≋p₂))
+        p₁ ≈′ p₂ → p₁ ≈ p₂
+sound {Tok} {R} p₁≈′p₂ =
+  ((λ {_} → lemma p₁≈′p₂) , λ {_} → lemma (sym p₁≈′p₂))
   where
   lemma : ∀ {xs₁ xs₂} {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
-          p₁ ≋ p₂ → p₁ ⊑ p₂
+          p₁ ≈′ p₂ → p₁ ⊑ p₂
   lemma ((⊆ , _) ∷ rest) {s = []}    []∈p₁  =
     initial-sound _ (⊆ (initial-complete []∈p₁))
   lemma (_       ∷ rest) {s = t ∷ s} t∷s∈p₁ =
@@ -54,6 +55,6 @@ sound {Tok} {R} p₁≋p₂ =
 
 complete : ∀ {Tok R xs₁ xs₂}
              {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
-           p₁ ≈ p₂ → p₁ ≋ p₂
+           p₁ ≈ p₂ → p₁ ≈′ p₂
 complete p₁≈p₂ = same-initial-set p₁≈p₂ ∷ λ t →
   ♯ complete (∂-cong p₁≈p₂)

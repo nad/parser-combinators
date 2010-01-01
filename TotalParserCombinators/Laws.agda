@@ -127,7 +127,7 @@ token-cong = Equivalence.refl
            {p₂ : Parser Tok R xs₂}
            {p₃ : Parser Tok R xs₃}
            {p₄ : Parser Tok R xs₄} →
-         p₁ ≋ p₃ → p₂ ≋ p₄ → p₁ ∣ p₂ ≋ p₃ ∣ p₄
+         p₁ ≈′ p₃ → p₂ ≈′ p₄ → p₁ ∣ p₂ ≈′ p₃ ∣ p₄
 ∣-cong (init₁ ∷ rest₁) (init₂ ∷ rest₂) =
   Prod.zip _++-mono_ _++-mono_ init₁ init₂ ∷ λ t →
   ♯ ∣-cong (♭ (rest₁ t)) (♭ (rest₂ t))
@@ -136,7 +136,7 @@ token-cong = Equivalence.refl
 <$>-cong : ∀ {Tok R₁ R₂ xs₁ xs₂} {f₁ f₂ : R₁ → R₂}
              {p₁ : Parser Tok R₁ xs₁}
              {p₂ : Parser Tok R₁ xs₂} →
-           f₁ ≗ f₂ → p₁ ≋ p₂ → f₁ <$> p₁ ≋ f₂ <$> p₂
+           f₁ ≗ f₂ → p₁ ≈′ p₂ → f₁ <$> p₁ ≈′ f₂ <$> p₂
 <$>-cong f₁≗f₂ (init ∷ rest) =
   Prod.map (lemma f₁≗f₂) (lemma (P.sym ∘ f₁≗f₂)) init ∷ λ t →
   ♯ <$>-cong f₁≗f₂ (♭ (rest t))
@@ -225,13 +225,13 @@ token-cong = Equivalence.refl
 
 nonempty-cong : ∀ {Tok R xs₁ xs₂}
                   {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
-                p₁ ≋ p₂ → nonempty p₁ ≋ nonempty p₂
+                p₁ ≈′ p₂ → nonempty p₁ ≈′ nonempty p₂
 nonempty-cong (_ ∷ rest) = SetEq.refl ∷ rest
 
 cast-cong : ∀ {Tok R xs₁ xs₂ xs₁′ xs₂′}
               {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂}
               {eq₁ : xs₁ ≡ xs₁′} {eq₂ : xs₂ ≡ xs₂′} →
-            p₁ ≋ p₂ → cast eq₁ p₁ ≋ cast eq₂ p₂
+            p₁ ≈′ p₂ → cast eq₁ p₁ ≈′ cast eq₂ p₂
 cast-cong {eq₁ = P.refl} {P.refl} (init ∷ rest) = init ∷ rest
 
 ⋆-cong : ∀ {Tok R} {p₁ p₂ : Parser Tok R []} →
@@ -276,17 +276,17 @@ module AdditiveMonoid where
 
   commutative : ∀ {Tok R xs₁ xs₂}
                 (p₁ : Parser Tok R xs₁) (p₂ : Parser Tok R xs₂) →
-                p₁ ∣ p₂ ≋ p₂ ∣ p₁
+                p₁ ∣ p₂ ≈′ p₂ ∣ p₁
   commutative {xs₁ = xs₁} {xs₂} p₁ p₂ =
     lemma ∷ λ t → ♯ commutative (∂ p₁ t) (∂ p₂ t)
     where
     lemma = ((λ {_} → AnyProp.Membership-≡.++-comm xs₁ xs₂)
             , λ {_} → AnyProp.Membership-≡.++-comm xs₂ xs₁)
 
-  left-identity : ∀ {Tok R xs} (p : Parser Tok R xs) → fail ∣ p ≋ p
+  left-identity : ∀ {Tok R xs} (p : Parser Tok R xs) → fail ∣ p ≈′ p
   left-identity p = SetEq.refl ∷ λ t → ♯ left-identity (∂ p t)
 
-  right-identity : ∀ {Tok R xs} (p : Parser Tok R xs) → p ∣ fail ≋ p
+  right-identity : ∀ {Tok R xs} (p : Parser Tok R xs) → p ∣ fail ≈′ p
   right-identity {xs = xs} p =
     lemma ∷ λ t → ♯ right-identity (∂ p t)
     where lemma = SetEq.reflexive (proj₂ ListMonoid.identity xs)
@@ -294,13 +294,13 @@ module AdditiveMonoid where
   associative : ∀ {Tok R xs₁ xs₂ xs₃}
                 (p₁ : Parser Tok R xs₁) (p₂ : Parser Tok R xs₂)
                 (p₃ : Parser Tok R xs₃) →
-                p₁ ∣ (p₂ ∣ p₃) ≋ (p₁ ∣ p₂) ∣ p₃
+                p₁ ∣ (p₂ ∣ p₃) ≈′ (p₁ ∣ p₂) ∣ p₃
   associative {xs₁ = xs₁} {xs₂} {xs₃} p₁ p₂ p₃ =
     lemma ∷ λ t → ♯ associative (∂ p₁ t) (∂ p₂ t) (∂ p₃ t)
     where
     lemma = SetEq.reflexive (P.sym $ ListMonoid.assoc xs₁ xs₂ xs₃)
 
-  idempotent : ∀ {Tok R xs} (p : Parser Tok R xs) → p ∣ p ≋ p
+  idempotent : ∀ {Tok R xs} (p : Parser Tok R xs) → p ∣ p ≈′ p
   idempotent {xs = xs} p = lemma ∷ λ t → ♯ idempotent (∂ p t)
     where
     lemma = ((λ {_} → AnyProp.Membership-≡.++-idempotent)
