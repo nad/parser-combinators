@@ -18,7 +18,7 @@ open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 open import Relation.Binary.HeterogeneousEquality using (_≅_; refl)
 
 open PrecedenceCorrect i g
-open import TotalParserCombinators.Semantics
+open import TotalParserCombinators.Semantics hiding (_≅_)
 open import Mixfix.Fixity
 open import Mixfix.Operator
 open import Mixfix.Cyclic.Lib as Lib

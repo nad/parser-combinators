@@ -34,7 +34,7 @@ open import TotalParserCombinators.BreadthFirst
 open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
-  hiding (sound; complete)
+  hiding (sound; complete; _≅_)
 
 i-complete∘i-sound : ∀ {Tok R xs x}
                      (p : Parser Tok R xs) (x∈p : x ∈ xs) →

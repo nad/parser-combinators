@@ -23,7 +23,7 @@ open import Relation.Nullary
 open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
-  hiding (sound; sound′; complete)
+  hiding (sound; sound′; complete; _≅_)
 
 ------------------------------------------------------------------------
 -- Kleene star

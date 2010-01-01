@@ -2,6 +2,8 @@
 -- Semantics of the parsers
 ------------------------------------------------------------------------
 
+{-# OPTIONS --universe-polymorphism #-}
+
 module TotalParserCombinators.Semantics where
 
 open import Algebra
@@ -16,9 +18,13 @@ open import Data.List.Any.Properties as AnyProp
 open import Data.Product as Prod
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Function hiding (_∶_)
+open import Function.Equality using (_⟨$⟩_)
+open import Function.Inverse using (Inverse; module Inverse)
 open import Data.Empty
+open import Data.Unit
 open import Relation.Binary
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality as P
+open import Relation.Nullary
 open import Relation.Nullary.Negation
 open Any.Membership-≡
 open AnyProp.Membership-≡
@@ -81,15 +87,70 @@ data _∈_·_ {Tok} :
   cast     : ∀ {R xs₁ xs₂ x s} {eq : xs₁ ≡ xs₂} {p : Parser Tok R xs₁}
              (x∈p : x ∈ p · s) → x ∈ cast eq p · s
 
--- Equivalence of parsers (languages).
+------------------------------------------------------------------------
+-- Parser and language equivalence
 
-infix 4 _⊑_ _≈_
+infix 4 _⊑_ _≈_ _≅_
+infix 3 _⇿_
+
+-- A ⇿ B means that there is an invertible function from A to B.
+
+_⇿_ : ∀ {a b} → Set a → Set b → Set _
+A ⇿ B = Inverse (P.setoid A) (P.setoid B)
+
+-- p₁ ⊑ p₂ means that the language defined by p₂ contains all the
+-- string/result pairs contained in the language defined by p₁.
 
 _⊑_ : ∀ {Tok R xs₁ xs₂} → Parser Tok R xs₁ → Parser Tok R xs₂ → Set₁
 p₁ ⊑ p₂ = ∀ {x s} → x ∈ p₁ · s → x ∈ p₂ · s
 
+-- Language equivalence.
+
 _≈_ : ∀ {Tok R xs₁ xs₂} → Parser Tok R xs₁ → Parser Tok R xs₂ → Set₁
 p₁ ≈ p₂ = p₁ ⊑ p₂ × p₂ ⊑ p₁
+
+-- Parser equivalence.
+
+_≅_ : ∀ {Tok R xs₁ xs₂} → Parser Tok R xs₁ → Parser Tok R xs₂ → Set₁
+p₁ ≅ p₂ = ∀ {x s} → x ∈ p₁ · s ⇿ x ∈ p₂ · s
+
+-- Parser equivalence implies language equivalence.
+
+≅⇒≈ : ∀ {Tok R xs₁ xs₂}
+        {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
+      p₁ ≅ p₂ → p₁ ≈ p₂
+≅⇒≈ p₁≅p₂ = (λ {_} → _⟨$⟩_ (Inverse.to   p₁≅p₂))
+          ,  λ {_} → _⟨$⟩_ (Inverse.from p₁≅p₂)
+
+-- Language equivalence does not (in general) imply parser
+-- equivalence.
+
+¬≈⇒≅ : ¬ (∀ {Tok R xs₁ xs₂}
+            {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
+          p₁ ≈ p₂ → p₁ ≅ p₂)
+¬≈⇒≅ hyp with Inverse.injective p₁≅p₂
+                {∣ˡ return} {∣ʳ [ tt ] return} (lemma _ _)
+  where
+  p₁ : Parser ⊤ ⊤ _
+  p₁ = return tt ∣ return tt
+
+  p₂ : Parser ⊤ ⊤ _
+  p₂ = return tt
+
+  p₁⊑p₂ : p₁ ⊑ p₂
+  p₁⊑p₂ (∣ˡ    return) = return
+  p₁⊑p₂ (∣ʳ ._ return) = return
+
+  p₁≈p₂ : p₁ ≈ p₂
+  p₁≈p₂ = ((λ {_} → p₁⊑p₂) , λ {_} → ∣ˡ)
+
+  p₁≅p₂ : p₁ ≅ p₂
+  p₁≅p₂ = hyp p₁≈p₂
+
+  lemma : ∀ {x s} (x∈₁ x∈₂ : x ∈ p₂ · s) → x∈₁ ≡ x∈₂
+  lemma return return = refl
+
+... | ()
 
 ------------------------------------------------------------------------
 -- Simple cast lemmas
@@ -204,7 +265,8 @@ same-initial-set {Tok} {R} = Prod.map lemma lemma
 -- The statement x ⊕ s₂ ∈ p · s means that there is some s₁ such that
 -- s ≡ s₁ ++ s₂ and x ∈ p · s₁. This variant of the semantics is
 -- perhaps harder to understand, but sometimes easier to work with
--- (and it is proved equivalent to the semantics above).
+-- (and it is proved to be language equivalent to the semantics
+-- above).
 
 infix 4 _⊕_∈_·_
 
