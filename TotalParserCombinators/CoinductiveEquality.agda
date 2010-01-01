@@ -11,7 +11,7 @@ open import Data.Product
 open import Relation.Binary
 
 private
-  open module Eq {R : Set} = Setoid (Any.Membership-≡.set-equality {R})
+  open module Eq {R : Set} = Setoid (Any.Membership-≡.Set-equality {R})
     using () renaming (_≈_ to _≗_)
 
 open import TotalParserCombinators.Parser

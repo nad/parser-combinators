@@ -33,7 +33,7 @@ private
   module BCS = CommutativeSemiring BoolProp.commutativeSemiring-∨-∧
   module BA = BAProp BoolProp.booleanAlgebra
   module LM {Tok : Set} = Monoid (List.monoid Tok)
-  open module Eq {R : Set} = Setoid (set-equality {R})
+  open module Eq {R : Set} = Setoid (Set-equality {R})
     using () renaming (_≈_ to _≛_)
 
 open import TotalParserCombinators.Coinduction

@@ -29,9 +29,7 @@ private
   open module ListMonad = RawMonad List.monad
          using () renaming (_>>=_ to _>>=′_)
   open Any.Membership-≡ using (_⊆_)
-  open module SetEq {A : Set} =
-         Setoid (Any.Membership-≡.set-equality {A})
-         using () renaming (_≈_ to _≛_)
+  module SetEq {A : Set} = Setoid (Any.Membership-≡.Set-equality {A})
 
 open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Applicative
