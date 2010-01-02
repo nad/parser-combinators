@@ -30,23 +30,13 @@ import TotalParserCombinators.Semantics
 
 import TotalParserCombinators.InitialSet
 
--- A very small library of derived parser combinators.
+-- A small library of derived parser combinators.
 
 import TotalParserCombinators.Lib
 
 -- A breadth-first backend.
 
 import TotalParserCombinators.BreadthFirst
-
--- A proof showing that the breadth-first backend does not introduce
--- any unneeded ambiguity.
-
-import TotalParserCombinators.BreadthFirst.LeftInverse
-
--- A proof showing that the breadth-first backend does not remove any
--- ambiguity.
-
-import TotalParserCombinators.BreadthFirst.RightInverse
 
 -- An alternative, coinductive definition of equality between parsers.
 

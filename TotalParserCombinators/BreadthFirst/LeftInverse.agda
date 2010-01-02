@@ -3,49 +3,36 @@
 ------------------------------------------------------------------------
 
 -- This module contains a proof showing that
--- TotalParserCombinators.BreadthFirst.complete is a left inverse of
--- TotalParserCombinators.BreadthFirst.sound. This implies that the
--- (finite) type x ∈ parseComplete p s contains at most as many proofs
--- as x ∈ p · s. In other words, the output of parseComplete p s can
--- only contain n copies of x if there are at least n distinct parse
--- trees in x ∈ p · s.
+-- TotalParserCombinators.BreadthFirst.Derivative.complete is a left
+-- inverse of TotalParserCombinators.BreadthFirst.Derivative.sound.
+-- This implies that the (finite) type x ∈ parseComplete p s contains
+-- at most as many proofs as x ∈ p · s. In other words, the output of
+-- parseComplete p s can only contain n copies of x if there are at
+-- least n distinct parse trees in x ∈ p · s.
 
 module TotalParserCombinators.BreadthFirst.LeftInverse where
 
 open import Category.Monad
 open import Coinduction
 open import Function
-open import Data.List as List hiding ([_])
+open import Data.List as List
 open import Data.List.Any as Any
-open import Data.List.Any.Properties as AnyProp
 open import Data.Product
-open import Data.Sum
-open import Relation.Binary
-open import Relation.Binary.HeterogeneousEquality using (_≅_; refl)
 open import Relation.Binary.PropositionalEquality
 
 open Any.Membership-≡
-open AnyProp.Membership-≡
 private
   open RawMonad List.monad using () renaming (_>>=_ to _>>=′_)
 
 open import TotalParserCombinators.Applicative
-open import TotalParserCombinators.BreadthFirst
+open import TotalParserCombinators.BreadthFirst.Derivative
+open import TotalParserCombinators.BreadthFirst.Correct
 open import TotalParserCombinators.Coinduction
+open import TotalParserCombinators.Lib
 import TotalParserCombinators.InitialSet as I
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
-  hiding (sound; complete; _≅_)
-
-⋁-complete∘⋁-sound : ∀ {Tok R₁ R₂ y s} {i : R₁ → List R₂} →
-                     (f : (x : R₁) → Parser Tok R₂ (i x)) (xs : List R₁)
-                     (y∈⋁fxs : y ∈ ⋁ f xs · s) →
-                     let p = proj₂ $ ⋁-sound f xs y∈⋁fxs in
-                     ⋁-complete f (proj₁ p) (proj₂ p) ≡ y∈⋁fxs
-⋁-complete∘⋁-sound         f []       ()
-⋁-complete∘⋁-sound         f (x ∷ xs) (∣ˡ    y∈fx)   = refl
-⋁-complete∘⋁-sound {i = i} f (x ∷ xs) (∣ʳ ._ y∈⋁fxs) =
-  cong (∣ʳ (i x)) (⋁-complete∘⋁-sound f xs y∈⋁fxs)
+  hiding (sound; complete)
 
 mutual
 
@@ -65,34 +52,34 @@ mutual
                                                                                   (∂-complete∘∂-sound p₁ f∈p₁′)
                                                                                   (cast∈-sym∘cast∈ refl (♭?♯? (∂-initial p₁ _)) refl x∈p₂)
   ∂-complete∘∂-sound (⟨ p₁ ⟩ ⊛ ⟨_⟩ {f} {fs} p₂) (∣ʳ ._ (f∈⋁f∷fs ⊛ x∈p₂′))
-    with                                    f∈⋁f∷fs′
+    with                                  f∈⋁f∷fs′
        | cast∈-sym∘cast∈ refl (♭?♯? (∂-initial p₂ _)) refl f∈⋁f∷fs
-       |            ⋁-sound return (f ∷ fs) f∈⋁f∷fs′
-       | ⋁-complete∘⋁-sound return (f ∷ fs) f∈⋁f∷fs′
+       |          ⋁.sound return (f ∷ fs) f∈⋁f∷fs′
+       | ⋁.complete∘sound return (f ∷ fs) f∈⋁f∷fs′
     where f∈⋁f∷fs′ = cast∈ refl (♭?♯? (∂-initial p₂ _)) refl f∈⋁f∷fs
   ∂-complete∘∂-sound (⟨_⟩ {x} {xs} p₁ ⊛ ⟨ p₂ ⟩)
                      (∣ʳ ._ (.(cast∈ refl (sym (♭?♯? (∂-initial p₂ _))) refl
-                                     (⋁-complete return f′∈f∷fs return)) ⊛ x∈p₂′))
+                                     (⋁.complete return f′∈f∷fs return)) ⊛ x∈p₂′))
     | ._ | refl | (f′ , f′∈f∷fs , return) | refl = cong₂ (λ pr₁ pr₂ → ∣ʳ (∂-initial p₁ _ ⊛′ (x ∷ xs))
                                                                          (cast∈ refl (sym (♭?♯? (∂-initial p₂ _))) refl
-                                                                                (⋁-complete return pr₁ return) ⊛ pr₂))
+                                                                                (⋁.complete return pr₁ return) ⊛ pr₂))
                                                          (I.complete∘sound p₁ f′∈f∷fs)
                                                          (∂-complete∘∂-sound p₂ x∈p₂′)
   ∂-complete∘∂-sound (⟪ p₁ ⟫ ⊛ ⟨ p₂ ⟩)          (∣ˡ    (f∈p₁′   ⊛ x∈p₂))  = cong₂ (λ pr₁ pr₂ → ∣ˡ (pr₁ ⊛ pr₂))
                                                                                   (∂-complete∘∂-sound (♭ p₁) f∈p₁′)
                                                                                   (cast∈-sym∘cast∈ refl (♭?♯? (∂-initial (♭ p₁) _)) refl x∈p₂)
   ∂-complete∘∂-sound (⟪ p₁ ⟫ ⊛ ⟨_⟩ {f} {fs} p₂) (∣ʳ ._ (f∈⋁f∷fs ⊛ x∈p₂′))
-    with                                    f∈⋁f∷fs′
+    with                                  f∈⋁f∷fs′
        | cast∈-sym∘cast∈ refl (♭?♯? (∂-initial p₂ _)) refl f∈⋁f∷fs
-       |            ⋁-sound return (f ∷ fs) f∈⋁f∷fs′
-       | ⋁-complete∘⋁-sound return (f ∷ fs) f∈⋁f∷fs′
+       |          ⋁.sound return (f ∷ fs) f∈⋁f∷fs′
+       | ⋁.complete∘sound return (f ∷ fs) f∈⋁f∷fs′
     where f∈⋁f∷fs′ = cast∈ refl (♭?♯? (∂-initial p₂ _)) refl f∈⋁f∷fs
   ∂-complete∘∂-sound (⟪ p₁ ⟫ ⊛ ⟨ p₂ ⟩)
                      (∣ʳ ._ (.(cast∈ refl (sym (♭?♯? (∂-initial p₂ _))) refl
-                                     (⋁-complete return f′∈f∷fs return)) ⊛ x∈p₂′))
+                                     (⋁.complete return f′∈f∷fs return)) ⊛ x∈p₂′))
     | ._ | refl | (f′ , f′∈f∷fs , return) | refl = cong₂ (λ pr₁ pr₂ → ∣ʳ []
                                                                          (cast∈ refl (sym (♭?♯? (∂-initial p₂ _))) refl
-                                                                                (⋁-complete return pr₁ return) ⊛ pr₂))
+                                                                                (⋁.complete return pr₁ return) ⊛ pr₂))
                                                          (I.complete∘sound (♭ p₁) f′∈f∷fs)
                                                          (∂-complete∘∂-sound p₂ x∈p₂′)
   ∂-complete∘∂-sound (_>>=_  {xs = x ∷ xs} p₁ p₂) (∣ʳ ._ z∈p₂′x)

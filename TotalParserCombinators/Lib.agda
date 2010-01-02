@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- A very small library of derived parser combinators
+-- A small library of derived parser combinators
 ------------------------------------------------------------------------
 
 module TotalParserCombinators.Lib where
@@ -266,3 +266,53 @@ module Token
     helper : ∀ {s} (t∈ : t ∈ tok t · s) → s ≡ [ t ] →
              t∈ ≅ complete {t = t}
     helper (token >>= t∈) refl rewrite helper₂ t∈ = refl
+
+------------------------------------------------------------------------
+-- Map then choice
+
+-- y ∈ ⋁ f xs · s  iff  ∃ x ∈ xs. y ∈ f x · s.
+
+⋁-initial : {R₁ R₂ : Set} → (R₁ → List R₂) → List R₁ → List R₂
+⋁-initial e []       = _
+⋁-initial e (x ∷ xs) = _
+
+⋁ : ∀ {Tok R₁ R₂} {f : R₁ → List R₂} →
+    ((x : R₁) → Parser Tok R₂ (f x)) → (xs : List R₁) →
+    Parser Tok R₂ (⋁-initial f xs)
+⋁ f []       = fail
+⋁ f (x ∷ xs) = f x ∣ ⋁ f xs
+
+module ⋁ where
+
+  sound : ∀ {Tok R₁ R₂ y s} {i : R₁ → List R₂} →
+          (f : (x : R₁) → Parser Tok R₂ (i x)) (xs : List R₁) →
+          y ∈ ⋁ f xs · s → ∃ λ x → (x ∈ xs) × (y ∈ f x · s)
+  sound f []       ()
+  sound f (x ∷ xs) (∣ˡ    y∈fx)   = (x , here refl , y∈fx)
+  sound f (x ∷ xs) (∣ʳ ._ y∈⋁fxs) =
+    Prod.map id (Prod.map there id) (sound f xs y∈⋁fxs)
+
+  complete : ∀ {Tok R₁ R₂ x y s} {i : R₁ → List R₂} →
+             (f : (x : R₁) → Parser Tok R₂ (i x)) {xs : List R₁} →
+             x ∈ xs → y ∈ f x · s → y ∈ ⋁ f xs · s
+  complete         f (here  refl) y∈fx = ∣ˡ y∈fx
+  complete {i = i} f (there x∈xs) y∈fx = ∣ʳ (i _) (complete f x∈xs y∈fx)
+
+  complete∘sound : ∀ {Tok R₁ R₂ y s} {i : R₁ → List R₂} →
+                   (f : (x : R₁) → Parser Tok R₂ (i x)) (xs : List R₁)
+                   (y∈⋁fxs : y ∈ ⋁ f xs · s) →
+                   let p = proj₂ $ sound f xs y∈⋁fxs in
+                   complete f (proj₁ p) (proj₂ p) ≡ y∈⋁fxs
+  complete∘sound         f []       ()
+  complete∘sound         f (x ∷ xs) (∣ˡ    y∈fx)   = refl
+  complete∘sound {i = i} f (x ∷ xs) (∣ʳ ._ y∈⋁fxs) =
+    P.cong (∣ʳ (i x)) (complete∘sound f xs y∈⋁fxs)
+
+  sound∘complete :
+    ∀ {Tok R₁ R₂ x y s} {i : R₁ → List R₂} →
+    (f : (x : R₁) → Parser Tok R₂ (i x)) {xs : List R₁} →
+    (x∈xs : x ∈ xs) (y∈fx : y ∈ f x · s) →
+    sound f xs (complete f x∈xs y∈fx) ≡ (x , x∈xs , y∈fx)
+  sound∘complete f (here  refl) y∈fx = refl
+  sound∘complete f (there x∈xs) y∈fx
+    rewrite sound∘complete f x∈xs y∈fx = refl

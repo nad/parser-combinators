@@ -3,44 +3,37 @@
 ------------------------------------------------------------------------
 
 -- This module contains a proof showing that
--- TotalParserCombinators.BreadthFirst.complete is a right inverse of
--- TotalParserCombinators.BreadthFirst.sound. This implies that the
--- (finite) type x ∈ parseComplete p s contains at least as many
--- proofs as x ∈ p · s. In other words, if the output of
--- parseComplete p s contains n copies of x, then there are at most n
--- distinct parse trees in x ∈ p · s.
+-- TotalParserCombinators.BreadthFirst.Derivative.complete is a right
+-- inverse of TotalParserCombinators.BreadthFirst.Derivative.sound.
+-- This implies that the (finite) type x ∈ parseComplete p s contains
+-- at least as many proofs as x ∈ p · s. In other words, if the output
+-- of parseComplete p s contains n copies of x, then there are at most
+-- n distinct parse trees in x ∈ p · s.
 
 module TotalParserCombinators.BreadthFirst.RightInverse where
 
+open import Category.Monad
 open import Coinduction
 open import Function
-open import Data.List
+open import Data.List as List
 open import Data.List.Any as Any
-open import Data.List.Any.Properties as AnyProp
 open import Data.Product
-open import Data.Sum
 open import Relation.Binary.HeterogeneousEquality as H using (_≅_; refl)
 open import Relation.Binary.PropositionalEquality
 
 open Any.Membership-≡
-open AnyProp.Membership-≡
+private
+  open RawMonad List.monad using () renaming (_>>=_ to _>>=′_)
 
 open import TotalParserCombinators.Applicative
-open import TotalParserCombinators.BreadthFirst
+open import TotalParserCombinators.BreadthFirst.Derivative
+open import TotalParserCombinators.BreadthFirst.Correct
 open import TotalParserCombinators.Coinduction
+open import TotalParserCombinators.Lib
 import TotalParserCombinators.InitialSet as I
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
   hiding (sound; complete; _≅_)
-
-⋁-sound∘⋁-complete :
-  ∀ {Tok R₁ R₂ x y s} {i : R₁ → List R₂} →
-  (f : (x : R₁) → Parser Tok R₂ (i x)) {xs : List R₁} →
-  (x∈xs : x ∈ xs) (y∈fx : y ∈ f x · s) →
-  ⋁-sound f xs (⋁-complete f x∈xs y∈fx) ≡ (x , x∈xs , y∈fx)
-⋁-sound∘⋁-complete f (here  refl) y∈fx = refl
-⋁-sound∘⋁-complete f (there x∈xs) y∈fx
-  rewrite ⋁-sound∘⋁-complete f x∈xs y∈fx = refl
 
 mutual
 
@@ -79,13 +72,13 @@ mutual
     with lhs | lemma
     where
     f∈f∷fs = I.complete f∈p₁
-    c      = ⋁-complete {Tok = Tok} return f∈f∷fs return
-    lhs    = ⋁-sound return (f ∷ fs) $
+    c      = ⋁.complete {Tok = Tok} return f∈f∷fs return
+    lhs    = ⋁.sound return (f ∷ fs) $
                cast∈ refl (♭?♯? (∂-initial p₂ t)) refl $
                  cast∈ refl (sym (♭?♯? (∂-initial p₂ t))) refl c
     lemma : lhs ≡ (_ , f∈f∷fs , return)
     lemma rewrite cast∈∘cast∈-sym refl (♭?♯? (∂-initial p₂ t)) refl c =
-          ⋁-sound∘⋁-complete return f∈f∷fs return
+          ⋁.sound∘complete return f∈f∷fs return
   ... | .(_ , I.complete f∈p₁ , return) | refl
     rewrite I.sound∘complete f∈p₁ | ∂-sound∘∂-complete x∈p₂ = refl
 
@@ -98,13 +91,13 @@ mutual
     with lhs | lemma
     where
     f∈f∷fs = I.complete f∈p₁
-    c      = ⋁-complete {Tok = Tok} return f∈f∷fs return
-    lhs    = ⋁-sound return (f ∷ fs) $
+    c      = ⋁.complete {Tok = Tok} return f∈f∷fs return
+    lhs    = ⋁.sound return (f ∷ fs) $
                cast∈ refl (♭?♯? (∂-initial p₂ t)) refl $
                  cast∈ refl (sym (♭?♯? (∂-initial p₂ t))) refl c
     lemma : lhs ≡ (_ , f∈f∷fs , return)
     lemma rewrite cast∈∘cast∈-sym refl (♭?♯? (∂-initial p₂ t)) refl c =
-          ⋁-sound∘⋁-complete return f∈f∷fs return
+          ⋁.sound∘complete return f∈f∷fs return
   ... | .(_ , I.complete f∈p₁ , return) | refl
     rewrite I.sound∘complete f∈p₁ | ∂-sound∘∂-complete x∈p₂ = refl
 
