@@ -30,6 +30,7 @@ import TotalRecognisers.LeftRecursion
 open TotalRecognisers.LeftRecursion Tok hiding (left-zero)
 import TotalRecognisers.LeftRecursion.Lib
 open TotalRecognisers.LeftRecursion.Lib Tok
+open ⊙ using (_⊙′_)
 open KleeneStar₂
 
 ------------------------------------------------------------------------
@@ -66,14 +67,7 @@ module Equivalence where
 
 ♭♯-cong : ∀ {n₁ n₂} b₁ b₂ {p₁ : P n₁} {p₂ : P n₂} →
           p₁ ≈ p₂ → ♭? (♯? {b₁} p₁) ≈ ♭? (♯? {b₂} p₂)
-♭♯-cong b₁ b₂ p₁≈p₂ =
-  Equivalent.from ≈⇔≤≥ ⟨$⟩
-     Prod.map (helper b₁ b₂) (helper b₂ b₁)
-              (Equivalent.to ≈⇔≤≥ ⟨$⟩ p₁≈p₂)
-  where
-  helper : ∀ {n₁ n₂} b₁ b₂ {p₁ : P n₁} {p₂ : P n₂} →
-           p₁ ≤ p₂ → ♭? (♯? {b₁} p₁) ≤ ♭? (♯? {b₂} p₂)
-  helper b₁ b₂ p₁≤p₂ ∈p₁ = add-♭♯ b₂ $ p₁≤p₂ $ drop-♭♯ b₁ ∈p₁
+♭♯-cong b₁ b₂ {p₁} {p₂} rewrite ♭?♯? b₁ {p₁} | ♭?♯? b₂ {p₂} = id
 
 ∅-cong : ∅ ≈ ∅
 ∅-cong = Equivalence.reflexive
@@ -146,10 +140,10 @@ cast-cong {eq₁ = refl} {refl} (init ∷ rest) = init ∷ rest
   where
   helper : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} i →
            p₁ ≤ p₂ → p₁ ^ i ≤ p₂ ^ i
-  helper           zero    p₁≤p₂ ε            = ε
-  helper {n₁} {n₂} (suc i) p₁≤p₂ (∈p₁ · ∈p₁ⁱ) =
-    add-♭♯ (n₂ ^ⁿ i) (p₁≤p₂ (drop-♭♯ (n₁ ^ⁿ i) ∈p₁)) ·
-    add-♭♯ n₂ (helper i p₁≤p₂ (drop-♭♯ n₁ ∈p₁ⁱ))
+  helper           zero    p₁≤p₂ ε       = ε
+  helper {n₁} {n₂} (suc i) p₁≤p₂ ∈p₁⊙p₁ⁱ
+    with ⊙.sound (n₁ ^ⁿ i) ∈p₁⊙p₁ⁱ
+  ... | ∈p₁ ⊙′ ∈p₁ⁱ = ⊙.complete (p₁≤p₂ ∈p₁) (helper i p₁≤p₂ ∈p₁ⁱ)
 
 ------------------------------------------------------------------------
 -- A variant of _≤_
@@ -210,43 +204,41 @@ p₁ ≲ p₂ = p₁ ∣ p₂ ≈ p₂
 -- Multiplicative monoid.
 
 ε-left-identity : ∀ {n} (p : P n) → ε ⊙ p ≈ p
-ε-left-identity {n} p = equivalent helper (λ s∈p → add-♭♯ n ε · s∈p)
+ε-left-identity {n} p = equivalent helper (λ s∈p → ⊙.complete ε s∈p)
   where
   helper : ε ⊙ p ≤ p
-  helper ([]∈ε · s∈p) with drop-♭♯ n []∈ε
-  ... | ε = s∈p
+  helper ∈ε⊙p with ⊙.sound n ∈ε⊙p
+  ... | ε ⊙′ s∈p = s∈p
 
 ε-right-identity : ∀ {n} (p : P n) → p ⊙ ε ≈ p
 ε-right-identity {n} p =
   equivalent
-    (λ s∈ → helper s∈ refl)
+    helper
     (λ s∈p → cast∈ (proj₂ ListMonoid.identity _) refl
-                   (s∈p · add-♭♯ n ε))
+                   (⊙.complete s∈p ε))
   where
-  helper : ∀ {s n′} {p′ : P n′} →
-           s ∈ p ⊙ p′ → p′ ≅ (P _ ∶ ε) → s ∈ p
-  helper (s∈p · []∈ε) refl with drop-♭♯ n []∈ε
-  ... | ε = cast∈ (P.sym (proj₂ ListMonoid.identity _)) refl s∈p
+  helper : ∀ {s} → s ∈ p ⊙ ε → s ∈ p
+  helper ∈p⊙ε with ⊙.sound true ∈p⊙ε
+  helper ∈p⊙ε | ∈p ⊙′ ε =
+    cast∈ (P.sym (proj₂ ListMonoid.identity _)) refl ∈p
 
 ·-associative : ∀ {n₁ n₂ n₃} (p₁ : P n₁) (p₂ : P n₂) (p₃ : P n₃) →
                 p₁ ⊙ (p₂ ⊙ p₃) ≈ (p₁ ⊙ p₂) ⊙ p₃
 ·-associative {n₁} {n₂} {n₃} p₁ p₂ p₃ = equivalent helper₁ helper₂
   where
   helper₁ : p₁ ⊙ (p₂ ⊙ p₃) ≤ (p₁ ⊙ p₂) ⊙ p₃
-  helper₁ (_·_ {s₁ = s₁} s₁∈ s₂++s₃∈) with drop-♭♯ n₁ s₂++s₃∈
-  ... | s₂∈ · s₃∈ =
+  helper₁ ∈⊙⊙ with ⊙.sound (n₂ ∧ n₃) ∈⊙⊙
+  ... | _⊙′_ {s₁ = s₁} ∈p₁ ∈⊙ with ⊙.sound n₃ ∈⊙
+  ...   | ∈p₂ ⊙′ ∈p₃ =
     cast∈ (ListMonoid.assoc s₁ _ _) refl $
-      add-♭♯ n₃ (add-♭♯ n₂ (drop-♭♯ (n₂ ∧ n₃) s₁∈) ·
-                 add-♭♯ n₁ (drop-♭♯ n₃        s₂∈)) ·
-      add-♭♯ (n₁ ∧ n₂) (drop-♭♯ n₂ s₃∈)
+      ⊙.complete (⊙.complete ∈p₁ ∈p₂) ∈p₃
 
   helper₂ : (p₁ ⊙ p₂) ⊙ p₃ ≤ p₁ ⊙ (p₂ ⊙ p₃)
-  helper₂ (s₁++s₂∈ · s₃∈) with drop-♭♯ n₃ s₁++s₂∈
-  ... | _·_ {s₁ = s₁} s₁∈ s₂∈ =
+  helper₂ ∈⊙⊙ with ⊙.sound n₃ ∈⊙⊙
+  ... | ∈⊙ ⊙′ ∈p₃ with ⊙.sound n₂ ∈⊙
+  ...   | _⊙′_ {s₁ = s₁} ∈p₁ ∈p₂ =
     cast∈ (P.sym $ ListMonoid.assoc s₁ _ _) refl $
-      add-♭♯ (n₂ ∧ n₃) (drop-♭♯ n₂ s₁∈) ·
-      add-♭♯ n₁ (add-♭♯ n₃ (drop-♭♯ n₁        s₂∈) ·
-                 add-♭♯ n₂ (drop-♭♯ (n₁ ∧ n₂) s₃∈))
+      ⊙.complete ∈p₁ (⊙.complete ∈p₂ ∈p₃)
 
 -- Distributivity.
 
@@ -256,20 +248,15 @@ left-distributive :
 left-distributive {n₁} {n₂} {n₃} p₁ p₂ p₃ = equivalent helper₁ helper₂
   where
   helper₁ : p₁ ⊙ (p₂ ∣ p₃) ≤ p₁ ⊙ p₂ ∣ p₁ ⊙ p₃
-  helper₁ (s₁∈p₁ · s₂∈p₂∣p₃) with drop-♭♯ n₁ s₂∈p₂∣p₃
-  ... | ∣ˡ s₂∈p₂ = ∣ˡ $ add-♭♯ n₂ (drop-♭♯ (n₂ ∨ n₃) s₁∈p₁) ·
-                        add-♭♯ n₁                    s₂∈p₂
-  ... | ∣ʳ s₂∈p₃ = ∣ʳ {n₁ = n₁ ∧ n₂} $
-                      add-♭♯ n₃ (drop-♭♯ (n₂ ∨ n₃) s₁∈p₁) ·
-                      add-♭♯ n₁                    s₂∈p₃
+  helper₁ ∈⊙∣ with ⊙.sound (n₂ ∨ n₃) ∈⊙∣
+  ... | ∈p₁ ⊙′ ∣ˡ ∈p₂ = ∣ˡ $ ⊙.complete ∈p₁ ∈p₂
+  ... | ∈p₁ ⊙′ ∣ʳ ∈p₃ = ∣ʳ {n₁ = n₁ ∧ n₂} $ ⊙.complete ∈p₁ ∈p₃
 
   helper₂ : p₁ ⊙ p₂ ∣ p₁ ⊙ p₃ ≤ p₁ ⊙ (p₂ ∣ p₃)
-  helper₂ (∣ˡ (s₁∈p₁ · s₂∈p₂)) =
-    add-♭♯ (n₂ ∨ n₃)      (drop-♭♯ n₂ s₁∈p₁) ·
-    add-♭♯ n₁        (∣ˡ $ drop-♭♯ n₁ s₂∈p₂)
-  helper₂ (∣ʳ (s₁∈p₁ · s₂∈p₃)) =
-    add-♭♯ (n₂ ∨ n₃)                (drop-♭♯ n₃ s₁∈p₁) ·
-    add-♭♯ n₁        (∣ʳ {n₁ = n₂} $ drop-♭♯ n₁ s₂∈p₃)
+  helper₂ (∣ˡ ∈⊙) with ⊙.sound n₂ ∈⊙
+  ... | ∈p₁ ⊙′ ∈p₂ = ⊙.complete ∈p₁ (∣ˡ ∈p₂)
+  helper₂ (∣ʳ ∈⊙) with ⊙.sound n₃ ∈⊙
+  ... | ∈p₁ ⊙′ ∈p₃ = ⊙.complete ∈p₁ (∣ʳ {n₁ = n₂} ∈p₃)
 
 right-distributive :
   ∀ {n₁ n₂ n₃} (p₁ : P n₁) (p₂ : P n₂) (p₃ : P n₃) →
@@ -277,20 +264,15 @@ right-distributive :
 right-distributive {n₁} {n₂} {n₃} p₁ p₂ p₃ = equivalent helper₁ helper₂
   where
   helper₁ : (p₁ ∣ p₂) ⊙ p₃ ≤ p₁ ⊙ p₃ ∣ p₂ ⊙ p₃
-  helper₁ (s₁∈p₁∣p₂ · s₂∈p₃) with drop-♭♯ n₃ s₁∈p₁∣p₂
-  ... | ∣ˡ s₁∈p₁ = ∣ˡ $ add-♭♯ n₃                    s₁∈p₁ ·
-                        add-♭♯ n₁ (drop-♭♯ (n₁ ∨ n₂) s₂∈p₃)
-  ... | ∣ʳ s₁∈p₂ = ∣ʳ {n₁ = n₁ ∧ n₃} $
-                      add-♭♯ n₃                    s₁∈p₂ ·
-                      add-♭♯ n₂ (drop-♭♯ (n₁ ∨ n₂) s₂∈p₃)
+  helper₁ ∈∣⊙ with ⊙.sound n₃ ∈∣⊙
+  ... | ∣ˡ ∈p₁ ⊙′ ∈p₃ = ∣ˡ $ ⊙.complete ∈p₁ ∈p₃
+  ... | ∣ʳ ∈p₂ ⊙′ ∈p₃ = ∣ʳ {n₁ = n₁ ∧ n₃} $ ⊙.complete ∈p₂ ∈p₃
 
   helper₂ : p₁ ⊙ p₃ ∣ p₂ ⊙ p₃ ≤ (p₁ ∣ p₂) ⊙ p₃
-  helper₂ (∣ˡ (s₁∈p₁ · s₂∈p₃)) =
-    add-♭♯ n₃        (∣ˡ $ drop-♭♯ n₃ s₁∈p₁) ·
-    add-♭♯ (n₁ ∨ n₂)      (drop-♭♯ n₁ s₂∈p₃)
-  helper₂ (∣ʳ (s₁∈p₂ · s₂∈p₃)) =
-    add-♭♯ n₃        (∣ʳ {n₁ = n₁} $ drop-♭♯ n₃ s₁∈p₂) ·
-    add-♭♯ (n₁ ∨ n₂)                (drop-♭♯ n₂ s₂∈p₃)
+  helper₂ (∣ˡ ∈⊙) with ⊙.sound n₃ ∈⊙
+  ... | ∈p₁ ⊙′ ∈p₃ = ⊙.complete (∣ˡ ∈p₁) ∈p₃
+  helper₂ (∣ʳ ∈⊙) with ⊙.sound n₃ ∈⊙
+  ... | ∈p₂ ⊙′ ∈p₃ = ⊙.complete (∣ʳ {n₁ = n₁} ∈p₂) ∈p₃
 
 -- Zero.
 
@@ -298,27 +280,25 @@ left-zero : ∀ {n} (p : P n) → ∅ ⊙ p ≈ ∅
 left-zero {n} p = equivalent helper (λ ())
   where
   helper : ∅ ⊙ p ≤ ∅
-  helper (s∈∅ · _) with drop-♭♯ n s∈∅
-  ... | ()
+  helper ∈∅⊙ with ⊙.sound n ∈∅⊙
+  ... | () ⊙′ _
 
 right-zero : ∀ {n} (p : P n) → p ⊙ ∅ ≈ ∅
 right-zero {n} p = equivalent helper (λ ())
   where
   helper : p ⊙ ∅ ≤ ∅
-  helper (_ · s∈∅) with drop-♭♯ n s∈∅
-  ... | ()
+  helper ∈⊙∅ with ⊙.sound false ∈⊙∅
+  ... | _ ⊙′ ()
 
 -- *-continuity.
 
 *-continuity-upper-bound :
   ∀ {n₁ n₂ n₃} (p₁ : P n₁) (p₂ : P n₂) (p₃ : P n₃) →
   ∀ i → p₁ ⊙ p₂ ^ i ⊙ p₃ ≤ p₁ ⊙ p₂ ⋆ ⊙ p₃
-*-continuity-upper-bound {n₁} {n₂} {n₃} _ _ _ i (∈p₁p₂ⁱ · ∈p₃)
-  with drop-♭♯ n₃ ∈p₁p₂ⁱ
-... | ∈p₁ · ∈p₂ⁱ =
-  add-♭♯ n₃ (drop-♭♯ (n₂ ^ⁿ i) ∈p₁ ·
-             add-♭♯ n₁ (^≤⋆ i (drop-♭♯ n₁  ∈p₂ⁱ))) ·
-  add-♭♯ n₁ (drop-♭♯ (n₁ ∧ n₂ ^ⁿ i) ∈p₃)
+*-continuity-upper-bound {n₁} {n₂} {n₃} _ _ _ i ∈⊙ⁱ⊙
+  with ⊙.sound n₃ ∈⊙ⁱ⊙
+... | ∈⊙ⁱ ⊙′ ∈p₃ with ⊙.sound (n₂ ^ⁿ i) ∈⊙ⁱ
+...   | ∈p₁ ⊙′ ∈p₂ⁱ = ⊙.complete (⊙.complete ∈p₁ (^≤⋆ i ∈p₂ⁱ)) ∈p₃
 
 *-continuity-least-upper-bound :
   ∀ {n₁ n₂ n₃ n} (p₁ : P n₁) (p₂ : P n₂) (p₃ : P n₃) (p : P n) →
@@ -327,11 +307,9 @@ right-zero {n} p = equivalent helper (λ ())
   helper ∘ _⟨$⟩_ (Equivalent.from $ ·-associative p₁ (p₂ ⋆) p₃)
   where
   helper : p₁ ⊙ (p₂ ⋆ ⊙ p₃) ≤ p
-  helper (_·_ {s₁ = s₁} ∈p₁ ∈p₂⋆p₃)
-    with drop-♭♯ n₁ ∈p₂⋆p₃
-  ... | ∈p₂⋆ · ∈p₃ with ⋆≤^ (drop-♭♯ n₃ ∈p₂⋆)
-  ... | (i , ∈p₂ⁱ) =
+  helper ∈⊙⋆⊙ with ⊙.sound (true ∧ n₃) ∈⊙⋆⊙
+  ... | _⊙′_ {s₁ = s₁} ∈p₁ ∈⋆⊙ with ⊙.sound n₃ ∈⋆⊙
+  ...   | ∈p₂⋆ ⊙′ ∈p₃ with ⋆≤^ ∈p₂⋆
+  ...     | (i , ∈p₂ⁱ) =
     cast∈ (ListMonoid.assoc s₁ _ _) refl $
-    ub i $ add-♭♯ n₃ (add-♭♯ (n₂ ^ⁿ i) (drop-♭♯ (true ∧ n₃) ∈p₁) ·
-                      add-♭♯ n₁ ∈p₂ⁱ) ·
-           add-♭♯ (n₁ ∧ n₂ ^ⁿ i) ∈p₃
+      ub i $ ⊙.complete (⊙.complete ∈p₁ ∈p₂ⁱ) ∈p₃

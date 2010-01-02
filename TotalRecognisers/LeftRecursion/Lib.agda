@@ -90,6 +90,23 @@ infixl 10 _⊙_
 _⊙_ : ∀ {n₁ n₂} → P n₁ → P n₂ → P (n₁ ∧ n₂)
 p₁ ⊙ p₂ = ♯? p₁ · ♯? p₂
 
+module ⊙ where
+
+  complete : ∀ {n₁ n₂ s₁ s₂} {p₁ : P n₁} {p₂ : P n₂} →
+             s₁ ∈ p₁ → s₂ ∈ p₂ → s₁ ++ s₂ ∈ p₁ ⊙ p₂
+  complete {n₁} {n₂} s₁∈p₁ s₂∈p₂ = add-♭♯ n₂ s₁∈p₁ · add-♭♯ n₁ s₂∈p₂
+
+  infixl 10 _⊙′_
+  infix   4 _⊙_∋_
+
+  data _⊙_∋_ {n₁ n₂} (p₁ : P n₁) (p₂ : P n₂) : List Tok → Set where
+    _⊙′_ : ∀ {s₁ s₂} (s₁∈p₁ : s₁ ∈ p₁) (s₂∈p₂ : s₂ ∈ p₂) →
+           p₁ ⊙ p₂ ∋ s₁ ++ s₂
+
+  sound : ∀ {n₁} n₂ {s} {p₁ : P n₁} {p₂ : P n₂} →
+          s ∈ p₁ ⊙ p₂ → p₁ ⊙ p₂ ∋ s
+  sound {n₁} n₂ (s₁∈p₁ · s₂∈p₂) = drop-♭♯ n₂ s₁∈p₁ ⊙′ drop-♭♯ n₁ s₂∈p₂
+
 ------------------------------------------------------------------------
 -- A combinator which repeats a recogniser a fixed number of times
 
