@@ -12,6 +12,9 @@ open import Coinduction
 open import Data.Bool as Bool hiding (_∧_)
 open import Data.Empty
 open import Function
+open import Function.Equality using (_⟨$⟩_)
+open import Function.Equivalence
+  using (_⇔_; equivalent; module Equivalent)
 open import Data.List as List
 open import Data.List.Reverse
 open import Data.Nat as Nat
@@ -57,7 +60,7 @@ private
 grammar⇒pred : ∀ {Tok n} (p : P Tok n) →
                ∃ λ (f : List Tok → Bool) → ∀ {s} → s ∈ p ⇔ T (f s)
 grammar⇒pred p =
-  ((λ s → ⌊ s ∈? p ⌋) , λ {_} → (fromWitness , toWitness))
+  ((λ s → ⌊ s ∈? p ⌋) , λ {_} → equivalent fromWitness toWitness)
 
 -- When the alphabet is Bool the other direction holds: for every
 -- decidable predicate there is a corresponding grammar.
@@ -67,7 +70,8 @@ grammar⇒pred p =
 
 pred⇒grammar : (f : List Bool → Bool) →
                ∃ λ (p : P Bool (f [])) → ∀ {s} → s ∈ p ⇔ T (f s)
-pred⇒grammar f = (p f , λ {s} → (p-sound f , p-complete f s))
+pred⇒grammar f =
+  (p f , λ {s} → equivalent (p-sound f) (p-complete f s))
   where
   p : (f : List Bool → Bool) → P Bool (f [])
   p f = cast (lemma f)
@@ -102,7 +106,8 @@ pred⇒grammar f = (p f , λ {s} → (p-sound f , p-complete f s))
 
 pred⇒grammar′ : (f : List Bool → Bool) →
                 ∃ λ (p : P Bool (f [])) → ∀ {s} → s ∈ p ⇔ T (f s)
-pred⇒grammar′ f = (p f , λ {s} → (p-sound f , p-complete f s))
+pred⇒grammar′ f =
+  (p f , λ {s} → equivalent (p-sound f) (p-complete f s))
   where
   extend : ∀ {A B} → (List A → B) → A → (List A → B)
   extend f x = λ xs → f (xs ∷ʳ x)
@@ -314,14 +319,14 @@ module NotExpressible where
   not-realisable (_ , p , hyp) = ¬pairs p op mp
     where
     op : OnlyPairs p
-    op {n} {[]}         s∈p = ⊥-elim (proj₁ hyp s∈p)
-    op {n} { m ∷ []}    s∈p with toWitness (proj₁ hyp s∈p)
+    op {n} {[]}         s∈p = ⊥-elim (Equivalent.to hyp ⟨$⟩ s∈p)
+    op {n} { m ∷ []}    s∈p with toWitness (Equivalent.to hyp ⟨$⟩ s∈p)
     op {n} {.n ∷ []}    s∈p | refl = refl
-    op {n} {_  ∷ _ ∷ _} s∈p = ⊥-elim (proj₁ hyp s∈p)
+    op {n} {_  ∷ _ ∷ _} s∈p = ⊥-elim (Equivalent.to hyp ⟨$⟩ s∈p)
 
     mp : ManyPairs p
     mp (i , ¬pair) =
-      ¬pair i NatOrder.refl $ proj₂ hyp (fromWitness refl)
+      ¬pair i NatOrder.refl $ Equivalent.from hyp ⟨$⟩ fromWitness refl
 
 not-expressible :
   ∃₂ λ (Tok : Set) (f : List Tok → Bool) →

@@ -13,6 +13,7 @@ private
   module BoolCS = CommutativeSemiring Bool.commutativeSemiring-∨-∧
   module BoolBA = Algebra.Props.BooleanAlgebra Bool.booleanAlgebra
 open import Function
+open import Function.Equivalence using (_⇔_; equivalent)
 open import Data.List as List
 private
   module ListMonoid {A} = Monoid (List.monoid A)
@@ -153,9 +154,11 @@ p₁ ≲ p₂ = p₁ ∣ p₂ ≈ p₂
 
 ≤⇔≲ : ∀ {n₁ n₂} (p₁ : P n₁) (p₂ : P n₂) → p₁ ≤ p₂ ⇔ p₁ ≲ p₂
 ≤⇔≲ {n₁} p₁ p₂ =
-  ((λ p₁≤p₂ → ((λ {_} → helper₁ p₁≤p₂) , λ {_} → ∣ʳ {n₁ = n₁}))
-  , helper₂
-  )
+  equivalent
+    (λ (p₁≤p₂ : p₁ ≤ p₂) → ((λ {s} → helper₁ p₁≤p₂)
+                           , λ {_} → ∣ʳ {n₁ = n₁}
+                           ))
+    helper₂
   where
   helper₁ : p₁ ≤ p₂ → p₁ ∣ p₂ ≤ p₂
   helper₁ p₁≤p₂ (∣ˡ s∈p₁) = p₁≤p₂ s∈p₁
