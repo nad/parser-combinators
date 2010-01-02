@@ -11,6 +11,7 @@ open import Algebra
 open import Category.Monad
 open import Coinduction
 open import Function
+open import Function.Equivalence hiding (id; _∘_; sym)
 open import Data.List as List
 import Data.List.Any as Any
 import Data.List.Any.Properties as AnyProp
@@ -322,9 +323,9 @@ p₁ ≤ p₂ = p₁ ∣ p₂ ≈ p₂
       (p₁ : Parser Tok R xs₁) (p₂ : Parser Tok R xs₂) →
       p₁ ⊑ p₂ ⇔ p₁ ≤ p₂
 ⊑⇔≤ {xs₁ = xs₁} p₁ p₂ =
-  ((λ p₁⊑p₂ → ((λ {_} → helper₁ p₁⊑p₂) , λ {_} → ∣ʳ xs₁))
-  , helper₂
-  )
+  equivalent
+    (λ (p₁⊑p₂ : p₁ ⊑ p₂) → ((λ {_} → helper₁ p₁⊑p₂) , λ {_} → ∣ʳ xs₁))
+    helper₂
   where
   helper₁ : p₁ ⊑ p₂ → p₁ ∣ p₂ ⊑ p₂
   helper₁ p₁⊑p₂ (∣ˡ      s∈p₁) = p₁⊑p₂ s∈p₁

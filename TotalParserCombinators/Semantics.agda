@@ -11,7 +11,7 @@ open import Data.List
 open import Data.Product
 open import Function
 open import Function.Equality using (_⟨$⟩_)
-open import Function.Inverse using (Inverse; module Inverse)
+open import Function.Inverse using (_⇿_; module Inverse)
 open import Data.Unit
 open import Relation.Binary.PropositionalEquality as P
 open import Relation.Nullary
@@ -70,12 +70,6 @@ data _∈_·_ {Tok} :
 -- Parser and language equivalence
 
 infix 4 _⊑_ _≈_ _≅_
-infix 3 _⇿_
-
--- A ⇿ B means that there is an invertible function from A to B.
-
-_⇿_ : ∀ {a b} → Set a → Set b → Set _
-A ⇿ B = Inverse (P.setoid A) (P.setoid B)
 
 -- p₁ ⊑ p₂ means that the language defined by p₂ contains all the
 -- string/result pairs contained in the language defined by p₁.
