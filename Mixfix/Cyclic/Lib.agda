@@ -26,6 +26,7 @@ open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Parser
 import TotalParserCombinators.Lib as Lib
 open import TotalParserCombinators.Semantics as Sem
+open import TotalParserCombinators.Semantics.Continuation as ContSem
   hiding (sound; complete)
 open import Mixfix.Operator using (NamePart)
 
@@ -262,12 +263,12 @@ module Semantics-⊕ where
   tok-sound : ∀ {t t′ s₁ s} →
               t′ ⊕ s₁ ∈ tok t · s →
               t ≡ t′ × s ≡ t′ ∷ s₁
-  tok-sound     ∈ with Sem.sound′ ∈
+  tok-sound     ∈ with ContSem.sound′ ∈
   tok-sound     ∈ | (s         , refl , ∈′) with Tok.sound ∈′
   tok-sound {t} ∈ | (.(t ∷ []) , refl , ∈′) | (refl , refl) = (refl , refl)
 
   tok-complete : ∀ {t s} → t ⊕ s ∈ tok t · t ∷ s
-  tok-complete = Sem.complete′ (_ , refl , Tok.complete)
+  tok-complete = ContSem.complete′ (_ , refl , Tok.complete)
 
   sound : ∀ {R x s s′} {p : ParserProg R} →
           x ⊕ s′ ∈⟦ p ⟧· s → x ⊕ s′ ∈ ⟦ p ⟧ · s

@@ -22,8 +22,7 @@ open import Relation.Nullary
 
 open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Parser
-open import TotalParserCombinators.Semantics
-  hiding (sound; complete; _≅_)
+open import TotalParserCombinators.Semantics hiding (_≅_)
 open import TotalParserCombinators.Lib
 private
   open module Tok = Token Bool _≟_ using (tok)

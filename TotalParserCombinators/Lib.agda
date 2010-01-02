@@ -23,8 +23,7 @@ open import Relation.Nullary
 open import TotalParserCombinators.Coinduction
 import TotalParserCombinators.InitialSet as I
 open import TotalParserCombinators.Parser
-open import TotalParserCombinators.Semantics
-  hiding (sound; sound′; complete; _≅_)
+open import TotalParserCombinators.Semantics hiding (_≅_)
 
 ------------------------------------------------------------------------
 -- Kleene star

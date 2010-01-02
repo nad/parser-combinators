@@ -32,8 +32,7 @@ open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Lib
 import TotalParserCombinators.InitialSet as I
 open import TotalParserCombinators.Parser
-open import TotalParserCombinators.Semantics
-  hiding (sound; complete; _≅_)
+open import TotalParserCombinators.Semantics hiding (_≅_)
 
 mutual
 

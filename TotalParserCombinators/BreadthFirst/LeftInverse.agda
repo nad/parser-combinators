@@ -32,7 +32,6 @@ open import TotalParserCombinators.Lib
 import TotalParserCombinators.InitialSet as I
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
-  hiding (sound; complete)
 
 mutual
 

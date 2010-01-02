@@ -16,7 +16,6 @@ private
 
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
-  hiding (sound; complete)
 import TotalParserCombinators.InitialSet as I
 open import TotalParserCombinators.BreadthFirst
   hiding (sound; complete)

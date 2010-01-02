@@ -52,6 +52,10 @@ import TotalParserCombinators.Laws
 
 import TotalParserCombinators.ExpressiveStrength
 
+-- An alternative semantics.
+
+import TotalParserCombinators.Semantics.Continuation
+
 -- Simplification of parsers.
 
 import TotalParserCombinators.Simplification

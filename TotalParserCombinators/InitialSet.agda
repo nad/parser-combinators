@@ -25,7 +25,6 @@ open import TotalParserCombinators.Applicative
 open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
-  hiding (sound; sound′; complete; complete′)
 
 ------------------------------------------------------------------------
 -- Sanity check: The initial set index is correctly defined

@@ -15,8 +15,7 @@ open import Relation.Binary.HeterogeneousEquality using (_≅_; refl)
 
 open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Parser
-open import TotalParserCombinators.Semantics
-  hiding (sound; complete; _≅_)
+open import TotalParserCombinators.Semantics hiding (_≅_)
 import StructurallyRecursiveDescentParsing.Simplified.Lemmas as SL
 
 ------------------------------------------------------------------------

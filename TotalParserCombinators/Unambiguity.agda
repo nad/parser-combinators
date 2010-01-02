@@ -12,7 +12,6 @@ open import Relation.Binary.PropositionalEquality
 open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
-  hiding (sound; complete)
 
 ------------------------------------------------------------------------
 -- Definition

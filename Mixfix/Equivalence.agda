@@ -18,7 +18,8 @@ open import Data.Product
 open import Data.Vec using (Vec; []; _∷_)
 
 open import TotalParserCombinators.Parser
-open import TotalParserCombinators.Semantics as Sem
+open import TotalParserCombinators.Semantics
+open import TotalParserCombinators.Semantics.Continuation as ContSem
 import StructurallyRecursiveDescentParsing.Simplified as Simplified
 import StructurallyRecursiveDescentParsing.Simplified.Semantics as SSem
 
@@ -189,7 +190,7 @@ acyclicToCyclic
   : ∀ {e s} → e ∈ Simplified.⟦_⟧ Acyclic.expression · s →
               e ∈                 Cyclic.expression · s
 acyclicToCyclic =
-  Sem.sound                   ∘
+  ContSem.sound               ∘
   CLib.Semantics-⊕.sound      ∘
   AcyclicToCyclic.precs _     ∘
   ALib.Semantics-⊕.complete _ ∘
@@ -205,4 +206,4 @@ cyclicToAcyclic =
   ALib.Semantics-⊕.sound      ∘
   CyclicToAcyclic.precs _     ∘
   CLib.Semantics-⊕.complete _ ∘
-  Sem.complete
+  ContSem.complete
