@@ -13,12 +13,17 @@ import Data.Bool.Properties as Bool
 private
   module BoolCS = CommutativeSemiring Bool.commutativeSemiring-∧-∨
 open import Function
+open import Function.Equality using (_⟨$⟩_)
+open import Function.Equivalence as Eq
+  using (_⇔_; equivalent; module Equivalent)
+  renaming (_∘_ to _⟨∘⟩_)
 open import Data.List as List using (List; []; _∷_; _++_; [_])
 private
   module ListMonoid {A} = Monoid (List.monoid A)
 open import Data.Product as Prod
 open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
+open import Relation.Nullary.Decidable as Dec
 
 ------------------------------------------------------------------------
 -- A "right-strict" variant of _∧_
@@ -127,7 +132,17 @@ p₁ ≤ p₂ = ∀ {s} → s ∈ p₁ → s ∈ p₂
 -- p₁ ≈ p₂ iff the languages p₁ and p₂ contain the same strings.
 
 _≈_ : ∀ {n₁ n₂} → P n₁ → P n₂ → Set
-p₁ ≈ p₂ = p₁ ≤ p₂ × p₂ ≤ p₁
+p₁ ≈ p₂ = ∀ {s} → s ∈ p₁ ⇔ s ∈ p₂
+
+-- p₁ ≈ p₂ iff both p₁ ≤ p₂ and p₂ ≤ p₁.
+
+≈⇔≤≥ : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
+       p₁ ≈ p₂ ⇔ (p₁ ≤ p₂ × p₂ ≤ p₁)
+≈⇔≤≥ = equivalent
+         (λ p₁≈p₂  → ((λ {_} → _⟨$⟩_ (Equivalent.to   p₁≈p₂))
+                     , λ {_} → _⟨$⟩_ (Equivalent.from p₁≈p₂)))
+         (λ p₁≤≥p₂ {s} → equivalent (proj₁ p₁≤≥p₂ {s})
+                                    (proj₂ p₁≤≥p₂ {s}))
 
 -- Some lemmas.
 
@@ -150,7 +165,7 @@ leftRight = ⟪ ♯ leftRight ⟫ · ⟪ ♯ leftRight ⟫
 -- primitive combinator.
 
 leftRight≈∅ : leftRight ≈ ∅
-leftRight≈∅ = ((λ {_} → ≤∅) , λ ())
+leftRight≈∅ = equivalent ≤∅ (λ ())
   where
   ≤∅ : ∀ {s A} → s ∈ leftRight → A
   ≤∅ (∈₁ · ∈₂) = ≤∅ ∈₁
@@ -191,15 +206,13 @@ leftRight≈∅ = ((λ {_} → ≤∅) , λ ())
 ⇐ (nonempty p)                 ()
 ⇐ (cast refl p)                refl = cast (⇐ p refl)
 
+index-correct : ∀ {n} {p : P n} → [] ∈ p ⇔ n ≡ true
+index-correct = equivalent ⇒ (⇐ _)
+
 -- We can decide if the empty string belongs to a given language.
 
 nullable? : ∀ {n} (p : P n) → Dec ([] ∈ p)
-nullable? {true}  p = yes (⇐ p refl)
-nullable? {false} p = no helper
-  where
-  helper : ¬ [] ∈ p
-  helper []∈p with ⇒ []∈p
-  ... | ()
+nullable? {n} p = Dec.map (Eq.sym index-correct) (Bool._≟_ n true)
 
 ------------------------------------------------------------------------
 -- Derivative
@@ -287,6 +300,9 @@ nullable? {false} p = no helper
   ∂-complete′ (nonempty p)      (nonempty ∈)         refl = ∂-complete ∈
   ∂-complete′ (cast _ p)        (cast ∈)             refl = ∂-complete ∈
 
+∂-correct : ∀ {s n} {p : P n} {t} → s ∈ ∂ p t ⇔ t ∷ s ∈ p
+∂-correct = equivalent ∂-sound ∂-complete
+
 ------------------------------------------------------------------------
 -- _∈_ is decidable
 
@@ -300,6 +316,10 @@ _∈?_ : ∀ {n} (s : List Tok) (p : P n) → Dec (s ∈ p)
 t ∷ s ∈? p with s ∈? ∂ p t
 t ∷ s ∈? p | yes s∈∂pt = yes (∂-sound s∈∂pt)
 t ∷ s ∈? p | no  s∉∂pt = no  (s∉∂pt ∘ ∂-complete)
+
+-- The last three lines could be replaced by the following one:
+--
+-- t ∷ s ∈? p = Dec.map ∂-correct (s ∈? ∂ p t)
 
 ------------------------------------------------------------------------
 -- Alternative characterisation of equality
@@ -316,39 +336,26 @@ data _≈′_ {n₁ n₂} (p₁ : P n₁) (p₂ : P n₂) : Set where
 
 -- This definition is equivalent to the one above.
 
+≈′-sound : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} → p₁ ≈′ p₂ → p₁ ≈ p₂
+≈′-sound (refl ∷ rest) {[]}    = Eq.sym index-correct ⟨∘⟩ index-correct
+≈′-sound (refl ∷ rest) {t ∷ s} =
+  ∂-correct ⟨∘⟩ ≈′-sound (♭ (rest t)) ⟨∘⟩ Eq.sym ∂-correct
+
 same-nullability : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
                    p₁ ≈ p₂ → n₁ ≡ n₂
-same-nullability {n₁ = true}  p₁≈p₂ = sym $ ⇒ $ proj₁ p₁≈p₂ $ ⇐ _ refl
-same-nullability {n₁ = false} p₁≈p₂ = sym $ Bool.¬-not $ helper p₁≈p₂
-  where
-  helper : ∀ {n₂} {p₁ : P false} {p₂ : P n₂} →
-           p₁ ≈ p₂ → n₂ ≢ true
-  helper p₁≈p₂ refl with ⇒ $ proj₂ p₁≈p₂ $ ⇐ _ refl
-  ... | ()
-
-∂-mono : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} {t} →
-         p₁ ≤ p₂ → ∂ p₁ t ≤ ∂ p₂ t
-∂-mono p₁≤p₂ = ∂-complete ∘ p₁≤p₂ ∘ ∂-sound
+same-nullability p₁≈p₂ =
+  Bool.⇔→≡ (index-correct ⟨∘⟩ p₁≈p₂ ⟨∘⟩ Eq.sym index-correct)
 
 ∂-cong : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} {t} →
          p₁ ≈ p₂ → ∂ p₁ t ≈ ∂ p₂ t
-∂-cong = Prod.map ∂-mono ∂-mono
-
-≈′-sym : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} → p₁ ≈′ p₂ → p₂ ≈′ p₁
-≈′-sym (refl ∷ rest) = refl ∷ λ t → ♯ ≈′-sym (♭ (rest t))
-
-≈′-sound : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} → p₁ ≈′ p₂ → p₁ ≈ p₂
-≈′-sound p₁≈′p₂ =
-  ((λ {_} → lemma p₁≈′p₂) , λ {_} → lemma (≈′-sym p₁≈′p₂))
-  where
-  lemma : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} → p₁ ≈′ p₂ → p₁ ≤ p₂
-  lemma (refl ∷ rest) {[]}    []∈p₁  = ⇐ _ (⇒ []∈p₁)
-  lemma (refl ∷ rest) {t ∷ s} t∷s∈p₁ =
-    ∂-sound (lemma (♭ (rest t)) (∂-complete t∷s∈p₁))
+∂-cong p₁≈p₂ = Eq.sym ∂-correct ⟨∘⟩ p₁≈p₂ ⟨∘⟩ ∂-correct
 
 ≈′-complete : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} → p₁ ≈ p₂ → p₁ ≈′ p₂
 ≈′-complete p₁≈p₂ =
   same-nullability p₁≈p₂ ∷ λ _ → ♯ ≈′-complete (∂-cong p₁≈p₂)
+
+≈′-correct : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} → p₁ ≈′ p₂ ⇔ p₁ ≈ p₂
+≈′-correct = equivalent ≈′-sound ≈′-complete
 
 ------------------------------------------------------------------------
 -- The combinator nonempty does not need to be primitive
@@ -413,3 +420,6 @@ module AlternativeNonempty where
                                                                                       complete′ p₂ pr₂ refl)
     complete′ (nonempty p)      (nonempty pr)                 refl = complete′ p pr refl
     complete′ (cast _ p)        (cast pr)                     refl = complete′ p pr refl
+
+  correct : ∀ {n} {p : P n} → nonempty′ p ≈ nonempty p
+  correct = equivalent sound complete
