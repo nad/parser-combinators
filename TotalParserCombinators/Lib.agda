@@ -4,13 +4,13 @@
 
 module TotalParserCombinators.Lib where
 
+open import Category.Monad
 open import Coinduction
 open import Function
 open import Function.Equality using (_⟶_)
 open import Function.Injection using (Injection; Injective)
-open import Data.List
-open import Data.List.Any
-open Membership-≡
+open import Data.List as List
+open import Data.List.Any as Any
 open import Data.List.Any.Properties as AnyProp
 open import Data.Nat
 open import Data.Product as Prod
@@ -20,6 +20,12 @@ open import Relation.Binary.HeterogeneousEquality as H
 open import Relation.Binary.PropositionalEquality as P
 open import Relation.Nullary
 
+open Any.Membership-≡
+private
+  open module ListMonad = RawMonad List.monad
+         using () renaming (_>>=_ to _>>=′_)
+
+open import TotalParserCombinators.Applicative
 open import TotalParserCombinators.Coinduction
 import TotalParserCombinators.InitialSet as I
 open import TotalParserCombinators.Parser
@@ -124,6 +130,82 @@ module KleeneStar where
     lemma (suc i) = return ∷ lemma i
 
 ------------------------------------------------------------------------
+-- Variants of some of the parser combinators
+
+-- These variants hide the use of ∞?.
+
+private
+
+  drop-♭♯ : ∀ {Tok R R′ xs′} {p : Parser Tok R′ xs′} (xs : List R) →
+            ♭? (♯? {xs = xs} p) ⊑ p
+  drop-♭♯ xs = cast∈ refl (♭?♯? xs) refl
+
+  add-♭♯ : ∀ {Tok R R′ xs′} {p : Parser Tok R′ xs′} (xs : List R) →
+           p ⊑ ♭? (♯? {xs = xs} p)
+  add-♭♯ xs = cast∈ refl (P.sym $ ♭?♯? xs) refl
+
+infixl 10 _⊙_
+
+_⊙_ : ∀ {Tok R₁ R₂ fs xs} →
+      Parser Tok (R₁ → R₂) fs → Parser Tok R₁ xs →
+      Parser Tok R₂ (fs ⊛′ xs)
+p₁ ⊙ p₂ = ♯? p₁ ⊛ ♯? p₂
+
+module ⊙ {Tok R₁ R₂ : Set} where
+
+  complete : ∀ {fs xs s₁ s₂ f x}
+               {p₁ : Parser Tok (R₁ → R₂) fs}
+               {p₂ : Parser Tok R₁        xs} →
+             f ∈ p₁ · s₁ → x ∈ p₂ · s₂ → f x ∈ p₁ ⊙ p₂ · s₁ ++ s₂
+  complete {fs} {xs} ∈p₁ ∈p₂ = add-♭♯ xs ∈p₁ ⊛ add-♭♯ fs ∈p₂
+
+  infixl 10 _⊙′_
+  infix   4 _⊙_·_∋_
+
+  data _⊙_·_∋_ {fs xs}
+               (p₁ : Parser Tok (R₁ → R₂) fs) (p₂ : Parser Tok R₁ xs) :
+               List Tok → R₂ → Set₁ where
+    _⊙′_ : ∀ {f x s₁ s₂} (∈p₁ : f ∈ p₁ · s₁) (∈p₂ : x ∈ p₂ · s₂) →
+           p₁ ⊙ p₂ · s₁ ++ s₂ ∋ f x
+
+  sound : ∀ {fs} xs {fx s}
+            {p₁ : Parser Tok (R₁ → R₂) fs}
+            {p₂ : Parser Tok R₁        xs} →
+          fx ∈ p₁ ⊙ p₂ · s → p₁ ⊙ p₂ · s ∋ fx
+  sound {fs} xs (∈p₁ ⊛ ∈p₂) = drop-♭♯ xs ∈p₁ ⊙′ drop-♭♯ fs ∈p₂
+
+infixl 10 _⟫=_
+
+_⟫=_ : ∀ {Tok R₁ R₂ xs} {f : R₁ → List R₂} →
+       Parser Tok R₁ xs → ((x : R₁) → Parser Tok R₂ (f x)) →
+       Parser Tok R₂ (xs >>=′ f)
+p₁ ⟫= p₂ = p₁ >>= λ x → ♯? (p₂ x)
+
+module ⟫= {Tok R₁ R₂ : Set} where
+
+  complete : ∀ {xs} {f : R₁ → List R₂} {x y s₁ s₂}
+               {p₁ : Parser Tok R₁ xs}
+               {p₂ : ((x : R₁) → Parser Tok R₂ (f x))} →
+             x ∈ p₁ · s₁ → y ∈ p₂ x · s₂ → y ∈ p₁ ⟫= p₂ · s₁ ++ s₂
+  complete {xs} ∈p₁ ∈p₂x = ∈p₁ >>= add-♭♯ xs ∈p₂x
+
+  infixl 10 _⟫=′_
+  infix   4 _⟫=_·_∋_
+
+  data _⟫=_·_∋_ {xs} {f : R₁ → List R₂}
+                (p₁ : Parser Tok R₁ xs)
+                (p₂ : ((x : R₁) → Parser Tok R₂ (f x))) :
+                List Tok → R₂ → Set₁ where
+    _⟫=′_ : ∀ {x y s₁ s₂} (∈p₁ : x ∈ p₁ · s₁) (∈p₂x : y ∈ p₂ x · s₂) →
+            p₁ ⟫= p₂ · s₁ ++ s₂ ∋ y
+
+  sound : ∀ xs {f : R₁ → List R₂} {y s}
+            {p₁ : Parser Tok R₁ xs}
+            {p₂ : ((x : R₁) → Parser Tok R₂ (f x))} →
+          y ∈ p₁ ⟫= p₂ · s → p₁ ⟫= p₂ · s ∋ y
+  sound xs (∈p₁ >>= ∈p₂x) = ∈p₁ ⟫=′ drop-♭♯ xs ∈p₂x
+
+------------------------------------------------------------------------
 -- A combinator for recognising a string a fixed number of times
 
 infixl 55 _^_ _↑_
@@ -135,7 +217,7 @@ infixl 55 _^_ _↑_
 _^_ : ∀ {Tok R xs} →
       Parser Tok R xs → (n : ℕ) → Parser Tok (Vec R n) (^-initial xs n)
 p ^ 0     = return []
-p ^ suc n = ♯? (_∷_ <$> p) ⊛ ♯? (p ^ n)
+p ^ suc n = _∷_ <$> p ⊙ p ^ n
 
 -- A variant.
 
@@ -150,13 +232,15 @@ p ↑ n = Vec.toList <$> p ^ n
 
 module Exactly where
 
+  open ⊙ using (_⊙′_)
+
   ↑⊑⋆ : ∀ {Tok R} {p : Parser Tok R []} n → p ↑ n ⊑ p ⋆
   ↑⊑⋆ {R = R} {p} n (<$> ∈pⁿ) = KleeneStar.complete $ helper n ∈pⁿ
     where
     helper : ∀ n {xs s} → xs ∈ p ^ n · s → Vec.toList xs ∈[ p ]⋆· s
-    helper zero    return     = []
-    helper (suc n) (∈p ⊛ ∈pⁿ) with drop-♭♯ (^-initial [] n) ∈p
-    ... | <$> ∈p′ = ∈p′ ∷ helper n (drop-♭♯ (List R ∶ []) ∈pⁿ)
+    helper zero    return = []
+    helper (suc n) ∈⊙ⁿ    with ⊙.sound (^-initial [] n) ∈⊙ⁿ
+    ... | <$> ∈p ⊙′ ∈pⁿ = ∈p ∷ helper n ∈pⁿ
 
   ⋆⊑↑ : ∀ {Tok R} {p : Parser Tok R []} {xs s} →
         xs ∈ p ⋆ · s → ∃ λ i → xs ∈ p ↑ i · s
@@ -170,7 +254,7 @@ module Exactly where
       Prod.map suc (λ {i} →
         Prod.map (_∷_ _) (
           Prod.map (P.cong (_∷_ _))
-                   (λ ∈pⁱ → add-♭♯ (^-initial [] i) (<$> ∈p) ⊛ ∈pⁱ)))
+                   (λ ∈pⁱ → ⊙.complete (<$> ∈p) ∈pⁱ)))
        (helper ∈p⋆)
   ... | (i , ys , refl , ∈pⁱ) = (i , <$> ∈pⁱ)
 

@@ -9,14 +9,89 @@ open import Coinduction
 open import Data.Bool
 open import Data.Product
 open import Data.List as List
-private module LM {Tok} = Monoid (List.monoid Tok)
+open import Function
+open import Function.Equality using (_⟨$⟩_)
+open import Function.Equivalence using (equivalent; module Equivalent)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym)
 open import Relation.Binary.HeterogeneousEquality using (_≅_; refl)
 
+private module LM {Tok} = Monoid (List.monoid Tok)
+
 open import TotalParserCombinators.Coinduction
+open import TotalParserCombinators.Congruence.Language
+open import TotalParserCombinators.Laws
+open import TotalParserCombinators.Lib
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics hiding (_≅_)
 import StructurallyRecursiveDescentParsing.Simplified.Lemmas as SL
+
+open ≈-Reasoning
+open ⊙ using (_⊙′_)
+
+------------------------------------------------------------------------
+-- Some laws
+
+<$>-fail : ∀ {Tok R₁ R₂} {f : R₁ → R₂} →
+           f <$> fail {Tok = Tok} ≈ fail
+<$>-fail {Tok} {R₁} {f = f} = equivalent (λ x∈ → helper x∈ refl) (λ ())
+  where
+  helper : ∀ {x s xs} {p : Parser Tok R₁ xs} →
+           x ∈ f <$> p · s → p ≅ fail {Tok = Tok} {R = R₁} →
+           x ∈ fail · s
+  helper (<$> ()) refl
+
+<$>-return : ∀ {Tok R₁ R₂} (f : R₁ → R₂) {x} →
+             f <$> return {Tok = Tok} x ≈ return (f x)
+<$>-return {Tok} {R₁} {R₂} f {x} =
+  equivalent (λ x∈ → helper₁ x∈ refl) (λ x∈ → helper₂ x∈ refl)
+  where
+  helper₁ : ∀ {y s xs} {p : Parser Tok R₁ xs} →
+            y ∈ f <$> p · s → p ≅ (Parser Tok _ _ ∶ return x) →
+            y ∈ return (f x) · s
+  helper₁ (<$> ∈return) refl with ∈return
+  ... | return = return
+
+  helper₂ : ∀ {y s xs} {p : Parser Tok R₂ xs} →
+            y ∈ p · s → p ≅ (Parser Tok _ _ ∶ return (f x)) →
+            y ∈ f <$> return x · s
+  helper₂ ∈return refl with ∈return
+  ... | return = <$>_ {f = f} return
+
+∣-token->>= : ∀ {Tok R} {f₁ f₂ : Tok → List R}
+                {p₁ : (t : Tok) → ∞? (Parser Tok R (f₁ t)) []}
+                {p₂ : (t : Tok) → ∞? (Parser Tok R (f₂ t)) []} →
+              token >>= p₁ ∣ token >>= p₂ ≈
+              token ⟫= λ t → ♭? (p₁ t) ∣ ♭? (p₂ t)
+∣-token->>= {f₁ = f₁} {p₁ = p₁} {p₂} = equivalent helper₁ helper₂
+  where
+  helper₁ : token >>= p₁ ∣ token >>= p₂ ⊑
+            token ⟫= λ t → ♭? (p₁ t) ∣ ♭? (p₂ t)
+  helper₁ (∣ˡ     (token >>= x∈p₁))           = token >>= ∣ˡ x∈p₁
+  helper₁ (∣ʳ .[] (_>>=_ {x = x} token x∈p₂)) =
+    token >>= ∣ʳ (f₁ x) x∈p₂
+
+  helper₂ : token ⟫= (λ t → ♭? (p₁ t) ∣ ♭? (p₂ t)) ⊑
+            token >>= p₁ ∣ token >>= p₂
+  helper₂ (token >>= ∣ˡ    y∈p₁x) = ∣ˡ    (token >>= y∈p₁x)
+  helper₂ (token >>= ∣ʳ ._ y∈p₂x) = ∣ʳ [] (token >>= y∈p₂x)
+
+nonempty-fail : ∀ {Tok R} →
+                nonempty {Tok = Tok} {R = R} fail ≈ fail
+nonempty-fail = equivalent helper (λ ())
+  where
+  helper : nonempty fail ⊑ fail
+  helper (nonempty ())
+
+cast-correct : ∀ {Tok R xs₁ xs₂} {eq : xs₁ ≡ xs₂} {p : Parser Tok R xs₁} →
+               cast eq p ≈ p
+cast-correct {eq = eq} {p} = equivalent helper cast
+  where
+  helper : cast eq p ⊑ p
+  helper (cast x∈p) = x∈p
+
+♭♯-correct : ∀ {Tok R R′ xs′} (xs : List R) {p : Parser Tok R′ xs′} →
+             ♭? (♯? {xs = xs} p) ≈ p
+♭♯-correct xs {p} rewrite ♭?♯? xs {p} = Equivalence.refl
 
 ------------------------------------------------------------------------
 -- Helpers
@@ -31,7 +106,7 @@ private
   _≈′_ = _≈_
 
   force : ∀ {Tok R xs} (p : ∞ (Parser Tok R xs)) → ∃ λ p′ → ♭ p ≈′ p′
-  force p = (♭ p , (λ x∈ → x∈) , λ x∈ → x∈)
+  force p = (♭ p , λ {_} → Equivalence.refl)
 
   -- A variant of cast.
 
@@ -39,13 +114,9 @@ private
           xs₁ ≡ xs₂ → Parser Tok R xs₁ → Parser Tok R xs₂
   cast′ refl p = p
 
-  cast⁺ : ∀ {Tok R xs₁ xs₂ x s} {p : Parser Tok R xs₁} →
-          (eq : xs₁ ≡ xs₂) → x ∈ p · s → x ∈ cast′ eq p · s
-  cast⁺ refl x∈p = x∈p
-
-  cast⁻ : ∀ {Tok R xs₁ xs₂ x s} {p : Parser Tok R xs₁} →
-          (eq : xs₁ ≡ xs₂) → x ∈ cast′ eq p · s → x ∈ p · s
-  cast⁻ refl x∈p = x∈p
+  cast-correct′ : ∀ {Tok R xs₁ xs₂} {p : Parser Tok R xs₁} →
+                  (eq : xs₁ ≡ xs₂) → cast′ eq p ≈ p
+  cast-correct′ refl = Equivalence.refl
 
 ------------------------------------------------------------------------
 -- Simplification
@@ -72,6 +143,9 @@ private
 -- An example of a possible future addition:
 --
 -- (p₁ >>= p₂) >>= p₃ → p₁ >>= λ x → p₂ >>= p₃
+--
+-- Note that I have not proved that the simplifications preserve
+-- /parser/ equivalence, only /language/ equivalence.
 
 mutual
 
@@ -79,89 +153,55 @@ mutual
 
   -- • return:
 
-  simplify₁ (return x) = (return x , (λ x∈ → x∈) , λ x∈ → x∈)
+  simplify₁ (return x) = (return x , λ {_} → Equivalence.refl)
 
   -- • fail:
 
-  simplify₁ fail       = (fail     , (λ ())      , λ ())
+  simplify₁ fail       = (fail     , λ {_} → Equivalence.refl)
 
   -- • token:
 
-  simplify₁ token      = (token    , (λ x∈ → x∈) , λ x∈ → x∈)
+  simplify₁ token      = (token    , λ {_} → Equivalence.refl)
 
   -- • _<$>_:
 
   simplify₁ (f <$> p) with simplify₁ p
-  ... | (fail , p≈∅) = (fail , (λ {_} → helper) , λ ())
-    where
-    helper : f <$> p ⊑ fail
-    helper (<$> x∈p) with proj₁ p≈∅ x∈p
-    ... | ()
-  ... | (return x , p≈ε) =
-    (return (f x) , (λ {_} → helper₁) , λ {_} → helper₂)
-    where
-    helper₁ : f <$> p ⊑ return (f x)
-    helper₁ (<$> x∈p) with proj₁ p≈ε x∈p
-    ... | return = return
-
-    helper₂ : return (f x) ⊑ f <$> p
-    helper₂ return = <$>_ {f = f} (proj₂ p≈ε return)
-  ... | (p′ , p≈p′) = (f <$> p′ , (λ {_} → helper₁) , λ {_} → helper₂)
-    where
-    helper₁ : f <$> p ⊑ f <$> p′
-    helper₁ (<$> x∈p) = <$> proj₁ p≈p′ x∈p
-
-    helper₂ : f <$> p′ ⊑ f <$> p
-    helper₂ (<$> x∈p′) = <$> proj₂ p≈p′ x∈p′
+  ... | (fail     , p≈∅) = _ , λ {_} → begin
+                           f <$> p     ≈⟨ <$>-cong (λ _ → refl) p≈∅ ⟩
+                           f <$> fail  ≈⟨ <$>-fail ⟩
+                           fail        ∎
+  ... | (return x , p≈ε) = _ , λ {_} → begin
+                           f <$> p         ≈⟨ <$>-cong (λ x → refl {x = f x}) p≈ε ⟩
+                           f <$> return x  ≈⟨ <$>-return f ⟩
+                           return (f x)    ∎
+  ... | (p′       , p≈p′) = _ , λ {_} → begin
+                           f <$> p   ≈⟨ <$>-cong (λ _ → refl) p≈p′ ⟩
+                           f <$> p′  ∎
 
   -- • _∣_:
 
   simplify₁ (p₁ ∣ p₂) with simplify₁ p₁ | simplify₁ p₂
-  simplify₁ (p₁ ∣ p₂) | (fail , p₁≈∅) | (p₂′ , p₂≈p₂′) =
-    (p₂′ , (λ {_} → helper) , λ x∈ → ∣ʳ [] (proj₂ p₂≈p₂′ x∈))
-    where
-    helper : p₁ ∣ p₂ ⊑ p₂′
-    helper (∣ʳ .[] x∈p₂) = proj₁ p₂≈p₂′ x∈p₂
-    helper (∣ˡ     x∈p₁) with proj₁ p₁≈∅ x∈p₁
-    ... | ()
-  simplify₁ (p₁ ∣ p₂) | (_>>=_ {f = f} token p₁′ , p₁≈…)
-                      | (token >>= p₂′           , p₂≈…) =
-    ( token >>= (λ t → ♯? (♭? (p₁′ t) ∣ ♭? (p₂′ t)))
-    , (λ {_} → helper₁) , λ {_} → helper₂
-    )
-    where
-    helper₁ : p₁ ∣ p₂ ⊑ token >>= (λ t → ♯? (♭? (p₁′ t) ∣ ♭? (p₂′ t)))
-    helper₁ (∣ˡ     x∈p₁) with proj₁ p₁≈… x∈p₁
-    helper₁ (∣ˡ     x∈p₁) | token >>= x∈p₁′ = token >>= ∣ˡ x∈p₁′
-    helper₁ (∣ʳ .[] x∈p₂) with proj₁ p₂≈… x∈p₂
-    helper₁ (∣ʳ .[] x∈p₂) | _>>=_ {x = x} token x∈p₂′ =
-      token >>= ∣ʳ (f x) x∈p₂′
-
-    helper₂ : token >>= (λ t → ♯? (♭? (p₁′ t) ∣ ♭? (p₂′ t))) ⊑ p₁ ∣ p₂
-    helper₂ (token >>= ∣ˡ    y∈p₁′x) = ∣ˡ    (proj₂ p₁≈… (token >>= y∈p₁′x))
-    helper₂ (token >>= ∣ʳ ._ y∈p₂′x) = ∣ʳ [] (proj₂ p₂≈… (token >>= y∈p₂′x))
-  simplify₁ (p₁ ∣ p₂) | (p₁′ , p₁≈p₁′) | (fail , p₂≈∅) =
-    (cast′ lem p₁′ , (λ {_} → helper₁) , λ {_} → helper₂)
-    where
-    lem = sym (proj₂ LM.identity _)
-
-    helper₁ : p₁ ∣ p₂ ⊑ cast′ lem p₁′
-    helper₁ (∣ˡ    x∈p₁) = cast⁺ lem (proj₁ p₁≈p₁′ x∈p₁)
-    helper₁ (∣ʳ ._ x∈p₂) with proj₁ p₂≈∅ x∈p₂
-    ... | ()
-
-    helper₂ : cast′ lem p₁′ ⊑ p₁ ∣ p₂
-    helper₂ x∈p₁′ = ∣ˡ (proj₂ p₁≈p₁′ (cast⁻ lem x∈p₁′))
-  simplify₁ (_∣_ {xs₁ = xs₁} p₁ p₂) | (p₁′ , p₁≈p₁′) | (p₂′ , p₂≈p₂′) =
-    (p₁′ ∣ p₂′ , (λ {_} → helper₁) , λ {_} → helper₂)
-    where
-    helper₁ : p₁ ∣ p₂ ⊑ p₁′ ∣ p₂′
-    helper₁ (∣ˡ      x∈p₁) = ∣ˡ     (proj₁ p₁≈p₁′ x∈p₁)
-    helper₁ (∣ʳ .xs₁ x∈p₂) = ∣ʳ xs₁ (proj₁ p₂≈p₂′ x∈p₂)
-
-    helper₂ : p₁′ ∣ p₂′ ⊑ p₁ ∣ p₂
-    helper₂ (∣ˡ      x∈p₁′) = ∣ˡ     (proj₂ p₁≈p₁′ x∈p₁′)
-    helper₂ (∣ʳ .xs₁ x∈p₂′) = ∣ʳ xs₁ (proj₂ p₂≈p₂′ x∈p₂′)
+  ... | (fail          , p₁≈∅)
+      | (p₂′           , p₂≈p₂′) = _ , λ {_} → begin
+                                   p₁   ∣ p₂   ≈⟨ ∣-cong p₁≈∅ p₂≈p₂′ ⟩
+                                   fail ∣ p₂′  ≈⟨ AdditiveMonoid.left-identity p₂′ ⟩
+                                   p₂′         ∎
+  ... | (p₁′           , p₁≈p₁′)
+      | (fail          , p₂≈∅)   = _ , λ {_} → begin
+                                   p₁  ∣ p₂       ≈⟨ ∣-cong p₁≈p₁′ p₂≈∅ ⟩
+                                   p₁′ ∣ fail     ≈⟨ AdditiveMonoid.right-identity p₁′ ⟩
+                                   p₁′            ≈⟨ Equivalence.sym $ cast-correct′ lem ⟩
+                                   cast′ lem p₁′  ∎
+                                   where lem = sym (proj₂ LM.identity _)
+  ... | (token >>= p₁′ , p₁≈…)
+      | (token >>= p₂′ , p₂≈…)   = _ , λ {_} → begin
+                                   p₁            ∣ p₂                        ≈⟨ ∣-cong p₁≈… p₂≈… ⟩
+                                   token >>= p₁′ ∣ token >>= p₂′             ≈⟨ ∣-token->>= ⟩
+                                   token ⟫= (λ t → ♭? (p₁′ t) ∣ ♭? (p₂′ t))  ∎
+  ... | (p₁′           , p₁≈p₁′)
+      | (p₂′           , p₂≈p₂′) = _ , λ {_} → begin
+                                   p₁  ∣ p₂   ≈⟨ ∣-cong p₁≈p₁′ p₂≈p₂′ ⟩
+                                   p₁′ ∣ p₂′  ∎
 
   -- • _⊛_:
 
@@ -186,35 +226,30 @@ mutual
              (R≡  : R₁ ≡ R₁′) →
              (xs≅ : xs ≅ xs′) →
              ∃ λ p′ → p₁ ⊛ cast₁ R≡ xs≅ p₂ ≈′ p′
-    helper {xs = xs} p₁ p₂ (fail , p₁≈∅) _ refl refl =
-      (cast′ lem fail , (λ {_} → helper₁) , λ {_} → helper₂)
-      where
-      lem = sym (SL.>>=-∅ xs)
-
-      helper₁ : p₁ ⊛ p₂ ⊑ cast′ lem fail
-      helper₁ (f∈p₁ ⊛ x∈p₂) with proj₁ p₁≈∅ f∈p₁
-      ... | ()
-
-      helper₂ : cast′ lem fail ⊑ p₁ ⊛ p₂
-      helper₂ x∈∅ with cast⁻ lem x∈∅
-      ... | ()
-    helper p₁ p₂ _ (fail , p₂≈∅) refl refl =
-      (fail , (λ {_} → helper₁) , λ ())
-      where
-      helper₁ : p₁ ⊛ p₂ ⊑ fail
-      helper₁ (f∈p₁ ⊛ x∈p₂) with proj₁ p₂≈∅ x∈p₂
-      ... | ()
+    helper {xs = xs} p₁ p₂ (fail , p₁≈∅) _ refl refl = _ , λ {_} → begin
+      p₁      ⊛ p₂    ≈⟨ ⊛-cong (begin
+                           ♭? p₁                   ≈⟨ p₁≈∅ ⟩
+                           fail                    ≈⟨ Equivalence.sym $ ♭♯-correct xs ⟩
+                           ♭? {xs = xs} (♯? fail)  ∎)
+                           (Equivalence.refl {p = ♭? p₂}) ⟩
+      ♯? fail ⊛ p₂    ≈⟨ ⊙-IdempotentSemiring.left-zero-⊛ p₂ ⟩
+      fail            ≈⟨ Equivalence.sym $ cast-correct′ lem ⟩
+      cast′ lem fail  ∎
+      where lem = sym (SL.>>=-∅ xs)
+    helper {fs = fs} p₁ p₂ _ (fail , p₂≈∅) refl refl = _ , λ {_} → begin
+      p₁ ⊛ p₂       ≈⟨ ⊛-cong (Equivalence.refl {p = ♭? p₁}) (begin
+                         ♭? p₂                   ≈⟨ p₂≈∅ ⟩
+                         fail                    ≈⟨ Equivalence.sym $ ♭♯-correct fs ⟩
+                         ♭? {xs = fs} (♯? fail)  ∎) ⟩
+      p₁ ⊛ ♯? fail  ≈⟨ ⊙-IdempotentSemiring.right-zero-⊛ p₁ ⟩
+      fail          ∎
     helper p₁ p₂ (return f , p₁≈ε) (return x , p₂≈ε) refl refl =
-      (return (f x) , (λ {_} → helper₁) , λ {_} → helper₂)
-      where
-      helper₁ : p₁ ⊛ p₂ ⊑ return (f x)
-      helper₁ (f∈p₁ ⊛ x∈p₂) with proj₁ p₁≈ε f∈p₁ | proj₁ p₂≈ε x∈p₂
-      ... | return | return = return
-
-      helper₂ : return (f x) ⊑ p₁ ⊛ p₂
-      helper₂ return = proj₂ p₁≈ε return ⊛ proj₂ p₂≈ε return
+      _ , λ {_} → begin
+      p₁       ⊛ p₂        ≈⟨ ⊛-cong p₁≈ε p₂≈ε ⟩
+      return f ⊙ return x  ≈⟨ ApplicativeFunctor.homomorphism f x ⟩
+      return (f x)         ∎
     helper p₁ p₂ (p₁′ , p₁≈p₁′) (p₂′ , p₂≈p₂′) R≡ xs≅ =
-      helper′ p₁ p₂ (p₁′ , p₁≈p₁′) (p₂′ , p₂≈p₂′) R≡ xs≅
+      helper′ p₁ p₂ (p₁′ , λ {_} → p₁≈p₁′) (p₂′ , λ {_} → p₂≈p₂′) R≡ xs≅
       where
       helper′ : ∀ {Tok R₁ R₁′ R₂ fs xs xs′}
                   (p₁ : ∞? (Parser Tok (R₁ → R₂) fs ) xs)
@@ -225,117 +260,92 @@ mutual
                 (xs≅ : xs ≅ xs′) →
                 ∃ λ p′ → p₁ ⊛ cast₁ R≡ xs≅ p₂ ≈′ p′
       helper′ {fs = fs} {xs} p₁ p₂ (p₁′ , p₁≈p₁′) (p₂′ , p₂≈p₂′)
-              refl refl =
-        ( ♯? p₁′ ⊛ ♯? p₂′
-        , (λ {_} → helper₁) , λ {_} → helper₂
-        )
-        where
-        helper₁ : p₁ ⊛ p₂ ⊑ ♯? p₁′ ⊛ ♯? p₂′
-        helper₁ (f∈p₁ ⊛ x∈p₂) =
-          cast∈ refl (sym (♭?♯? xs)) refl (proj₁ p₁≈p₁′ f∈p₁) ⊛
-          cast∈ refl (sym (♭?♯? fs)) refl (proj₁ p₂≈p₂′ x∈p₂)
-
-        helper₂ : ♯? p₁′ ⊛ ♯? p₂′ ⊑ p₁ ⊛ p₂
-        helper₂ (f∈p₁′ ⊛ x∈p₂′) =
-          proj₂ p₁≈p₁′ (cast∈ refl (♭?♯? xs) refl f∈p₁′) ⊛
-          proj₂ p₂≈p₂′ (cast∈ refl (♭?♯? fs) refl x∈p₂′)
+              refl refl = _ , λ {_} → begin
+        p₁  ⊛ p₂   ≈⟨ ⊛-cong
+                        (begin
+                           ♭? p₁                  ≈⟨ p₁≈p₁′ ⟩
+                           p₁′                    ≈⟨ Equivalence.sym $ ♭♯-correct xs ⟩
+                           ♭? {xs = xs} (♯? p₁′)  ∎)
+                        (begin
+                           ♭? p₂                  ≈⟨ p₂≈p₂′ ⟩
+                           p₂′                    ≈⟨ Equivalence.sym $ ♭♯-correct fs ⟩
+                           ♭? {xs = fs} (♯? p₂′)  ∎) ⟩
+        p₁′ ⊙ p₂′  ∎
 
   -- • _>>=_:
 
   simplify₁ (p₁ >>= p₂) with simplify₁ p₁
-  simplify₁ (p₁ >>= p₂) | (fail , p₁≈∅) = (fail , (λ {_} → helper) , λ ())
-    where
-    helper : p₁ >>= p₂ ⊑ fail
-    helper (x∈p₁ >>= y∈p₂x) with proj₁ p₁≈∅ x∈p₁
-    ... | ()
-  simplify₁ (p₁ >>= p₂) | (return x , p₁≈ε) with simplify₁′ (p₂ x)
-  simplify₁ (p₁ >>= p₂) | (return x , p₁≈ε) | (p₂′ , p₂x≈p₂′) =
-    (cast′ lem p₂′ , (λ {_} → helper₁) , λ {_} → helper₂)
-    where
-    lem = sym (proj₂ LM.identity _)
-
-    helper₁ : p₁ >>= p₂ ⊑ cast′ lem p₂′
-    helper₁ (_>>=_ {y = y} {s₂ = s₂} x∈p₁ y∈p₂x) =
-      cast⁺ lem (helper (proj₁ p₁≈ε x∈p₁) y∈p₂x)
-      where
-      helper : ∀ {x′ s₁} → x′ ∈ return x · s₁ → y ∈ ♭? (p₂ x′) · s₂ →
-               y ∈ p₂′ · s₁ ++ s₂
-      helper return x∈p₂ = proj₁ p₂x≈p₂′ x∈p₂
-
-    helper₂ : cast′ lem p₂′ ⊑ p₁ >>= p₂
-    helper₂ y∈p₂′ =
-      _>>=_ {x = x} {p₂ = p₂} (proj₂ p₁≈ε (return {x = x}))
-                              (proj₂ p₂x≈p₂′ (cast⁻ lem y∈p₂′))
-  simplify₁ (p₁ >>= p₂) | (p₁′ , p₁≈p₁′) =
-    (p₁′ >>= p₂ , (λ {_} → helper₁) , λ {_} → helper₂)
-    where
-    helper₁ : p₁ >>= p₂ ⊑ p₁′ >>= p₂
-    helper₁ (x∈p₁ >>= y∈p₂x) = proj₁ p₁≈p₁′ x∈p₁ >>= y∈p₂x
-
-    helper₂ : p₁′ >>= p₂ ⊑ p₁ >>= p₂
-    helper₂ (x∈p₁ >>= y∈p₂x) = proj₂ p₁≈p₁′ x∈p₁ >>= y∈p₂x
+  ... | (fail     , p₁≈∅) = _ , λ {_} → begin
+                            p₁   >>= p₂  ≈⟨ >>=-cong p₁≈∅ (λ _ → Equivalence.refl) ⟩
+                            fail >>= p₂  ≈⟨ ⟫=-IdempotentSemiring.left-zero->>= p₂ ⟩
+                            fail         ∎
+  ... | (return x , p₁≈ε) with simplify₁′ (p₂ x)
+  ...   | (p₂′ , p₂x≈p₂′) = _ , λ {_} → begin
+                            p₁       >>= p₂  ≈⟨ >>=-cong
+                                                  p₁≈ε
+                                                  (λ x → Equivalence.refl {p = ♭? (p₂ x)}) ⟩
+                            return x >>= p₂  ≈⟨ Monad.left-identity->>= x p₂ ⟩
+                            ♭? (p₂ x)        ≈⟨ p₂x≈p₂′ ⟩
+                            p₂′              ≈⟨ Equivalence.sym $ cast-correct′ lem ⟩
+                            cast′ lem p₂′    ∎
+                            where lem = sym (proj₂ LM.identity _)
+  simplify₁ (p₁ >>= p₂)
+      | (p₁′ , p₁≈p₁′)    = _ , λ {_} → begin
+                            p₁  >>= p₂  ≈⟨ >>=-cong p₁≈p₁′ (λ _ → Equivalence.refl) ⟩
+                            p₁′ >>= p₂  ∎
 
   -- • _>>=!_:
 
   simplify₁ (p₁ >>=! p₂) with force p₁
-  simplify₁ (p₁ >>=! p₂) | (fail , p₁≈∅) = (fail , (λ {_} → helper) , λ ())
-    where
-    helper : p₁ >>=! p₂ ⊑ fail
-    helper (x∈p₁ >>=! y∈p₂x) with proj₁ p₁≈∅ x∈p₁
-    ... | ()
-  simplify₁ (p₁ >>=! p₂) | (return x , p₁≈ε) with simplify₁′ (p₂ x)
-  simplify₁ (p₁ >>=! p₂) | (return x , p₁≈ε) | (p₂′ , p₂x≈p₂′) =
-    (cast′ lem p₂′ , (λ {_} → helper₁) , λ {_} → helper₂)
-    where
-    lem = sym (proj₂ LM.identity _)
+  ... | (fail     , p₁≈∅) = _ , λ {_} → begin
+                            p₁ >>=! p₂  ≈⟨ >>=!-cong p₁≈∅ (λ _ → Equivalence.refl) ⟩
+                            ∅  >>=! p₂  ≈⟨ equivalent helper (λ ()) ⟩
+                            fail        ∎
+                            where
+                            ∅ = ♯ fail
 
-    helper₁ : p₁ >>=! p₂ ⊑ cast′ lem p₂′
-    helper₁ (_>>=!_ {y = y} {s₂ = s₂} x∈p₁ y∈p₂x) =
-      cast⁺ lem (helper (proj₁ p₁≈ε x∈p₁) y∈p₂x)
-      where
-      helper : ∀ {x′ s₁} → x′ ∈ return x · s₁ → y ∈ ♭? (p₂ x′) · s₂ →
-               y ∈ p₂′ · s₁ ++ s₂
-      helper return x∈p₂ = proj₁ p₂x≈p₂′ x∈p₂
+                            helper : ∅ >>=! p₂ ⊑ fail
+                            helper (() >>=! _)
+  ... | (return x , p₁≈ε) with simplify₁′ (p₂ x)
+  ...   | (p₂′ , p₂x≈p₂′) = _ , λ {_} → begin
+                            p₁       >>=! p₂  ≈⟨ >>=!-cong p₁≈ε
+                                                   (λ x → Equivalence.refl {p = ♭? (p₂ x)}) ⟩
+                            return-x >>=! p₂  ≈⟨ equivalent helper
+                                                            (λ y∈p₂x → return >>=! y∈p₂x) ⟩
+                            ♭? (p₂ x)         ≈⟨ p₂x≈p₂′ ⟩
+                            p₂′               ≈⟨ Equivalence.sym $ cast-correct′ lem ⟩
+                            cast′ lem p₂′     ∎
+                            where
+                            lem = sym (proj₂ LM.identity _)
 
-    helper₂ : cast′ lem p₂′ ⊑ p₁ >>=! p₂
-    helper₂ y∈p₂′ =
-      _>>=!_ {x = x} {p₂ = p₂} (proj₂ p₁≈ε (return {x = x}))
-                               (proj₂ p₂x≈p₂′ (cast⁻ lem y∈p₂′))
-  simplify₁ (p₁ >>=! p₂) | (p₁′ , p₁≈p₁′) =
-    (♯ p₁′ >>=! p₂ , (λ {_} → helper₁) , λ {_} → helper₂)
-    where
-    helper₁ : p₁ >>=! p₂ ⊑ _ >>=! p₂
-    helper₁ (x∈p₁ >>=! y∈p₂x) = proj₁ p₁≈p₁′ x∈p₁ >>=! y∈p₂x
+                            return-x = ♯ return x
 
-    helper₂ : _ >>=! p₂ ⊑ p₁ >>=! p₂
-    helper₂ (x∈p₁ >>=! y∈p₂x) = proj₂ p₁≈p₁′ x∈p₁ >>=! y∈p₂x
+                            helper : return-x >>=! p₂ ⊑ ♭? (p₂ x)
+                            helper (return >>=! y∈p₂x) = y∈p₂x
+  simplify₁ (p₁ >>=! p₂)
+      | (p₁′ , p₁≈p₁′)    = _ , λ {_} → begin
+                            p₁ >>=! p₂  ≈⟨ >>=!-cong p₁≈p₁′ (λ _ → Equivalence.refl) ⟩
+                            p₁′>>=!p₂   ∎
+                            where p₁′>>=!p₂ = ♯ p₁′ >>=! p₂
 
   -- • nonempty:
 
   simplify₁ (nonempty p) with simplify₁ p
-  simplify₁ (nonempty p) | (fail , p≈∅) =
-    (fail , (λ {_} → helper) , λ ())
-    where
-    helper : nonempty p ⊑ fail
-    helper (nonempty x∈p) with proj₁ p≈∅ x∈p
-    ... | ()
-  simplify₁ (nonempty p) | (p′ , p≈p′) =
-    (nonempty p′ , (λ {_} → helper₁) , λ {_} → helper₂)
-    where
-    helper₁ : nonempty p ⊑ nonempty p′
-    helper₁ (nonempty x∈p) = nonempty (proj₁ p≈p′ x∈p)
-
-    helper₂ : nonempty p′ ⊑ nonempty p
-    helper₂ (nonempty x∈p′) = nonempty (proj₂ p≈p′ x∈p′)
+  ... | (fail , p≈∅)  = _ , λ {_} → begin
+                        nonempty p     ≈⟨ nonempty-cong p≈∅ ⟩
+                        nonempty fail  ≈⟨ nonempty-fail ⟩
+                        fail           ∎
+  ... | (p′   , p≈p′) = _ , λ {_} → begin
+                        nonempty p   ≈⟨ nonempty-cong p≈p′ ⟩
+                        nonempty p′  ∎
 
   -- • cast:
 
   simplify₁ (cast refl p) with simplify₁ p
-  simplify₁ (cast refl p) | (p′ , p≈p′) =
-    (p′ , (λ {_} → helper) , λ x∈ → cast (proj₂ p≈p′ x∈))
-    where
-    helper : cast refl p ⊑ p′
-    helper (cast x∈p) = proj₁ p≈p′ x∈p
+  ... | (p′ , p≈p′) = _ , λ {_} → begin
+                      cast refl p   ≈⟨ cast-cong p≈p′ ⟩
+                      cast refl p′  ≈⟨ cast-correct ⟩
+                      p′            ∎
 
   -- Note that if an argument parser is delayed, then simplification
   -- is not applied recursively (because this could lead to
@@ -345,7 +355,7 @@ mutual
 
   simplify₁′ : ∀ {Tok R R′ xs} {ys : List R′}
                (p : ∞? (Parser Tok R xs) ys) → ∃ λ p′ → ♭? p ≈′ p′
-  simplify₁′ ⟪ p ⟫ = (♭ p , (λ x∈ → x∈) , λ x∈ → x∈)
+  simplify₁′ ⟪ p ⟫ = (♭ p , λ {_} → Equivalence.refl)
   simplify₁′ ⟨ p ⟩ = simplify₁ p
 
 -- The projections of simplify₁.
@@ -353,8 +363,5 @@ mutual
 simplify : ∀ {Tok R xs} → Parser Tok R xs → Parser Tok R xs
 simplify p = proj₁ (simplify₁ p)
 
-sound : ∀ {Tok R xs} {p : Parser Tok R xs} → simplify p ⊑ p
-sound = proj₂ (proj₂ (simplify₁ _))
-
-complete : ∀ {Tok R xs} {p : Parser Tok R xs} → p ⊑ simplify p
-complete = proj₁ (proj₂ (simplify₁ _))
+correct : ∀ {Tok R xs} {p : Parser Tok R xs} → p ≈ simplify p
+correct = proj₂ (simplify₁ _)

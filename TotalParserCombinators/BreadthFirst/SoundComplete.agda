@@ -1,8 +1,8 @@
 ------------------------------------------------------------------------
--- Correctness
+-- Soundness and completeness
 ------------------------------------------------------------------------
 
-module TotalParserCombinators.BreadthFirst.Correct where
+module TotalParserCombinators.BreadthFirst.SoundComplete where
 
 open import Category.Monad
 open import Coinduction

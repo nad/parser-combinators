@@ -9,7 +9,7 @@ module TotalParserCombinators.ExpressiveStrength where
 open import Coinduction
 open import Data.Bool
 open import Function
-open import Function.Inverse using (_⇿_)
+open import Function.Inverse as Inv using (_⇿_)
 open import Data.List as List
 open import Data.List.Any
 open Membership-≡
@@ -28,8 +28,6 @@ open import TotalParserCombinators.Lib
 private
   open module Tok = Token Bool _≟_ using (tok)
 import TotalParserCombinators.BreadthFirst as Backend
-import TotalParserCombinators.BreadthFirst.LeftInverse  as Left
-import TotalParserCombinators.BreadthFirst.RightInverse as Right
 
 ------------------------------------------------------------------------
 -- Boring lemmas
@@ -64,16 +62,7 @@ parser⇒fun : ∀ {R xs} (p : Parser Bool R xs) →
              ∃ λ (f : List Bool → List R) →
                ∀ x s → x ∈ p · s ⇿ x ∈ f s
 parser⇒fun p =
-  ( Backend.parseComplete p
-  , λ _ s → record
-      { to         = P.→-to-⟶ (Backend.complete s)
-      ; from       = P.→-to-⟶ (Backend.sound s)
-      ; inverse-of = record
-        { left-inverse-of  = Right.sound∘complete s
-        ; right-inverse-of = Left.complete∘sound s p
-        }
-      }
-  )
+  (Backend.parseComplete p , λ _ _ → Inv.sym Backend.correct)
 
 -- For every function there is a corresponding parser.
 
@@ -180,16 +169,18 @@ fun⇒parser′ {R} f =
   sound∘complete f [] x∈
     rewrite Return⋆.sound∘complete {Tok = Bool} x∈ = refl
   sound∘complete f (bs ∶ rs ∶ʳ true) x∈
-    with cast∈ refl lem refl $ cast∈ refl (P.sym lem) refl $
-               Tok.complete {t = true}
-       | cast∈∘cast∈-sym refl lem refl (Tok.complete {t = true})
-    where lem = ♭?♯? (List.map (const {B = Bool}) (f [ true ]))
+    with cast∈ refl lem refl $ cast∈ refl (P.sym lem) refl true∈
+       | Cast∈.∘sym refl lem refl true∈
+    where
+    lem   = ♭?♯? (List.map (const {B = Bool}) (f [ true ]))
+    true∈ = Tok.complete {t = true}
   ... | .Tok.complete | refl = sound∘complete (specialise f true) rs x∈
   sound∘complete f (bs ∶ rs ∶ʳ false) x∈
-    with cast∈ refl lem refl $ cast∈ refl (P.sym lem) refl $
-               Tok.complete {t = false}
-       | cast∈∘cast∈-sym refl lem refl (Tok.complete {t = false})
-    where lem = ♭?♯? (List.map (const {B = Bool}) (f [ false ]))
+    with cast∈ refl lem refl $ cast∈ refl (P.sym lem) refl false∈
+       | Cast∈.∘sym refl lem refl false∈
+    where
+    lem    = ♭?♯? (List.map (const {B = Bool}) (f [ false ]))
+    false∈ = Tok.complete {t = false}
   ... | .Tok.complete | refl = sound∘complete (specialise f false) rs x∈
 
   complete∘sound : ∀ {x} {s s′ : List Bool}

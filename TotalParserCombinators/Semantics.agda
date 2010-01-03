@@ -11,6 +11,7 @@ open import Data.List
 open import Data.Product
 open import Function
 open import Function.Equality using (_⟨$⟩_)
+open import Function.Equivalence
 open import Function.Inverse using (_⇿_; module Inverse)
 open import Data.Unit
 open import Relation.Binary.PropositionalEquality as P
@@ -80,20 +81,30 @@ p₁ ⊑ p₂ = ∀ {x s} → x ∈ p₁ · s → x ∈ p₂ · s
 -- Language equivalence.
 
 _≈_ : ∀ {Tok R xs₁ xs₂} → Parser Tok R xs₁ → Parser Tok R xs₂ → Set₁
-p₁ ≈ p₂ = p₁ ⊑ p₂ × p₂ ⊑ p₁
+p₁ ≈ p₂ = ∀ {x s} → x ∈ p₁ · s ⇔ x ∈ p₂ · s
 
 -- Parser equivalence.
 
 _≅_ : ∀ {Tok R xs₁ xs₂} → Parser Tok R xs₁ → Parser Tok R xs₂ → Set₁
 p₁ ≅ p₂ = ∀ {x s} → x ∈ p₁ · s ⇿ x ∈ p₂ · s
 
+-- p₁ ≈ p₂ iff both p₁ ⊑ p₂ and p₂ ⊑ p₁.
+
+≈⇔≤≥ : ∀ {Tok R xs₁ xs₂}
+         {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
+       p₁ ≈ p₂ ⇔ (p₁ ⊑ p₂ × p₂ ⊑ p₁)
+≈⇔≤≥ = equivalent
+         (λ p₁≈p₂  → ((λ {_} → _⟨$⟩_ (Equivalent.to   p₁≈p₂))
+                     , λ {_} → _⟨$⟩_ (Equivalent.from p₁≈p₂)))
+         (λ p₁≤≥p₂ {s} → equivalent (proj₁ p₁≤≥p₂ {s})
+                                    (proj₂ p₁≤≥p₂ {s}))
+
 -- Parser equivalence implies language equivalence.
 
 ≅⇒≈ : ∀ {Tok R xs₁ xs₂}
         {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
       p₁ ≅ p₂ → p₁ ≈ p₂
-≅⇒≈ p₁≅p₂ = (λ {_} → _⟨$⟩_ (Inverse.to   p₁≅p₂))
-          ,  λ {_} → _⟨$⟩_ (Inverse.from p₁≅p₂)
+≅⇒≈ p₁≅p₂ = Inverse.equivalence p₁≅p₂
 
 -- Language equivalence does not (in general) imply parser
 -- equivalence.
@@ -114,11 +125,8 @@ p₁ ≅ p₂ = ∀ {x s} → x ∈ p₁ · s ⇿ x ∈ p₂ · s
   p₁⊑p₂ (∣ˡ    return) = return
   p₁⊑p₂ (∣ʳ ._ return) = return
 
-  p₁≈p₂ : p₁ ≈ p₂
-  p₁≈p₂ = ((λ {_} → p₁⊑p₂) , λ {_} → ∣ˡ)
-
   p₁≅p₂ : p₁ ≅ p₂
-  p₁≅p₂ = hyp p₁≈p₂
+  p₁≅p₂ = hyp $ equivalent p₁⊑p₂ ∣ˡ
 
   lemma : ∀ {x s} (x∈₁ x∈₂ : x ∈ p₂ · s) → x∈₁ ≡ x∈₂
   lemma return return = refl
@@ -126,32 +134,24 @@ p₁ ≅ p₂ = ∀ {x s} → x ∈ p₁ · s ⇿ x ∈ p₂ · s
 ... | ()
 
 ------------------------------------------------------------------------
--- Simple cast lemmas
+-- A simple cast lemma
 
 cast∈ : ∀ {Tok R xs} {p p′ : Parser Tok R xs} {x x′ s s′} →
         x ≡ x′ → p ≡ p′ → s ≡ s′ → x ∈ p · s → x′ ∈ p′ · s′
 cast∈ refl refl refl x∈ = x∈
 
-cast∈-sym∘cast∈ :
-  ∀ {Tok R xs} {p p′ : Parser Tok R xs} {x x′ s s′}
-  (x≡x′ : x ≡ x′) (p≡p′ : p ≡ p′) (s≡s′ : s ≡ s′)
-  (x∈p : x ∈ p · s) →
-  cast∈ (sym x≡x′) (sym p≡p′) (sym s≡s′)
-        (cast∈ x≡x′ p≡p′ s≡s′ x∈p) ≡ x∈p
-cast∈-sym∘cast∈ refl refl refl _ = refl
+module Cast∈ where
 
-cast∈∘cast∈-sym :
-  ∀ {Tok R xs} {p p′ : Parser Tok R xs} {x x′ s s′}
-  (x≡x′ : x ≡ x′) (p≡p′ : p ≡ p′) (s≡s′ : s ≡ s′)
-  (x∈p : x′ ∈ p′ · s′) →
-  cast∈ x≡x′ p≡p′ s≡s′
-        (cast∈ (sym x≡x′) (sym p≡p′) (sym s≡s′) x∈p) ≡ x∈p
-cast∈∘cast∈-sym refl refl refl _ = refl
+  sym∘ : ∀ {Tok R xs} {p p′ : Parser Tok R xs} {x x′ s s′}
+         (x≡x′ : x ≡ x′) (p≡p′ : p ≡ p′) (s≡s′ : s ≡ s′)
+         (x∈p : x ∈ p · s) →
+         cast∈ (P.sym x≡x′) (P.sym p≡p′) (P.sym s≡s′)
+               (cast∈ x≡x′ p≡p′ s≡s′ x∈p) ≡ x∈p
+  sym∘ refl refl refl _ = refl
 
-drop-♭♯ : ∀ {Tok R R′ xs′} {p : Parser Tok R′ xs′} (xs : List R) →
-          ♭? (♯? {xs = xs} p) ⊑ p
-drop-♭♯ xs = cast∈ refl (♭?♯? xs) refl
-
-add-♭♯ : ∀ {Tok R R′ xs′} {p : Parser Tok R′ xs′} (xs : List R) →
-         p ⊑ ♭? (♯? {xs = xs} p)
-add-♭♯ xs = cast∈ refl (sym $ ♭?♯? xs) refl
+  ∘sym : ∀ {Tok R xs} {p p′ : Parser Tok R xs} {x x′ s s′}
+         (x≡x′ : x ≡ x′) (p≡p′ : p ≡ p′) (s≡s′ : s ≡ s′)
+         (x∈p : x′ ∈ p′ · s′) →
+         cast∈ x≡x′ p≡p′ s≡s′
+               (cast∈ (P.sym x≡x′) (P.sym p≡p′) (P.sym s≡s′) x∈p) ≡ x∈p
+  ∘sym refl refl refl _ = refl

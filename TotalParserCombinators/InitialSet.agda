@@ -10,16 +10,21 @@ open import Data.List.Any.Properties as AnyProp
 open import Data.Product as Prod
 open import Data.Sum
 open import Function
+open import Function.Equality using (_⟨$⟩_)
+open import Function.Equivalence
+  using (_⇔_; module Equivalent) renaming (_∘_ to _⟨∘⟩_)
+open import Function.Inverse as Inv
+  using (_⇿_; module Inverse)
 open import Relation.Binary
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality as P
 open import Relation.Binary.HeterogeneousEquality as H
   using (refl) renaming (_≅_ to _≅′_)
 
 open Any.Membership-≡
 open AnyProp.Membership-≡
 private
-  open module Eq {R : Set} = Setoid (Set-equality {R})
-    using () renaming (_≈_ to _≛_)
+  open module SetEq {R : Set} = Setoid (Set-equality {R})
+    using () renaming (_≈_ to _Set-≈_)
 
 open import TotalParserCombinators.Applicative
 open import TotalParserCombinators.Coinduction
@@ -183,14 +188,23 @@ complete∘sound (⟪ _ ⟫ ⊛ _)  ()
 complete∘sound (_ >>=! _)   ()
 complete∘sound (nonempty _) ()
 
+correct : ∀ {Tok R xs x} {p : Parser Tok R xs} → x ∈ p · [] ⇿ x ∈ xs
+correct {p = p} = record
+  { to         = P.→-to-⟶ complete
+  ; from       = P.→-to-⟶ $ sound p
+  ; inverse-of = record
+    { left-inverse-of  = sound∘complete
+    ; right-inverse-of = complete∘sound p
+    }
+  }
+
 ------------------------------------------------------------------------
 -- Equal parsers have equal initial sets
 
 same-set : ∀ {Tok R xs₁ xs₂}
              {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
-           p₁ ≈ p₂ → xs₁ ≛ xs₂
-same-set {Tok} {R} = Prod.map lemma lemma
-  where
-  lemma : ∀ {xs₁ xs₂} {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
-          p₁ ⊑ p₂ → xs₁ ⊆ xs₂
-  lemma p₁⊑p₂ = complete ∘ p₁⊑p₂ ∘ sound _
+           p₁ ≈ p₂ → xs₁ Set-≈ xs₂
+same-set p₁≈p₂ =
+  Inverse.equivalence correct ⟨∘⟩
+  p₁≈p₂ ⟨∘⟩
+  Inverse.equivalence (Inv.sym correct)

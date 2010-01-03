@@ -42,6 +42,14 @@ import TotalParserCombinators.BreadthFirst
 
 import TotalParserCombinators.CoinductiveEquality
 
+-- The relation _⊑_ is a partial order with respect to _≈_.
+
+import TotalParserCombinators.PartialOrder
+
+-- Language equivalence is a congruence.
+
+import TotalParserCombinators.Congruence.Language
+
 -- Proofs of various laws, for instance the monad laws.
 
 import TotalParserCombinators.Laws

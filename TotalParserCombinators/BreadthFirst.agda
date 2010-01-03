@@ -13,7 +13,7 @@ open import TotalParserCombinators.BreadthFirst.Derivative public
 
 -- The parser is sound and complete with respect to the semantics.
 
-open import TotalParserCombinators.BreadthFirst.Correct public
+open import TotalParserCombinators.BreadthFirst.SoundComplete public
   using (sound; complete; ∂-sound; ∂-complete)
 
 -- A proof showing that the breadth-first backend does not introduce
