@@ -10,7 +10,8 @@ open import Data.Product as Prod
 open import Function
 open import Function.Equivalence as Eq
   using (module Equivalent) renaming (_∘_ to _⟨∘⟩_)
-open import Function.Inverse using (_⇿_; module Inverse)
+open import Function.Inverse as Inv
+  using (_⇿_; module Inverse) renaming (_∘_ to _⟪∘⟫_)
 import Relation.Binary.PropositionalEquality as P
 
 open Any.Membership-≡
@@ -63,10 +64,17 @@ correct {s = s} {p} = record
 
 -- ∂ preserves language equivalence.
 
-∂-cong : ∀ {Tok R xs₁ xs₂ t}
-           {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
-         p₁ ≈ p₂ → ∂ p₁ t ≈ ∂ p₂ t
-∂-cong p₁≈p₂ =
+∂-cong-≈ : ∀ {Tok R xs₁ xs₂ t}
+             {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
+           p₁ ≈ p₂ → ∂ p₁ t ≈ ∂ p₂ t
+∂-cong-≈ p₁≈p₂ =
   Eq.sym (Inverse.equivalence ∂-correct) ⟨∘⟩
   p₁≈p₂ ⟨∘⟩
   Inverse.equivalence ∂-correct
+
+-- ∂ preserves parser equivalence.
+
+∂-cong-≅ : ∀ {Tok R xs₁ xs₂ t}
+             {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
+           p₁ ≅ p₂ → ∂ p₁ t ≅ ∂ p₂ t
+∂-cong-≅ p₁≅p₂ = Inv.sym ∂-correct ⟪∘⟫ p₁≅p₂ ⟪∘⟫ ∂-correct

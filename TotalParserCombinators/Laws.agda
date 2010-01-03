@@ -33,7 +33,7 @@ private
 open import TotalParserCombinators.Applicative
 open import TotalParserCombinators.BreadthFirst
 open import TotalParserCombinators.Coinduction
-open import TotalParserCombinators.CoinductiveEquality as CEq
+open import TotalParserCombinators.CoinductiveEquality
 open import TotalParserCombinators.Lib
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
@@ -46,31 +46,32 @@ module AdditiveMonoid where
   commutative : ∀ {Tok R xs₁ xs₂}
                 (p₁ : Parser Tok R xs₁) (p₂ : Parser Tok R xs₂) →
                 p₁ ∣ p₂ ≈ p₂ ∣ p₁
-  commutative p₁ p₂ = CEq.sound (commutative′ p₁ p₂)
+  commutative p₁ p₂ = LanguageEquivalence.sound (commutative′ p₁ p₂)
     where
     commutative′ : ∀ {Tok R xs₁ xs₂}
                    (p₁ : Parser Tok R xs₁) (p₂ : Parser Tok R xs₂) →
                    p₁ ∣ p₂ ≈′ p₂ ∣ p₁
     commutative′ {xs₁ = xs₁} {xs₂} p₁ p₂ =
-      lemma ∷ λ t → ♯ commutative′ (∂ p₁ t) (∂ p₂ t)
+      (λ {_} → lemma) ∷ λ t → ♯ commutative′ (∂ p₁ t) (∂ p₂ t)
       where
       lemma : _ ≛ _
       lemma = equivalent (AnyProp.Membership-≡.++-comm xs₁ xs₂)
                          (AnyProp.Membership-≡.++-comm xs₂ xs₁)
 
   left-identity : ∀ {Tok R xs} (p : Parser Tok R xs) → fail ∣ p ≈ p
-  left-identity = CEq.sound ∘ left-identity′
+  left-identity = LanguageEquivalence.sound ∘ left-identity′
     where
     left-identity′ : ∀ {Tok R xs} (p : Parser Tok R xs) → fail ∣ p ≈′ p
-    left-identity′ p = SetEq.refl ∷ λ t → ♯ left-identity′ (∂ p t)
+    left-identity′ p =
+      (λ {_} → SetEq.refl) ∷ λ t → ♯ left-identity′ (∂ p t)
 
   right-identity : ∀ {Tok R xs} (p : Parser Tok R xs) → p ∣ fail ≈ p
-  right-identity = CEq.sound ∘ right-identity′
+  right-identity = LanguageEquivalence.sound ∘ right-identity′
     where
     right-identity′ : ∀ {Tok R xs} (p : Parser Tok R xs) →
                       p ∣ fail ≈′ p
     right-identity′ {xs = xs} p =
-      lemma ∷ λ t → ♯ right-identity′ (∂ p t)
+      (λ {_} → lemma) ∷ λ t → ♯ right-identity′ (∂ p t)
       where
       lemma : _ ≛ _
       lemma = SetEq.reflexive (proj₂ ListMonoid.identity xs)
@@ -79,23 +80,25 @@ module AdditiveMonoid where
                 (p₁ : Parser Tok R xs₁) (p₂ : Parser Tok R xs₂)
                 (p₃ : Parser Tok R xs₃) →
                 p₁ ∣ (p₂ ∣ p₃) ≈ (p₁ ∣ p₂) ∣ p₃
-  associative p₁ p₂ p₃ = CEq.sound $ associative′ p₁ p₂ p₃
+  associative p₁ p₂ p₃ =
+    LanguageEquivalence.sound $ associative′ p₁ p₂ p₃
     where
     associative′ : ∀ {Tok R xs₁ xs₂ xs₃}
                    (p₁ : Parser Tok R xs₁) (p₂ : Parser Tok R xs₂)
                    (p₃ : Parser Tok R xs₃) →
                    p₁ ∣ (p₂ ∣ p₃) ≈′ (p₁ ∣ p₂) ∣ p₃
     associative′ {xs₁ = xs₁} {xs₂} {xs₃} p₁ p₂ p₃ =
-      lemma ∷ λ t → ♯ associative′ (∂ p₁ t) (∂ p₂ t) (∂ p₃ t)
+      (λ {_} → lemma) ∷ λ t → ♯ associative′ (∂ p₁ t) (∂ p₂ t) (∂ p₃ t)
       where
       lemma : _ ≛ _
       lemma = SetEq.reflexive (P.sym $ ListMonoid.assoc xs₁ xs₂ xs₃)
 
   idempotent : ∀ {Tok R xs} (p : Parser Tok R xs) → p ∣ p ≈ p
-  idempotent = CEq.sound ∘ idempotent′
+  idempotent = LanguageEquivalence.sound ∘ idempotent′
     where
     idempotent′ : ∀ {Tok R xs} (p : Parser Tok R xs) → p ∣ p ≈′ p
-    idempotent′ {xs = xs} p = lemma ∷ λ t → ♯ idempotent′ (∂ p t)
+    idempotent′ {xs = xs} p =
+      (λ {_} → lemma) ∷ λ t → ♯ idempotent′ (∂ p t)
       where
       lemma : _ ≛ _
       lemma = equivalent (AnyProp.Membership-≡.++-idempotent)

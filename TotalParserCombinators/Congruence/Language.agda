@@ -24,7 +24,7 @@ private
   module SetEq {A : Set} = Setoid (Any.Membership-≡.Set-equality {A})
 
 open import TotalParserCombinators.Coinduction
-open import TotalParserCombinators.CoinductiveEquality as CEq
+open import TotalParserCombinators.CoinductiveEquality
 open import TotalParserCombinators.Lib
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
@@ -103,7 +103,9 @@ token-cong = Equivalence.refl
            {p₄ : Parser Tok R xs₄} →
          p₁ ≈ p₃ → p₂ ≈ p₄ → p₁ ∣ p₂ ≈ p₃ ∣ p₄
 ∣-cong p₁≈p₃ p₂≈p₄ =
-  CEq.sound $ ∣-cong′ (CEq.complete p₁≈p₃) (CEq.complete p₂≈p₄)
+  LanguageEquivalence.sound $
+    ∣-cong′ (LanguageEquivalence.complete p₁≈p₃)
+            (LanguageEquivalence.complete p₂≈p₄)
   where
   open AnyProp.Membership-≡
 
@@ -124,7 +126,7 @@ token-cong = Equivalence.refl
              {p₂ : Parser Tok R₁ xs₂} →
            f₁ ≗ f₂ → p₁ ≈ p₂ → f₁ <$> p₁ ≈ f₂ <$> p₂
 <$>-cong {Tok} {R₁} {R₂} {f₁} {f₂} f₁≗f₂ =
-  CEq.sound ∘ <$>-cong′ ∘ CEq.complete
+  LanguageEquivalence.sound ∘ <$>-cong′ ∘ LanguageEquivalence.complete
   where
   open Any.Membership-≡.⊆-Reasoning
 
@@ -229,7 +231,10 @@ token-cong = Equivalence.refl
 nonempty-cong : ∀ {Tok R xs₁ xs₂}
                   {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
                 p₁ ≈ p₂ → nonempty p₁ ≈ nonempty p₂
-nonempty-cong = CEq.sound ∘ nonempty-cong′ ∘ CEq.complete
+nonempty-cong =
+  LanguageEquivalence.sound ∘
+  nonempty-cong′ ∘
+  LanguageEquivalence.complete
   where
   nonempty-cong′ : ∀ {Tok R xs₁ xs₂}
                      {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
@@ -241,7 +246,7 @@ cast-cong : ∀ {Tok R xs₁ xs₂ xs₁′ xs₂′}
               {eq₁ : xs₁ ≡ xs₁′} {eq₂ : xs₂ ≡ xs₂′} →
             p₁ ≈ p₂ → cast eq₁ p₁ ≈ cast eq₂ p₂
 cast-cong {xs₁ = xs₁} {xs₂} {p₁ = p₁} {p₂} {P.refl} {P.refl} =
-  CEq.sound ∘ cast-cong′ ∘ CEq.complete
+  LanguageEquivalence.sound ∘ cast-cong′ ∘ LanguageEquivalence.complete
   where
   cast-cong′ : p₁ ≈′ p₂ → cast P.refl p₁ ≈′ cast P.refl p₂
   cast-cong′ (init ∷ rest) = init ∷ rest

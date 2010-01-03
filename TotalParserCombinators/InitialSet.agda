@@ -14,7 +14,7 @@ open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence
   using (_⇔_; module Equivalent) renaming (_∘_ to _⟨∘⟩_)
 open import Function.Inverse as Inv
-  using (_⇿_; module Inverse)
+  using (_⇿_; module Inverse) renaming (_∘_ to _⟪∘⟫_)
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality as P
 open import Relation.Binary.HeterogeneousEquality as H
@@ -25,6 +25,8 @@ open AnyProp.Membership-≡
 private
   open module SetEq {R : Set} = Setoid (Set-equality {R})
     using () renaming (_≈_ to _Set-≈_)
+  open module BagEq {R : Set} = Setoid (Bag-equality {R})
+    using () renaming (_≈_ to _Bag-≈_)
 
 open import TotalParserCombinators.Applicative
 open import TotalParserCombinators.Coinduction
@@ -208,3 +210,8 @@ same-set p₁≈p₂ =
   Inverse.equivalence correct ⟨∘⟩
   p₁≈p₂ ⟨∘⟩
   Inverse.equivalence (Inv.sym correct)
+
+same-bag : ∀ {Tok R xs₁ xs₂}
+             {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
+           p₁ ≅ p₂ → xs₁ Bag-≈ xs₂
+same-bag p₁≅p₂ = correct ⟪∘⟫ p₁≅p₂ ⟪∘⟫ Inv.sym correct
