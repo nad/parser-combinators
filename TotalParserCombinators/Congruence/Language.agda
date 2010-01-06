@@ -12,6 +12,7 @@ open import Function.Equivalence as Eq
 open import Data.List as List
 import Data.List.Any as Any
 import Data.List.Any.Properties as AnyProp
+open import Data.List.Any.SetEquality
 import Data.List.Properties as ListProp
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Product as Prod
@@ -19,7 +20,6 @@ open import Data.Vec using (Vec; []; _∷_)
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality as P using (_≡_; _≗_)
 
-open Any.Membership-≡ using (_⊆_)
 private
   module SetEq {A : Set} = Setoid (Any.Membership-≡.Set-equality {A})
 
@@ -116,10 +116,8 @@ token-cong = Equivalence.refl
               {p₄ : Parser Tok R xs₄} →
             p₁ ≈′ p₃ → p₂ ≈′ p₄ → p₁ ∣ p₂ ≈′ p₃ ∣ p₄
   ∣-cong′ (init₁ ∷ rest₁) (init₂ ∷ rest₂) =
-    equivalent
-      (_⟨$⟩_ (Equivalent.to   init₁) ++-mono _⟨$⟩_ (Equivalent.to   init₂))
-      (_⟨$⟩_ (Equivalent.from init₁) ++-mono _⟨$⟩_ (Equivalent.from init₂)) ∷
-    λ t → ♯ ∣-cong′ (♭ (rest₁ t)) (♭ (rest₂ t))
+    (λ {_} → init₁ ++-cong init₂) ∷ λ t →
+    ♯ ∣-cong′ (♭ (rest₁ t)) (♭ (rest₂ t))
 
 <$>-cong : ∀ {Tok R₁ R₂} {f₁ f₂ : R₁ → R₂} {xs₁ xs₂}
              {p₁ : Parser Tok R₁ xs₁}
@@ -128,22 +126,11 @@ token-cong = Equivalence.refl
 <$>-cong {Tok} {R₁} {R₂} {f₁} {f₂} f₁≗f₂ =
   LanguageEquivalence.sound ∘ <$>-cong′ ∘ LanguageEquivalence.complete
   where
-  open Any.Membership-≡.⊆-Reasoning
-
-  lemma : ∀ {A B : Set} {f₁ f₂ : A → B} {xs ys} →
-          f₁ ≗ f₂ → xs ⊆ ys → List.map f₁ xs ⊆ List.map f₂ ys
-  lemma {f₁ = f₁} {f₂} {xs} {ys} f₁≗f₂ xs⊆ys = begin
-    List.map f₁ xs ≡⟨ ListProp.map-cong f₁≗f₂ xs ⟩
-    List.map f₂ xs ⊆⟨ AnyProp.Membership-≡.map-mono xs⊆ys ⟩
-    List.map f₂ ys ∎
-
   <$>-cong′ : ∀ {xs₁ xs₂}
                 {p₁ : Parser Tok R₁ xs₁} {p₂ : Parser Tok R₁ xs₂} →
               p₁ ≈′ p₂ → f₁ <$> p₁ ≈′ f₂ <$> p₂
   <$>-cong′ (init ∷ rest) =
-    equivalent (lemma          f₁≗f₂  $ _⟨$⟩_ (Equivalent.to   init))
-               (lemma (P.sym ∘ f₁≗f₂) $ _⟨$⟩_ (Equivalent.from init)) ∷
-    λ t → ♯ <$>-cong′ (♭ (rest t))
+    (λ {_} → map-cong f₁≗f₂ init) ∷ λ t → ♯ <$>-cong′ (♭ (rest t))
 
 ⊛-cong : ∀ {Tok R₁ R₂ xs₁ xs₂ xs₃ xs₄}
            {p₁ : ∞? (Parser Tok (R₁ → R₂) xs₁) xs₂}
@@ -239,7 +226,7 @@ nonempty-cong =
   nonempty-cong′ : ∀ {Tok R xs₁ xs₂}
                      {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
                    p₁ ≈′ p₂ → nonempty p₁ ≈′ nonempty p₂
-  nonempty-cong′ (_ ∷ rest) = SetEq.refl ∷ rest
+  nonempty-cong′ (_ ∷ rest) = (λ {_} → SetEq.refl) ∷ rest
 
 cast-cong : ∀ {Tok R xs₁ xs₂ xs₁′ xs₂′}
               {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂}
@@ -249,7 +236,7 @@ cast-cong {xs₁ = xs₁} {xs₂} {p₁ = p₁} {p₂} {P.refl} {P.refl} =
   LanguageEquivalence.sound ∘ cast-cong′ ∘ LanguageEquivalence.complete
   where
   cast-cong′ : p₁ ≈′ p₂ → cast P.refl p₁ ≈′ cast P.refl p₂
-  cast-cong′ (init ∷ rest) = init ∷ rest
+  cast-cong′ (init ∷ rest) = (λ {_} → init) ∷ rest
 
 ⋆-cong : ∀ {Tok R} {p₁ p₂ : Parser Tok R []} →
          p₁ ≈ p₂ → p₁ ⋆ ≈ p₂ ⋆
