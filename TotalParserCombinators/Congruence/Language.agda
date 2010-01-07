@@ -56,7 +56,7 @@ module ≈-Reasoning {Tok R : Set} where
 
   infix  4 _IsRelatedTo_
   infix  2 _∎
-  infixr 2 _≈⟨_⟩_
+  infixr 2 _≈⟨_⟩_ _≅⟨_⟩_
   infix  1 begin_
 
   data _IsRelatedTo_ {xs₁ xs₂}
@@ -74,6 +74,12 @@ module ≈-Reasoning {Tok R : Set} where
              {p₃ : Parser Tok R xs₃} →
            p₁ ≈ p₂ → p₂ IsRelatedTo p₃ → p₁ IsRelatedTo p₃
   _ ≈⟨ p₁≈p₂ ⟩ relTo p₂≈p₃ = relTo (Equivalence.trans p₁≈p₂ p₂≈p₃)
+
+  _≅⟨_⟩_ : ∀ {xs₁ xs₂ xs₃}
+             (p₁ : Parser Tok R xs₁) {p₂ : Parser Tok R xs₂}
+             {p₃ : Parser Tok R xs₃} →
+           p₁ ≅ p₂ → p₂ IsRelatedTo p₃ → p₁ IsRelatedTo p₃
+  _ ≅⟨ p₁≅p₂ ⟩ relTo p₂≈p₃ = relTo (Equivalence.trans (≅⇒≈ p₁≅p₂) p₂≈p₃)
 
   _∎ : ∀ {xs} (p : Parser Tok R xs) → p IsRelatedTo p
   _∎ _ = relTo Equivalence.refl
