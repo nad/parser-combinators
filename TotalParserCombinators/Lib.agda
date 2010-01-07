@@ -9,7 +9,7 @@ open import Coinduction
 open import Function
 open import Function.Equality using (_⟶_)
 open import Function.Injection using (Injection; Injective)
-open import Function.Inverse using (_⇿_)
+open import Function.Inverse using (_⇿_; module Inverse)
 open import Data.List as List
 open import Data.List.Any as Any
 open import Data.List.Any.Properties as AnyProp
@@ -189,16 +189,6 @@ module KleeneStar where
 
 -- These variants hide the use of ∞?.
 
-private
-
-  drop-♭♯ : ∀ {Tok R R′ xs′} {p : Parser Tok R′ xs′} (xs : List R) →
-            ♭? (♯? {xs = xs} p) ⊑ p
-  drop-♭♯ xs = cast∈ refl (♭?♯? xs) refl
-
-  add-♭♯ : ∀ {Tok R R′ xs′} {p : Parser Tok R′ xs′} (xs : List R) →
-           p ⊑ ♭? (♯? {xs = xs} p)
-  add-♭♯ xs = cast∈ refl (P.sym $ ♭?♯? xs) refl
-
 infixl 10 _⊙_
 
 _⊙_ : ∀ {Tok R₁ R₂ fs xs} →
@@ -221,7 +211,7 @@ module ⊙ {Tok R₁ R₂ : Set} where
                {p₁ : Parser Tok (R₁ → R₂) fs}
                {p₂ : Parser Tok R₁        xs} →
              f ∈ p₁ · s₁ → x ∈ p₂ · s₂ → f x ∈ p₁ ⊙ p₂ · s₁ ++ s₂
-  complete {fs} {xs} ∈p₁ ∈p₂ = add-♭♯ xs ∈p₁ ⊛ add-♭♯ fs ∈p₂
+  complete {fs} {xs} ∈p₁ ∈p₂ = ♭♯.add xs ∈p₁ ⊛ ♭♯.add fs ∈p₂
 
   private
 
@@ -235,7 +225,7 @@ module ⊙ {Tok R₁ R₂ : Set} where
             {p₁ : Parser Tok (R₁ → R₂) fs}
             {p₂ : Parser Tok R₁        xs} →
           fx ∈ p₁ ⊙ p₂ · s → p₁ ⊙ p₂ · s ∋ fx
-  sound {fs} xs (∈p₁ ⊛ ∈p₂) = drop-♭♯ xs ∈p₁ ⊙′ drop-♭♯ fs ∈p₂
+  sound {fs} xs (∈p₁ ⊛ ∈p₂) = ♭♯.drop xs ∈p₁ ⊙′ ♭♯.drop fs ∈p₂
 
   private
 
@@ -245,8 +235,8 @@ module ⊙ {Tok R₁ R₂ : Set} where
                       (fx∈ : p₁ ⊙ p₂ · s ∋ fx) →
                       sound xs (complete′ fx∈) ≡ fx∈
     sound∘complete′ {fs} {xs} (f∈ ⊙′ x∈)
-      rewrite Cast∈.∘sym refl (♭?♯? xs) refl f∈
-            | Cast∈.∘sym refl (♭?♯? fs) refl x∈ =
+      rewrite Inverse.right-inverse-of (♭♯.correct xs) f∈
+            | Inverse.right-inverse-of (♭♯.correct fs) x∈ =
               refl
 
     complete′∘sound : ∀ {fs} xs {fx s}
@@ -255,8 +245,8 @@ module ⊙ {Tok R₁ R₂ : Set} where
                       (fx∈ : fx ∈ p₁ ⊙ p₂ · s) →
                       complete′ (sound xs fx∈) ≡ fx∈
     complete′∘sound {fs} xs (∈p₁ ⊛ ∈p₂)
-      rewrite Cast∈.sym∘ refl (♭?♯? xs) refl ∈p₁
-            | Cast∈.sym∘ refl (♭?♯? fs) refl ∈p₂ =
+      rewrite Inverse.left-inverse-of (♭♯.correct xs) ∈p₁
+            | Inverse.left-inverse-of (♭♯.correct fs) ∈p₂ =
               refl
 
   correct : ∀ {fs} xs {s fx}
@@ -285,7 +275,7 @@ module ⟫= {Tok R₁ R₂ : Set} where
                {p₁ : Parser Tok R₁ xs}
                {p₂ : ((x : R₁) → Parser Tok R₂ (f x))} →
              x ∈ p₁ · s₁ → y ∈ p₂ x · s₂ → y ∈ p₁ ⟫= p₂ · s₁ ++ s₂
-  complete {xs} ∈p₁ ∈p₂x = ∈p₁ >>= add-♭♯ xs ∈p₂x
+  complete {xs} ∈p₁ ∈p₂x = ∈p₁ >>= ♭♯.add xs ∈p₂x
 
   infixl 10 _⟫=′_
   infix   4 _⟫=_·_∋_
@@ -301,7 +291,7 @@ module ⟫= {Tok R₁ R₂ : Set} where
             {p₁ : Parser Tok R₁ xs}
             {p₂ : ((x : R₁) → Parser Tok R₂ (f x))} →
           y ∈ p₁ ⟫= p₂ · s → p₁ ⟫= p₂ · s ∋ y
-  sound xs (∈p₁ >>= ∈p₂x) = ∈p₁ ⟫=′ drop-♭♯ xs ∈p₂x
+  sound xs (∈p₁ >>= ∈p₂x) = ∈p₁ ⟫=′ ♭♯.drop xs ∈p₂x
 
 ------------------------------------------------------------------------
 -- A combinator for recognising a string a fixed number of times

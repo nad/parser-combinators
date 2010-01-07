@@ -7,12 +7,12 @@
 module TotalParserCombinators.Semantics where
 
 open import Coinduction
-open import Data.List
+open import Data.List hiding (drop)
 open import Data.Product
 open import Function
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence
-open import Function.Inverse using (_⇿_; module Inverse)
+open import Function.Inverse as Inv using (_⇿_; module Inverse)
 open import Data.Unit
 open import Relation.Binary.PropositionalEquality as P
 open import Relation.Nullary
@@ -155,3 +155,33 @@ module Cast∈ where
          cast∈ x≡x′ p≡p′ s≡s′
                (cast∈ (P.sym x≡x′) (P.sym p≡p′) (P.sym s≡s′) x∈p) ≡ x∈p
   ∘sym refl refl refl _ = refl
+
+  correct : ∀ {Tok R xs} {p p′ : Parser Tok R xs} {x x′ s s′}
+            (x≡x′ : x ≡ x′) (p≡p′ : p ≡ p′) (s≡s′ : s ≡ s′) →
+            x ∈ p · s ⇿ x′ ∈ p′ · s′
+  correct x≡x′ p≡p′ s≡s′ = record
+    { to         = P.→-to-⟶ $ cast∈ x≡x′ p≡p′ s≡s′
+    ; from       = P.→-to-⟶ $
+                     cast∈ (P.sym x≡x′) (P.sym p≡p′) (P.sym s≡s′)
+    ; inverse-of = record
+      { left-inverse-of  = sym∘ x≡x′ p≡p′ s≡s′
+      ; right-inverse-of = ∘sym x≡x′ p≡p′ s≡s′
+      }
+    }
+
+------------------------------------------------------------------------
+-- Lemmas about conditional coinduction
+
+module ♭♯ where
+
+  drop : ∀ {Tok R R′ xs′} {p : Parser Tok R′ xs′} (xs : List R) →
+         ♭? (♯? {xs = xs} p) ⊑ p
+  drop xs = cast∈ refl (♭?♯? xs) refl
+
+  add : ∀ {Tok R R′ xs′} {p : Parser Tok R′ xs′} (xs : List R) →
+        p ⊑ ♭? (♯? {xs = xs} p)
+  add xs = cast∈ refl (P.sym $ ♭?♯? xs) refl
+
+  correct : ∀ {Tok R R′ xs′} (xs : List R) {p : Parser Tok R′ xs′} →
+            ♭? (♯? {xs = xs} p) ≅ p
+  correct xs = Cast∈.correct refl (♭?♯? xs) refl

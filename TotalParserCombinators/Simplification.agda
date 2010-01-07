@@ -19,6 +19,7 @@ private module LM {Tok} = Monoid (List.monoid Tok)
 
 open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Congruence.Language
+import TotalParserCombinators.Congruence.Parser as CP
 open import TotalParserCombinators.Laws
 open import TotalParserCombinators.Lib
 open import TotalParserCombinators.Parser
@@ -88,10 +89,6 @@ cast-correct {eq = eq} {p} = equivalent helper cast
   where
   helper : cast eq p ⊑ p
   helper (cast x∈p) = x∈p
-
-♭♯-correct : ∀ {Tok R R′ xs′} (xs : List R) {p : Parser Tok R′ xs′} →
-             ♭? (♯? {xs = xs} p) ≈ p
-♭♯-correct xs {p} rewrite ♭?♯? xs {p} = Equivalence.refl
 
 ------------------------------------------------------------------------
 -- Helpers
@@ -229,7 +226,7 @@ mutual
     helper {xs = xs} p₁ p₂ (fail , p₁≈∅) _ refl refl = _ , λ {_} → begin
       p₁      ⊛ p₂    ≈⟨ ⊛-cong (begin
                            ♭? p₁                   ≈⟨ p₁≈∅ ⟩
-                           fail                    ≈⟨ Equivalence.sym $ ♭♯-correct xs ⟩
+                           fail                    ≅⟨ CP.Equivalence.sym $ ♭♯.correct xs ⟩
                            ♭? {xs = xs} (♯? fail)  ∎)
                            (Equivalence.refl {p = ♭? p₂}) ⟩
       ♯? fail ⊛ p₂    ≈⟨ ⊙-IdempotentSemiring.left-zero-⊛ p₂ ⟩
@@ -239,7 +236,7 @@ mutual
     helper {fs = fs} p₁ p₂ _ (fail , p₂≈∅) refl refl = _ , λ {_} → begin
       p₁ ⊛ p₂       ≈⟨ ⊛-cong (Equivalence.refl {p = ♭? p₁}) (begin
                          ♭? p₂                   ≈⟨ p₂≈∅ ⟩
-                         fail                    ≈⟨ Equivalence.sym $ ♭♯-correct fs ⟩
+                         fail                    ≅⟨ CP.Equivalence.sym $ ♭♯.correct fs ⟩
                          ♭? {xs = fs} (♯? fail)  ∎) ⟩
       p₁ ⊛ ♯? fail  ≈⟨ ⊙-IdempotentSemiring.right-zero-⊛ p₁ ⟩
       fail          ∎
@@ -264,11 +261,11 @@ mutual
         p₁  ⊛ p₂   ≈⟨ ⊛-cong
                         (begin
                            ♭? p₁                  ≈⟨ p₁≈p₁′ ⟩
-                           p₁′                    ≈⟨ Equivalence.sym $ ♭♯-correct xs ⟩
+                           p₁′                    ≅⟨ CP.Equivalence.sym $ ♭♯.correct xs ⟩
                            ♭? {xs = xs} (♯? p₁′)  ∎)
                         (begin
                            ♭? p₂                  ≈⟨ p₂≈p₂′ ⟩
-                           p₂′                    ≈⟨ Equivalence.sym $ ♭♯-correct fs ⟩
+                           p₂′                    ≅⟨ CP.Equivalence.sym $ ♭♯.correct fs ⟩
                            ♭? {xs = fs} (♯? p₂′)  ∎) ⟩
         p₁′ ⊙ p₂′  ∎
 
