@@ -431,7 +431,7 @@ module *-Continuity where
   least-upper-bound {R₁ = R₁} {fs = fs} {xs₃} {xs} _ _ _ _ ub ∈⊙⋆⊙
     with ⊙.sound xs₃ ∈⊙⋆⊙
   ... | ∈⊙⋆ ⊙′ ∈p₃ with ⊙.sound {fs = fs} [ [] ] ∈⊙⋆
-  ... | ∈p₁ ⊙′ ∈p₂⋆ with Exactly.⋆⊑↑ ∈p₂⋆
+  ... | ∈p₁ ⊙′ ∈p₂⋆ with Exactly.⋆⊑∃↑ ∈p₂⋆
   ... | (n , ∈p₂ⁿ) = ub n (⊙.complete (⊙.complete ∈p₁ ∈p₂ⁿ) ∈p₃)
 
   -- However, if we allow arbitrary argument parsers, then we cannot

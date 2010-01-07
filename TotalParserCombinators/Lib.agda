@@ -242,9 +242,9 @@ module Exactly where
     helper (suc n) ∈⊙ⁿ    with ⊙.sound (^-initial [] n) ∈⊙ⁿ
     ... | <$> ∈p ⊙′ ∈pⁿ = ∈p ∷ helper n ∈pⁿ
 
-  ⋆⊑↑ : ∀ {Tok R} {p : Parser Tok R []} {xs s} →
-        xs ∈ p ⋆ · s → ∃ λ i → xs ∈ p ↑ i · s
-  ⋆⊑↑ {R = R} {p} ∈p⋆ with helper $ KleeneStar.sound ∈p⋆
+  ⋆⊑∃↑ : ∀ {Tok R} {p : Parser Tok R []} {xs s} →
+         xs ∈ p ⋆ · s → ∃ λ i → xs ∈ p ↑ i · s
+  ⋆⊑∃↑ {R = R} {p} ∈p⋆ with helper $ KleeneStar.sound ∈p⋆
     where
     helper : ∀ {xs s} → xs ∈[ p ]⋆· s →
              ∃₂ λ i (ys : Vec R i) →
