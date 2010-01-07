@@ -46,9 +46,10 @@ import TotalParserCombinators.CoinductiveEquality
 
 import TotalParserCombinators.PartialOrder
 
--- Language equivalence is a congruence.
+-- Language equivalence and parser equivalence are both congruences.
 
 import TotalParserCombinators.Congruence.Language
+import TotalParserCombinators.Congruence.Parser
 
 -- Proofs of various laws, for instance the monad laws.
 

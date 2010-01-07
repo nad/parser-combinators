@@ -9,6 +9,7 @@ open import Coinduction
 open import Function
 open import Function.Equality using (_⟶_)
 open import Function.Injection using (Injection; Injective)
+open import Function.Inverse using (_⇿_)
 open import Data.List as List
 open import Data.List.Any as Any
 open import Data.List.Any.Properties as AnyProp
@@ -67,25 +68,29 @@ module KleeneStar where
 
   -- The implementation is correct.
 
-  sound : ∀ {Tok R xs s} {p : Parser Tok R []} →
-          xs ∈ p ⋆ · s → xs ∈[ p ]⋆· s
-  sound xs∈ = sound′ xs∈ refl
-    where
-    sound′ : ∀ {Tok R xs ys s}
-               {p : Parser Tok R []} {p⋆ : Parser Tok (List R) ys} →
-             xs ∈ p⋆ · s → p⋆ ≅ p ⋆ → xs ∈[ p ]⋆· s
-    sound′ (∣ˡ []∈)             refl with []∈
-    ... | return = []
-    sound′ (∣ʳ .([ [] ]) x∷xs∈) refl with x∷xs∈
-    ... | <$> x∈p ⊛ xs∈p⋆ = x∈p ∷ sound xs∈p⋆
-    sound′ return       ()
-    sound′ token        ()
-    sound′ (<$> _)      ()
-    sound′ (_ ⊛ _)      ()
-    sound′ (_ >>= _)    ()
-    sound′ (_ >>=! _)   ()
-    sound′ (nonempty _) ()
-    sound′ (cast _)     ()
+  mutual
+
+    sound : ∀ {Tok R xs s} {p : Parser Tok R []} →
+            xs ∈ p ⋆ · s → xs ∈[ p ]⋆· s
+    sound xs∈ = sound′ xs∈ refl
+
+    private
+
+      sound′ : ∀ {Tok R xs ys s}
+                 {p : Parser Tok R []} {p⋆ : Parser Tok (List R) ys} →
+               xs ∈ p⋆ · s → p⋆ ≅ p ⋆ → xs ∈[ p ]⋆· s
+      sound′ (∣ˡ []∈)             refl with []∈
+      ... | return = []
+      sound′ (∣ʳ .([ [] ]) x∷xs∈) refl with x∷xs∈
+      ... | <$> x∈p ⊛ xs∈p⋆ = x∈p ∷ sound xs∈p⋆
+      sound′ return       ()
+      sound′ token        ()
+      sound′ (<$> _)      ()
+      sound′ (_ ⊛ _)      ()
+      sound′ (_ >>= _)    ()
+      sound′ (_ >>=! _)   ()
+      sound′ (nonempty _) ()
+      sound′ (cast _)     ()
 
   complete : ∀ {Tok R xs s} {p : Parser Tok R []} →
              xs ∈[ p ]⋆· s → xs ∈ p ⋆ · s
@@ -94,6 +99,56 @@ module KleeneStar where
   ... | ()
   complete (_∷_ {s₁ = _ ∷ _} x∈p xs∈p⋆) =
     ∣ʳ [ [] ] (<$> x∈p ⊛ complete xs∈p⋆)
+
+  mutual
+
+    complete∘sound :
+      ∀ {Tok R xs s} {p : Parser Tok R []} (xs∈ : xs ∈ p ⋆ · s) →
+      complete (sound xs∈) ≡ xs∈
+    complete∘sound xs∈ = H.≅-to-≡ $ complete∘sound′ xs∈ refl
+
+    private
+
+      complete∘sound′ :
+        ∀ {Tok R xs ys s}
+          {p : Parser Tok R []} {p⋆ : Parser Tok (List R) ys}
+        (xs∈ : xs ∈ p⋆ · s) (eq : p⋆ ≅ p ⋆) →
+        complete (sound′ xs∈ eq) ≅ xs∈
+      complete∘sound′ (∣ˡ []∈)             refl with []∈
+      ... | return = refl
+      complete∘sound′ (∣ʳ .([ [] ]) x∷xs∈) refl with x∷xs∈
+      ... | _⊛_ {s₁ = _ ∷ _} (<$> x∈p) xs∈p⋆
+            rewrite complete∘sound xs∈p⋆ = refl
+      ... | _⊛_ {s₁ = []}    (<$> x∈p) xs∈p⋆ with I.complete x∈p
+      ...   | ()
+      complete∘sound′ return       ()
+      complete∘sound′ token        ()
+      complete∘sound′ (<$> _)      ()
+      complete∘sound′ (_ ⊛ _)      ()
+      complete∘sound′ (_ >>= _)    ()
+      complete∘sound′ (_ >>=! _)   ()
+      complete∘sound′ (nonempty _) ()
+      complete∘sound′ (cast _)     ()
+
+  sound∘complete : ∀ {Tok R xs s} {p : Parser Tok R []}
+                   (xs∈ : xs ∈[ p ]⋆· s) →
+                   sound (complete xs∈) ≡ xs∈
+  sound∘complete []                           = refl
+  sound∘complete (_∷_ {s₁ = []}    x∈p xs∈p⋆) with I.complete x∈p
+  ... | ()
+  sound∘complete (_∷_ {s₁ = _ ∷ _} x∈p xs∈p⋆) =
+    P.cong (_∷_ x∈p) $ sound∘complete xs∈p⋆
+
+  correct : ∀ {Tok R xs s} {p : Parser Tok R []} →
+            xs ∈ p ⋆ · s ⇿ xs ∈[ p ]⋆· s
+  correct = record
+    { to         = P.→-to-⟶ sound
+    ; from       = P.→-to-⟶ complete
+    ; inverse-of = record
+      { left-inverse-of  = complete∘sound
+      ; right-inverse-of = sound∘complete
+      }
+    }
 
   -- The definition of _⋆ is restricted to non-nullable parsers. This
   -- restriction cannot be removed: an unrestricted Kleene star
@@ -153,12 +208,6 @@ p₁ ⊙ p₂ = ♯? p₁ ⊛ ♯? p₂
 
 module ⊙ {Tok R₁ R₂ : Set} where
 
-  complete : ∀ {fs xs s₁ s₂ f x}
-               {p₁ : Parser Tok (R₁ → R₂) fs}
-               {p₂ : Parser Tok R₁        xs} →
-             f ∈ p₁ · s₁ → x ∈ p₂ · s₂ → f x ∈ p₁ ⊙ p₂ · s₁ ++ s₂
-  complete {fs} {xs} ∈p₁ ∈p₂ = add-♭♯ xs ∈p₁ ⊛ add-♭♯ fs ∈p₂
-
   infixl 10 _⊙′_
   infix   4 _⊙_·_∋_
 
@@ -168,11 +217,60 @@ module ⊙ {Tok R₁ R₂ : Set} where
     _⊙′_ : ∀ {f x s₁ s₂} (∈p₁ : f ∈ p₁ · s₁) (∈p₂ : x ∈ p₂ · s₂) →
            p₁ ⊙ p₂ · s₁ ++ s₂ ∋ f x
 
+  complete : ∀ {fs xs s₁ s₂ f x}
+               {p₁ : Parser Tok (R₁ → R₂) fs}
+               {p₂ : Parser Tok R₁        xs} →
+             f ∈ p₁ · s₁ → x ∈ p₂ · s₂ → f x ∈ p₁ ⊙ p₂ · s₁ ++ s₂
+  complete {fs} {xs} ∈p₁ ∈p₂ = add-♭♯ xs ∈p₁ ⊛ add-♭♯ fs ∈p₂
+
+  private
+
+    complete′ : ∀ {fs xs s fx}
+                  {p₁ : Parser Tok (R₁ → R₂) fs}
+                  {p₂ : Parser Tok R₁        xs} →
+                p₁ ⊙ p₂ · s ∋ fx → fx ∈ p₁ ⊙ p₂ · s
+    complete′ (∈p₁ ⊙′ ∈p₂) = complete ∈p₁ ∈p₂
+
   sound : ∀ {fs} xs {fx s}
             {p₁ : Parser Tok (R₁ → R₂) fs}
             {p₂ : Parser Tok R₁        xs} →
           fx ∈ p₁ ⊙ p₂ · s → p₁ ⊙ p₂ · s ∋ fx
   sound {fs} xs (∈p₁ ⊛ ∈p₂) = drop-♭♯ xs ∈p₁ ⊙′ drop-♭♯ fs ∈p₂
+
+  private
+
+    sound∘complete′ : ∀ {fs xs s fx}
+                        {p₁ : Parser Tok (R₁ → R₂) fs}
+                        {p₂ : Parser Tok R₁        xs}
+                      (fx∈ : p₁ ⊙ p₂ · s ∋ fx) →
+                      sound xs (complete′ fx∈) ≡ fx∈
+    sound∘complete′ {fs} {xs} (f∈ ⊙′ x∈)
+      rewrite Cast∈.∘sym refl (♭?♯? xs) refl f∈
+            | Cast∈.∘sym refl (♭?♯? fs) refl x∈ =
+              refl
+
+    complete′∘sound : ∀ {fs} xs {fx s}
+                        {p₁ : Parser Tok (R₁ → R₂) fs}
+                        {p₂ : Parser Tok R₁        xs}
+                      (fx∈ : fx ∈ p₁ ⊙ p₂ · s) →
+                      complete′ (sound xs fx∈) ≡ fx∈
+    complete′∘sound {fs} xs (∈p₁ ⊛ ∈p₂)
+      rewrite Cast∈.sym∘ refl (♭?♯? xs) refl ∈p₁
+            | Cast∈.sym∘ refl (♭?♯? fs) refl ∈p₂ =
+              refl
+
+  correct : ∀ {fs} xs {s fx}
+              {p₁ : Parser Tok (R₁ → R₂) fs}
+              {p₂ : Parser Tok R₁        xs} →
+            p₁ ⊙ p₂ · s ∋ fx ⇿ fx ∈ p₁ ⊙ p₂ · s
+  correct xs = record
+    { to         = P.→-to-⟶ complete′
+    ; from       = P.→-to-⟶ $ sound xs
+    ; inverse-of = record
+      { left-inverse-of  = sound∘complete′
+      ; right-inverse-of = complete′∘sound xs
+      }
+    }
 
 infixl 10 _⟫=_
 
