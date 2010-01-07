@@ -33,7 +33,7 @@ infixl  5 _∣_
 --   p : Parser Tok R xs
 -- we have
 --   x ∈ xs  iff  x ∈ p · []
--- (see TotalParserCombinators.Semantics).
+-- (see TotalParserCombinators.InitialSet).
 
 data Parser (Tok : Set) : (R : Set) → List R → Set1 where
   return   : ∀ {R} (x : R) → Parser Tok R (return′ x)
@@ -70,7 +70,7 @@ data Parser (Tok : Set) : (R : Set) → List R → Set1 where
 -- x in xs, but this seems complicated.
 
 -- Note that it would be reasonable to generalise the casts to accept
--- /set/ equality instead of just list equality. However, I have not
+-- /bag/ equality instead of just list equality. However, I have not
 -- yet found a use for this generalisation.
 
 -- Note also that these parsers can be both left and right recursive:
