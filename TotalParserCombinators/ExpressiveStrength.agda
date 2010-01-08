@@ -34,11 +34,6 @@ import TotalParserCombinators.BreadthFirst as Backend
 
 private
 
-  indices-equal : {A : Set} {xs ys : List A}
-                  {rxs : Reverse xs} {rys : Reverse ys} →
-                  rxs ≅ rys → xs ≡ ys
-  indices-equal refl = refl
-
   η-cast∈ : ∀ {Tok R x xs s} {p : Parser Tok R xs} {x∈} →
             ((x∈′ : x ∈ p · s) → x∈′ ≡ x∈) →
             ∀ {R′} (xs′ : List R′)
@@ -128,7 +123,7 @@ fun⇒parser′ {R} f =
       ; inverse-of = record
         { right-inverse-of = sound∘complete f (reverseView s)
         ; left-inverse-of  = λ x∈ →
-            complete∘sound f (reverseView s) _ x∈ refl
+            complete∘sound f (reverseView s) _ x∈ refl refl
         }
       }
   )
@@ -185,40 +180,40 @@ fun⇒parser′ {R} f =
 
   complete∘sound : ∀ {x} {s s′ : List Bool}
                    f (rs : Reverse s) (rs′ : Reverse s′)
-                   (x∈pf : x ∈ p f · s) → rs ≅ rs′ →
+                   (x∈pf : x ∈ p f · s) → s ≡ s′ → rs ≅ rs′ →
                    complete f rs (sound f x∈pf) ≡ x∈pf
 
-  complete∘sound f rs rs′ (∣ʳ ._ x∈) eq
+  complete∘sound f rs rs′ (∣ʳ ._ x∈) s≡ rs≅
     with Return⋆.sound (f []) x∈
        | Return⋆.complete∘sound (f []) x∈
-  complete∘sound f ._ []                 (∣ʳ ._ .(Return⋆.complete x∈′)) refl | (refl , x∈′) | refl = refl
-  complete∘sound f _  ([]      ∶ _ ∶ʳ _) (∣ʳ ._ .(Return⋆.complete x∈′)) ()   | (refl , x∈′) | refl
-  complete∘sound f _  ((_ ∷ _) ∶ _ ∶ʳ _) (∣ʳ ._ .(Return⋆.complete x∈′)) ()   | (refl , x∈′) | refl
+  complete∘sound f ._ []                 (∣ʳ ._ .(Return⋆.complete x∈′)) refl refl | (refl , x∈′) | refl = refl
+  complete∘sound f _  ([]      ∶ _ ∶ʳ _) (∣ʳ ._ .(Return⋆.complete x∈′)) ()   _    | (refl , x∈′) | refl
+  complete∘sound f _  ((_ ∷ _) ∶ _ ∶ʳ _) (∣ʳ ._ .(Return⋆.complete x∈′)) ()   _    | (refl , x∈′) | refl
 
-  complete∘sound f rs rs′ (∣ˡ (∣ˡ (<$> x∈ ⊛ t∈))) eq
+  complete∘sound f rs rs′ (∣ˡ (∣ˡ (<$> x∈ ⊛ t∈))) s≡ rs≅
     with Tok.sound (cast∈ refl (♭?♯? (List.map const (f [ true  ]))) refl t∈)
-  complete∘sound f rs (bs′ ∶ rs′ ∶ʳ true)  (∣ˡ (∣ˡ (_⊛_ {s₁ = bs}    (<$> x∈) t∈))) eq | (refl , refl)
-    with proj₁ $ ListProp.∷ʳ-injective bs bs′ (indices-equal eq)
-  complete∘sound f rs (.bs ∶ rs′ ∶ʳ true)  (∣ˡ (∣ˡ (_⊛_ {s₁ = bs}    (<$> x∈) t∈))) eq | (refl , refl) | refl with eq
-  complete∘sound f ._ (.bs ∶ rs′ ∶ʳ true)  (∣ˡ (∣ˡ (_⊛_ {s₁ = bs}    (<$> x∈) t∈))) eq | (refl , refl) | refl | refl
-    rewrite complete∘sound (specialise f true) rs′ rs′ x∈ refl
+  complete∘sound f rs (bs′ ∶ rs′ ∶ʳ true)  (∣ˡ (∣ˡ (_⊛_ {s₁ = bs}    (<$> x∈) t∈))) s≡ rs≅ | (refl , refl)
+    with proj₁ $ ListProp.∷ʳ-injective bs bs′ s≡
+  complete∘sound f rs (.bs ∶ rs′ ∶ʳ true)  (∣ˡ (∣ˡ (_⊛_ {s₁ = bs}    (<$> x∈) t∈))) s≡ rs≅ | (refl , refl) | refl with s≡ | rs≅
+  complete∘sound f ._ (.bs ∶ rs′ ∶ʳ true)  (∣ˡ (∣ˡ (_⊛_ {s₁ = bs}    (<$> x∈) t∈))) s≡ rs≅ | (refl , refl) | refl | refl | refl
+    rewrite complete∘sound (specialise f true) rs′ rs′ x∈ refl refl
           | tok-lemma (List.map const (f [ true  ])) t∈ = refl
-  complete∘sound f rs (bs′ ∶ rs′ ∶ʳ false) (∣ˡ (∣ˡ (_⊛_ {s₁ = bs}    (<$> x∈) t∈))) eq | (refl , refl)
-    with proj₂ $ ListProp.∷ʳ-injective bs bs′ (indices-equal eq)
+  complete∘sound f rs (bs′ ∶ rs′ ∶ʳ false) (∣ˡ (∣ˡ (_⊛_ {s₁ = bs}    (<$> x∈) t∈))) s≡ rs≅ | (refl , refl)
+    with proj₂ $ ListProp.∷ʳ-injective bs bs′ s≡
   ... | ()
-  complete∘sound f rs []                   (∣ˡ (∣ˡ (_⊛_ {s₁ = []}    (<$> x∈) t∈))) () | (refl , refl)
-  complete∘sound f rs []                   (∣ˡ (∣ˡ (_⊛_ {s₁ = _ ∷ _} (<$> x∈) t∈))) () | (refl , refl)
+  complete∘sound f rs []                   (∣ˡ (∣ˡ (_⊛_ {s₁ = []}    (<$> x∈) t∈))) () _   | (refl , refl)
+  complete∘sound f rs []                   (∣ˡ (∣ˡ (_⊛_ {s₁ = _ ∷ _} (<$> x∈) t∈))) () _   | (refl , refl)
 
-  complete∘sound f rs rs′ (∣ˡ (∣ʳ ._ (<$> x∈ ⊛ t∈))) eq
+  complete∘sound f rs rs′ (∣ˡ (∣ʳ ._ (<$> x∈ ⊛ t∈))) s≡ rs≅
     with Tok.sound (cast∈ refl (♭?♯? (List.map const (f [ false ]))) refl t∈)
-  complete∘sound f rs (bs′ ∶ rs′ ∶ʳ false) (∣ˡ (∣ʳ ._ (_⊛_ {s₁ = bs}    (<$> x∈) t∈))) eq | (refl , refl)
-    with proj₁ $ ListProp.∷ʳ-injective bs bs′ (indices-equal eq)
-  complete∘sound f rs (.bs ∶ rs′ ∶ʳ false) (∣ˡ (∣ʳ ._ (_⊛_ {s₁ = bs}    (<$> x∈) t∈))) eq | (refl , refl) | refl with eq
-  complete∘sound f ._ (.bs ∶ rs′ ∶ʳ false) (∣ˡ (∣ʳ ._ (_⊛_ {s₁ = bs}    (<$> x∈) t∈))) eq | (refl , refl) | refl | refl
-    rewrite complete∘sound (specialise f false) rs′ rs′ x∈ refl
+  complete∘sound f rs (bs′ ∶ rs′ ∶ʳ false) (∣ˡ (∣ʳ ._ (_⊛_ {s₁ = bs}    (<$> x∈) t∈))) s≡ rs≅ | (refl , refl)
+    with proj₁ $ ListProp.∷ʳ-injective bs bs′ s≡
+  complete∘sound f rs (.bs ∶ rs′ ∶ʳ false) (∣ˡ (∣ʳ ._ (_⊛_ {s₁ = bs}    (<$> x∈) t∈))) s≡ rs≅ | (refl , refl) | refl with s≡ | rs≅
+  complete∘sound f ._ (.bs ∶ rs′ ∶ʳ false) (∣ˡ (∣ʳ ._ (_⊛_ {s₁ = bs}    (<$> x∈) t∈))) s≡ rs≅ | (refl , refl) | refl | refl | refl
+    rewrite complete∘sound (specialise f false) rs′ rs′ x∈ refl refl
           | tok-lemma (List.map const (f [ false ])) t∈ = refl
-  complete∘sound f rs (bs′ ∶ rs′ ∶ʳ true)  (∣ˡ (∣ʳ ._ (_⊛_ {s₁ = bs}    (<$> x∈) t∈))) eq | (refl , refl)
-    with proj₂ $ ListProp.∷ʳ-injective bs bs′ (indices-equal eq)
+  complete∘sound f rs (bs′ ∶ rs′ ∶ʳ true)  (∣ˡ (∣ʳ ._ (_⊛_ {s₁ = bs}    (<$> x∈) t∈))) s≡ rs≅ | (refl , refl)
+    with proj₂ $ ListProp.∷ʳ-injective bs bs′ s≡
   ... | ()
-  complete∘sound f rs []                   (∣ˡ (∣ʳ ._ (_⊛_ {s₁ = []}    (<$> x∈) t∈))) () | (refl , refl)
-  complete∘sound f rs []                   (∣ˡ (∣ʳ ._ (_⊛_ {s₁ = _ ∷ _} (<$> x∈) t∈))) () | (refl , refl)
+  complete∘sound f rs []                   (∣ˡ (∣ʳ ._ (_⊛_ {s₁ = []}    (<$> x∈) t∈))) () _   | (refl , refl)
+  complete∘sound f rs []                   (∣ˡ (∣ʳ ._ (_⊛_ {s₁ = _ ∷ _} (<$> x∈) t∈))) () _   | (refl , refl)

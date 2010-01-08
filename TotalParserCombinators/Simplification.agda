@@ -34,29 +34,30 @@ open ⊙ using (_⊙′_)
 
 <$>-fail : ∀ {Tok R₁ R₂} {f : R₁ → R₂} →
            f <$> fail {Tok = Tok} ≈ fail
-<$>-fail {Tok} {R₁} {f = f} = equivalent (λ x∈ → helper x∈ refl) (λ ())
+<$>-fail {Tok} {R₁} {f = f} =
+  equivalent (λ x∈ → helper x∈ refl refl) (λ ())
   where
   helper : ∀ {x s xs} {p : Parser Tok R₁ xs} →
-           x ∈ f <$> p · s → p ≅ fail {Tok = Tok} {R = R₁} →
+           x ∈ f <$> p · s → xs ≡ [] → p ≅ fail {Tok = Tok} {R = R₁} →
            x ∈ fail · s
-  helper (<$> ()) refl
+  helper (<$> ()) refl refl
 
 <$>-return : ∀ {Tok R₁ R₂} (f : R₁ → R₂) {x} →
              f <$> return {Tok = Tok} x ≈ return (f x)
 <$>-return {Tok} {R₁} {R₂} f {x} =
-  equivalent (λ x∈ → helper₁ x∈ refl) (λ x∈ → helper₂ x∈ refl)
+  equivalent (λ x∈ → helper₁ x∈ refl refl) helper₂
   where
   helper₁ : ∀ {y s xs} {p : Parser Tok R₁ xs} →
-            y ∈ f <$> p · s → p ≅ (Parser Tok _ _ ∶ return x) →
+            y ∈ f <$> p · s →
+            xs ≡ [ x ] → p ≅ (Parser Tok _ _ ∶ return x) →
             y ∈ return (f x) · s
-  helper₁ (<$> ∈return) refl with ∈return
+  helper₁ (<$> ∈return) refl refl with ∈return
   ... | return = return
 
-  helper₂ : ∀ {y s xs} {p : Parser Tok R₂ xs} →
-            y ∈ p · s → p ≅ (Parser Tok _ _ ∶ return (f x)) →
+  helper₂ : ∀ {y s} →
+            y ∈ Parser Tok _ _ ∶ return (f x) · s →
             y ∈ f <$> return x · s
-  helper₂ ∈return refl with ∈return
-  ... | return = <$>_ {f = f} return
+  helper₂ return = <$>_ {f = f} return
 
 ∣-token->>= : ∀ {Tok R} {f₁ f₂ : Tok → List R}
                 {p₁ : (t : Tok) → ∞? (Parser Tok R (f₁ t)) []}

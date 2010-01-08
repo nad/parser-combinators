@@ -375,8 +375,8 @@ module Return⋆ where
   complete∘sound (y ∷ ys) (∣ˡ return)        = refl
   complete∘sound (y ∷ ys) (∣ʳ .([ y ]) x∈ys)
     with sound ys x∈ys | complete∘sound ys x∈ys
-  complete∘sound (y ∷ ys) (∣ʳ .([ y ]) .(complete (proj₂ p)))
-    | p | refl = refl
+  complete∘sound (y ∷ ys) (∣ʳ .([ y ]) .(complete p))
+    | (refl , p) | refl = refl
 
   sound∘complete : ∀ {Tok R x} {xs : List R} (x∈xs : x ∈ xs) →
                    sound {Tok = Tok} {s = []} xs (complete x∈xs) ≡
