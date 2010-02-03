@@ -443,13 +443,9 @@ module Token
 
 -- y ∈ ⋁ f xs · s  iff  ∃ x ∈ xs. y ∈ f x · s.
 
-⋁-initial : {R₁ R₂ : Set} → (R₁ → List R₂) → List R₁ → List R₂
-⋁-initial e []       = _
-⋁-initial e (x ∷ xs) = _
-
 ⋁ : ∀ {Tok R₁ R₂} {f : R₁ → List R₂} →
     ((x : R₁) → Parser Tok R₂ (f x)) → (xs : List R₁) →
-    Parser Tok R₂ (⋁-initial f xs)
+    Parser Tok R₂ (xs >>=′ f)
 ⋁ f []       = fail
 ⋁ f (x ∷ xs) = f x ∣ ⋁ f xs
 
