@@ -9,7 +9,7 @@ module TotalParserCombinators.BreadthFirst where
 -- Definition of the derivative and the parser backend.
 
 open import TotalParserCombinators.BreadthFirst.Derivative public
-  using (∂; parseComplete)
+  using (∂; ∂-initial; parseComplete)
 
 -- The parser is sound and complete with respect to the semantics.
 
