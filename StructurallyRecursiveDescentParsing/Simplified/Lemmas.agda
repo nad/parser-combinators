@@ -23,11 +23,6 @@ import Data.List.Properties as ListProp
 open import Relation.Binary.PropositionalEquality
 open ≡-Reasoning
 
->>=-∅ : ∀ {A B} (xs : List A) →
-        (xs >>=′ const {A = List B} []) ≡ []
->>=-∅ []       = refl
->>=-∅ (x ∷ xs) = >>=-∅ xs
-
 tail-++ : ∀ {A} (xs ys : List⁺ A) →
           tail xs ++ List⁺.toList ys ≡ tail (xs ⁺++⁺ ys)
 tail-++ [ x ]    ys = refl

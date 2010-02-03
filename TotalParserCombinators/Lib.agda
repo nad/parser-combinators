@@ -12,7 +12,7 @@ open import Function.Injection using (Injection; Injective)
 open import Function.Inverse using (_⇿_; module Inverse)
 open import Data.List as List
 open import Data.List.Any as Any
-open import Data.List.Any.Properties as AnyProp
+import Data.List.Any.Membership as ∈
 open import Data.Nat
 open import Data.Product as Prod
 open import Data.Vec as Vec using (Vec; []; _∷_)
@@ -163,7 +163,7 @@ module KleeneStar where
     ¬ (∀ {xs ys s} {p : Parser Tok R ys} →
          xs ∈[ p ]⋆· s → xs ∈ p ⋆′ · s)
   unrestricted-incomplete {R} x f _⋆′ complete =
-    AnyProp.Membership-≡.finite
+    ∈.Membership-≡.finite
       (record { to = to; injective = injective })
       (f (return x)) (I.complete ∘ complete ∘ lemma)
     where

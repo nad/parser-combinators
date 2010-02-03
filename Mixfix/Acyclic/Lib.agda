@@ -214,7 +214,7 @@ module Semantics where
   sound (<$> x∈p)      = drop-[] (sound x∈p !>>= return)
   sound (+-[] x∈p)     = drop-[] (sound x∈p !>>= ∣ʳ false return)
   sound (+-∷ x∈p xs∈p) = sound x∈p !>>= ∣ˡ (drop-[] (sound xs∈p !>>= return))
-  sound (∥ˡ x∈p₁)      = drop-[] (∣ˡ (sound x∈p₁ !>>= return))
+  sound (∥ˡ x∈p₁)      = drop-[] (∣ˡ {x = (, _)} (sound x∈p₁ !>>= return))
   sound (∥ʳ x∈p₂)      = ∣ʳ false (sound x∈p₂)
   sound between-[]     = tok-complete !>>= return
   sound (between-∷ {s₁ = s₁} {ts = _ ∷ _} x∈p xs∈⋯) =

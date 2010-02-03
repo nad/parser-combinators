@@ -7,13 +7,13 @@ module TotalParserCombinators.Applicative where
 open import Category.Monad
 open import Data.List as List
 import Data.List.Any as Any
-import Data.List.Any.Properties as AnyProp
+import Data.List.Any.Membership as ∈
 open import Data.Product
 open import Relation.Binary.PropositionalEquality
 open import Relation.Binary.HeterogeneousEquality
 
 open Any.Membership-≡
-open AnyProp.Membership-≡
+open ∈.Membership-≡
 open RawMonad List.monad
 
 -- A helper function.

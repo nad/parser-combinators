@@ -9,6 +9,7 @@ open import Coinduction
 open import Data.Bool
 open import Data.Product
 open import Data.List as List
+import Data.List.Properties as ListProp
 open import Function
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence using (equivalent; module Equivalent)
@@ -24,7 +25,6 @@ open import TotalParserCombinators.Laws
 open import TotalParserCombinators.Lib
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics hiding (_≅_)
-import StructurallyRecursiveDescentParsing.Simplified.Lemmas as SL
 
 open ≈-Reasoning
 open ⊙ using (_⊙′_)
@@ -233,7 +233,7 @@ mutual
       ♯? fail ⊛ p₂    ≈⟨ ⊙-IdempotentSemiring.left-zero-⊛ p₂ ⟩
       fail            ≈⟨ Equivalence.sym $ cast-correct′ lem ⟩
       cast′ lem fail  ∎
-      where lem = sym (SL.>>=-∅ xs)
+      where lem = sym (ListProp.Monad.right-zero xs)
     helper {fs = fs} p₁ p₂ _ (fail , p₂≈∅) refl refl = _ , λ {_} → begin
       p₁ ⊛ p₂       ≈⟨ ⊛-cong (Equivalence.refl {p = ♭? p₁}) (begin
                          ♭? p₂                   ≈⟨ p₂≈∅ ⟩

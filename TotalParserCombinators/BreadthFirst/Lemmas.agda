@@ -68,9 +68,9 @@ correct {s = s} {p} = record
              {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
            p₁ ≈ p₂ → ∂ p₁ t ≈ ∂ p₂ t
 ∂-cong-≈ p₁≈p₂ =
-  Eq.sym (Inverse.equivalence ∂-correct) ⟨∘⟩
+  Eq.sym (Inverse.equivalent ∂-correct) ⟨∘⟩
   p₁≈p₂ ⟨∘⟩
-  Inverse.equivalence ∂-correct
+  Inverse.equivalent ∂-correct
 
 -- ∂ preserves parser equivalence.
 

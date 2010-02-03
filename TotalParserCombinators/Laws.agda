@@ -15,7 +15,9 @@ open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence as Eq hiding (id; _∘_)
 open import Data.List as List
 import Data.List.Any as Any
+import Data.List.Any.Membership as ∈
 import Data.List.Any.Properties as AnyProp
+import Data.List.Any.SetEquality as SetEq
 open import Data.Product
 open import Data.Unit using (⊤; tt)
 open import Relation.Binary
@@ -26,9 +28,11 @@ private
   module ListMonoid {A : Set} = Monoid (List.monoid A)
   open module ListMonad = RawMonad List.monad
          using () renaming (_>>=_ to _>>=′_)
-  open module SetEq {A : Set} =
+  open module SetS {A : Set} =
     Setoid (Any.Membership-≡.Set-equality {A})
       using () renaming (_≈_ to _≛_)
+  module SetMonoid {A : Set} =
+    CommutativeMonoid (SetEq.commutativeMonoid A)
 
 open import TotalParserCombinators.Applicative
 open import TotalParserCombinators.BreadthFirst
@@ -52,18 +56,15 @@ module AdditiveMonoid where
                    (p₁ : Parser Tok R xs₁) (p₂ : Parser Tok R xs₂) →
                    p₁ ∣ p₂ ≈′ p₂ ∣ p₁
     commutative′ {xs₁ = xs₁} {xs₂} p₁ p₂ =
-      (λ {_} → lemma) ∷ λ t → ♯ commutative′ (∂ p₁ t) (∂ p₂ t)
-      where
-      lemma : _ ≛ _
-      lemma = equivalent (AnyProp.Membership-≡.++-comm xs₁ xs₂)
-                         (AnyProp.Membership-≡.++-comm xs₂ xs₁)
+      (λ {_} → SetMonoid.comm xs₁ xs₂) ∷ λ t → ♯
+      commutative′ (∂ p₁ t) (∂ p₂ t)
 
   left-identity : ∀ {Tok R xs} (p : Parser Tok R xs) → fail ∣ p ≈ p
   left-identity = LanguageEquivalence.sound ∘ left-identity′
     where
     left-identity′ : ∀ {Tok R xs} (p : Parser Tok R xs) → fail ∣ p ≈′ p
     left-identity′ p =
-      (λ {_} → SetEq.refl) ∷ λ t → ♯ left-identity′ (∂ p t)
+      (λ {_} → SetS.refl) ∷ λ t → ♯ left-identity′ (∂ p t)
 
   right-identity : ∀ {Tok R xs} (p : Parser Tok R xs) → p ∣ fail ≈ p
   right-identity = LanguageEquivalence.sound ∘ right-identity′
@@ -74,7 +75,7 @@ module AdditiveMonoid where
       (λ {_} → lemma) ∷ λ t → ♯ right-identity′ (∂ p t)
       where
       lemma : _ ≛ _
-      lemma = SetEq.reflexive (proj₂ ListMonoid.identity xs)
+      lemma = SetS.reflexive (proj₂ ListMonoid.identity xs)
 
   associative : ∀ {Tok R xs₁ xs₂ xs₃}
                 (p₁ : Parser Tok R xs₁) (p₂ : Parser Tok R xs₂)
@@ -91,7 +92,7 @@ module AdditiveMonoid where
       (λ {_} → lemma) ∷ λ t → ♯ associative′ (∂ p₁ t) (∂ p₂ t) (∂ p₃ t)
       where
       lemma : _ ≛ _
-      lemma = SetEq.reflexive (P.sym $ ListMonoid.assoc xs₁ xs₂ xs₃)
+      lemma = SetS.reflexive (P.sym $ ListMonoid.assoc xs₁ xs₂ xs₃)
 
   idempotent : ∀ {Tok R xs} (p : Parser Tok R xs) → p ∣ p ≈ p
   idempotent = LanguageEquivalence.sound ∘ idempotent′
@@ -101,7 +102,7 @@ module AdditiveMonoid where
       (λ {_} → lemma) ∷ λ t → ♯ idempotent′ (∂ p t)
       where
       lemma : _ ≛ _
-      lemma = equivalent (AnyProp.Membership-≡.++-idempotent)
+      lemma = equivalent (AnyProp.++-idempotent)
                          (AnyProp.++⁺ˡ {xs = xs})
 
 ------------------------------------------------------------------------

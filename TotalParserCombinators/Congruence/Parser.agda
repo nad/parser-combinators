@@ -4,6 +4,7 @@
 
 module TotalParserCombinators.Congruence.Parser where
 
+open import Algebra
 open import Coinduction
 open import Function
 open import Function.Equality using (_⟨$⟩_)
@@ -11,8 +12,8 @@ open import Function.Inverse as Inv
   using (_⇿_; module Inverse) renaming (_∘_ to _⟪∘⟫_)
 open import Data.List as List
 import Data.List.Any as Any
-open import Data.List.Any.BagEquality
-import Data.List.Any.Properties as AnyProp
+import Data.List.Any.BagEquality as BagEq
+import Data.List.Any.Membership as ∈
 import Data.List.Properties as ListProp
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Product as Prod
@@ -21,7 +22,9 @@ open import Relation.Binary
 open import Relation.Binary.PropositionalEquality as P using (_≡_; _≗_)
 
 private
-  open module BagEq {A : Set} =
+  module BagMonoid {A : Set} =
+    CommutativeMonoid (BagEq.commutativeMonoid A)
+  open module BagS {A : Set} =
     Setoid (Any.Membership-≡.Bag-equality {A})
       using () renaming (_≈_ to _Bag-≈_)
 
@@ -109,7 +112,7 @@ token-cong = Equivalence.refl
     ∣-cong′ (ParserEquivalence.complete p₁≅p₃)
             (ParserEquivalence.complete p₂≅p₄)
   where
-  open AnyProp.Membership-≡
+  open ∈.Membership-≡
 
   ∣-cong′ : ∀ {Tok R xs₁ xs₂ xs₃ xs₄}
               {p₁ : Parser Tok R xs₁}
@@ -118,7 +121,7 @@ token-cong = Equivalence.refl
               {p₄ : Parser Tok R xs₄} →
             p₁ ≅′ p₃ → p₂ ≅′ p₄ → p₁ ∣ p₂ ≅′ p₃ ∣ p₄
   ∣-cong′ (init₁ ∷ rest₁) (init₂ ∷ rest₂) =
-    (λ {_} → init₁ ++-cong init₂) ∷ λ t →
+    (λ {_} → BagMonoid.∙-cong init₁ init₂) ∷ λ t →
     ♯ ∣-cong′ (♭ (rest₁ t)) (♭ (rest₂ t))
 
 <$>-cong : ∀ {Tok R₁ R₂} {f₁ f₂ : R₁ → R₂} {xs₁ xs₂}
@@ -132,7 +135,7 @@ token-cong = Equivalence.refl
                 {p₁ : Parser Tok R₁ xs₁} {p₂ : Parser Tok R₁ xs₂} →
               p₁ ≅′ p₂ → f₁ <$> p₁ ≅′ f₂ <$> p₂
   <$>-cong′ (init ∷ rest) =
-    (λ {_} → map-cong f₁≗f₂ init) ∷ λ t → ♯ <$>-cong′ (♭ (rest t))
+    (λ {_} → BagEq.map-cong f₁≗f₂ init) ∷ λ t → ♯ <$>-cong′ (♭ (rest t))
 
 ⊛-cong : ∀ {Tok R₁ R₂ xs₁ xs₂ xs₃ xs₄}
            {p₁ : ∞? (Parser Tok (R₁ → R₂) xs₁) xs₂}
@@ -286,7 +289,7 @@ nonempty-cong =
   nonempty-cong′ : ∀ {Tok R xs₁ xs₂}
                      {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
                    p₁ ≅′ p₂ → nonempty p₁ ≅′ nonempty p₂
-  nonempty-cong′ (_ ∷ rest) = (λ {_} → BagEq.refl) ∷ rest
+  nonempty-cong′ (_ ∷ rest) = (λ {_} → BagS.refl) ∷ rest
 
 cast-cong : ∀ {Tok R xs₁ xs₂ xs₁′ xs₂′}
               {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂}

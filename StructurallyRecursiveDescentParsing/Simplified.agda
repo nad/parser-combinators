@@ -16,6 +16,7 @@ open import Data.List.NonEmpty.Properties
 import Data.List as List
 open List using (List; _∷_; []; _++_)
 open RawMonad List.monad using () renaming (_>>=_ to _>>=′_)
+import Data.List.Properties as ListProp
 
 open import Relation.Binary.PropositionalEquality
 open ≡-Reasoning
@@ -108,7 +109,8 @@ private
                initial (p₂ (head (initial⁺ p₁ refl))) ++
                  (tail (initial⁺ p₁ refl) >>=′ λ x → initial (p₂ x)) ≡
                initial (p₁ ?>>= p₂)
-  ?>>=-lemma {false} p₁ p₂ = >>=-∅ (tail (initial⁺ p₁ refl))
+  ?>>=-lemma {false} p₁ p₂ = ListProp.Monad.right-zero
+                               (tail (initial⁺ p₁ refl))
   ?>>=-lemma {true}  p₁ p₂ = cong₂ _∷_ (head->>= f xs) (tail->>= f xs)
     where f  = λ x → initial⁺ (p₂ x) refl
           xs = initial⁺ p₁ refl

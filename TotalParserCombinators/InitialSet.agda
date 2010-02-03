@@ -6,7 +6,8 @@ module TotalParserCombinators.InitialSet where
 
 open import Data.List
 open import Data.List.Any as Any
-open import Data.List.Any.Properties as AnyProp
+import Data.List.Any.Membership as ∈
+open import Data.List.Any.Properties
 open import Data.Product as Prod
 open import Data.Sum
 open import Function
@@ -21,7 +22,7 @@ open import Relation.Binary.HeterogeneousEquality as H
   using (refl) renaming (_≅_ to _≅′_)
 
 open Any.Membership-≡
-open AnyProp.Membership-≡
+open ∈.Membership-≡
 private
   open module SetEq {R : Set} = Setoid (Set-equality {R})
     using () renaming (_≈_ to _Set-≈_)
@@ -207,9 +208,9 @@ same-set : ∀ {Tok R xs₁ xs₂}
              {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
            p₁ ≈ p₂ → xs₁ Set-≈ xs₂
 same-set p₁≈p₂ =
-  Inverse.equivalence correct ⟨∘⟩
+  Inverse.equivalent correct ⟨∘⟩
   p₁≈p₂ ⟨∘⟩
-  Inverse.equivalence (Inv.sym correct)
+  Inverse.equivalent (Inv.sym correct)
 
 same-bag : ∀ {Tok R xs₁ xs₂}
              {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →

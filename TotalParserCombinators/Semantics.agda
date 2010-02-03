@@ -105,7 +105,7 @@ p₁ ≅ p₂ = ∀ {x s} → x ∈ p₁ · s ⇿ x ∈ p₂ · s
 ≅⇒≈ : ∀ {Tok R xs₁ xs₂}
         {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
       p₁ ≅ p₂ → p₁ ≈ p₂
-≅⇒≈ p₁≅p₂ = Inverse.equivalence p₁≅p₂
+≅⇒≈ p₁≅p₂ = Inverse.equivalent p₁≅p₂
 
 -- Language equivalence does not (in general) imply parser
 -- equivalence.

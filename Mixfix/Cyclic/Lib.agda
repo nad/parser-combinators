@@ -169,7 +169,7 @@ module Semantics where
                            (<$> sound x∈p ⊛ ∣ʳ [] return)
   sound (+-∷ x∈p xs∈p) = _⊛_ {xs = _ ∷ []} (<$> sound x∈p)
                                            (∣ˡ (<$> sound xs∈p))
-  sound (∥ˡ x∈p₁)      = ∣ˡ (<$> sound x∈p₁)
+  sound (∥ˡ x∈p₁)      = ∣ˡ {x = (, _)} (<$> sound x∈p₁)
   sound (∥ʳ x∈p₂)      = ∣ʳ [] (sound x∈p₂)
   sound between-[]     = <$> Tok.complete
   sound (between-∷ {ts = _ ∷ _} x∈p xs∈⋯) =
@@ -280,7 +280,7 @@ module Semantics-⊕ where
   sound (+-[] x∈p)     = <$> sound x∈p ⊛ ∣ʳ [] return
   sound (+-∷ x∈p xs∈p) = _⊛_ {xs = _ ∷ []} (<$> sound x∈p)
                                            (∣ˡ (<$> sound xs∈p))
-  sound (∥ˡ x∈p₁)      = ∣ˡ (<$> sound x∈p₁)
+  sound (∥ˡ x∈p₁)      = ∣ˡ {x = (, _)} (<$> sound x∈p₁)
   sound (∥ʳ x∈p₂)      = ∣ʳ [] (sound x∈p₂)
   sound between-[]     = <$> tok-complete
   sound (between-∷ {ts = _ ∷ _} x∈p xs∈⋯) =

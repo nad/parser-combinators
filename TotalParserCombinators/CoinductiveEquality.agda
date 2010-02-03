@@ -54,13 +54,13 @@ module LanguageEquivalence where
             {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
           p₁ ≈′ p₂ → p₁ ≈ p₂
   sound (xs₁≈xs₂ ∷ rest) {s = []} =
-    Eq.sym (Inverse.equivalence I.correct) ⟨∘⟩
+    Eq.sym (Inverse.equivalent I.correct) ⟨∘⟩
     xs₁≈xs₂ ⟨∘⟩
-    Inverse.equivalence I.correct
+    Inverse.equivalent I.correct
   sound (xs₁≈xs₂ ∷ rest) {s = t ∷ s} =
-    Inverse.equivalence ∂-correct ⟨∘⟩
+    Inverse.equivalent ∂-correct ⟨∘⟩
     sound (♭ (rest t)) ⟨∘⟩
-    Eq.sym (Inverse.equivalence ∂-correct)
+    Eq.sym (Inverse.equivalent ∂-correct)
 
   complete : ∀ {Tok R xs₁ xs₂}
                {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
