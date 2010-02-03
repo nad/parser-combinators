@@ -14,6 +14,7 @@ open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence
 open import Function.Inverse as Inv using (_⇿_; module Inverse)
 open import Data.Unit
+import Relation.Binary.HeterogeneousEquality as H
 open import Relation.Binary.PropositionalEquality as P
 open import Relation.Nullary
 
@@ -141,6 +142,12 @@ cast∈ : ∀ {Tok R xs} {p p′ : Parser Tok R xs} {x x′ s s′} →
 cast∈ refl refl refl x∈ = x∈
 
 module Cast∈ where
+
+  drop : ∀ {Tok R xs} {p p′ : Parser Tok R xs} {x x′ s s′}
+         (x≡x′ : x ≡ x′) (p≡p′ : p ≡ p′) (s≡s′ : s ≡ s′)
+         (x∈p : x ∈ p · s) →
+         H._≅_ (cast∈ x≡x′ p≡p′ s≡s′ x∈p) x∈p
+  drop refl refl refl _ = H.refl
 
   sym∘ : ∀ {Tok R xs} {p p′ : Parser Tok R xs} {x x′ s s′}
          (x≡x′ : x ≡ x′) (p≡p′ : p ≡ p′) (s≡s′ : s ≡ s′)

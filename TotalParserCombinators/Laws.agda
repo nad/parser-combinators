@@ -137,13 +137,17 @@ module ApplicativeFunctor where
 
   open ⊙ using (_⊙′_)
 
-  identity : ∀ {Tok R xs} (p : Parser Tok R xs) → return id ⊙ p ≈ p
-  identity {xs = xs} p =
-    equivalent helper (λ x∈p → ⊙.complete return x∈p)
+  identity-⊛ : ∀ {Tok R xs} (p : ∞? (Parser Tok R xs) [ id ]) →
+               ♯? (return id) ⊛ p ≈ ♭? p
+  identity-⊛ {Tok} {R} {xs} p =
+    equivalent helper (λ x∈p → ♭♯.add xs return ⊛ x∈p)
     where
-    helper : return id ⊙ p ⊑ p
-    helper ∈ret⊙ with ⊙.sound {fs = [ id ]} xs ∈ret⊙
-    ... | return ⊙′ ∈p = ∈p
+    helper : ♯? (return id) ⊛ p ⊑ ♭? p
+    helper (∈ret ⊛ ∈p) with ♭♯.drop xs ∈ret
+    ... | return = ∈p
+
+  identity : ∀ {Tok R xs} (p : Parser Tok R xs) → return id ⊙ p ≈ p
+  identity p = identity-⊛ (♯? p)
 
   composition :
     ∀ {Tok R₁ R₂ R₃ fs gs xs}
