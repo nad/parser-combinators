@@ -24,7 +24,7 @@ open Any.Membership-≡
 private
   open RawMonad List.monad using () renaming (_>>=_ to _>>=′_)
 
-open import TotalParserCombinators.Applicative
+open import TotalParserCombinators.Applicative using (_⊛′_)
 open import TotalParserCombinators.BreadthFirst.Derivative
 open import TotalParserCombinators.BreadthFirst.SoundComplete
 open import TotalParserCombinators.Coinduction

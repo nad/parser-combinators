@@ -64,9 +64,9 @@ correct {s = s} {p} = record
 
 -- ∂ preserves language equivalence.
 
-∂-cong-≈ : ∀ {Tok R xs₁ xs₂ t}
+∂-cong-≈ : ∀ {Tok R xs₁ xs₂}
              {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
-           p₁ ≈ p₂ → ∂ p₁ t ≈ ∂ p₂ t
+           p₁ ≈ p₂ → ∀ {t} → ∂ p₁ t ≈ ∂ p₂ t
 ∂-cong-≈ p₁≈p₂ =
   Eq.sym (Inverse.equivalent ∂-correct) ⟨∘⟩
   p₁≈p₂ ⟨∘⟩
@@ -74,7 +74,7 @@ correct {s = s} {p} = record
 
 -- ∂ preserves parser equivalence.
 
-∂-cong-≅ : ∀ {Tok R xs₁ xs₂ t}
+∂-cong-≅ : ∀ {Tok R xs₁ xs₂}
              {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
-           p₁ ≅ p₂ → ∂ p₁ t ≅ ∂ p₂ t
+           p₁ ≅ p₂ → ∀ {t} → ∂ p₁ t ≅ ∂ p₂ t
 ∂-cong-≅ p₁≅p₂ = Inv.sym ∂-correct ⟪∘⟫ p₁≅p₂ ⟪∘⟫ ∂-correct

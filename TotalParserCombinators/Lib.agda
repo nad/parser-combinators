@@ -213,13 +213,11 @@ module ⊙ {Tok R₁ R₂ : Set} where
              f ∈ p₁ · s₁ → x ∈ p₂ · s₂ → f x ∈ p₁ ⊙ p₂ · s₁ ++ s₂
   complete {fs} {xs} ∈p₁ ∈p₂ = ♭♯.add xs ∈p₁ ⊛ ♭♯.add fs ∈p₂
 
-  private
-
-    complete′ : ∀ {fs xs s fx}
-                  {p₁ : Parser Tok (R₁ → R₂) fs}
-                  {p₂ : Parser Tok R₁        xs} →
-                p₁ ⊙ p₂ · s ∋ fx → fx ∈ p₁ ⊙ p₂ · s
-    complete′ (∈p₁ ⊙′ ∈p₂) = complete ∈p₁ ∈p₂
+  complete′ : ∀ {fs xs s fx}
+                {p₁ : Parser Tok (R₁ → R₂) fs}
+                {p₂ : Parser Tok R₁        xs} →
+              p₁ ⊙ p₂ · s ∋ fx → fx ∈ p₁ ⊙ p₂ · s
+  complete′ (∈p₁ ⊙′ ∈p₂) = complete ∈p₁ ∈p₂
 
   sound : ∀ {fs} xs {fx s}
             {p₁ : Parser Tok (R₁ → R₂) fs}
@@ -271,12 +269,6 @@ p₁ ⟫= p₂ = p₁ >>= λ x → ♯? (p₂ x)
 
 module ⟫= {Tok R₁ R₂ : Set} where
 
-  complete : ∀ {xs} {f : R₁ → List R₂} {x y s₁ s₂}
-               {p₁ : Parser Tok R₁ xs}
-               {p₂ : ((x : R₁) → Parser Tok R₂ (f x))} →
-             x ∈ p₁ · s₁ → y ∈ p₂ x · s₂ → y ∈ p₁ ⟫= p₂ · s₁ ++ s₂
-  complete {xs} ∈p₁ ∈p₂x = ∈p₁ >>= ♭♯.add xs ∈p₂x
-
   infixl 10 _⟫=′_
   infix   4 _⟫=_·_∋_
 
@@ -287,11 +279,54 @@ module ⟫= {Tok R₁ R₂ : Set} where
     _⟫=′_ : ∀ {x y s₁ s₂} (∈p₁ : x ∈ p₁ · s₁) (∈p₂x : y ∈ p₂ x · s₂) →
             p₁ ⟫= p₂ · s₁ ++ s₂ ∋ y
 
+  complete : ∀ {xs} {f : R₁ → List R₂} {x y s₁ s₂}
+               {p₁ : Parser Tok R₁ xs}
+               {p₂ : ((x : R₁) → Parser Tok R₂ (f x))} →
+             x ∈ p₁ · s₁ → y ∈ p₂ x · s₂ → y ∈ p₁ ⟫= p₂ · s₁ ++ s₂
+  complete {xs} ∈p₁ ∈p₂x = ∈p₁ >>= ♭♯.add xs ∈p₂x
+
+  complete′ : ∀ {xs} {f : R₁ → List R₂} {y s}
+                {p₁ : Parser Tok R₁ xs}
+                {p₂ : ((x : R₁) → Parser Tok R₂ (f x))} →
+              p₁ ⟫= p₂ · s ∋ y → y ∈ p₁ ⟫= p₂ · s
+  complete′ (∈p₁ ⟫=′ ∈p₂x) = complete ∈p₁ ∈p₂x
+
   sound : ∀ xs {f : R₁ → List R₂} {y s}
             {p₁ : Parser Tok R₁ xs}
             {p₂ : ((x : R₁) → Parser Tok R₂ (f x))} →
           y ∈ p₁ ⟫= p₂ · s → p₁ ⟫= p₂ · s ∋ y
   sound xs (∈p₁ >>= ∈p₂x) = ∈p₁ ⟫=′ ♭♯.drop xs ∈p₂x
+
+  private
+
+    sound∘complete′ : ∀ {xs} {f : R₁ → List R₂} {y s}
+                        {p₁ : Parser Tok R₁ xs}
+                        {p₂ : ((x : R₁) → Parser Tok R₂ (f x))}
+                      (y∈ : p₁ ⟫= p₂ · s ∋ y) →
+                      sound xs (complete′ y∈) ≡ y∈
+    sound∘complete′ {xs = xs} (x∈ ⟫=′ y∈)
+      rewrite Inverse.right-inverse-of (♭♯.correct xs) y∈ = refl
+
+    complete′∘sound : ∀ xs {f : R₁ → List R₂} {y s}
+                        {p₁ : Parser Tok R₁ xs}
+                        {p₂ : ((x : R₁) → Parser Tok R₂ (f x))} →
+                      (y∈ : y ∈ p₁ ⟫= p₂ · s) →
+                      complete′ (sound xs y∈) ≡ y∈
+    complete′∘sound xs (x∈ >>= y∈)
+      rewrite Inverse.left-inverse-of (♭♯.correct xs) y∈ = refl
+
+  correct : ∀ {xs} {f : R₁ → List R₂} {y s}
+              {p₁ : Parser Tok R₁ xs}
+              {p₂ : ((x : R₁) → Parser Tok R₂ (f x))} →
+            p₁ ⟫= p₂ · s ∋ y ⇿ y ∈ p₁ ⟫= p₂ · s
+  correct {xs = xs} = record
+    { to         = P.→-to-⟶ complete′
+    ; from       = P.→-to-⟶ $ sound xs
+    ; inverse-of = record
+      { left-inverse-of  = sound∘complete′
+      ; right-inverse-of = complete′∘sound xs
+      }
+    }
 
 ------------------------------------------------------------------------
 -- A combinator for recognising a string a fixed number of times
@@ -386,6 +421,31 @@ module Return⋆ where
     with sound {Tok = Tok} xs (complete x∈xs)
        | sound∘complete {Tok} {xs = xs} x∈xs
   sound∘complete (there x∈xs) | .(refl , x∈xs) | refl = refl
+
+  correct : ∀ {Tok R} {xs : List R} {x s} →
+            (s ≡ [] × x ∈ xs) ⇿ x ∈ return⋆ {Tok} xs · s
+  correct {xs = xs} {x} = record
+    { to         = P.→-to-⟶ complete′
+    ; from       = P.→-to-⟶ $ sound xs
+    ; inverse-of = record
+      { left-inverse-of  = sound∘complete′
+      ; right-inverse-of = complete′∘sound xs
+      }
+    }
+    where
+    complete′ : ∀ {Tok R x} {xs : List R} {s : List Tok} →
+                s ≡ [] × x ∈ xs → x ∈ return⋆ xs · s
+    complete′ (refl , x∈xs) = complete x∈xs
+
+    sound∘complete′ : ∀ {Tok R x} {xs : List R} {s : List Tok}
+                      (p : s ≡ [] × x ∈ xs) → sound xs (complete′ p) ≡ p
+    sound∘complete′ (refl , x∈xs) = sound∘complete x∈xs
+
+    complete′∘sound : ∀ {Tok R x} {s : List Tok}
+                      (xs : List R) (x∈xs : x ∈ return⋆ xs · s) →
+                      complete′ (sound xs x∈xs) ≡ x∈xs
+    complete′∘sound xs x∈ with sound xs x∈ | complete∘sound xs x∈
+    complete′∘sound xs .(complete x∈xs) | (refl , x∈xs) | refl = refl
 
 ------------------------------------------------------------------------
 -- A parser for a given token

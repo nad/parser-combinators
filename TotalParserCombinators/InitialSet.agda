@@ -29,7 +29,7 @@ private
   open module BagEq {R : Set} = Setoid (Bag-equality {R})
     using () renaming (_≈_ to _Bag-≈_)
 
-open import TotalParserCombinators.Applicative
+import TotalParserCombinators.Applicative as ⊛
 open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
@@ -51,7 +51,7 @@ mutual
     complete′ (∣ˡ     x∈p₁)                                 refl = ++⁺ˡ (complete x∈p₁)
     complete′ (∣ʳ xs₁ x∈p₂)                                 refl = ++⁺ʳ xs₁ (complete x∈p₂)
     complete′ (<$> x∈p)                                     refl = map-∈⁺ (complete x∈p)
-    complete′ (_⊛_   {s₁ = []} {fs = fs}        f∈p₁ x∈p₂)  refl = ⊛′-∈⁺ (complete f∈p₁) (complete x∈p₂)
+    complete′ (_⊛_   {s₁ = []} {fs = fs}        f∈p₁ x∈p₂)  refl = ⊛.∈⁺ (complete f∈p₁) (complete x∈p₂)
     complete′ (_>>=_ {s₁ = []} {xs = _ ∷ _} {f} x∈p₁ y∈p₂x) refl = >>=-∈⁺ f (complete x∈p₁) (complete y∈p₂x)
     complete′ (cast {eq = refl} x∈p)                        refl = complete x∈p
 
@@ -76,7 +76,7 @@ mutual
   ... | inj₂ x∈xs₂ = ∣ʳ xs₁ (sound p₂ x∈xs₂)
   sound (_<$>_ {xs = xs} f p) x∈xs with map-∈⁻ xs x∈xs
   ... | (y , y∈xs , refl) = <$> sound p y∈xs
-  sound (_⊛_ {fs = fs} {x ∷ xs} ⟨ p₁ ⟩ p₂) y∈ys with ⊛′-∈⁻ fs (x ∷ xs) y∈ys
+  sound (_⊛_ {fs = fs} {x ∷ xs} ⟨ p₁ ⟩ p₂) y∈ys with ⊛.∈⁻ fs (x ∷ xs) y∈ys
   sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟪ p₂ ⟫)  y∈ys | (f′ , x′ , ()    , x′∈x∷xs , refl)
   sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟨ p₂ ⟩)  y∈ys | (f′ , x′ , f′∈fs , x′∈x∷xs , refl) =
     sound p₁ f′∈fs ⊛ sound p₂ x′∈x∷xs
@@ -122,8 +122,8 @@ mutual
                                                            H.cong ((_ → _ ∈ _ · _) ∶ <$>_) (sound∘complete′ x∈p refl)
     sound∘complete′ (_⊛_ {s₁ = []} {fs = fs} {xs = x ∷ xs} {p₁ = ⟨ p₁ ⟩} f∈p₁ x∈p₂) refl
       with complete f∈p₁ | complete x∈p₂
-      | ⊛′-∈⁻ fs (x ∷ xs) (⊛′-∈⁺ (complete f∈p₁) (complete x∈p₂))
-      | ⊛′-∈⁻∘⊛′-∈⁺ (complete f∈p₁) (complete x∈p₂)
+      | ⊛.∈⁻ fs (x ∷ xs) (⊛.∈⁺ (complete f∈p₁) (complete x∈p₂))
+      | ⊛.∈⁻∘∈⁺ (complete f∈p₁) (complete x∈p₂)
       | sound∘complete f∈p₁ | sound∘complete x∈p₂
     sound∘complete′ (_⊛_ {s₁ = []} {fs = []}     {xs = _ ∷ _}  {p₁ = ⟨ _  ⟩} {p₂ = ⟪ _  ⟫} _ _) refl | () | _ | _ | _ | _ | _
     sound∘complete′ (_⊛_ {s₁ = []} {fs = f ∷ fs} {xs = x ∷ xs} {p₁ = ⟨ p₁ ⟩} {p₂ = ⟨ p₂ ⟩}
@@ -168,10 +168,10 @@ complete∘sound (_∣_ {xs₁ = xs₁} p₁ p₂) .(++⁺ˡ     x∈xs₁) | in
 complete∘sound (_∣_ {xs₁ = xs₁} p₁ p₂) .(++⁺ʳ xs₁ x∈xs₂) | inj₂ x∈xs₂ | refl = cong (++⁺ʳ xs₁) $ complete∘sound p₂ x∈xs₂
 complete∘sound (_<$>_ {xs = xs} f p)   x∈xs              with map-∈⁻ xs x∈xs | map-∈⁺∘map-∈⁻ x∈xs
 complete∘sound (_<$>_ {xs = xs} f p)   .(map-∈⁺ y∈xs)    | (y , y∈xs , refl) | refl = cong map-∈⁺ $ complete∘sound p y∈xs
-complete∘sound (_⊛_ {fs = fs} {x ∷ xs} ⟨ p₁ ⟩ p₂) y∈ys with ⊛′-∈⁻ fs (x ∷ xs) y∈ys | ⊛′-∈⁺∘⊛′-∈⁻ fs (x ∷ xs) y∈ys
-complete∘sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟪ p₂ ⟫) y∈ys                   | (f′ , x′ , ()    , x′∈x∷xs , refl) | _
-complete∘sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟨ p₂ ⟩) .(⊛′-∈⁺ f′∈fs x′∈x∷xs) | (f′ , x′ , f′∈fs , x′∈x∷xs , refl) | refl =
-  cong₂ ⊛′-∈⁺ (complete∘sound p₁ f′∈fs) (complete∘sound p₂ x′∈x∷xs)
+complete∘sound (_⊛_ {fs = fs} {x ∷ xs} ⟨ p₁ ⟩ p₂) y∈ys with ⊛.∈⁻ fs (x ∷ xs) y∈ys | ⊛.∈⁺∘∈⁻ fs (x ∷ xs) y∈ys
+complete∘sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟪ p₂ ⟫) y∈ys                  | (f′ , x′ , ()    , x′∈x∷xs , refl) | _
+complete∘sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟨ p₂ ⟩) .(⊛.∈⁺ f′∈fs x′∈x∷xs) | (f′ , x′ , f′∈fs , x′∈x∷xs , refl) | refl =
+  cong₂ ⊛.∈⁺ (complete∘sound p₁ f′∈fs) (complete∘sound p₂ x′∈x∷xs)
 complete∘sound (_>>=_ {xs = zs}     {f} p₁ p₂) y∈ys                    with >>=-∈⁻ f zs y∈ys | >>=-∈⁺∘>>=-∈⁻ f zs y∈ys
 complete∘sound (_>>=_ {xs = []}     {f} p₁ p₂) ._                      | (x , ()     , y∈fx) | refl
 complete∘sound (_>>=_ {xs = z ∷ zs} {f} p₁ p₂) .(>>=-∈⁺ f x∈z∷zs y∈fx) | (x , x∈z∷zs , y∈fx) | refl =

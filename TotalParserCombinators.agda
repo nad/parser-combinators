@@ -50,6 +50,7 @@ import TotalParserCombinators.PartialOrder
 
 import TotalParserCombinators.Congruence.Language
 import TotalParserCombinators.Congruence.Parser
+import TotalParserCombinators.Congruence.Parser.Sound
 
 -- Proofs of various laws, for instance the monad laws.
 
