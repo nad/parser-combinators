@@ -17,7 +17,7 @@ open import TotalParserCombinators.Semantics
 -- A parser is unambiguous if every string can be parsed in at most
 -- one way.
 
-Unambiguous : ∀ {Tok R xs} → Parser Tok R xs → Set1
+Unambiguous : ∀ {Tok R xs} → Parser Tok R xs → Set₁
 Unambiguous p =
   ∀ {x₁ x₂ s} (x₁∈p : x₁ ∈ p · s) (x₂∈p : x₂ ∈ p · s) →
   x₁ ≡ x₂ × x₁∈p ≅′ x₂∈p
