@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- A variant of the semantics which uses continuation-passing style
+-- A semantics which uses continuation-passing style
 ------------------------------------------------------------------------
 
 module TotalParserCombinators.Semantics.Continuation where
@@ -7,11 +7,17 @@ module TotalParserCombinators.Semantics.Continuation where
 open import Algebra
 open import Coinduction
 open import Data.List as List
+import Data.List.Any as Any
 import Data.List.Properties as ListProp
 open import Data.Product as Prod
 open import Function
+open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
+
 private
+  open module BagS {A : Set} =
+    Setoid (Any.Membership-≡.Bag-equality {A})
+      using () renaming (_≈_ to _Bag-≈_)
   module LM {Tok : Set} = Monoid (List.monoid Tok)
 
 open import TotalParserCombinators.Coinduction
@@ -59,9 +65,9 @@ data _⊕_∈_·_ {Tok} : ∀ {R xs} → R → List Tok →
   nonempty : ∀ {R xs x y s₂} s₁ {p : Parser Tok R xs}
              (x∈p : y ⊕ s₂ ∈ p · x ∷ s₁ ++ s₂) →
              y ⊕ s₂ ∈ nonempty p · x ∷ s₁ ++ s₂
-  cast     : ∀ {R xs₁ xs₂ x s₁ s₂} {eq : xs₁ ≡ xs₂}
+  cast     : ∀ {R xs₁ xs₂ x s₁ s₂} {xs₁≈xs₂ : xs₁ Bag-≈ xs₂}
                {p : Parser Tok R xs₁}
-             (x∈p : x ⊕ s₂ ∈ p · s₁) → x ⊕ s₂ ∈ cast eq p · s₁
+             (x∈p : x ⊕ s₂ ∈ p · s₁) → x ⊕ s₂ ∈ cast xs₁≈xs₂ p · s₁
 
 -- A simple cast lemma.
 

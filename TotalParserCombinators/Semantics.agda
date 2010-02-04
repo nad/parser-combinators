@@ -8,15 +8,22 @@ module TotalParserCombinators.Semantics where
 
 open import Coinduction
 open import Data.List hiding (drop)
+import Data.List.Any as Any
 open import Data.Product
 open import Function
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence
 open import Function.Inverse as Inv using (_⇿_; module Inverse)
 open import Data.Unit
+open import Relation.Binary
 import Relation.Binary.HeterogeneousEquality as H
 open import Relation.Binary.PropositionalEquality as P
 open import Relation.Nullary
+
+private
+  open module BagS {A : Set} =
+    Setoid (Any.Membership-≡.Bag-equality {A})
+      using () renaming (_≈_ to _Bag-≈_)
 
 open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Parser
@@ -65,8 +72,9 @@ data _∈_·_ {Tok} :
              y ∈ p₁ >>=! p₂ · s₁ ++ s₂
   nonempty : ∀ {R xs x y s} {p : Parser Tok R xs}
              (x∈p : y ∈ p · x ∷ s) → y ∈ nonempty p · x ∷ s
-  cast     : ∀ {R xs₁ xs₂ x s} {eq : xs₁ ≡ xs₂} {p : Parser Tok R xs₁}
-             (x∈p : x ∈ p · s) → x ∈ cast eq p · s
+  cast     : ∀ {R xs₁ xs₂ x s}
+               {xs₁≈xs₂ : xs₁ Bag-≈ xs₂} {p : Parser Tok R xs₁}
+             (x∈p : x ∈ p · s) → x ∈ cast xs₁≈xs₂ p · s
 
 ------------------------------------------------------------------------
 -- Parser and language equivalence

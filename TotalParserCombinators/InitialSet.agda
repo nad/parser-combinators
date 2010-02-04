@@ -24,9 +24,9 @@ open import Relation.Binary.HeterogeneousEquality as H
 open Any.Membership-≡
 open ∈.Membership-≡
 private
-  open module SetEq {R : Set} = Setoid (Set-equality {R})
+  open module SetS {R : Set} = Setoid (Set-equality {R})
     using () renaming (_≈_ to _Set-≈_)
-  open module BagEq {R : Set} = Setoid (Bag-equality {R})
+  open module BagS {R : Set} = Setoid (Bag-equality {R})
     using () renaming (_≈_ to _Bag-≈_)
 
 import TotalParserCombinators.Applicative as ⊛
@@ -53,7 +53,7 @@ mutual
     complete′ (<$> x∈p)                                     refl = map-∈⁺ (complete x∈p)
     complete′ (_⊛_   {s₁ = []} {fs = fs}        f∈p₁ x∈p₂)  refl = ⊛.∈⁺ (complete f∈p₁) (complete x∈p₂)
     complete′ (_>>=_ {s₁ = []} {xs = _ ∷ _} {f} x∈p₁ y∈p₂x) refl = >>=-∈⁺ f (complete x∈p₁) (complete y∈p₂x)
-    complete′ (cast {eq = refl} x∈p)                        refl = complete x∈p
+    complete′ (cast {xs₁≈xs₂ = xs₁≈xs₂} x∈p)                refl = Inverse.to xs₁≈xs₂ ⟨$⟩ complete x∈p
 
     complete′ (_>>=_  {s₁ = []} {xs = []} x∈p₁ y∈p₂x) refl with complete x∈p₁
     ... | ()
@@ -84,7 +84,7 @@ mutual
     with >>=-∈⁻ f zs y∈ys
   ... | (x , x∈zs , y∈fx) =
     _>>=_ {f = f} (sound p₁ x∈zs) (sound′ (p₂ x) x∈zs y∈fx)
-  sound (cast refl p) x∈xs = cast (sound p x∈xs)
+  sound (cast xs₁≈xs₂ p) x∈xs = cast (sound p (Inverse.from xs₁≈xs₂ ⟨$⟩ x∈xs))
 
   sound (return _)   (there ())
   sound fail         ()
@@ -143,8 +143,9 @@ mutual
          helper ⟪ p ⟫ () _
          helper ⟨ p ⟩ _  y∈p = sound∘complete y∈p
     ... | ._ | refl | ._ | refl = refl
-    sound∘complete′ (cast {eq = refl} x∈p)             refl with complete x∈p | sound∘complete x∈p
-    sound∘complete′ (cast {eq = refl} .(sound _ x∈xs)) refl | x∈xs | refl = refl
+    sound∘complete′ (cast {xs₁≈xs₂ = xs₁≈xs₂} x∈p)             refl with complete x∈p | sound∘complete x∈p
+    sound∘complete′ (cast {xs₁≈xs₂ = xs₁≈xs₂} .(sound _ x∈xs)) refl | x∈xs | refl
+      rewrite Inverse.left-inverse-of xs₁≈xs₂ x∈xs = refl
 
     sound∘complete′ (_⊛_    {s₁ = []} {xs = []} _    x∈p₂)  refl with complete x∈p₂
     ... | ()
@@ -182,7 +183,9 @@ complete∘sound (_>>=_ {xs = z ∷ zs} {f} p₁ p₂) .(>>=-∈⁺ f x∈z∷zs
            (x∈z∷zs : x ∈ z ∷ zs) (y∈xs : y ∈ xs) →
            complete (sound′ p x∈z∷zs y∈xs) ≡ y∈xs
   helper ⟨ p ⟩ x∈z∷zs y∈xs = complete∘sound p y∈xs
-complete∘sound (cast refl p) x∈xs = complete∘sound p x∈xs
+complete∘sound (cast xs₁≈xs₂ p) x∈xs
+  rewrite complete∘sound p (Inverse.from xs₁≈xs₂ ⟨$⟩ x∈xs) =
+    Inverse.right-inverse-of xs₁≈xs₂ x∈xs
 
 complete∘sound (return _)   (there ())
 complete∘sound fail         ()

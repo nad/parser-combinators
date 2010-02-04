@@ -16,11 +16,15 @@ import Data.List.Any.SetEquality as SetEq
 open import Data.Nat using (ℕ; zero; suc)
 import Data.Product as Prod
 open import Relation.Binary
+import Relation.Binary.EqReasoning as EqReasoning
 open import Relation.Binary.PropositionalEquality as P using (_≡_; _≗_)
 
 private
   module SetMonoid {A : Set} =
     CommutativeMonoid (SetEq.commutativeMonoid A)
+  open module BagS {A : Set} =
+    Setoid (Any.Membership-≡.Bag-equality {A})
+      using () renaming (_≈_ to _Bag-≈_)
   module SetS {A : Set} = Setoid (Any.Membership-≡.Set-equality {A})
 
 open import TotalParserCombinators.Coinduction
@@ -234,13 +238,22 @@ nonempty-cong =
 
 cast-cong : ∀ {Tok R xs₁ xs₂ xs₁′ xs₂′}
               {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂}
-              {eq₁ : xs₁ ≡ xs₁′} {eq₂ : xs₂ ≡ xs₂′} →
-            p₁ ≈ p₂ → cast eq₁ p₁ ≈ cast eq₂ p₂
-cast-cong {xs₁ = xs₁} {xs₂} {p₁ = p₁} {p₂} {P.refl} {P.refl} =
+              {xs₁≈xs₁′ : xs₁ Bag-≈ xs₁′} {xs₂≈xs₂′ : xs₂ Bag-≈ xs₂′} →
+            p₁ ≈ p₂ → cast xs₁≈xs₁′ p₁ ≈ cast xs₂≈xs₂′ p₂
+cast-cong {xs₁ = xs₁} {xs₂} {xs₁′} {xs₂′}
+          {p₁} {p₂} {xs₁≈xs₁′} {xs₂≈xs₂′} =
   LanguageEquivalence.sound ∘ cast-cong′ ∘ LanguageEquivalence.complete
   where
-  cast-cong′ : p₁ ≈′ p₂ → cast P.refl p₁ ≈′ cast P.refl p₂
-  cast-cong′ (init ∷ rest) = (λ {_} → init) ∷ rest
+  open Any.Membership-≡
+  open EqReasoning Set-equality
+
+  cast-cong′ : p₁ ≈′ p₂ → cast xs₁≈xs₁′ p₁ ≈′ cast xs₂≈xs₂′ p₂
+  cast-cong′ (init ∷ rest) =
+    (λ {_} → begin
+      xs₁′  ≈⟨ SetS.sym $ bag-=⇒set-= xs₁≈xs₁′ ⟩
+      xs₁   ≈⟨ init ⟩
+      xs₂   ≈⟨ bag-=⇒set-= xs₂≈xs₂′ ⟩
+      xs₂′  ∎) ∷ rest
 
 ⋆-cong : ∀ {Tok R} {p₁ p₂ : Parser Tok R []} →
          p₁ ≈ p₂ → p₁ ⋆ ≈ p₂ ⋆

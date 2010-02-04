@@ -7,7 +7,14 @@ module TotalParserCombinators.Unambiguity where
 open import Coinduction
 open import Data.Bool
 open import Data.List hiding (map)
+import Data.List.Any as Any
+open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
+
+private
+  open module BagS {A : Set} =
+    Setoid (Any.Membership-≡.Bag-equality {A})
+      using () renaming (_≈_ to _Bag-≈_)
 
 open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Parser
@@ -74,8 +81,9 @@ data Unambiguous′ {Tok} : ∀ {R xs} → Parser Tok R xs → Set1 where
              (u : ∀ {x₁ x₂ t s} →
                   x₁ ∈ p · t ∷ s → x₂ ∈ p · t ∷ s → x₁ ≡ x₂) →
              Unambiguous′ (nonempty p)
-  cast     : ∀ {R xs₁ xs₂} {eq : xs₁ ≡ xs₂} {p : Parser Tok R xs₁}
-             (u : Unambiguous′ p) → Unambiguous′ (cast eq p)
+  cast     : ∀ {R xs₁ xs₂}
+               {xs₁≈xs₂ : xs₁ Bag-≈ xs₂} {p : Parser Tok R xs₁}
+             (u : Unambiguous′ p) → Unambiguous′ (cast xs₁≈xs₂ p)
 
 -- The two definitions are equivalent.
 
@@ -132,4 +140,4 @@ complete (p₁ >>=! p₂)            u = bind′ (λ x₁∈ y₁∈ eq₁ x₂�
                                               u (cast∈ refl refl eq₁ (_>>=!_ {p₁ = p₁} x₁∈ y₁∈))
                                                 (cast∈ refl refl eq₂ (_>>=!_           x₂∈ y₂∈)))
 complete (nonempty p)            u = nonempty (λ x₁∈ x₂∈ → u (nonempty x₁∈) (nonempty x₂∈))
-complete (cast refl p)           u = cast (complete p (λ x₁∈ x₂∈ → u (cast x₁∈) (cast x₂∈)))
+complete (cast xs₁≈xs₂ p)        u = cast (complete p (λ x₁∈ x₂∈ → u (cast x₁∈) (cast x₂∈)))

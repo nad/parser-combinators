@@ -15,7 +15,9 @@ open import Relation.Binary
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 
 private
-  module BagS {A : Set} = Setoid (Any.Membership-≡.Bag-equality {A})
+  open module BagS {A : Set} =
+    Setoid (Any.Membership-≡.Bag-equality {A})
+      using () renaming (_≈_ to _Bag-≈_)
 
 open import TotalParserCombinators.Applicative using (_⊛′_)
 open import TotalParserCombinators.BreadthFirst hiding (correct)
@@ -116,6 +118,8 @@ module Cast where
 
   -- Casts can be erased.
 
-  correct : ∀ {Tok R xs₁ xs₂} {eq : xs₁ ≡ xs₂} {p : Parser Tok R xs₁} →
-            cast eq p ≅P p
-  correct {eq = P.refl} {p} = BagS.refl ∷ λ t → ♯ (∂ p t ∎)
+  correct : ∀ {Tok R xs₁ xs₂}
+              {xs₁≈xs₂ : xs₁ Bag-≈ xs₂} {p : Parser Tok R xs₁} →
+            cast xs₁≈xs₂ p ≅P p
+  correct {xs₁≈xs₂ = xs₁≈xs₂} {p} =
+    BagS.sym xs₁≈xs₂ ∷ λ t → ♯ (∂ p t ∎)

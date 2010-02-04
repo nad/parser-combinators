@@ -11,6 +11,7 @@ import Data.List.Any as Any
 import Data.List.Any.BagEquality as BagEq
 open import Function
 open import Relation.Binary
+import Relation.Binary.EqReasoning as EqReasoning
 open import Relation.Binary.PropositionalEquality as P using (_≡_; _≗_)
 
 private
@@ -178,10 +179,17 @@ private
 
   castW : ∀ {Tok R xs₁ xs₂ xs₁′ xs₂′}
             {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂}
-            {eq₁ : xs₁ ≡ xs₁′} {eq₂ : xs₂ ≡ xs₂′} →
-         p₁ ≅W p₂ → cast eq₁ p₁ ≅W cast eq₂ p₂
-  castW {eq₁ = P.refl} {eq₂ = P.refl} (xs₁≈xs₂ ∷ ∂p₁≅∂p₂) =
-    xs₁≈xs₂ ∷ ∂p₁≅∂p₂
+            {xs₁≈xs₁′ : xs₁ Bag-≈ xs₁′} {xs₂≈xs₂′ : xs₂ Bag-≈ xs₂′} →
+         p₁ ≅W p₂ → cast xs₁≈xs₁′ p₁ ≅W cast xs₂≈xs₂′ p₂
+  castW {xs₁ = xs₁} {xs₂} {xs₁′} {xs₂′}
+        {xs₁≈xs₁′ = xs₁≈xs₁′} {xs₂≈xs₂′} (xs₁≈xs₂ ∷ ∂p₁≅∂p₂) =
+    (begin
+      xs₁′  ≈⟨ BagS.sym xs₁≈xs₁′ ⟩
+      xs₁   ≈⟨ xs₁≈xs₂ ⟩
+      xs₂   ≈⟨ xs₂≈xs₂′ ⟩
+      xs₂′  □) ∷ ∂p₁≅∂p₂
+    where
+    open EqReasoning Any.Membership-≡.Bag-equality renaming (_∎ to _□)
 
   whnf : ∀ {Tok R xs₁ xs₂}
            {p₁ : Parser Tok R xs₁}

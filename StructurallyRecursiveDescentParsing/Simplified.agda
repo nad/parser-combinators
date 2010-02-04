@@ -7,23 +7,26 @@ module StructurallyRecursiveDescentParsing.Simplified where
 open import Category.Monad
 open import Coinduction
 open import Data.Bool
-
-import Data.List.NonEmpty as List⁺
-open List⁺ using (List⁺; _∷_; [_]; _⁺++_; head; tail)
-open RawMonad List⁺.monad using () renaming (_>>=_ to _>>=⁺_)
-open import Data.List.NonEmpty.Properties
-
-import Data.List as List
-open List using (List; _∷_; []; _++_)
-open RawMonad List.monad using () renaming (_>>=_ to _>>=′_)
+open import Data.List as List using (List; _∷_; []; _++_)
+import Data.List.Any as Any
 import Data.List.Properties as ListProp
-
+open import Data.List.NonEmpty as List⁺
+  using (List⁺; _∷_; [_]; _⁺++_; head; tail)
+open import Data.List.NonEmpty.Properties
+open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
-open ≡-Reasoning
 
+open ≡-Reasoning
+open RawMonad List.monad using () renaming (_>>=_ to _>>=′_)
+open RawMonad List⁺.monad using () renaming (_>>=_ to _>>=⁺_)
+private
+  open module BagS {A : Set} =
+    Setoid (Any.Membership-≡.Bag-equality {A})
+      using () renaming (_≈_ to _Bag-≈_)
+
+open import StructurallyRecursiveDescentParsing.Simplified.Lemmas
 open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Parser as Parser hiding (Parser)
-open import StructurallyRecursiveDescentParsing.Simplified.Lemmas
 
 ------------------------------------------------------------------------
 -- Parsers
@@ -126,7 +129,11 @@ private
 ⟦ fail       ⟧ = fail
 ⟦ token      ⟧ = token
 ⟦ p₁ ∣ p₂    ⟧ = cast lem (⟦ p₁ ⟧ ∣ ⟦ p₂ ⟧)
-                 where lem = ∣-lemma p₁ p₂
+                 where
+                 lem : _ Bag-≈ _
+                 lem = BagS.reflexive (∣-lemma p₁ p₂)
 ⟦ p₁ !>>= p₂ ⟧ =           ⟦ p₁ ⟧ >>= λ x → ⟪ ♯ ⟦ ♭ (p₂ x) ⟧ ⟫
 ⟦ p₁ ?>>= p₂ ⟧ = cast lem (⟦ p₁ ⟧ >>= λ x → ⟨   ⟦    p₂ x  ⟧ ⟩)
-                 where lem = ?>>=-lemma p₁ p₂
+                 where
+                 lem : _ Bag-≈ _
+                 lem = BagS.reflexive (?>>=-lemma p₁ p₂)

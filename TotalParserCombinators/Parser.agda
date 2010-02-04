@@ -6,8 +6,11 @@ module TotalParserCombinators.Parser where
 
 open import Category.Monad
 open import Coinduction
-open import Data.Bool
 open import Data.List as List
+import Data.List.Any as Any
+open import Function
+open import Relation.Binary
+
 open RawMonadPlus List.monadPlus
   using ()
   renaming ( return to return′
@@ -15,11 +18,13 @@ open RawMonadPlus List.monadPlus
            ; _∣_    to _∣′_
            ; _>>=_  to _>>=′_
            )
-open import Function
-open import Relation.Binary.PropositionalEquality
+private
+  open module BagS {A : Set} =
+    Setoid (Any.Membership-≡.Bag-equality {A})
+      using () renaming (_≈_ to _Bag-≈_)
 
+open import TotalParserCombinators.Applicative using (_⊛′_)
 open import TotalParserCombinators.Coinduction
-open import TotalParserCombinators.Applicative
 
 ------------------------------------------------------------------------
 -- Parsers
@@ -60,8 +65,8 @@ data Parser (Tok : Set) : (R : Set) → List R → Set1 where
              (p₂ : R₁ → ∞? (Parser Tok R₂ fail′) xs) →
                             Parser Tok R₂ fail′
   nonempty : ∀ {R xs} (p : Parser Tok R xs) → Parser Tok R []
-  cast     : ∀ {R xs₁ xs₂}
-             (eq : xs₁ ≡ xs₂) (p : Parser Tok R xs₁) → Parser Tok R xs₂
+  cast     : ∀ {R xs₁ xs₂} (xs₁≈xs₂ : xs₁ Bag-≈ xs₂)
+             (p : Parser Tok R xs₁) → Parser Tok R xs₂
 
 -- The difference between the _>>=_ and _>>=!_ combinators is that the
 -- latter one accepts a delayed left parser, but requires the index of
@@ -69,11 +74,7 @@ data Parser (Tok : Set) : (R : Set) → List R → Set1 where
 -- to require the index to be a function f such that f x ≡ [] for all
 -- x in xs, but this seems complicated.
 
--- Note that it would be reasonable to generalise the casts to accept
--- /bag/ equality instead of just list equality. However, I have not
--- yet found a use for this generalisation.
-
--- Note also that these parsers can be both left and right recursive:
+-- Note that these parsers can be both left and right recursive:
 
 private
 
