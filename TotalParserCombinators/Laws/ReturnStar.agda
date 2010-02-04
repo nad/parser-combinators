@@ -68,24 +68,24 @@ distrib-⊙ fs xs =
 
     ∂ (return⋆ fs ⊙ return⋆ xs) t    ∎)
 
--- return⋆ is homomorphic with respect to _>>=′_/_⟫=_.
+-- return⋆ is homomorphic with respect to _>>=′_/_≫=_.
 
-distrib-⟫= :
+distrib-≫= :
   ∀ {Tok R₁ R₂} xs (f : R₁ → List R₂) →
-  return⋆ {Tok = Tok} (xs >>=′ f) ≅P return⋆ xs ⟫= (return⋆ ∘ f)
-distrib-⟫= xs f =
+  return⋆ {Tok = Tok} (xs >>=′ f) ≅P return⋆ xs ≫= (return⋆ ∘ f)
+distrib-≫= xs f =
   BagS.refl ∷ λ t → ♯ (
     ∂ (return⋆ (xs >>=′ f)) t                  ≅⟨ ∂-return⋆ (xs >>=′ f) ⟩
 
     fail                                       ≅⟨ sym $ AdditiveMonoid.left-identity fail ⟩
 
-    fail ∣ fail                                ≅⟨ sym $ left-zero-⟫=  (return⋆ ∘ f) ∣
-                                                        right-zero-⟫= (return⋆ xs) ⟩
+    fail ∣ fail                                ≅⟨ sym $ left-zero-≫=  (return⋆ ∘ f) ∣
+                                                        right-zero-≫= (return⋆ xs) ⟩
 
-    fail ⟫= (return⋆ ∘ f) ∣
-    return⋆ xs ⟫= (λ _ → fail)                 ≅⟨ sym $ ∂-return⋆ xs ⟫=′ (λ x → return⋆ (f x) ∎) ∣
-                                                        (return⋆ xs ∎) ⟫=′ (λ x → ∂-return⋆ (f x)) ⟩
-    ∂ (return⋆ xs) t ⟫= (return⋆ ∘ f) ∣
-    return⋆ xs ⟫= (λ x → ∂ (return⋆ (f x)) t)  ≅⟨ sym $ ∂-⟫= (return⋆ xs) (return⋆ ∘ f) ⟩
+    fail ≫= (return⋆ ∘ f) ∣
+    return⋆ xs ≫= (λ _ → fail)                 ≅⟨ sym $ ∂-return⋆ xs ≫=′ (λ x → return⋆ (f x) ∎) ∣
+                                                        (return⋆ xs ∎) ≫=′ (λ x → ∂-return⋆ (f x)) ⟩
+    ∂ (return⋆ xs) t ≫= (return⋆ ∘ f) ∣
+    return⋆ xs ≫= (λ x → ∂ (return⋆ (f x)) t)  ≅⟨ sym $ ∂-≫= (return⋆ xs) (return⋆ ∘ f) ⟩
 
-    ∂ (return⋆ xs ⟫= (return⋆ ∘ f)) t          ∎)
+    ∂ (return⋆ xs ≫= (return⋆ ∘ f)) t          ∎)

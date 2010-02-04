@@ -260,57 +260,57 @@ module ⊙ {Tok R₁ R₂ : Set} where
       }
     }
 
-infixl 10 _⟫=_
+infixl 10 _≫=_
 
-_⟫=_ : ∀ {Tok R₁ R₂ xs} {f : R₁ → List R₂} →
+_≫=_ : ∀ {Tok R₁ R₂ xs} {f : R₁ → List R₂} →
        Parser Tok R₁ xs → ((x : R₁) → Parser Tok R₂ (f x)) →
        Parser Tok R₂ (xs >>=′ f)
-p₁ ⟫= p₂ = p₁ >>= λ x → ♯? (p₂ x)
+p₁ ≫= p₂ = p₁ >>= λ x → ♯? (p₂ x)
 
-module ⟫= {Tok R₁ R₂ : Set} where
+module ≫= {Tok R₁ R₂ : Set} where
 
-  infixl 10 _⟫=′_
-  infix   4 _⟫=_·_∋_
+  infixl 10 _≫=′_
+  infix   4 _≫=_·_∋_
 
-  data _⟫=_·_∋_ {xs} {f : R₁ → List R₂}
+  data _≫=_·_∋_ {xs} {f : R₁ → List R₂}
                 (p₁ : Parser Tok R₁ xs)
                 (p₂ : ((x : R₁) → Parser Tok R₂ (f x))) :
                 List Tok → R₂ → Set₁ where
-    _⟫=′_ : ∀ {x y s₁ s₂} (∈p₁ : x ∈ p₁ · s₁) (∈p₂x : y ∈ p₂ x · s₂) →
-            p₁ ⟫= p₂ · s₁ ++ s₂ ∋ y
+    _≫=′_ : ∀ {x y s₁ s₂} (∈p₁ : x ∈ p₁ · s₁) (∈p₂x : y ∈ p₂ x · s₂) →
+            p₁ ≫= p₂ · s₁ ++ s₂ ∋ y
 
   complete : ∀ {xs} {f : R₁ → List R₂} {x y s₁ s₂}
                {p₁ : Parser Tok R₁ xs}
                {p₂ : ((x : R₁) → Parser Tok R₂ (f x))} →
-             x ∈ p₁ · s₁ → y ∈ p₂ x · s₂ → y ∈ p₁ ⟫= p₂ · s₁ ++ s₂
+             x ∈ p₁ · s₁ → y ∈ p₂ x · s₂ → y ∈ p₁ ≫= p₂ · s₁ ++ s₂
   complete {xs} ∈p₁ ∈p₂x = ∈p₁ >>= ♭♯.add xs ∈p₂x
 
   complete′ : ∀ {xs} {f : R₁ → List R₂} {y s}
                 {p₁ : Parser Tok R₁ xs}
                 {p₂ : ((x : R₁) → Parser Tok R₂ (f x))} →
-              p₁ ⟫= p₂ · s ∋ y → y ∈ p₁ ⟫= p₂ · s
-  complete′ (∈p₁ ⟫=′ ∈p₂x) = complete ∈p₁ ∈p₂x
+              p₁ ≫= p₂ · s ∋ y → y ∈ p₁ ≫= p₂ · s
+  complete′ (∈p₁ ≫=′ ∈p₂x) = complete ∈p₁ ∈p₂x
 
   sound : ∀ xs {f : R₁ → List R₂} {y s}
             {p₁ : Parser Tok R₁ xs}
             {p₂ : ((x : R₁) → Parser Tok R₂ (f x))} →
-          y ∈ p₁ ⟫= p₂ · s → p₁ ⟫= p₂ · s ∋ y
-  sound xs (∈p₁ >>= ∈p₂x) = ∈p₁ ⟫=′ ♭♯.drop xs ∈p₂x
+          y ∈ p₁ ≫= p₂ · s → p₁ ≫= p₂ · s ∋ y
+  sound xs (∈p₁ >>= ∈p₂x) = ∈p₁ ≫=′ ♭♯.drop xs ∈p₂x
 
   private
 
     sound∘complete′ : ∀ {xs} {f : R₁ → List R₂} {y s}
                         {p₁ : Parser Tok R₁ xs}
                         {p₂ : ((x : R₁) → Parser Tok R₂ (f x))}
-                      (y∈ : p₁ ⟫= p₂ · s ∋ y) →
+                      (y∈ : p₁ ≫= p₂ · s ∋ y) →
                       sound xs (complete′ y∈) ≡ y∈
-    sound∘complete′ {xs = xs} (x∈ ⟫=′ y∈)
+    sound∘complete′ {xs = xs} (x∈ ≫=′ y∈)
       rewrite Inverse.right-inverse-of (♭♯.correct xs) y∈ = refl
 
     complete′∘sound : ∀ xs {f : R₁ → List R₂} {y s}
                         {p₁ : Parser Tok R₁ xs}
                         {p₂ : ((x : R₁) → Parser Tok R₂ (f x))} →
-                      (y∈ : y ∈ p₁ ⟫= p₂ · s) →
+                      (y∈ : y ∈ p₁ ≫= p₂ · s) →
                       complete′ (sound xs y∈) ≡ y∈
     complete′∘sound xs (x∈ >>= y∈)
       rewrite Inverse.left-inverse-of (♭♯.correct xs) y∈ = refl
@@ -318,7 +318,7 @@ module ⟫= {Tok R₁ R₂ : Set} where
   correct : ∀ {xs} {f : R₁ → List R₂} {y s}
               {p₁ : Parser Tok R₁ xs}
               {p₂ : ((x : R₁) → Parser Tok R₂ (f x))} →
-            p₁ ⟫= p₂ · s ∋ y ⇿ y ∈ p₁ ⟫= p₂ · s
+            p₁ ≫= p₂ · s ∋ y ⇿ y ∈ p₁ ≫= p₂ · s
   correct {xs = xs} = record
     { to         = P.→-to-⟶ complete′
     ; from       = P.→-to-⟶ $ sound xs
@@ -506,23 +506,23 @@ module Token
 ⋁ : ∀ {Tok R₁ R₂} {f : R₁ → List R₂} →
     ((x : R₁) → Parser Tok R₂ (f x)) → (xs : List R₁) →
     Parser Tok R₂ (xs >>=′ f)
-⋁ f xs = return⋆ xs ⟫= f
+⋁ f xs = return⋆ xs ≫= f
 
 module ⋁ where
 
-  open ⟫= using (_⟫=′_)
+  open ≫= using (_≫=′_)
 
   sound : ∀ {Tok R₁ R₂ y s} {i : R₁ → List R₂} →
           (f : (x : R₁) → Parser Tok R₂ (i x)) (xs : List R₁) →
           y ∈ ⋁ f xs · s → ∃ λ x → (x ∈ xs) × (y ∈ f x · s)
-  sound f xs y∈⋁fxs with ⟫=.sound xs y∈⋁fxs
-  ... | ∈ret⋆ ⟫=′ y∈fx with Return⋆.sound xs ∈ret⋆
+  sound f xs y∈⋁fxs with ≫=.sound xs y∈⋁fxs
+  ... | ∈ret⋆ ≫=′ y∈fx with Return⋆.sound xs ∈ret⋆
   ...   | (refl , x∈xs) = (_ , x∈xs , y∈fx)
 
   complete : ∀ {Tok R₁ R₂ x y s} {i : R₁ → List R₂} →
              (f : (x : R₁) → Parser Tok R₂ (i x)) {xs : List R₁} →
              x ∈ xs → y ∈ f x · s → y ∈ ⋁ f xs · s
-  complete f x∈xs y∈fx = ⟫=.complete (Return⋆.complete x∈xs) y∈fx
+  complete f x∈xs y∈fx = ≫=.complete (Return⋆.complete x∈xs) y∈fx
 
   complete∘sound : ∀ {Tok R₁ R₂ y s} {i : R₁ → List R₂} →
                    (f : (x : R₁) → Parser Tok R₂ (i x)) (xs : List R₁)
@@ -530,13 +530,13 @@ module ⋁ where
                    let p = proj₂ $ sound f xs y∈⋁fxs in
                    complete f (proj₁ p) (proj₂ p) ≡ y∈⋁fxs
   complete∘sound f xs y∈⋁fxs
-    with ⟫=.sound xs y∈⋁fxs
-       | Inverse.right-inverse-of (⟫=.correct {xs = xs}) y∈⋁fxs
-  complete∘sound f xs .(⟫=.complete ∈ret⋆ y∈fx) | ∈ret⋆ ⟫=′ y∈fx | refl
+    with ≫=.sound xs y∈⋁fxs
+       | Inverse.right-inverse-of (≫=.correct {xs = xs}) y∈⋁fxs
+  complete∘sound f xs .(≫=.complete ∈ret⋆ y∈fx) | ∈ret⋆ ≫=′ y∈fx | refl
     with Return⋆.sound xs ∈ret⋆
        | Inverse.right-inverse-of (Return⋆.correct) ∈ret⋆
-  complete∘sound f xs .(⟫=.complete (Return⋆.complete x∈xs) y∈fx)
-    | ._ ⟫=′ y∈fx | refl | (refl , x∈xs) | refl = refl
+  complete∘sound f xs .(≫=.complete (Return⋆.complete x∈xs) y∈fx)
+    | ._ ≫=′ y∈fx | refl | (refl , x∈xs) | refl = refl
 
   sound∘complete :
     ∀ {Tok R₁ R₂ x y s} {i : R₁ → List R₂} →

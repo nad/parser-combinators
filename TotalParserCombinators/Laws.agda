@@ -38,7 +38,7 @@ module AdditiveMonoid = TotalParserCombinators.Laws.AdditiveMonoid
 import TotalParserCombinators.Laws.Derivative
 module ∂ = TotalParserCombinators.Laws.Derivative
   hiding (left-zero-⊙; right-zero-⊙;
-          left-zero-⟫=; right-zero-⟫=;
+          left-zero-≫=; right-zero-≫=;
           >>=!≅>>=)
 
 -- Laws related to return⋆.

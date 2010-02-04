@@ -191,14 +191,14 @@ token-cong = Equivalence.refl
            p₁₁ >>= p₁₂ ⊑ p₂₁ >>= p₂₂
   helper ₁₁⊑₂₁ ₁₂⊑₂₂ (∈p₁₁ >>= ∈p₁₂) = ₁₁⊑₂₁ ∈p₁₁ >>= ₁₂⊑₂₂ _ ∈p₁₂
 
-⟫=-cong : ∀ {Tok R₁ R₂ xs₁ xs₂} {f₁ f₂ : R₁ → List R₂}
+≫=-cong : ∀ {Tok R₁ R₂ xs₁ xs₂} {f₁ f₂ : R₁ → List R₂}
             {p₁₁ : Parser Tok R₁ xs₁}
             {p₁₂ : (x : R₁) → Parser Tok R₂ (f₁ x)}
             {p₂₁ : Parser Tok R₁ xs₂}
             {p₂₂ : (x : R₁) → Parser Tok R₂ (f₂ x)} →
           p₁₁ ≈ p₂₁ → (∀ x → p₁₂ x ≈ p₂₂ x) →
-          p₁₁ ⟫= p₁₂ ≈ p₂₁ ⟫= p₂₂
-⟫=-cong {xs₁ = xs₁} {xs₂} ₁₁≈₂₁ ₁₂≈₂₂ =
+          p₁₁ ≫= p₁₂ ≈ p₂₁ ≫= p₂₂
+≫=-cong {xs₁ = xs₁} {xs₂} ₁₁≈₂₁ ₁₂≈₂₂ =
   >>=-cong ₁₁≈₂₁ (♭♯-cong xs₁ xs₂ ∘ ₁₂≈₂₂)
 
 >>=!-cong : ∀ {Tok R₁ R₂ xs₁ xs₂}
