@@ -32,13 +32,6 @@ mutual
   ∂-initial (nonempty _)              _ = _
   ∂-initial (cast _ _)                _ = _
 
-  ∂-⋁-initial : ∀ {Tok R₁ R₂ y} {ys : List R₁} {f : R₁ → List R₂} →
-                List R₁ →
-                ((x : R₁) → ∞? (Parser Tok R₂ (f x)) (y ∷ ys)) → Tok →
-                List R₂
-  ∂-⋁-initial []      _ _ = _
-  ∂-⋁-initial (_ ∷ _) _ _ = _
-
   ∂!-initial : ∀ {Tok R₁ R₂ xs y} {ys : List R₁} →
                ∞? (Parser Tok R₂ xs) (y ∷ ys) → Tok → List R₂
   ∂!-initial ⟨ _ ⟩ _ = _
@@ -57,27 +50,17 @@ mutual
   ∂ (⟨ p₁ ⟩ ⊛ ⟪ p₂ ⟫)            t = ⟨   ∂    p₁  t ⟩ ⊛ ♯? (♭ p₂)
   ∂ (⟪ p₁ ⟫ ⊛ ⟪ p₂ ⟫)            t = ⟪ ♯ ∂ (♭ p₁) t ⟫ ⊛ ♯? (♭ p₂)
   ∂ (⟨ p₁ ⟩ ⊛ ⟨_⟩ {f} {fs} p₂)   t = ⟨   ∂    p₁  t ⟩ ⊛ ♯?    p₂
-                                   ∣ ♯? (⋁ return (f ∷ fs)) ⊛ ⟨ ∂ p₂ t ⟩
+                                   ∣ ♯? (return⋆ (f ∷ fs)) ⊛ ⟨ ∂ p₂ t ⟩
   ∂ (⟪ p₁ ⟫ ⊛ ⟨_⟩ {f} {fs} p₂)   t = ⟪ ♯ ∂ (♭ p₁) t ⟫ ⊛ ♯?     p₂
-                                   ∣ ♯? (⋁ return (f ∷ fs)) ⊛ ⟨ ∂ p₂ t ⟩
+                                   ∣ ♯? (return⋆ (f ∷ fs)) ⊛ ⟨ ∂ p₂ t ⟩
   ∂ (_>>=_ {xs = []}      p₁ p₂) t = ∂ p₁ t >>= (λ x → ♯? (♭? (p₂ x)))
   ∂ (_>>=_ {xs = x ∷ xs}  p₁ p₂) t = ∂ p₁ t >>= (λ x → ♯? (♭? (p₂ x)))
-                                   ∣ ∂-⋁ (x ∷ xs) p₂ t
+                                   ∣ return⋆ (x ∷ xs) >>= λ x → ⟨ ∂! (p₂ x) t ⟩
   ∂ (_>>=!_ {xs = []}     p₁ p₂) t = (♯ ∂ (♭ p₁) t) >>=! (λ x → ♯? (♭? (p₂ x)))
   ∂ (_>>=!_ {xs = x ∷ xs} p₁ p₂) t = (♯ ∂ (♭ p₁) t) >>=! (λ x → ♯? (♭? (p₂ x)))
-                                   ∣ ∂-⋁ (x ∷ xs) p₂ t
+                                   ∣ return⋆ (x ∷ xs) >>= λ x → ⟨ ∂! (p₂ x) t ⟩
   ∂ (nonempty p)                 t = ∂ p t
   ∂ (cast _ p)                   t = ∂ p t
-
-  -- ⋁ is inlined here, because otherwise the termination checker
-  -- would not accept the code.
-
-  ∂-⋁ : ∀ {Tok R₁ R₂ y} {ys : List R₁} {f : R₁ → List R₂}
-        (xs : List R₁)
-        (p : (x : R₁) → ∞? (Parser Tok R₂ (f x)) (y ∷ ys)) (t : Tok) →
-        Parser Tok R₂ (∂-⋁-initial xs p t)
-  ∂-⋁ []       p t = fail
-  ∂-⋁ (x ∷ xs) p t = ∂! (p x) t ∣ ∂-⋁ xs p t
 
   ∂! : ∀ {Tok R₁ R₂ xs y} {ys : List R₁}
        (p : ∞? (Parser Tok R₂ xs) (y ∷ ys)) (t : Tok) →

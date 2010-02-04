@@ -20,13 +20,13 @@ private
 open import TotalParserCombinators.Applicative using (_⊛′_)
 open import TotalParserCombinators.BreadthFirst hiding (correct)
 open import TotalParserCombinators.Congruence.Parser
-open import TotalParserCombinators.Lib hiding (module ⋁)
+open import TotalParserCombinators.Lib hiding (module Return⋆)
 open import TotalParserCombinators.Parser
 
 ------------------------------------------------------------------------
 -- Reexported modules
 
--- Laws related to _∣_ and fail.
+-- Laws related to _∣_.
 
 import TotalParserCombinators.Laws.AdditiveMonoid
 module AdditiveMonoid = TotalParserCombinators.Laws.AdditiveMonoid
@@ -35,14 +35,16 @@ module AdditiveMonoid = TotalParserCombinators.Laws.AdditiveMonoid
 
 import TotalParserCombinators.Laws.Derivative
 module ∂ = TotalParserCombinators.Laws.Derivative
-  hiding (left-zero; right-zero; >>=!≅>>=)
+  hiding (left-zero-⊙; right-zero-⊙;
+          left-zero-⟫=; right-zero-⟫=;
+          >>=!≅>>=)
 
--- Laws related to ⋁.
+-- Laws related to return⋆.
 
-import TotalParserCombinators.Laws.Or
-module ⋁ = TotalParserCombinators.Laws.Or
+import TotalParserCombinators.Laws.ReturnStar
+module Return⋆ = TotalParserCombinators.Laws.ReturnStar
 
--- Laws related to _⊙_ and return.
+-- Laws related to _⊙_.
 
 import TotalParserCombinators.Laws.ApplicativeFunctor
 module ApplicativeFunctor =

@@ -105,11 +105,11 @@ private
   _⊛W_ {xs₁ = fs₁} {xs₃ = fs₃} {p₁ = p₁} {p₂} {p₃} {p₄}
        (fs₁≈fs₃ ∷ ∂p₁≅∂p₃) (xs₂≈xs₄ ∷ ∂p₂≅∂p₄) =
     ⊛.cong fs₁≈fs₃ xs₂≈xs₄ ∷ λ t →
-      ∂ (p₁ ⊛ p₂) t                                     ≅⟨ ∂-⊛ p₁ p₂ ⟩
-      ∂ (♭? p₁) t ⊙ ♭? p₂ ∣ ⋁ return fs₁ ⊙ ∂ (♭? p₂) t  ≅⟨ ∂p₁≅∂p₃ t ⊙′ (xs₂≈xs₄ ∷ λ t → ♯ ∂p₂≅∂p₄ t) ∣
-                                                           ⋁′ (λ _ → return P.refl) fs₁≈fs₃ ⊙′ ∂p₂≅∂p₄ t ⟩
-      ∂ (♭? p₃) t ⊙ ♭? p₄ ∣ ⋁ return fs₃ ⊙ ∂ (♭? p₄) t  ≅⟨ sym $ ∂-⊛ p₃ p₄ ⟩
-      ∂ (p₃ ⊛ p₄) t                                     ∎
+      ∂ (p₁ ⊛ p₂) t                                    ≅⟨ ∂-⊛ p₁ p₂ ⟩
+      ∂ (♭? p₁) t ⊙ ♭? p₂ ∣ return⋆ fs₁ ⊙ ∂ (♭? p₂) t  ≅⟨ ∂p₁≅∂p₃ t ⊙′ (xs₂≈xs₄ ∷ λ t → ♯ ∂p₂≅∂p₄ t) ∣
+                                                          Return⋆.cong fs₁≈fs₃ ⊙′ ∂p₂≅∂p₄ t ⟩
+      ∂ (♭? p₃) t ⊙ ♭? p₄ ∣ return⋆ fs₃ ⊙ ∂ (♭? p₄) t  ≅⟨ sym $ ∂-⊛ p₃ p₄ ⟩
+      ∂ (p₃ ⊛ p₄) t                                    ∎
 
   _⊙W_ : ∀ {Tok R₁ R₂ xs₁ xs₂ xs₃ xs₄}
            {p₁ : Parser Tok (R₁ → R₂) xs₁}
@@ -120,11 +120,11 @@ private
   _⊙W_ {xs₁ = fs₁} {xs₃ = fs₃} {p₁ = p₁} {p₂} {p₃} {p₄}
        (fs₁≈fs₃ ∷ ∂p₁≅∂p₃) (xs₂≈xs₄ ∷ ∂p₂≅∂p₄) =
     ⊛.cong fs₁≈fs₃ xs₂≈xs₄ ∷ λ t →
-      ∂ (p₁ ⊙ p₂) t                        ≅⟨ ∂-⊙ p₁ p₂ ⟩
-      ∂ p₁ t ⊙ p₂ ∣ ⋁ return fs₁ ⊙ ∂ p₂ t  ≅⟨ ∂p₁≅∂p₃ t ⊙′ (xs₂≈xs₄ ∷ λ t → ♯ ∂p₂≅∂p₄ t) ∣
-                                              ⋁′ (λ _ → return P.refl) fs₁≈fs₃ ⊙′ ∂p₂≅∂p₄ t ⟩
-      ∂ p₃ t ⊙ p₄ ∣ ⋁ return fs₃ ⊙ ∂ p₄ t  ≅⟨ sym $ ∂-⊙ p₃ p₄ ⟩
-      ∂ (p₃ ⊙ p₄) t                        ∎
+      ∂ (p₁ ⊙ p₂) t                       ≅⟨ ∂-⊙ p₁ p₂ ⟩
+      ∂ p₁ t ⊙ p₂ ∣ return⋆ fs₁ ⊙ ∂ p₂ t  ≅⟨ ∂p₁≅∂p₃ t ⊙′ (xs₂≈xs₄ ∷ λ t → ♯ ∂p₂≅∂p₄ t) ∣
+                                             Return⋆.cong fs₁≈fs₃ ⊙′ ∂p₂≅∂p₄ t ⟩
+      ∂ p₃ t ⊙ p₄ ∣ return⋆ fs₃ ⊙ ∂ p₄ t  ≅⟨ sym $ ∂-⊙ p₃ p₄ ⟩
+      ∂ (p₃ ⊙ p₄) t                       ∎
 
   _>>=W_ : ∀ {Tok R₁ R₂ xs₁ xs₂} {f₁ f₂ : R₁ → List R₂}
              {p₁ : Parser Tok R₁ xs₁}
@@ -135,11 +135,11 @@ private
            p₁ >>= p₂ ≅W p₃ >>= p₄
   _>>=W_ {xs₁ = xs₁} {xs₂} {p₁ = p₁} {p₂} {p₃} {p₄}
          (xs₁≈xs₂ ∷ ∂p₁≅∂p₃) p₂≅p₄ = BagEq.>>=-cong xs₁≈xs₂ (head ∘ p₂≅p₄) ∷ λ t →
-    ∂ (p₁ >>= p₂) t                                      ≅⟨ ∂->>= p₁ p₂ ⟩
-    ∂ p₁ t ⟫= (♭? ∘ p₂) ∣ ⋁ (λ x → ∂ (♭? (p₂ x)) t) xs₁  ≅⟨ ∂p₁≅∂p₃ t ⟫=′ (forget ∘ p₂≅p₄) ∣
-                                                            ⋁′ (λ x → tail (p₂≅p₄ x) t) xs₁≈xs₂ ⟩
-    ∂ p₃ t ⟫= (♭? ∘ p₄) ∣ ⋁ (λ x → ∂ (♭? (p₄ x)) t) xs₂  ≅⟨ sym $ ∂->>= p₃ p₄ ⟩
-    ∂ (p₃ >>= p₄) t                                      ∎
+    ∂ (p₁ >>= p₂) t                                               ≅⟨ ∂->>= p₁ p₂ ⟩
+    ∂ p₁ t ⟫= (♭? ∘ p₂) ∣ return⋆ xs₁ ⟫= (λ x → ∂ (♭? (p₂ x)) t)  ≅⟨ ∂p₁≅∂p₃ t ⟫=′ (forget ∘ p₂≅p₄) ∣
+                                                                     Return⋆.cong xs₁≈xs₂ ⟫=′ (λ x → tail (p₂≅p₄ x) t) ⟩
+    ∂ p₃ t ⟫= (♭? ∘ p₄) ∣ return⋆ xs₂ ⟫= (λ x → ∂ (♭? (p₄ x)) t)  ≅⟨ sym $ ∂->>= p₃ p₄ ⟩
+    ∂ (p₃ >>= p₄) t                                               ∎
 
   _>>=!W_ : ∀ {Tok R₁ R₂ xs₁ xs₂}
               {p₁ : ∞ (Parser Tok R₁ xs₁)}
@@ -150,11 +150,11 @@ private
             p₁ >>=! p₂ ≅W p₃ >>=! p₄
   _>>=!W_ {xs₁ = xs₁} {xs₂} {p₁} {p₂} {p₃} {p₄}
           (xs₁≈xs₂ ∷ ∂p₁≅∂p₃) p₂≅p₄ = BagMonoid.refl ∷ λ t →
-    ∂ (p₁ >>=! p₂) t                                         ≅⟨ ∂->>=! p₁ p₂ ⟩
-    ∂ (♭ p₁) t ⟫= (♭? ∘ p₂) ∣ ⋁ (λ x → ∂ (♭? (p₂ x)) t) xs₁  ≅⟨ ∂p₁≅∂p₃ t ⟫=′ (forget ∘ p₂≅p₄) ∣
-                                                                ⋁′ (λ x → tail (p₂≅p₄ x) t) xs₁≈xs₂ ⟩
-    ∂ (♭ p₃) t ⟫= (♭? ∘ p₄) ∣ ⋁ (λ x → ∂ (♭? (p₄ x)) t) xs₂  ≅⟨ sym $ ∂->>=! p₃ p₄ ⟩
-    ∂ (p₃ >>=! p₄) t                                         ∎
+    ∂ (p₁ >>=! p₂) t                                                  ≅⟨ ∂->>=! p₁ p₂ ⟩
+    ∂ (♭ p₁) t ⟫= (♭? ∘ p₂) ∣ return⋆ xs₁ ⟫= (λ x → ∂ (♭? (p₂ x)) t)  ≅⟨ ∂p₁≅∂p₃ t ⟫=′ (forget ∘ p₂≅p₄) ∣
+                                                                         Return⋆.cong xs₁≈xs₂ ⟫=′ (λ x → tail (p₂≅p₄ x) t) ⟩
+    ∂ (♭ p₃) t ⟫= (♭? ∘ p₄) ∣ return⋆ xs₂ ⟫= (λ x → ∂ (♭? (p₄ x)) t)  ≅⟨ sym $ ∂->>=! p₃ p₄ ⟩
+    ∂ (p₃ >>=! p₄) t                                                  ∎
 
   _⟫=W_ : ∀ {Tok R₁ R₂ xs₁ xs₂} {f₁ f₂ : R₁ → List R₂}
              {p₁ : Parser Tok R₁ xs₁}
@@ -165,11 +165,11 @@ private
   _⟫=W_ {xs₁ = xs₁} {xs₂} {p₁ = p₁} {p₂} {p₃} {p₄}
         (xs₁≈xs₂ ∷ ∂p₁≅∂p₃) p₂≅p₄ =
     BagEq.>>=-cong xs₁≈xs₂ (head ∘ p₂≅p₄) ∷ λ t →
-      ∂ (p₁ ⟫= p₂) t                           ≅⟨ ∂-⟫= p₁ p₂ ⟩
-      ∂ p₁ t ⟫= p₂ ∣ ⋁ (λ x → ∂ (p₂ x) t) xs₁  ≅⟨ ∂p₁≅∂p₃ t ⟫=′ (forget ∘ p₂≅p₄) ∣
-                                                  ⋁′ (λ x → tail (p₂≅p₄ x) t) xs₁≈xs₂ ⟩
-      ∂ p₃ t ⟫= p₄ ∣ ⋁ (λ x → ∂ (p₄ x) t) xs₂  ≅⟨ sym $ ∂-⟫= p₃ p₄ ⟩
-      ∂ (p₃ ⟫= p₄) t                           ∎
+      ∂ (p₁ ⟫= p₂) t                                    ≅⟨ ∂-⟫= p₁ p₂ ⟩
+      ∂ p₁ t ⟫= p₂ ∣ return⋆ xs₁ ⟫= (λ x → ∂ (p₂ x) t)  ≅⟨ ∂p₁≅∂p₃ t ⟫=′ (forget ∘ p₂≅p₄) ∣
+                                                           Return⋆.cong xs₁≈xs₂ ⟫=′ (λ x → tail (p₂≅p₄ x) t) ⟩
+      ∂ p₃ t ⟫= p₄ ∣ return⋆ xs₂ ⟫= (λ x → ∂ (p₄ x) t)  ≅⟨ sym $ ∂-⟫= p₃ p₄ ⟩
+      ∂ (p₃ ⟫= p₄) t                                    ∎
 
   nonemptyW : ∀ {Tok R xs₁ xs₂}
                 {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
@@ -182,17 +182,6 @@ private
          p₁ ≅W p₂ → cast eq₁ p₁ ≅W cast eq₂ p₂
   castW {eq₁ = P.refl} {eq₂ = P.refl} (xs₁≈xs₂ ∷ ∂p₁≅∂p₂) =
     xs₁≈xs₂ ∷ ∂p₁≅∂p₂
-
-  ⋁W : ∀ {Tok R₁ R₂} {f₁ f₂ : R₁ → List R₂} →
-         {p₁ : (x : R₁) → Parser Tok R₂ (f₁ x)} {xs₁ : List R₁}
-         {p₂ : (x : R₁) → Parser Tok R₂ (f₂ x)} {xs₂ : List R₁} →
-       (∀ x → p₁ x ≅W p₂ x) → xs₁ Bag-≈ xs₂ → ⋁ p₁ xs₁ ≅W ⋁ p₂ xs₂
-  ⋁W {f₁ = f₁} {f₂} {p₁} {xs₁} {p₂} {xs₂} p₁≅p₂ xs₁≈xs₂ =
-    BagEq.>>=-cong xs₁≈xs₂ (head ∘ p₁≅p₂) ∷ λ t →
-      ∂ (⋁ p₁ xs₁) t            ≅⟨ ∂-⋁-distrib p₁ xs₁ ⟩
-      ⋁ (λ x → ∂ (p₁ x) t) xs₁  ≅⟨ ⋁′ (λ x → tail (p₁≅p₂ x) t) xs₁≈xs₂ ⟩
-      ⋁ (λ x → ∂ (p₂ x) t) xs₂  ≅⟨ sym $ ∂-⋁-distrib p₂ xs₂ ⟩
-      ∂ (⋁ p₂ xs₂) t            ∎
 
   whnf : ∀ {Tok R xs₁ xs₂}
            {p₁ : Parser Tok R xs₁}
@@ -215,7 +204,6 @@ private
   whnf (p₁≅p₃ >>=! p₂≅p₄)    = whnf p₁≅p₃ >>=!W λ x → whnf (p₂≅p₄ x)
   whnf (nonempty p₁≅p₂)      = nonemptyW (whnf p₁≅p₂)
   whnf (cast p₁≅p₂)          = castW (whnf p₁≅p₂)
-  whnf (⋁′ p₁≅p₂ xs₁≈xs₂)    = ⋁W (λ x → whnf (p₁≅p₂ x)) xs₁≈xs₂
 
 sound : ∀ {Tok R xs₁ xs₂}
           {p₁ : Parser Tok R xs₁}

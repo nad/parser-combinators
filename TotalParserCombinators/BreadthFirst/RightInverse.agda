@@ -70,14 +70,14 @@ mutual
     with lhs | lemma
     where
     f∈f∷fs = I.complete f∈p₁
-    c      = ⋁.complete {Tok = Tok} return f∈f∷fs return
-    lhs    = ⋁.sound return (f ∷ fs) $
+    c      = Return⋆.complete {Tok = Tok} f∈f∷fs
+    lhs    = Return⋆.sound (f ∷ fs) $
                cast∈ refl (♭?♯? (∂-initial p₂ t)) refl $
                  cast∈ refl (sym (♭?♯? (∂-initial p₂ t))) refl c
-    lemma : lhs ≡ (_ , f∈f∷fs , return)
+    lemma : lhs ≡ (refl , f∈f∷fs)
     lemma rewrite Cast∈.∘sym refl (♭?♯? (∂-initial p₂ t)) refl c =
-          ⋁.sound∘complete return f∈f∷fs return
-  ... | .(_ , I.complete f∈p₁ , return) | refl
+          Return⋆.sound∘complete f∈f∷fs
+  ... | .(refl , I.complete f∈p₁) | refl
     rewrite I.sound∘complete f∈p₁ | ∂-sound∘∂-complete x∈p₂ = refl
 
   ∂-sound∘∂-complete′ (⟪ p₁ ⟫ ⊛ ⟨ p₂ ⟩) (_⊛_ {s₁ = t ∷ _} f∈p₁ x∈p₂) refl
@@ -89,19 +89,20 @@ mutual
     with lhs | lemma
     where
     f∈f∷fs = I.complete f∈p₁
-    c      = ⋁.complete {Tok = Tok} return f∈f∷fs return
-    lhs    = ⋁.sound return (f ∷ fs) $
+    c      = Return⋆.complete {Tok = Tok} f∈f∷fs
+    lhs    = Return⋆.sound (f ∷ fs) $
                cast∈ refl (♭?♯? (∂-initial p₂ t)) refl $
                  cast∈ refl (sym (♭?♯? (∂-initial p₂ t))) refl c
-    lemma : lhs ≡ (_ , f∈f∷fs , return)
+    lemma : lhs ≡ (refl , f∈f∷fs)
     lemma rewrite Cast∈.∘sym refl (♭?♯? (∂-initial p₂ t)) refl c =
-          ⋁.sound∘complete return f∈f∷fs return
-  ... | .(_ , I.complete f∈p₁ , return) | refl
+          Return⋆.sound∘complete f∈f∷fs
+  ... | .(refl , I.complete f∈p₁) | refl
     rewrite I.sound∘complete f∈p₁ | ∂-sound∘∂-complete x∈p₂ = refl
 
-  ∂-sound∘∂-complete′ (_>>=_ {xs = x ∷ xs} {f} p₁ p₂) (_>>=_ {s₁ = []} x∈p₁ y∈p₂x) refl
-    rewrite ∂-⋁-sound∘∂-⋁-complete p₂ (I.complete x∈p₁) y∈p₂x
-          | I.sound∘complete x∈p₁ =
+  ∂-sound∘∂-complete′ {Tok = Tok} (_>>=_ {xs = x ∷ xs} {f} p₁ p₂) (_>>=_ {s₁ = []} x∈p₁ y∈p₂x) refl
+    rewrite Return⋆.sound∘complete {Tok = Tok} (I.complete x∈p₁)
+          | I.sound∘complete x∈p₁
+          | ∂!-sound∘∂!-complete (p₂ _) y∈p₂x =
     refl
   ∂-sound∘∂-complete′ (_>>=_ {xs = x ∷ xs} p₁ p₂) (_>>=_ {s₁ = t ∷ _} x∈p₁ y∈p₂x) refl
     rewrite ∂-sound∘∂-complete x∈p₁
@@ -112,9 +113,10 @@ mutual
           | Cast∈.∘sym refl (♭?♯? (∂-initial p₁ t)) refl y∈p₂x =
     refl
 
-  ∂-sound∘∂-complete′ (_>>=!_ {xs = x ∷ xs} p₁ p₂) (_>>=!_ {s₁ = []} x∈p₁ y∈p₂x) refl
-    rewrite ∂-⋁-sound∘∂-⋁-complete p₂ (I.complete x∈p₁) y∈p₂x
-          | I.sound∘complete x∈p₁ =
+  ∂-sound∘∂-complete′ {Tok = Tok} (_>>=!_ {xs = x ∷ xs} p₁ p₂) (_>>=!_ {s₁ = []} x∈p₁ y∈p₂x) refl
+    rewrite Return⋆.sound∘complete {Tok = Tok} (I.complete x∈p₁)
+          | I.sound∘complete x∈p₁
+          | ∂!-sound∘∂!-complete (p₂ _) y∈p₂x =
     refl
   ∂-sound∘∂-complete′ (_>>=!_ {xs = x ∷ xs} p₁ p₂) (_>>=!_ {s₁ = t ∷ _} x∈p₁ y∈p₂x) refl
     rewrite ∂-sound∘∂-complete x∈p₁
@@ -137,15 +139,6 @@ mutual
   ... | ()
   ∂-sound∘∂-complete′ (_>>=!_ {xs = []} _ _) (_>>=!_ {s₁ = []} x∈p₁ _) _ with I.complete x∈p₁
   ... | ()
-
-  ∂-⋁-sound∘∂-⋁-complete :
-    ∀ {Tok R₁ R₂ x t z s xs y} {ys : List R₁}
-      {f : R₁ → List R₂}
-    (p : (x : R₁) → ∞? (Parser Tok R₂ (f x)) (y ∷ ys))
-    (x∈xs : x ∈ xs) (z∈px : z ∈ ♭? (p x) · t ∷ s) →
-    ∂-⋁-sound xs p (∂-⋁-complete p x∈xs z∈px) ≡ (x , x∈xs , z∈px)
-  ∂-⋁-sound∘∂-⋁-complete p (here refl)  y∈px rewrite ∂!-sound∘∂!-complete (p _) y∈px = refl
-  ∂-⋁-sound∘∂-⋁-complete p (there x∈xs) y∈px rewrite ∂-⋁-sound∘∂-⋁-complete p x∈xs y∈px = refl
 
   ∂!-sound∘∂!-complete :
     ∀ {Tok R₁ R₂ z t s xs y} {ys : List R₁}

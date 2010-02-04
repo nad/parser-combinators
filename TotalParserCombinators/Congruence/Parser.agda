@@ -144,12 +144,6 @@ data _≅P_ {Tok} : ∀ {R xs₁ xs₂} →
            {eq₁ : xs₁ ≡ xs₁′} {eq₂ : xs₂ ≡ xs₂′}
          (p₁≅p₂ : p₁ ≅P p₂) → cast eq₁ p₁ ≅P cast eq₂ p₂
 
-  ⋁′ : ∀ {R₁ R₂} {f₁ f₂ : R₁ → List R₂} →
-         {p₁ : (x : R₁) → Parser Tok R₂ (f₁ x)} {xs₁ : List R₁}
-         {p₂ : (x : R₁) → Parser Tok R₂ (f₂ x)} {xs₂ : List R₁}
-       (p₁≅p₂ : ∀ x → p₁ x ≅P p₂ x) (xs₁≈xs₂ : xs₁ Bag-≈ xs₂) →
-       ⋁ p₁ xs₁ ≅P ⋁ p₂ xs₂
-
 -- Completeness.
 
 complete : ∀ {Tok R xs₁ xs₂}
