@@ -79,13 +79,13 @@ data _∈_·_ {Tok} :
 ------------------------------------------------------------------------
 -- Parser and language equivalence
 
-infix 4 _⊑_ _≈_ _≅_
+infix 4 _≲_ _≈_ _≅_
 
--- p₁ ⊑ p₂ means that the language defined by p₂ contains all the
+-- p₁ ≲ p₂ means that the language defined by p₂ contains all the
 -- string/result pairs contained in the language defined by p₁.
 
-_⊑_ : ∀ {Tok R xs₁ xs₂} → Parser Tok R xs₁ → Parser Tok R xs₂ → Set₁
-p₁ ⊑ p₂ = ∀ {x s} → x ∈ p₁ · s → x ∈ p₂ · s
+_≲_ : ∀ {Tok R xs₁ xs₂} → Parser Tok R xs₁ → Parser Tok R xs₂ → Set₁
+p₁ ≲ p₂ = ∀ {x s} → x ∈ p₁ · s → x ∈ p₂ · s
 
 -- Language equivalence.
 
@@ -97,16 +97,16 @@ p₁ ≈ p₂ = ∀ {x s} → x ∈ p₁ · s ⇔ x ∈ p₂ · s
 _≅_ : ∀ {Tok R xs₁ xs₂} → Parser Tok R xs₁ → Parser Tok R xs₂ → Set₁
 p₁ ≅ p₂ = ∀ {x s} → x ∈ p₁ · s ⇿ x ∈ p₂ · s
 
--- p₁ ≈ p₂ iff both p₁ ⊑ p₂ and p₂ ⊑ p₁.
+-- p₁ ≈ p₂ iff both p₁ ≲ p₂ and p₂ ≲ p₁.
 
-≈⇔≤≥ : ∀ {Tok R xs₁ xs₂}
+≈⇔≲≳ : ∀ {Tok R xs₁ xs₂}
          {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
-       p₁ ≈ p₂ ⇔ (p₁ ⊑ p₂ × p₂ ⊑ p₁)
-≈⇔≤≥ = equivalent
+       p₁ ≈ p₂ ⇔ (p₁ ≲ p₂ × p₂ ≲ p₁)
+≈⇔≲≳ = equivalent
          (λ p₁≈p₂  → ((λ {_} → _⟨$⟩_ (Equivalent.to   p₁≈p₂))
                      , λ {_} → _⟨$⟩_ (Equivalent.from p₁≈p₂)))
-         (λ p₁≤≥p₂ {s} → equivalent (proj₁ p₁≤≥p₂ {s})
-                                    (proj₂ p₁≤≥p₂ {s}))
+         (λ p₁≲≳p₂ {s} → equivalent (proj₁ p₁≲≳p₂ {s})
+                                    (proj₂ p₁≲≳p₂ {s}))
 
 -- Parser equivalence implies language equivalence.
 
@@ -130,12 +130,12 @@ p₁ ≅ p₂ = ∀ {x s} → x ∈ p₁ · s ⇿ x ∈ p₂ · s
   p₂ : Parser ⊤ ⊤ _
   p₂ = return tt
 
-  p₁⊑p₂ : p₁ ⊑ p₂
-  p₁⊑p₂ (∣ˡ    return) = return
-  p₁⊑p₂ (∣ʳ ._ return) = return
+  p₁≲p₂ : p₁ ≲ p₂
+  p₁≲p₂ (∣ˡ    return) = return
+  p₁≲p₂ (∣ʳ ._ return) = return
 
   p₁≅p₂ : p₁ ≅ p₂
-  p₁≅p₂ = hyp $ equivalent p₁⊑p₂ ∣ˡ
+  p₁≅p₂ = hyp $ equivalent p₁≲p₂ ∣ˡ
 
   lemma : ∀ {x s} (x∈₁ x∈₂ : x ∈ p₂ · s) → x∈₁ ≡ x∈₂
   lemma return return = refl
@@ -190,11 +190,11 @@ module Cast∈ where
 module ♭♯ where
 
   drop : ∀ {Tok R R′ xs′} {p : Parser Tok R′ xs′} (xs : List R) →
-         ♭? (♯? {xs = xs} p) ⊑ p
+         ♭? (♯? {xs = xs} p) ≲ p
   drop xs = cast∈ refl (♭?♯? xs) refl
 
   add : ∀ {Tok R R′ xs′} {p : Parser Tok R′ xs′} (xs : List R) →
-        p ⊑ ♭? (♯? {xs = xs} p)
+        p ≲ ♭? (♯? {xs = xs} p)
   add xs = cast∈ refl (P.sym $ ♭?♯? xs) refl
 
   correct : ∀ {Tok R R′ xs′} (xs : List R) {p : Parser Tok R′ xs′} →

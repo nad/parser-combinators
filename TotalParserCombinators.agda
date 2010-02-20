@@ -42,7 +42,7 @@ import TotalParserCombinators.BreadthFirst
 
 import TotalParserCombinators.CoinductiveEquality
 
--- The relation _⊑_ is a partial order with respect to _≈_.
+-- The relation _≲_ is a partial order with respect to _≈_.
 
 import TotalParserCombinators.PartialOrder
 

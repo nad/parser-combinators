@@ -357,17 +357,17 @@ module Exactly where
 
   open ⊙ using (_⊙′_)
 
-  ↑⊑⋆ : ∀ {Tok R} {p : Parser Tok R []} n → p ↑ n ⊑ p ⋆
-  ↑⊑⋆ {R = R} {p} n (<$> ∈pⁿ) = KleeneStar.complete $ helper n ∈pⁿ
+  ↑≲⋆ : ∀ {Tok R} {p : Parser Tok R []} n → p ↑ n ≲ p ⋆
+  ↑≲⋆ {R = R} {p} n (<$> ∈pⁿ) = KleeneStar.complete $ helper n ∈pⁿ
     where
     helper : ∀ n {xs s} → xs ∈ p ^ n · s → Vec.toList xs ∈[ p ]⋆· s
     helper zero    return = []
     helper (suc n) ∈⊙ⁿ    with ⊙.sound (^-initial [] n) ∈⊙ⁿ
     ... | <$> ∈p ⊙′ ∈pⁿ = ∈p ∷ helper n ∈pⁿ
 
-  ⋆⊑∃↑ : ∀ {Tok R} {p : Parser Tok R []} {xs s} →
+  ⋆≲∃↑ : ∀ {Tok R} {p : Parser Tok R []} {xs s} →
          xs ∈ p ⋆ · s → ∃ λ i → xs ∈ p ↑ i · s
-  ⋆⊑∃↑ {R = R} {p} ∈p⋆ with helper $ KleeneStar.sound ∈p⋆
+  ⋆≲∃↑ {R = R} {p} ∈p⋆ with helper $ KleeneStar.sound ∈p⋆
     where
     helper : ∀ {xs s} → xs ∈[ p ]⋆· s →
              ∃₂ λ i (ys : Vec R i) →

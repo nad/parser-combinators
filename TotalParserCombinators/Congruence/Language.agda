@@ -147,18 +147,18 @@ token-cong = Equivalence.refl
            {p₄ : ∞? (Parser Tok R₁        xs₄) xs₃} →
          ♭? p₁ ≈ ♭? p₃ → ♭? p₂ ≈ ♭? p₄ → p₁ ⊛ p₂ ≈ p₃ ⊛ p₄
 ⊛-cong p₁≈p₃ p₂≈p₄ =
-  Equivalent.from ≈⇔≤≥ ⟨$⟩
+  Equivalent.from ≈⇔≲≳ ⟨$⟩
     Prod.zip helper helper
-             (Equivalent.to ≈⇔≤≥ ⟨$⟩ p₁≈p₃)
-             (Equivalent.to ≈⇔≤≥ ⟨$⟩ p₂≈p₄)
+             (Equivalent.to ≈⇔≲≳ ⟨$⟩ p₁≈p₃)
+             (Equivalent.to ≈⇔≲≳ ⟨$⟩ p₂≈p₄)
   where
   helper : ∀ {Tok R₁ R₂ xs₁ xs₂ xs₃ xs₄}
              {p₁ : ∞? (Parser Tok (R₁ → R₂) xs₁) xs₂}
              {p₂ : ∞? (Parser Tok R₁        xs₂) xs₁}
              {p₃ : ∞? (Parser Tok (R₁ → R₂) xs₃) xs₄}
              {p₄ : ∞? (Parser Tok R₁        xs₄) xs₃} →
-           ♭? p₁ ⊑ ♭? p₃ → ♭? p₂ ⊑ ♭? p₄ → p₁ ⊛ p₂ ⊑ p₃ ⊛ p₄
-  helper ₁⊑₃ ₂⊑₄ (∈p₁ ⊛ ∈p₂) = ₁⊑₃ ∈p₁ ⊛ ₂⊑₄ ∈p₂
+           ♭? p₁ ≲ ♭? p₃ → ♭? p₂ ≲ ♭? p₄ → p₁ ⊛ p₂ ≲ p₃ ⊛ p₄
+  helper ₁≲₃ ₂≲₄ (∈p₁ ⊛ ∈p₂) = ₁≲₃ ∈p₁ ⊛ ₂≲₄ ∈p₂
 
 ⊙-cong : ∀ {Tok R₁ R₂ xs₁ xs₂ xs₃ xs₄}
            {p₁ : Parser Tok (R₁ → R₂) xs₁}
@@ -187,9 +187,9 @@ token-cong = Equivalence.refl
              {p₁₂ : (x : R₁) → ∞? (Parser Tok R₂ (f₁ x)) xs₁}
              {p₂₁ : Parser Tok R₁ xs₂}
              {p₂₂ : (x : R₁) → ∞? (Parser Tok R₂ (f₂ x)) xs₂} →
-           p₁₁ ⊑ p₂₁ → (∀ x → ♭? (p₁₂ x) ⊑ ♭? (p₂₂ x)) →
-           p₁₁ >>= p₁₂ ⊑ p₂₁ >>= p₂₂
-  helper ₁₁⊑₂₁ ₁₂⊑₂₂ (∈p₁₁ >>= ∈p₁₂) = ₁₁⊑₂₁ ∈p₁₁ >>= ₁₂⊑₂₂ _ ∈p₁₂
+           p₁₁ ≲ p₂₁ → (∀ x → ♭? (p₁₂ x) ≲ ♭? (p₂₂ x)) →
+           p₁₁ >>= p₁₂ ≲ p₂₁ >>= p₂₂
+  helper ₁₁≲₂₁ ₁₂≲₂₂ (∈p₁₁ >>= ∈p₁₂) = ₁₁≲₂₁ ∈p₁₁ >>= ₁₂≲₂₂ _ ∈p₁₂
 
 ≫=-cong : ∀ {Tok R₁ R₂ xs₁ xs₂} {f₁ f₂ : R₁ → List R₂}
             {p₁₁ : Parser Tok R₁ xs₁}
@@ -219,9 +219,9 @@ token-cong = Equivalence.refl
              {p₁₂ : (x : R₁) → ∞? (Parser Tok R₂ []) xs₁}
              {p₂₁ : ∞ (Parser Tok R₁ xs₂)}
              {p₂₂ : (x : R₁) → ∞? (Parser Tok R₂ []) xs₂} →
-           ♭ p₁₁ ⊑ ♭ p₂₁ → (∀ x → ♭? (p₁₂ x) ⊑ ♭? (p₂₂ x)) →
-           p₁₁ >>=! p₁₂ ⊑ p₂₁ >>=! p₂₂
-  helper ₁₁⊑₂₁ ₁₂⊑₂₂ (∈p₁₁ >>=! ∈p₁₂) = ₁₁⊑₂₁ ∈p₁₁ >>=! ₁₂⊑₂₂ _ ∈p₁₂
+           ♭ p₁₁ ≲ ♭ p₂₁ → (∀ x → ♭? (p₁₂ x) ≲ ♭? (p₂₂ x)) →
+           p₁₁ >>=! p₁₂ ≲ p₂₁ >>=! p₂₂
+  helper ₁₁≲₂₁ ₁₂≲₂₂ (∈p₁₁ >>=! ∈p₁₂) = ₁₁≲₂₁ ∈p₁₁ >>=! ₁₂≲₂₂ _ ∈p₁₂
 
 nonempty-cong : ∀ {Tok R xs₁ xs₂}
                   {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
@@ -258,37 +258,37 @@ cast-cong {xs₁ = xs₁} {xs₂} {xs₁′} {xs₂′}
 ⋆-cong : ∀ {Tok R} {p₁ p₂ : Parser Tok R []} →
          p₁ ≈ p₂ → p₁ ⋆ ≈ p₂ ⋆
 ⋆-cong p₁≈p₂ =
-  Equivalent.from ≈⇔≤≥ ⟨$⟩
+  Equivalent.from ≈⇔≲≳ ⟨$⟩
     Prod.map helper helper
-             (Equivalent.to ≈⇔≤≥ ⟨$⟩ p₁≈p₂)
+             (Equivalent.to ≈⇔≲≳ ⟨$⟩ p₁≈p₂)
   where
   helper : ∀ {Tok R} {p₁ p₂ : Parser Tok R []} →
-           p₁ ⊑ p₂ → p₁ ⋆ ⊑ p₂ ⋆
-  helper {p₁ = p₁} {p₂} p₁⊑p₂ =
+           p₁ ≲ p₂ → p₁ ⋆ ≲ p₂ ⋆
+  helper {p₁ = p₁} {p₂} p₁≲p₂ =
     KleeneStar.complete ∘ helper′ ∘ KleeneStar.sound
     where
     helper′ : ∀ {xs s} → xs ∈[ p₁ ]⋆· s → xs ∈[ p₂ ]⋆· s
     helper′ []           = []
-    helper′ (∈p₁ ∷ ∈p₁⋆) = p₁⊑p₂ ∈p₁ ∷ helper′ ∈p₁⋆
+    helper′ (∈p₁ ∷ ∈p₁⋆) = p₁≲p₂ ∈p₁ ∷ helper′ ∈p₁⋆
 
 ^-cong : ∀ {Tok R xs₁ xs₂ n}
            {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
          p₁ ≈ p₂ → p₁ ^ n ≈ p₂ ^ n
 ^-cong {n = n} p₁≈p₂ =
-  Equivalent.from ≈⇔≤≥ ⟨$⟩
+  Equivalent.from ≈⇔≲≳ ⟨$⟩
     Prod.map (helper n) (helper n)
-             (Equivalent.to ≈⇔≤≥ ⟨$⟩ p₁≈p₂)
+             (Equivalent.to ≈⇔≲≳ ⟨$⟩ p₁≈p₂)
   where
   open ⊙ using (_⊙′_)
 
   helper : ∀ {Tok R xs₁ xs₂}
              {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} n →
-           p₁ ⊑ p₂ → p₁ ^ n ⊑ p₂ ^ n
-  helper             zero    p₁⊑p₂ return = return
-  helper {xs₁ = xs₁} (suc n) p₁⊑p₂ ∈∷⊙ⁱ
+           p₁ ≲ p₂ → p₁ ^ n ≲ p₂ ^ n
+  helper             zero    p₁≲p₂ return = return
+  helper {xs₁ = xs₁} (suc n) p₁≲p₂ ∈∷⊙ⁱ
     with ⊙.sound (^-initial xs₁ n) ∈∷⊙ⁱ
   ... | <$> ∈p₁ ⊙′ ∈p₁ⁱ =
-    ⊙.complete (<$> p₁⊑p₂ ∈p₁) (helper n p₁⊑p₂ ∈p₁ⁱ)
+    ⊙.complete (<$> p₁≲p₂ ∈p₁) (helper n p₁≲p₂ ∈p₁ⁱ)
 
 ↑-cong : ∀ {Tok R xs₁ xs₂ n₁ n₂}
            {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →

@@ -59,8 +59,8 @@ correct {s = s} {p} = record
 
 ∂-mono : ∀ {Tok R xs₁ xs₂ t}
            {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
-         p₁ ⊑ p₂ → ∂ p₁ t ⊑ ∂ p₂ t
-∂-mono p₁⊑p₂ = ∂-complete ∘ p₁⊑p₂ ∘ ∂-sound _
+         p₁ ≲ p₂ → ∂ p₁ t ≲ ∂ p₂ t
+∂-mono p₁≲p₂ = ∂-complete ∘ p₁≲p₂ ∘ ∂-sound _
 
 -- ∂ preserves language equivalence.
 
