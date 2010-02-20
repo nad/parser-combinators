@@ -16,7 +16,7 @@ open import Data.Bool using (Bool; true; false; _∨_)
 open import Function
 open import Data.List as List using (List; []; _∷_; _++_; [_])
 private
-  module ListMonoid {A} = Monoid (List.monoid A)
+  module ListMonoid {A : Set} = Monoid (List.monoid A)
 open import Data.Nat as Nat using (ℕ; zero; suc; _+_)
 import Data.Nat.Properties as NatProp
 open NatProp.SemiringSolver

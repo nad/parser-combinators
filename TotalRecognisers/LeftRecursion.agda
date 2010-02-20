@@ -19,7 +19,7 @@ open import Function.Equivalence as Eq
   renaming (_∘_ to _⟨∘⟩_)
 open import Data.List as List using (List; []; _∷_; _++_; [_])
 private
-  module ListMonoid {A} = Monoid (List.monoid A)
+  module ListMonoid {A : Set} = Monoid (List.monoid A)
 open import Data.Product as Prod
 open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary

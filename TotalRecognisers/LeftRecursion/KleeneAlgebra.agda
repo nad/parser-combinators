@@ -18,7 +18,7 @@ open import Function.Equivalence as Eq
   using (_⇔_; equivalent; module Equivalent)
 open import Data.List as List
 private
-  module ListMonoid {A} = Monoid (List.monoid A)
+  module ListMonoid {A : Set} = Monoid (List.monoid A)
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Product as Prod
 open import Relation.Binary.HeterogeneousEquality using (_≅_; refl)
