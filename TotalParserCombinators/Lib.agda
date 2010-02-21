@@ -26,7 +26,7 @@ private
   open module ListMonad = RawMonad List.monad
          using () renaming (_>>=_ to _>>=′_)
 
-open import TotalParserCombinators.Applicative
+open import TotalParserCombinators.Applicative using (_⊛′_)
 open import TotalParserCombinators.Coinduction
 import TotalParserCombinators.InitialSet as I
 open import TotalParserCombinators.Parser
@@ -163,9 +163,8 @@ module KleeneStar where
     ¬ (∀ {xs ys s} {p : Parser Tok R ys} →
          xs ∈[ p ]⋆· s → xs ∈ p ⋆′ · s)
   unrestricted-incomplete {R} x f _⋆′ complete =
-    ∈.Membership-≡.finite
-      (record { to = to; injective = injective })
-      (f (return x)) (I.complete ∘ complete ∘ lemma)
+    ∈.finite (record { to = to; injective = injective })
+             (f (return x)) (I.complete ∘ complete ∘ lemma)
     where
     to : P.setoid ℕ ⟶ P.setoid (List R)
     to = →-to-⟶ (flip replicate x)

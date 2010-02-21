@@ -7,7 +7,7 @@ module TotalParserCombinators.Laws.AdditiveMonoid where
 open import Algebra
 open import Coinduction
 import Data.List.Any.BagEquality as BagEq
-import Data.List.Any.Properties as AnyProp
+import Data.List.Any.SetEquality as SetEq
 open import Data.Product using (proj₁; proj₂)
 open import Function
 open import Function.Equivalence using (equivalent)
@@ -53,9 +53,7 @@ associative {xs₁ = xs₁} p₁ p₂ p₃ =
 
 idempotent : ∀ {Tok R xs} (p : Parser Tok R xs) → p ∣ p ≈′ p
 idempotent {xs = xs} p =
-  (λ {_} → equivalent AnyProp.++-idempotent
-                      (AnyProp.++⁺ˡ {xs = xs})) ∷ λ t → ♯
-  idempotent (∂ p t)
+  (λ {_} → SetEq.++-idempotent xs) ∷ λ t → ♯ idempotent (∂ p t)
 
 ------------------------------------------------------------------------
 -- A lemma which can be convenient when proving distributivity laws

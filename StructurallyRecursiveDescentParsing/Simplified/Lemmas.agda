@@ -16,7 +16,7 @@ open import Data.List.NonEmpty.Properties
 
 import Data.List as List
 open List using (List; _∷_; []; _++_)
-private module LM {A} = Monoid (List.monoid A)
+private module LM {A : Set} = Monoid (List.monoid A)
 open RawMonad List.monad using () renaming (_>>=_ to _>>=′_)
 import Data.List.Properties as ListProp
 

@@ -23,7 +23,7 @@ open import Coinduction
 open import Data.Bool using (Bool; true; false)
 open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.List as List using (List; []; _∷_; _++_)
-private module LM {A} = Monoid (List.monoid A)
+private module LM {A : Set} = Monoid (List.monoid A)
 open import Data.List.NonEmpty using (List⁺; [_]; _∷_; _∷ʳ_)
 open import Data.Vec using (Vec; []; _∷_)
 open import Data.Product
