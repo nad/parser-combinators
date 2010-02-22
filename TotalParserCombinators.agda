@@ -48,9 +48,8 @@ import TotalParserCombinators.PartialOrder
 
 -- Language equivalence and parser equivalence are both congruences.
 
-import TotalParserCombinators.Congruence.Language
-import TotalParserCombinators.Congruence.Parser
-import TotalParserCombinators.Congruence.Parser.Sound
+import TotalParserCombinators.Congruence
+import TotalParserCombinators.Congruence.Sound
 
 -- Proofs of various laws, for instance the monad laws.
 

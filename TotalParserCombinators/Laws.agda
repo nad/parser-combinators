@@ -7,23 +7,25 @@
 
 module TotalParserCombinators.Laws where
 
+open import Algebra
 open import Coinduction
 open import Data.List as List
 import Data.List.Any as Any
+import Data.List.Any.BagAndSetEquality as Eq
 open import Function
-open import Relation.Binary
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 
+open Any.Membership-≡ using (bag) renaming (_≈[_]_ to _List-≈[_]_)
 private
-  open module BagS {A : Set} =
-    Setoid (Any.Membership-≡.Bag-equality {A})
-      using () renaming (_≈_ to _Bag-≈_)
+  module BagMonoid {A : Set} =
+    CommutativeMonoid (Eq.commutativeMonoid _ A)
 
 open import TotalParserCombinators.Applicative using (_⊛′_)
 open import TotalParserCombinators.BreadthFirst hiding (correct)
-open import TotalParserCombinators.Congruence.Parser
+open import TotalParserCombinators.Congruence
 open import TotalParserCombinators.Lib hiding (module Return⋆)
 open import TotalParserCombinators.Parser
+open import TotalParserCombinators.Semantics
 
 ------------------------------------------------------------------------
 -- Reexported modules
@@ -74,7 +76,7 @@ module <$> where
   return-⊙ : ∀ {Tok R₁ R₂ xs} {f : R₁ → R₂} {p : Parser Tok R₁ xs} →
              f <$> p ≅P return f ⊙ p
   return-⊙ {xs = xs} {f} {p} =
-    BagS.reflexive (lemma xs) ∷ λ t → ♯ (
+    BagMonoid.reflexive (lemma xs) ∷ λ t → ♯ (
       f <$> ∂ p t         ≅⟨ return-⊙ ⟩
       return f ⊙ ∂ p t    ≅⟨ sym $ ∂-return-⊙ f p ⟩
       ∂ (return f ⊙ p) t  ∎)
@@ -109,7 +111,7 @@ module Nonempty where
   -- fail is a zero for nonempty.
 
   zero : ∀ {Tok R} → nonempty {Tok = Tok} {R = R} fail ≅P fail
-  zero = BagS.refl ∷ λ t → ♯ (fail ∎)
+  zero = BagMonoid.refl ∷ λ t → ♯ (fail ∎)
 
 ------------------------------------------------------------------------
 -- A law for cast
@@ -119,7 +121,8 @@ module Cast where
   -- Casts can be erased.
 
   correct : ∀ {Tok R xs₁ xs₂}
-              {xs₁≈xs₂ : xs₁ Bag-≈ xs₂} {p : Parser Tok R xs₁} →
+              {xs₁≈xs₂ : xs₁ List-≈[ bag ] xs₂}
+              {p : Parser Tok R xs₁} →
             cast xs₁≈xs₂ p ≅P p
   correct {xs₁≈xs₂ = xs₁≈xs₂} {p} =
-    BagS.sym xs₁≈xs₂ ∷ λ t → ♯ (∂ p t ∎)
+    BagMonoid.sym xs₁≈xs₂ ∷ λ t → ♯ (∂ p t ∎)

@@ -4,32 +4,34 @@
 
 module TotalParserCombinators.Laws.ReturnStar where
 
+open import Algebra
 open import Category.Monad
 open import Coinduction
 open import Data.List as List
 import Data.List.Any as Any
+import Data.List.Any.BagAndSetEquality as Eq
 open import Function
-open import Relation.Binary
 
+open Any.Membership-≡ using () renaming (_≈[_]_ to _List-≈[_]_)
 private
-  open module BagS {A : Set} =
-    Setoid (Any.Membership-≡.Bag-equality {A})
-      using () renaming (_≈_ to _Bag-≈_)
+  module BagMonoid {A : Set} =
+    CommutativeMonoid (Eq.commutativeMonoid Any.Membership-≡.bag A)
   open module ListMonad = RawMonad List.monad
     using () renaming (_>>=_ to _>>=′_)
 
 open import TotalParserCombinators.Applicative using (_⊛′_)
 open import TotalParserCombinators.BreadthFirst
-open import TotalParserCombinators.Congruence.Parser
+open import TotalParserCombinators.Congruence
 import TotalParserCombinators.Laws.AdditiveMonoid as AdditiveMonoid
 open import TotalParserCombinators.Laws.Derivative
 open import TotalParserCombinators.Lib
 open import TotalParserCombinators.Parser
+open import TotalParserCombinators.Semantics
 
 -- return⋆ preserves equality.
 
-cong : ∀ {Tok R} {xs₁ xs₂ : List R} →
-       xs₁ Bag-≈ xs₂ → return⋆ {Tok = Tok} xs₁ ≅P return⋆ xs₂
+cong : ∀ {k Tok R} {xs₁ xs₂ : List R} →
+       xs₁ List-≈[ k ] xs₂ → return⋆ {Tok = Tok} xs₁ ≈[ k ]P return⋆ xs₂
 cong {xs₁ = xs₁} {xs₂} xs₁≈xs₂ = xs₁≈xs₂ ∷ λ t → ♯ (
   ∂ (return⋆ xs₁) t  ≅⟨ ∂-return⋆ xs₁ ⟩
   fail               ≅⟨ sym $ ∂-return⋆ xs₂ ⟩
@@ -41,7 +43,7 @@ distrib-∣ :
   ∀ {Tok R} (xs₁ xs₂ : List R) →
   return⋆ {Tok = Tok} (xs₁ ++ xs₂) ≅P return⋆ xs₁ ∣ return⋆ xs₂
 distrib-∣ xs₁ xs₂ =
-  BagS.refl ∷ λ t → ♯ (
+  BagMonoid.refl ∷ λ t → ♯ (
     ∂ (return⋆ (xs₁ ++ xs₂)) t             ≅⟨ ∂-return⋆ (xs₁ ++ xs₂) ⟩
     fail                                   ≅⟨ sym $ AdditiveMonoid.left-identity fail ⟩
     fail ∣ fail                            ≅⟨ sym $ ∂-return⋆ xs₁ ∣ ∂-return⋆ xs₂ ⟩
@@ -53,7 +55,7 @@ distrib-⊙ :
   ∀ {Tok R₁ R₂} (fs : List (R₁ → R₂)) xs →
   return⋆ {Tok = Tok} (fs ⊛′ xs) ≅P return⋆ fs ⊙ return⋆ xs
 distrib-⊙ fs xs =
-  BagS.refl ∷ λ t → ♯ (
+  BagMonoid.refl ∷ λ t → ♯ (
     ∂ (return⋆ (fs ⊛′ xs)) t         ≅⟨ ∂-return⋆ (fs ⊛′ xs) ⟩
 
     fail                             ≅⟨ sym $ AdditiveMonoid.left-identity fail ⟩
@@ -74,7 +76,7 @@ distrib-≫= :
   ∀ {Tok R₁ R₂} xs (f : R₁ → List R₂) →
   return⋆ {Tok = Tok} (xs >>=′ f) ≅P return⋆ xs ≫= (return⋆ ∘ f)
 distrib-≫= xs f =
-  BagS.refl ∷ λ t → ♯ (
+  BagMonoid.refl ∷ λ t → ♯ (
     ∂ (return⋆ (xs >>=′ f)) t                  ≅⟨ ∂-return⋆ (xs >>=′ f) ⟩
 
     fail                                       ≅⟨ sym $ AdditiveMonoid.left-identity fail ⟩

@@ -13,7 +13,7 @@ open import Relation.Binary.HeterogeneousEquality
   using (refl) renaming (_≅_ to _≅H_)
 
 open import TotalParserCombinators.Coinduction
-open import TotalParserCombinators.Congruence.Parser
+open import TotalParserCombinators.Congruence
 open import TotalParserCombinators.Laws
 open import TotalParserCombinators.Lib
 open import TotalParserCombinators.Parser

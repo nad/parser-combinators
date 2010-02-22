@@ -2,28 +2,23 @@
 -- Semantics of the parsers
 ------------------------------------------------------------------------
 
-{-# OPTIONS --universe-polymorphism #-}
-
 module TotalParserCombinators.Semantics where
 
 open import Coinduction
 open import Data.List hiding (drop)
 import Data.List.Any as Any
 open import Data.Product
+open import Data.Unit using (⊤; tt)
 open import Function
 open import Function.Equality using (_⟨$⟩_)
-open import Function.Equivalence
-open import Function.Inverse as Inv using (_⇿_; module Inverse)
-open import Data.Unit
-open import Relation.Binary
+open import Function.Equivalence as Eq using (_⇔_; module Equivalent)
+open import Function.Inverse as Inv
+  using (_⇿_; module Inverse; Isomorphism)
 import Relation.Binary.HeterogeneousEquality as H
-open import Relation.Binary.PropositionalEquality as P
+open import Relation.Binary.PropositionalEquality as P using (_≡_)
 open import Relation.Nullary
 
-private
-  open module BagS {A : Set} =
-    Setoid (Any.Membership-≡.Bag-equality {A})
-      using () renaming (_≈_ to _Bag-≈_)
+open Any.Membership-≡ using (bag) renaming (_≈[_]_ to _List-≈[_]_)
 
 open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Parser
@@ -73,13 +68,36 @@ data _∈_·_ {Tok} :
   nonempty : ∀ {R xs x y s} {p : Parser Tok R xs}
              (x∈p : y ∈ p · x ∷ s) → y ∈ nonempty p · x ∷ s
   cast     : ∀ {R xs₁ xs₂ x s}
-               {xs₁≈xs₂ : xs₁ Bag-≈ xs₂} {p : Parser Tok R xs₁}
+               {xs₁≈xs₂ : xs₁ List-≈[ bag ] xs₂} {p : Parser Tok R xs₁}
              (x∈p : x ∈ p · s) → x ∈ cast xs₁≈xs₂ p · s
 
 ------------------------------------------------------------------------
 -- Parser and language equivalence
 
-infix 4 _≲_ _≈_ _≅_
+infix 4 _≈[_]_ _≈_ _≅_ _≲_
+
+-- There are two kinds of equivalences. Parser equivalences are
+-- stronger, and correspond to bag equality. Language equivalences are
+-- weaker, and correspond to set equality.
+
+open Any.Membership-≡ public
+  using (Kind) renaming (bag to parser; set to language)
+
+-- General definition of parser equivalence.
+
+_≈[_]_ : ∀ {Tok R xs₁ xs₂} →
+         Parser Tok R xs₁ → Kind → Parser Tok R xs₂ → Set₁
+p₁ ≈[ k ] p₂ = ∀ {x s} → Isomorphism k (x ∈ p₁ · s) (x ∈ p₂ · s)
+
+-- Language equivalence. (Corresponds to set equality.)
+
+_≈_ : ∀ {Tok R xs₁ xs₂} → Parser Tok R xs₁ → Parser Tok R xs₂ → Set₁
+p₁ ≈ p₂ = p₁ ≈[ language ] p₂
+
+-- Parser equivalence. (Corresponds to bag equality.)
+
+_≅_ : ∀ {Tok R xs₁ xs₂} → Parser Tok R xs₁ → Parser Tok R xs₂ → Set₁
+p₁ ≅ p₂ = p₁ ≈[ parser ] p₂
 
 -- p₁ ≲ p₂ means that the language defined by p₂ contains all the
 -- string/result pairs contained in the language defined by p₁.
@@ -87,33 +105,23 @@ infix 4 _≲_ _≈_ _≅_
 _≲_ : ∀ {Tok R xs₁ xs₂} → Parser Tok R xs₁ → Parser Tok R xs₂ → Set₁
 p₁ ≲ p₂ = ∀ {x s} → x ∈ p₁ · s → x ∈ p₂ · s
 
--- Language equivalence.
-
-_≈_ : ∀ {Tok R xs₁ xs₂} → Parser Tok R xs₁ → Parser Tok R xs₂ → Set₁
-p₁ ≈ p₂ = ∀ {x s} → x ∈ p₁ · s ⇔ x ∈ p₂ · s
-
--- Parser equivalence.
-
-_≅_ : ∀ {Tok R xs₁ xs₂} → Parser Tok R xs₁ → Parser Tok R xs₂ → Set₁
-p₁ ≅ p₂ = ∀ {x s} → x ∈ p₁ · s ⇿ x ∈ p₂ · s
-
 -- p₁ ≈ p₂ iff both p₁ ≲ p₂ and p₂ ≲ p₁.
 
 ≈⇔≲≳ : ∀ {Tok R xs₁ xs₂}
          {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
        p₁ ≈ p₂ ⇔ (p₁ ≲ p₂ × p₂ ≲ p₁)
-≈⇔≲≳ = equivalent
+≈⇔≲≳ = Eq.equivalent
          (λ p₁≈p₂  → ((λ {_} → _⟨$⟩_ (Equivalent.to   p₁≈p₂))
                      , λ {_} → _⟨$⟩_ (Equivalent.from p₁≈p₂)))
-         (λ p₁≲≳p₂ {s} → equivalent (proj₁ p₁≲≳p₂ {s})
-                                    (proj₂ p₁≲≳p₂ {s}))
+         (λ p₁≲≳p₂ {s} → Eq.equivalent (proj₁ p₁≲≳p₂ {s})
+                                       (proj₂ p₁≲≳p₂ {s}))
 
 -- Parser equivalence implies language equivalence.
 
 ≅⇒≈ : ∀ {Tok R xs₁ xs₂}
         {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
       p₁ ≅ p₂ → p₁ ≈ p₂
-≅⇒≈ p₁≅p₂ = Inverse.equivalent p₁≅p₂
+≅⇒≈ p₁≅p₂ = Inv.⇿⇒ p₁≅p₂
 
 -- Language equivalence does not (in general) imply parser
 -- equivalence.
@@ -135,10 +143,10 @@ p₁ ≅ p₂ = ∀ {x s} → x ∈ p₁ · s ⇿ x ∈ p₂ · s
   p₁≲p₂ (∣ʳ ._ return) = return
 
   p₁≅p₂ : p₁ ≅ p₂
-  p₁≅p₂ = hyp $ equivalent p₁≲p₂ ∣ˡ
+  p₁≅p₂ = hyp $ Eq.equivalent p₁≲p₂ ∣ˡ
 
   lemma : ∀ {x s} (x∈₁ x∈₂ : x ∈ p₂ · s) → x∈₁ ≡ x∈₂
-  lemma return return = refl
+  lemma return return = P.refl
 
 ... | ()
 
@@ -147,7 +155,7 @@ p₁ ≅ p₂ = ∀ {x s} → x ∈ p₁ · s ⇿ x ∈ p₂ · s
 
 cast∈ : ∀ {Tok R xs} {p p′ : Parser Tok R xs} {x x′ s s′} →
         x ≡ x′ → p ≡ p′ → s ≡ s′ → x ∈ p · s → x′ ∈ p′ · s′
-cast∈ refl refl refl x∈ = x∈
+cast∈ P.refl P.refl P.refl x∈ = x∈
 
 module Cast∈ where
 
@@ -155,21 +163,21 @@ module Cast∈ where
          (x≡x′ : x ≡ x′) (p≡p′ : p ≡ p′) (s≡s′ : s ≡ s′)
          (x∈p : x ∈ p · s) →
          H._≅_ (cast∈ x≡x′ p≡p′ s≡s′ x∈p) x∈p
-  drop refl refl refl _ = H.refl
+  drop P.refl P.refl P.refl _ = H.refl
 
   sym∘ : ∀ {Tok R xs} {p p′ : Parser Tok R xs} {x x′ s s′}
          (x≡x′ : x ≡ x′) (p≡p′ : p ≡ p′) (s≡s′ : s ≡ s′)
          (x∈p : x ∈ p · s) →
          cast∈ (P.sym x≡x′) (P.sym p≡p′) (P.sym s≡s′)
                (cast∈ x≡x′ p≡p′ s≡s′ x∈p) ≡ x∈p
-  sym∘ refl refl refl _ = refl
+  sym∘ P.refl P.refl P.refl _ = P.refl
 
   ∘sym : ∀ {Tok R xs} {p p′ : Parser Tok R xs} {x x′ s s′}
          (x≡x′ : x ≡ x′) (p≡p′ : p ≡ p′) (s≡s′ : s ≡ s′)
          (x∈p : x′ ∈ p′ · s′) →
          cast∈ x≡x′ p≡p′ s≡s′
                (cast∈ (P.sym x≡x′) (P.sym p≡p′) (P.sym s≡s′) x∈p) ≡ x∈p
-  ∘sym refl refl refl _ = refl
+  ∘sym P.refl P.refl P.refl _ = P.refl
 
   correct : ∀ {Tok R xs} {p p′ : Parser Tok R xs} {x x′ s s′}
             (x≡x′ : x ≡ x′) (p≡p′ : p ≡ p′) (s≡s′ : s ≡ s′) →
@@ -191,12 +199,12 @@ module ♭♯ where
 
   drop : ∀ {Tok R R′ xs′} {p : Parser Tok R′ xs′} (xs : List R) →
          ♭? (♯? {xs = xs} p) ≲ p
-  drop xs = cast∈ refl (♭?♯? xs) refl
+  drop xs = cast∈ P.refl (♭?♯? xs) P.refl
 
   add : ∀ {Tok R R′ xs′} {p : Parser Tok R′ xs′} (xs : List R) →
         p ≲ ♭? (♯? {xs = xs} p)
-  add xs = cast∈ refl (P.sym $ ♭?♯? xs) refl
+  add xs = cast∈ P.refl (P.sym $ ♭?♯? xs) P.refl
 
   correct : ∀ {Tok R R′ xs′} (xs : List R) {p : Parser Tok R′ xs′} →
             ♭? (♯? {xs = xs} p) ≅ p
-  correct xs = Cast∈.correct refl (♭?♯? xs) refl
+  correct xs = Cast∈.correct P.refl (♭?♯? xs) P.refl

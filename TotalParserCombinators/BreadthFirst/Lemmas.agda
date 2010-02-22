@@ -8,13 +8,10 @@ open import Data.List
 import Data.List.Any as Any
 open import Data.Product as Prod
 open import Function
-open import Function.Equivalence as Eq
-  using (module Equivalent) renaming (_∘_ to _⟨∘⟩_)
-open import Function.Inverse as Inv
-  using (_⇿_; module Inverse) renaming (_∘_ to _⟪∘⟫_)
+open import Function.Inverse as Inv using (_⇿_)
 import Relation.Binary.PropositionalEquality as P
 
-open Any.Membership-≡
+open Any.Membership-≡ using (_∈_)
 
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
@@ -62,19 +59,14 @@ correct {s = s} {p} = record
          p₁ ≲ p₂ → ∂ p₁ t ≲ ∂ p₂ t
 ∂-mono p₁≲p₂ = ∂-complete ∘ p₁≲p₂ ∘ ∂-sound _
 
--- ∂ preserves language equivalence.
+-- ∂ preserves parser and language equivalence.
 
-∂-cong-≈ : ∀ {Tok R xs₁ xs₂}
-             {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
-           p₁ ≈ p₂ → ∀ {t} → ∂ p₁ t ≈ ∂ p₂ t
-∂-cong-≈ p₁≈p₂ =
-  Eq.sym (Inverse.equivalent ∂-correct) ⟨∘⟩
-  p₁≈p₂ ⟨∘⟩
-  Inverse.equivalent ∂-correct
-
--- ∂ preserves parser equivalence.
-
-∂-cong-≅ : ∀ {Tok R xs₁ xs₂}
-             {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
-           p₁ ≅ p₂ → ∀ {t} → ∂ p₁ t ≅ ∂ p₂ t
-∂-cong-≅ p₁≅p₂ = Inv.sym ∂-correct ⟪∘⟫ p₁≅p₂ ⟪∘⟫ ∂-correct
+∂-cong : ∀ {k Tok R xs₁ xs₂}
+           {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
+         p₁ ≈[ k ] p₂ → ∀ {t} → ∂ p₁ t ≈[ k ] ∂ p₂ t
+∂-cong {p₁ = p₁} {p₂} p₁≈p₂ {t} {x} {s} =
+  x ∈ ∂ p₁ t · s  ⇿⟨ ∂-correct ⟩
+  x ∈ p₁ · t ∷ s  ≈⟨ p₁≈p₂ ⟩
+  x ∈ p₂ · t ∷ s  ⇿⟨ sym ∂-correct ⟩
+  x ∈ ∂ p₂ t · s  ∎
+  where open Inv.EquationalReasoning

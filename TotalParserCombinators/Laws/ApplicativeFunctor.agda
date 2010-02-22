@@ -4,19 +4,20 @@
 
 module TotalParserCombinators.Laws.ApplicativeFunctor where
 
+open import Algebra
 open import Coinduction
-open import Data.List as List
-import Data.List.Any as Any
+open import Data.List
+import Data.List.Any.BagAndSetEquality as BSEq
 open import Function
-open import Relation.Binary
 
 private
-  module BagS {A : Set} = Setoid (Any.Membership-≡.Bag-equality {A})
+  module BagMonoid {A : Set} =
+    CommutativeMonoid (BSEq.commutativeMonoid _ A)
 
 open import TotalParserCombinators.Applicative as ⊛ using (_⊛′_)
 open import TotalParserCombinators.BreadthFirst
 open import TotalParserCombinators.Coinduction
-open import TotalParserCombinators.Congruence.Parser as Eq
+open import TotalParserCombinators.Congruence as Eq
 import TotalParserCombinators.Laws.AdditiveMonoid as AdditiveMonoid
 open import TotalParserCombinators.Laws.Derivative as Derivative
 import TotalParserCombinators.Laws.ReturnStar as Return⋆
@@ -58,7 +59,7 @@ left-distributive : ∀ {Tok R₁ R₂ fs xs₁ xs₂}
                     (p₃ : Parser Tok R₁ xs₂) →
                     p₁ ⊙ (p₂ ∣ p₃) ≅P p₁ ⊙ p₂ ∣ p₁ ⊙ p₃
 left-distributive {fs = fs} {xs₁} p₁ p₂ p₃ =
-  BagS.reflexive (⊛.left-distributive xs₁) ∷ λ t → ♯ (
+  BagMonoid.reflexive (⊛.left-distributive xs₁) ∷ λ t → ♯ (
     ∂ (p₁ ⊙ (p₂ ∣ p₃)) t                         ≅⟨ ∂-⊙ p₁ (p₂ ∣ p₃) ⟩
 
     ∂ p₁ t ⊙ (p₂ ∣ p₃) ∣
@@ -101,7 +102,7 @@ right-distributive {fs₁ = fs₁} {fs₂} {xs} p₁ p₂ p₃ =
 
 identity : ∀ {Tok R xs} (p : Parser Tok R xs) → return id ⊙ p ≅P p
 identity {xs = xs} p =
-  BagS.reflexive (⊛.identity xs) ∷ λ t → ♯ (
+  BagMonoid.reflexive (⊛.identity xs) ∷ λ t → ♯ (
     ∂ (return id ⊙ p) t                    ≅⟨ ∂-⊙ (return id) p ⟩
     fail ⊙ p ∣ (return id ∣ fail) ⊙ ∂ p t  ≅⟨ left-zero p ∣
                                               AdditiveMonoid.right-identity (return id) ⊙′ (∂ p t ∎) ⟩
@@ -111,7 +112,7 @@ identity {xs = xs} p =
 
 homomorphism : ∀ {Tok R₁ R₂} (f : R₁ → R₂) (x : R₁) →
                return f ⊙ return x ≅P return {Tok = Tok} (f x)
-homomorphism f x = BagS.refl ∷ λ t → ♯ (
+homomorphism f x = BagMonoid.refl ∷ λ t → ♯ (
   ∂ (return f ⊙ return x) t  ≅⟨ ∂-return-⊙ f (return x) {t} ⟩
   return f ⊙ fail            ≅⟨ right-zero (return f) ⟩
   fail                       ≅⟨ fail ∎ ⟩
@@ -124,7 +125,7 @@ composition :
   (p₃ : Parser Tok R₁        xs) →
   return _∘′_ ⊙ p₁ ⊙ p₂ ⊙ p₃ ≅P p₁ ⊙ (p₂ ⊙ p₃)
 composition {fs = fs} {gs} {xs} p₁ p₂ p₃ =
-  BagS.reflexive (⊛.composition fs gs xs) ∷ λ t → ♯ (
+  BagMonoid.reflexive (⊛.composition fs gs xs) ∷ λ t → ♯ (
     ∂ (return _∘′_ ⊙ p₁ ⊙ p₂ ⊙ p₃) t                 ≅⟨ ∂-⊙ (return _∘′_ ⊙ p₁ ⊙ p₂) p₃ ⟩
 
     ∂ (return _∘′_ ⊙ p₁ ⊙ p₂) t ⊙ p₃ ∣
@@ -177,7 +178,7 @@ interchange : ∀ {Tok R₁ R₂ fs}
               (p : Parser Tok (R₁ → R₂) fs) (x : R₁) →
               p ⊙ return x ≅P return (λ f → f x) ⊙ p
 interchange {fs = fs} p x =
-  BagS.reflexive (⊛.interchange fs) ∷ λ t → ♯ (
+  BagMonoid.reflexive (⊛.interchange fs) ∷ λ t → ♯ (
     ∂ (p ⊙ return x) t            ≅⟨ ∂-⊙-return p x ⟩
     ∂ p t ⊙ return x              ≅⟨ interchange (∂ p t) x ⟩
     return (λ f → f x) ⊙ ∂ p t    ≅⟨ sym $ ∂-return-⊙ (λ f → f x) p ⟩

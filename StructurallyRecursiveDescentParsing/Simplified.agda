@@ -17,12 +17,12 @@ open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
 
 open ≡-Reasoning
+open Any.Membership-≡
 open RawMonad List.monad using () renaming (_>>=_ to _>>=′_)
 open RawMonad List⁺.monad using () renaming (_>>=_ to _>>=⁺_)
 private
-  open module BagS {A : Set} =
-    Setoid (Any.Membership-≡.Bag-equality {A})
-      using () renaming (_≈_ to _Bag-≈_)
+  open module BagS {A : Set} = Setoid ([ bag ]-Equality A)
+    using () renaming (_≈_ to _Bag-≈_)
 
 open import StructurallyRecursiveDescentParsing.Simplified.Lemmas
 open import TotalParserCombinators.Coinduction

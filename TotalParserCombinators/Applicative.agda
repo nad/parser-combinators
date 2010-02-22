@@ -10,13 +10,12 @@ open import Data.Bool
 open import Data.List as List
 import Data.List.Properties as ListProp
 open import Data.List.Any as Any using (Any)
-import Data.List.Any.BagEquality as BagEq
+import Data.List.Any.BagAndSetEquality as Eq
 open import Data.List.Any.Properties as AnyProp
 open import Data.List.Any.Membership
 open import Data.Product
 open import Function
 open import Function.Inverse as Inv using (_⇿_)
-open import Relation.Binary
 import Relation.Binary.EqReasoning as EqR
 open import Relation.Binary.HeterogeneousEquality using (_≅_; refl)
 open import Relation.Binary.PropositionalEquality as P
@@ -25,13 +24,10 @@ open import Relation.Binary.PropositionalEquality as P
 open Any.Membership-≡
 open RawMonad List.monad
 private
-  open module BagS {A : Set} =
-    Setoid (Any.Membership-≡.Bag-equality {A})
-      using (_≈_)
-  module ListMonoid {A : Set} = Monoid (List.monoid A)
   open module BagMonoid {A : Set} =
-    CommutativeMonoid (BagEq.commutativeMonoid A)
+    CommutativeMonoid (Eq.commutativeMonoid bag A)
       using () renaming (∙-cong to _++-cong_)
+  module ListMonoid {A : Set} = Monoid (List.monoid A)
 
 -- A helper function.
 
@@ -60,21 +56,21 @@ abstract
 
   ⊛′⇿⊛ : ∀ {A B} {fs : List (A → B)} xs {fx} →
          fx ∈ fs ⊛′ xs ⇿ fx ∈ fs ⊛ xs
-  ⊛′⇿⊛ {fs = fs} xs {fx} = begin
-    fx ∈ fs ⊛′ xs                           ⇿⟨ Inv.sym >>=⇿ ⟩
-    Any (λ x → fx ∈ app fs x) xs            ⇿⟨ Any-cong (λ _ → Inv.sym map⇿) BagS.refl ⟩
+  ⊛′⇿⊛ {fs = fs} xs {fx} =
+    fx ∈ fs ⊛′ xs                           ⇿⟨ sym >>=⇿ ⟩
+    Any (λ x → fx ∈ app fs x) xs            ⇿⟨ Any-cong (λ _ → Inv.sym map⇿) (_ ∎) ⟩
     Any (λ x → Any (λ f → fx ≡ f x) fs) xs  ⇿⟨ AnyProp.swap ⟩
     Any (λ f → Any (λ x → fx ≡ f x) xs) fs  ⇿⟨ ⊛⇿ ⟩
     fx ∈ fs ⊛ xs                            ∎
-    where open Inv.⇿-Reasoning
+    where open Inv.EquationalReasoning
 
   ⇿ : ∀ {A B} {fs : List (A → B)} {xs fx} →
       (∃₂ λ f x → f ∈ fs × x ∈ xs × fx ≡ f x) ⇿ fx ∈ fs ⊛′ xs
-  ⇿ {fs = fs} {xs} {fx} = begin
+  ⇿ {fs = fs} {xs} {fx} =
     (∃₂ λ f x → f ∈ fs × x ∈ xs × fx ≡ f x)  ⇿⟨ ⊛-∈⇿ _ ⟩
-    fx ∈ fs ⊛  xs                            ⇿⟨ Inv.sym $ ⊛′⇿⊛ xs ⟩
+    fx ∈ fs ⊛  xs                            ⇿⟨ sym $ ⊛′⇿⊛ xs ⟩
     fx ∈ fs ⊛′ xs                            ∎
-    where open Inv.⇿-Reasoning
+    where open Inv.EquationalReasoning
 
 ------------------------------------------------------------------------
 -- Algebraic properties
@@ -89,12 +85,12 @@ abstract
                      app (fs ++ gs) x ≡ app fs x ++ app gs x
     app-++-commute fs gs x = ListProp.map-++-commute (λ f → f x) fs gs
 
-  -- _⊛′_ preserves bag equality.
+  -- _⊛′_ preserves bag and set equality.
 
-  cong : ∀ {A B} {fs₁ fs₂ : List (A → B)} {xs₁ xs₂} →
-         fs₁ ≈ fs₂ → xs₁ ≈ xs₂ → fs₁ ⊛′ xs₁ ≈ fs₂ ⊛′ xs₂
+  cong : ∀ {k A B} {fs₁ fs₂ : List (A → B)} {xs₁ xs₂} →
+         fs₁ ≈[ k ] fs₂ → xs₁ ≈[ k ] xs₂ → fs₁ ⊛′ xs₁ ≈[ k ] fs₂ ⊛′ xs₂
   cong fs₁≈fs₂ xs₁≈xs₂ =
-    BagEq.>>=-cong xs₁≈xs₂ (λ x → BagEq.map-cong (λ f → refl) fs₁≈fs₂)
+    Eq.>>=-cong xs₁≈xs₂ (λ x → Eq.map-cong (λ f → refl) fs₁≈fs₂)
 
   -- [] is a left zero for _⊛′_.
 
@@ -131,21 +127,21 @@ abstract
 
   right-distributive :
     ∀ {A B} {fs₁ fs₂ : List (A → B)} xs →
-    (fs₁ ++ fs₂) ⊛′ xs ≈ fs₁ ⊛′ xs ++ fs₂ ⊛′ xs
-  right-distributive                   []       = BagS.refl
+    (fs₁ ++ fs₂) ⊛′ xs ≈[ bag ] fs₁ ⊛′ xs ++ fs₂ ⊛′ xs
+  right-distributive                   []       = BagMonoid.refl
   right-distributive {fs₁ = fs₁} {fs₂} (x ∷ xs) = begin
     (fs₁ ++ fs₂) ⊛′ (x ∷ xs)                  ≡⟨ refl ⟩
-    app (fs₁ ++ fs₂) x ++ (fs₁ ++ fs₂) ⊛′ xs  ≈⟨ BagS.reflexive (app-++-commute fs₁ fs₂ x)
+    app (fs₁ ++ fs₂) x ++ (fs₁ ++ fs₂) ⊛′ xs  ≈⟨ BagMonoid.reflexive (app-++-commute fs₁ fs₂ x)
                                                    ++-cong
                                                  right-distributive xs ⟩
     (app fs₁ x ++ app fs₂ x) ++
     (fs₁ ⊛′ xs ++ fs₂ ⊛′ xs)                  ≡⟨ ListMonoid.assoc (app fs₁ x) _ _ ⟩
     app fs₁ x ++ (app fs₂ x ++
-    (fs₁ ⊛′ xs ++ fs₂ ⊛′ xs))                 ≈⟨ BagS.refl {x = app fs₁ x} ++-cong (begin
+    (fs₁ ⊛′ xs ++ fs₂ ⊛′ xs))                 ≈⟨ BagMonoid.refl {x = app fs₁ x} ++-cong (begin
       app fs₂ x ++ (fs₁ ⊛′ xs ++ fs₂ ⊛′ xs)      ≡⟨ P.sym $ ListMonoid.assoc (app fs₂ x) _ _ ⟩
       (app fs₂ x ++ fs₁ ⊛′ xs) ++ fs₂ ⊛′ xs      ≈⟨ BagMonoid.comm (app fs₂ x) (fs₁ ⊛′ xs)
                                                       ++-cong
-                                                    BagS.refl ⟩
+                                                    BagMonoid.refl ⟩
       (fs₁ ⊛′ xs ++ app fs₂ x) ++ fs₂ ⊛′ xs      ≡⟨ ListMonoid.assoc (fs₁ ⊛′ xs) _ _ ⟩
       fs₁ ⊛′ xs ++ (app fs₂ x ++ fs₂ ⊛′ xs)      ∎) ⟩
     app fs₁ x ++ (fs₁ ⊛′ xs ++
@@ -153,7 +149,7 @@ abstract
     (app fs₁ x ++ fs₁ ⊛′ xs) ++
     (app fs₂ x ++ fs₂ ⊛′ xs)                  ≡⟨ refl ⟩
     fs₁ ⊛′ (x ∷ xs) ++ fs₂ ⊛′ (x ∷ xs)        ∎
-    where open EqR Any.Membership-≡.Bag-equality
+    where open EqR ([ bag ]-Equality _)
 
   -- Applicative functor laws.
 

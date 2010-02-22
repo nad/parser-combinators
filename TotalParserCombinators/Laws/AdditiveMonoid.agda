@@ -6,19 +6,16 @@ module TotalParserCombinators.Laws.AdditiveMonoid where
 
 open import Algebra
 open import Coinduction
-import Data.List.Any.BagEquality as BagEq
-import Data.List.Any.SetEquality as SetEq
+import Data.List.Any.BagAndSetEquality as Eq
 open import Data.Product using (proj₁; proj₂)
 open import Function
-open import Function.Equivalence using (equivalent)
 
 private
   module BagMonoid {A : Set} =
-    CommutativeMonoid (BagEq.commutativeMonoid A)
+    CommutativeMonoid (Eq.commutativeMonoid _ A)
 
 open import TotalParserCombinators.BreadthFirst
-open import TotalParserCombinators.CoinductiveEquality
-open import TotalParserCombinators.Congruence.Parser
+open import TotalParserCombinators.Congruence
 open import TotalParserCombinators.Parser
 
 ------------------------------------------------------------------------
@@ -51,9 +48,9 @@ associative {xs₁ = xs₁} p₁ p₂ p₃ =
 -- Note that this law uses language equivalence, not parser
 -- equivalence.
 
-idempotent : ∀ {Tok R xs} (p : Parser Tok R xs) → p ∣ p ≈′ p
+idempotent : ∀ {Tok R xs} (p : Parser Tok R xs) → p ∣ p ≈P p
 idempotent {xs = xs} p =
-  (λ {_} → SetEq.++-idempotent xs) ∷ λ t → ♯ idempotent (∂ p t)
+  Eq.++-idempotent xs ∷ λ t → ♯ idempotent (∂ p t)
 
 ------------------------------------------------------------------------
 -- A lemma which can be convenient when proving distributivity laws

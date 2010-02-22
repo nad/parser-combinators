@@ -9,8 +9,8 @@ open import Coinduction
 open import Data.List as List
 import Data.List.Any as Any
 open import Function
-open import Relation.Binary
 
+open Any.Membership-≡
 open RawMonadPlus List.monadPlus
   using ()
   renaming ( return to return′
@@ -18,10 +18,6 @@ open RawMonadPlus List.monadPlus
            ; _∣_    to _∣′_
            ; _>>=_  to _>>=′_
            )
-private
-  open module BagS {A : Set} =
-    Setoid (Any.Membership-≡.Bag-equality {A})
-      using () renaming (_≈_ to _Bag-≈_)
 
 open import TotalParserCombinators.Applicative using (_⊛′_)
 open import TotalParserCombinators.Coinduction
@@ -65,7 +61,7 @@ data Parser (Tok : Set) : (R : Set) → List R → Set1 where
              (p₂ : R₁ → ∞? (Parser Tok R₂ fail′) xs) →
                             Parser Tok R₂ fail′
   nonempty : ∀ {R xs} (p : Parser Tok R xs) → Parser Tok R []
-  cast     : ∀ {R xs₁ xs₂} (xs₁≈xs₂ : xs₁ Bag-≈ xs₂)
+  cast     : ∀ {R xs₁ xs₂} (xs₁≈xs₂ : xs₁ ≈[ bag ] xs₂)
              (p : Parser Tok R xs₁) → Parser Tok R xs₂
 
 -- The difference between the _>>=_ and _>>=!_ combinators is that the

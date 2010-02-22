@@ -8,26 +8,18 @@ open import Data.List
 open import Data.List.Any as Any
 open import Data.List.Any.Membership
 open import Data.List.Any.Properties
-open import Data.Product as Prod
+open import Data.Product
 open import Data.Sum
 open import Function
 open import Function.Equality using (_⟨$⟩_)
-open import Function.Equivalence
-  using (_⇔_; module Equivalent) renaming (_∘_ to _⟨∘⟩_)
-open import Function.Inverse as Inv
-  using (_⇿_) renaming (_∘_ to _⟪∘⟫_)
-open import Relation.Binary
+open import Function.Inverse as Inv using (_⇿_)
 open import Relation.Binary.PropositionalEquality as P
+  using (_≡_; refl)
 open import Relation.Binary.HeterogeneousEquality as H
   using (refl) renaming (_≅_ to _≅′_)
 
-open Any.Membership-≡
+open Any.Membership-≡ using (_∈_) renaming (_≈[_]_ to _List-≈[_]_)
 open Inv.Inverse
-private
-  open module SetS {R : Set} = Setoid (Set-equality {R})
-    using () renaming (_≈_ to _Set-≈_)
-  open module BagS {R : Set} = Setoid (Bag-equality {R})
-    using () renaming (_≈_ to _Bag-≈_)
 
 import TotalParserCombinators.Applicative as ⊛
 open import TotalParserCombinators.Coinduction
@@ -170,14 +162,14 @@ complete∘sound (_∣_ {xs₁ = xs₁} p₁ p₂) x∈xs
   with from             (++⇿ {xs = xs₁}) ⟨$⟩ x∈xs
      | right-inverse-of (++⇿ {xs = xs₁})     x∈xs
 complete∘sound (_∣_ {xs₁ = xs₁} p₁ p₂) .(to ++⇿              ⟨$⟩ inj₁ x∈xs₁) | inj₁ x∈xs₁ | refl =
-  cong (_⟨$⟩_ (to ++⇿)              ∘ inj₁) $ complete∘sound p₁ x∈xs₁
+  P.cong (_⟨$⟩_ (to ++⇿)              ∘ inj₁) $ complete∘sound p₁ x∈xs₁
 complete∘sound (_∣_ {xs₁ = xs₁} p₁ p₂) .(to (++⇿ {xs = xs₁}) ⟨$⟩ inj₂ x∈xs₂) | inj₂ x∈xs₂ | refl =
-  cong (_⟨$⟩_ (to (++⇿ {xs = xs₁})) ∘ inj₂) $ complete∘sound p₂ x∈xs₂
+  P.cong (_⟨$⟩_ (to (++⇿ {xs = xs₁})) ∘ inj₂) $ complete∘sound p₂ x∈xs₂
 complete∘sound (_<$>_ {xs = xs} f p) x∈xs
   with            from (map-∈⇿ {xs = xs}) ⟨$⟩ x∈xs
      | right-inverse-of map-∈⇿                x∈xs
 complete∘sound (_<$>_ {xs = xs} f p) .(to map-∈⇿ ⟨$⟩ (y , y∈xs , refl)) | (y , y∈xs , refl) | refl =
-  cong (λ y∈ → to map-∈⇿ ⟨$⟩ (y , y∈ , refl)) $ complete∘sound p y∈xs
+  P.cong (λ y∈ → to map-∈⇿ ⟨$⟩ (y , y∈ , refl)) $ complete∘sound p y∈xs
 complete∘sound (_⊛_ {fs = fs} {x ∷ xs} ⟨ p₁ ⟩ p₂) y∈ys
   with from             (⊛.⇿ {fs = fs} {xs = x ∷ xs}) ⟨$⟩ y∈ys
      | right-inverse-of (⊛.⇿ {fs = fs} {xs = x ∷ xs})     y∈ys
@@ -185,17 +177,17 @@ complete∘sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟪ p₂ ⟫)
                y∈ys                                             | (f′ , x′ , ()    , x′∈x∷xs , refl) | _
 complete∘sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟨ p₂ ⟩)
                .(to ⊛.⇿ ⟨$⟩ (f′ , x′ , f′∈fs , x′∈x∷xs , refl)) | (f′ , x′ , f′∈fs , x′∈x∷xs , refl) | refl =
-  cong₂ (λ f′∈ x′∈ → to ⊛.⇿ ⟨$⟩ (f′ , x′ , f′∈ , x′∈ , refl))
-        (complete∘sound p₁ f′∈fs)
-        (complete∘sound p₂ x′∈x∷xs)
+  P.cong₂ (λ f′∈ x′∈ → to ⊛.⇿ ⟨$⟩ (f′ , x′ , f′∈ , x′∈ , refl))
+          (complete∘sound p₁ f′∈fs)
+          (complete∘sound p₂ x′∈x∷xs)
 complete∘sound (_>>=_ {xs = zs}     {f} p₁ p₂) y∈ys
   with from             (>>=-∈⇿ {xs = zs} {f = f}) ⟨$⟩ y∈ys
      | right-inverse-of (>>=-∈⇿ {xs = zs} {f = f})     y∈ys
 complete∘sound (_>>=_ {xs = []}     {f} p₁ p₂) ._                                             | (x , ()     , y∈fx) | refl
 complete∘sound (_>>=_ {xs = z ∷ zs} {f} p₁ p₂) .(to (>>=-∈⇿ {f = f}) ⟨$⟩ (x , x∈z∷zs , y∈fx)) | (x , x∈z∷zs , y∈fx) | refl =
-  cong₂ (λ x∈ y∈ → to (>>=-∈⇿ {f = f}) ⟨$⟩ (x , x∈ , y∈))
-        (complete∘sound p₁ x∈z∷zs)
-        (helper (p₂ x) x∈z∷zs y∈fx)
+  P.cong₂ (λ x∈ y∈ → to (>>=-∈⇿ {f = f}) ⟨$⟩ (x , x∈ , y∈))
+          (complete∘sound p₁ x∈z∷zs)
+          (helper (p₂ x) x∈z∷zs y∈fx)
   where
   helper : ∀ {Tok R₁ R₂ x y xs z} {zs : List R₁}
            (p : ∞? (Parser Tok R₂ xs) (z ∷ zs))
@@ -226,15 +218,12 @@ correct {p = p} = record
 ------------------------------------------------------------------------
 -- Equal parsers have equal initial sets
 
-same-set : ∀ {Tok R xs₁ xs₂}
+same-set : ∀ {k Tok R xs₁ xs₂}
              {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
-           p₁ ≈ p₂ → xs₁ Set-≈ xs₂
-same-set p₁≈p₂ =
-  equivalent correct ⟨∘⟩
-  p₁≈p₂ ⟨∘⟩
-  equivalent (Inv.sym correct)
-
-same-bag : ∀ {Tok R xs₁ xs₂}
-             {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
-           p₁ ≅ p₂ → xs₁ Bag-≈ xs₂
-same-bag p₁≅p₂ = correct ⟪∘⟫ p₁≅p₂ ⟪∘⟫ Inv.sym correct
+           p₁ ≈[ k ] p₂ → xs₁ List-≈[ k ] xs₂
+same-set {xs₁ = xs₁} {xs₂} {p₁} {p₂} p₁≈p₂ {x} =
+  (x ∈ xs₁)    ⇿⟨ sym correct ⟩
+  x ∈ p₁ · []  ≈⟨ p₁≈p₂ ⟩
+  x ∈ p₂ · []  ⇿⟨ correct ⟩
+  (x ∈ xs₂)    ∎
+  where open Inv.EquationalReasoning
