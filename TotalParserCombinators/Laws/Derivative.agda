@@ -215,7 +215,7 @@ private
     _ >>=! (λ x → ♯? (♭? (p₂ x))) ∣
     return⋆ (x ∷ xs) ≫= (λ x → ∂ (♭? (p₂ x)) t)   ∎
 
--- _>>=!_ and _>>=_ are equivalent.
+-- _>>=!_ and _>>=_ are equivalent (where their domains overlap).
 
 >>=!≅>>= : ∀ {Tok R₁ R₂ xs}
            (p₁ : ∞ (Parser Tok R₁ xs))

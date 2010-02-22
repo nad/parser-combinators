@@ -30,7 +30,7 @@ open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
 
 ------------------------------------------------------------------------
--- _>>=_, _>>=!_ and _≫=_ are equivalent
+-- _>>=_, _>>=!_ and _≫=_ are equivalent (where their domains overlap)
 
 open Derivative public using (>>=!≅>>=)
 
