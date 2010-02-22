@@ -87,8 +87,8 @@ record _LeastUpperBoundOf_
 ------------------------------------------------------------------------
 -- The parser combinators do not form a Kleene algebra
 
--- However, if we allow arbitrary argument parsers, then we cannot
--- even prove the following (variant of a) Kleene algebra axiom.
+-- If we allow arbitrary argument parsers, then we cannot prove the
+-- following (variant of a) Kleene algebra axiom.
 
 not-Kleene-algebra :
   (f : ∀ {Tok R xs} → Parser Tok R xs → List (List R)) →
