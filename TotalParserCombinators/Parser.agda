@@ -70,6 +70,11 @@ data Parser (Tok : Set) : (R : Set) → List R → Set1 where
 -- to require the index to be a function f such that f x ≡ [] for all
 -- x in xs, but this seems complicated.
 
+-- The initial set of a parser:
+
+initial-set : ∀ {R Tok xs} → Parser Tok R xs → List R
+initial-set {xs = xs} _ = xs
+
 -- Note that these parsers can be both left and right recursive:
 
 private

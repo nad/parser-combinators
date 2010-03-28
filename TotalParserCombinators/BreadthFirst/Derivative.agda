@@ -4,8 +4,11 @@
 
 module TotalParserCombinators.BreadthFirst.Derivative where
 
+open import Category.Monad
 open import Coinduction
-open import Data.List
+open import Data.List as List
+
+open RawMonad List.monad using () renaming (_>>=_ to _>>=′_)
 
 open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Lib
@@ -25,8 +28,11 @@ mutual
   ∂-initial (⟪ _ ⟫ ⊛ ⟪ _ ⟫)           _ = _
   ∂-initial (⟨ _ ⟩ ⊛ ⟨ _ ⟩)           _ = _
   ∂-initial (⟪ _ ⟫ ⊛ ⟨ _ ⟩)           _ = _
-  ∂-initial (_>>=_  {xs = []   } _ _) _ = _
-  ∂-initial (_>>=_  {xs = _ ∷ _} _ _) _ = _
+  -- ∂-initial (p₁ >>= _) _ with initial-set p₁
+  ∂-initial (_>>=_ {xs = ys} {f = f} p₁ p₂) t with ys
+  ... | []     =  ∂-initial p₁ t >>=′ f
+  ... | x ∷ xs = (∂-initial p₁ t >>=′ f) ++
+                 ((x ∷ xs) >>=′ λ x → ∂!-initial (p₂ x) t)
   ∂-initial (_>>=!_ {xs = []   } _ _) _ = _
   ∂-initial (_>>=!_ {xs = _ ∷ _} _ _) _ = _
   ∂-initial (nonempty _)              _ = _
@@ -42,25 +48,27 @@ mutual
 
   ∂ : ∀ {Tok R xs}
       (p : Parser Tok R xs) (t : Tok) → Parser Tok R (∂-initial p t)
-  ∂ (return x)                   t = fail
-  ∂ fail                         t = fail
-  ∂ token                        t = return t
-  ∂ (p₁ ∣ p₂)                    t = ∂ p₁ t ∣ ∂ p₂ t
-  ∂ (f <$> p)                    t = f <$> ∂ p t
-  ∂ (⟨ p₁ ⟩ ⊛ ⟪ p₂ ⟫)            t = ⟨   ∂    p₁  t ⟩ ⊛ ♯? (♭ p₂)
-  ∂ (⟪ p₁ ⟫ ⊛ ⟪ p₂ ⟫)            t = ⟪ ♯ ∂ (♭ p₁) t ⟫ ⊛ ♯? (♭ p₂)
-  ∂ (⟨ p₁ ⟩ ⊛ ⟨_⟩ {f} {fs} p₂)   t = ⟨   ∂    p₁  t ⟩ ⊛ ♯?    p₂
-                                   ∣ ♯? (return⋆ (f ∷ fs)) ⊛ ⟨ ∂ p₂ t ⟩
-  ∂ (⟪ p₁ ⟫ ⊛ ⟨_⟩ {f} {fs} p₂)   t = ⟪ ♯ ∂ (♭ p₁) t ⟫ ⊛ ♯?     p₂
-                                   ∣ ♯? (return⋆ (f ∷ fs)) ⊛ ⟨ ∂ p₂ t ⟩
-  ∂ (_>>=_ {xs = []}      p₁ p₂) t = ∂ p₁ t >>= (λ x → ♯? (♭? (p₂ x)))
-  ∂ (_>>=_ {xs = x ∷ xs}  p₁ p₂) t = ∂ p₁ t >>= (λ x → ♯? (♭? (p₂ x)))
-                                   ∣ return⋆ (x ∷ xs) >>= λ x → ⟨ ∂! (p₂ x) t ⟩
-  ∂ (_>>=!_ {xs = []}     p₁ p₂) t = (♯ ∂ (♭ p₁) t) >>=! (λ x → ♯? (♭? (p₂ x)))
-  ∂ (_>>=!_ {xs = x ∷ xs} p₁ p₂) t = (♯ ∂ (♭ p₁) t) >>=! (λ x → ♯? (♭? (p₂ x)))
-                                   ∣ return⋆ (x ∷ xs) >>= λ x → ⟨ ∂! (p₂ x) t ⟩
-  ∂ (nonempty p)                 t = ∂ p t
-  ∂ (cast _ p)                   t = ∂ p t
+  ∂ (return x)        t = fail
+  ∂ fail              t = fail
+  ∂ token             t = return t
+  ∂ (p₁ ∣ p₂)         t = ∂ p₁ t ∣ ∂ p₂ t
+  ∂ (nonempty p)      t = ∂ p t
+  ∂ (cast eq p)       t = ∂ p t
+  ∂ (f <$> p)         t = f <$> ∂ p t
+  ∂ (⟨ p₁ ⟩ ⊛ ⟪ p₂ ⟫) t = ⟨   ∂    p₁  t ⟩ ⊛ ♯? (♭ p₂)
+  ∂ (⟪ p₁ ⟫ ⊛ ⟪ p₂ ⟫) t = ⟪ ♯ ∂ (♭ p₁) t ⟫ ⊛ ♯? (♭ p₂)
+  ∂ (⟨ p₁ ⟩ ⊛ ⟨ p₂ ⟩) t = ⟨   ∂    p₁  t ⟩ ⊛ ♯?    p₂
+                        ∣ ♯? (return⋆ (initial-set    p₁ )) ⊛ ⟨ ∂ p₂ t ⟩
+  ∂ (⟪ p₁ ⟫ ⊛ ⟨ p₂ ⟩) t = ⟪ ♯ ∂ (♭ p₁) t ⟫ ⊛ ♯?     p₂
+                        ∣ ♯? (return⋆ (initial-set (♭ p₁))) ⊛ ⟨ ∂ p₂ t ⟩
+  ∂ (p₁ >>= p₂)       t with initial-set p₁
+  ∂ (p₁ >>= p₂)       t | []     = ∂ p₁ t >>= (λ x → ♯? (♭? (p₂ x)))
+  ∂ (p₁ >>= p₂)       t | x ∷ xs = ∂ p₁ t >>= (λ x → ♯? (♭? (p₂ x)))
+                                 ∣ return⋆ (x ∷ xs) >>= λ x → ⟨ ∂! (p₂ x) t ⟩
+  ∂ (p₁ >>=! p₂)      t with initial-set (♭ p₁)
+  ∂ (p₁ >>=! p₂)      t | []     = (♯ ∂ (♭ p₁) t) >>=! (λ x → ♯? (♭? (p₂ x)))
+  ∂ (p₁ >>=! p₂)      t | x ∷ xs = (♯ ∂ (♭ p₁) t) >>=! (λ x → ♯? (♭? (p₂ x)))
+                                 ∣ return⋆ (x ∷ xs) >>= λ x → ⟨ ∂! (p₂ x) t ⟩
 
   ∂! : ∀ {Tok R₁ R₂ xs y} {ys : List R₁}
        (p : ∞? (Parser Tok R₂ xs) (y ∷ ys)) (t : Tok) →
