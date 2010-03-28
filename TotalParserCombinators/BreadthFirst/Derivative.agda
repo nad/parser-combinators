@@ -8,39 +8,49 @@ open import Category.Monad
 open import Coinduction
 open import Data.List as List
 
-open RawMonad List.monad using () renaming (_>>=_ to _>>=′_)
+open RawMonadPlus List.monadPlus
+  using ()
+  renaming ( return to return′
+           ; ∅      to fail′
+           ; _∣_    to _∣′_
+           ; _>>=_  to _>>=′_
+           )
 
+open import TotalParserCombinators.Applicative using (_⊛′_)
 open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Lib
 open import TotalParserCombinators.Parser
 
--- Functions calculating the index of the derivative.
+-- Functions calculating the index of the derivative. Note that these
+-- functions are highly constrained by the definition of ∂; most of
+-- the right-hand sides could be replaced by _.
 
 mutual
 
   ∂-initial : ∀ {Tok R xs} → Parser Tok R xs → Tok → List R
-  ∂-initial (return _)                _ = _
-  ∂-initial fail                      _ = _
-  ∂-initial token                     _ = _
-  ∂-initial (_ ∣ _)                   _ = _
-  ∂-initial (_ <$> _)                 _ = _
-  ∂-initial (⟨ _ ⟩ ⊛ ⟪ _ ⟫)           _ = _
-  ∂-initial (⟪ _ ⟫ ⊛ ⟪ _ ⟫)           _ = _
-  ∂-initial (⟨ _ ⟩ ⊛ ⟨ _ ⟩)           _ = _
-  ∂-initial (⟪ _ ⟫ ⊛ ⟨ _ ⟩)           _ = _
-  -- ∂-initial (p₁ >>= _) _ with initial-set p₁
-  ∂-initial (_>>=_ {xs = ys} {f = f} p₁ p₂) t with ys
-  ... | []     =  ∂-initial p₁ t >>=′ f
-  ... | x ∷ xs = (∂-initial p₁ t >>=′ f) ++
+  ∂-initial (return x)        t = fail′
+  ∂-initial fail              t = fail′
+  ∂-initial token             t = return′ t
+  ∂-initial (p₁ ∣ p₂)         t = ∂-initial p₁ t ∣′ ∂-initial p₂ t
+  ∂-initial (nonempty p)      t = ∂-initial p t
+  ∂-initial (cast eq p)       t = ∂-initial p t
+  ∂-initial (f <$> p)         t = map f (∂-initial p t)
+  ∂-initial (⟨ p₁ ⟩ ⊛ ⟪ p₂ ⟫) t = ∂-initial p₁ t     ⊛′ initial-set (♭ p₂)
+  ∂-initial (⟪ p₁ ⟫ ⊛ ⟪ p₂ ⟫) t = fail′
+  ∂-initial (⟨ p₁ ⟩ ⊛ ⟨ p₂ ⟩) t = ∂-initial p₁ t     ⊛′ initial-set    p₂  ∣′
+                                  initial-set    p₁  ⊛′ ∂-initial p₂ t
+  ∂-initial (⟪ p₁ ⟫ ⊛ ⟨ p₂ ⟩) t = initial-set (♭ p₁) ⊛′ ∂-initial p₂ t
+  ∂-initial (p₁ >>= p₂)       t with initial-set p₁
+  ... | []     =  ∂-initial p₁ t >>=′ (λ x → initial-set (♭? (p₂ x)))
+  ... | x ∷ xs = (∂-initial p₁ t >>=′ (λ x → initial-set (♭? (p₂ x)))) ∣′
                  ((x ∷ xs) >>=′ λ x → ∂!-initial (p₂ x) t)
-  ∂-initial (_>>=!_ {xs = []   } _ _) _ = _
-  ∂-initial (_>>=!_ {xs = _ ∷ _} _ _) _ = _
-  ∂-initial (nonempty _)              _ = _
-  ∂-initial (cast _ _)                _ = _
+  ∂-initial (p₁ >>=! p₂)      t with initial-set (♭ p₁)
+  ... | []     = []
+  ... | x ∷ xs = (x ∷ xs) >>=′ λ x → ∂!-initial (p₂ x) t
 
   ∂!-initial : ∀ {Tok R₁ R₂ xs y} {ys : List R₁} →
                ∞? (Parser Tok R₂ xs) (y ∷ ys) → Tok → List R₂
-  ∂!-initial ⟨ _ ⟩ _ = _
+  ∂!-initial ⟨ p ⟩ t = ∂-initial p t
 
 -- "Derivative": x ∈ ∂ p t · s  iff  x ∈ p · t ∷ s.
 
