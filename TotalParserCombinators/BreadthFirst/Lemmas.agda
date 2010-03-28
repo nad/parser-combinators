@@ -26,13 +26,13 @@ open import TotalParserCombinators.BreadthFirst.RightInverse
 -- The backend is correct.
 
 correct : ∀ {Tok R xs x s} {p : Parser Tok R xs} →
-          (x ∈ parseComplete p s) ⇿ x ∈ p · s
+          x ∈ p · s ⇿ x ∈ parseComplete p s
 correct {s = s} {p} = record
-  { to         = P.→-to-⟶ $ sound s
-  ; from       = P.→-to-⟶ $ complete s
+  { to         = P.→-to-⟶ $ complete s
+  ; from       = P.→-to-⟶ $ sound s
   ; inverse-of = record
-    { left-inverse-of  = complete∘sound s p
-    ; right-inverse-of = sound∘complete s
+    { left-inverse-of  = sound∘complete s
+    ; right-inverse-of = complete∘sound s p
     }
   }
 

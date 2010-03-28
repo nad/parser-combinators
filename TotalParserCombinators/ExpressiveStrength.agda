@@ -9,7 +9,7 @@ module TotalParserCombinators.ExpressiveStrength where
 open import Coinduction
 open import Data.Bool
 open import Function
-open import Function.Inverse as Inv using (_⇿_)
+open import Function.Inverse using (_⇿_)
 open import Data.List as List
 open import Data.List.Any
 open Membership-≡
@@ -57,7 +57,7 @@ parser⇒fun : ∀ {R xs} (p : Parser Bool R xs) →
              ∃ λ (f : List Bool → List R) →
                ∀ x s → x ∈ p · s ⇿ x ∈ f s
 parser⇒fun p =
-  (Backend.parseComplete p , λ _ _ → Inv.sym Backend.correct)
+  (Backend.parseComplete p , λ _ _ → Backend.correct)
 
 -- For every function there is a corresponding parser.
 

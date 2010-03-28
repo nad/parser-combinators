@@ -141,7 +141,7 @@ associative : ∀ {Tok R₁ R₂ R₃ xs}
               (p₁ : Parser Tok R₁ xs)
               (p₂ : (x : R₁) → Parser Tok R₂ (f x))
               (p₃ : (x : R₂) → Parser Tok R₃ (g x)) →
-              (p₁ ≫= λ x → p₂ x ≫= p₃) ≅P p₁ ≫= p₂ ≫= p₃
+              p₁ ≫= (λ x → p₂ x ≫= p₃) ≅P p₁ ≫= p₂ ≫= p₃
 associative {xs = xs} {f} {g} p₁ p₂ p₃ =
   BagMonoid.reflexive (ListProp.Monad.associative xs f g) ∷ λ t → ♯ (
     ∂ (p₁ ≫= λ x → p₂ x ≫= p₃) t                               ≅⟨ ∂-≫= p₁ (λ x → p₂ x ≫= p₃) ⟩
