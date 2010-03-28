@@ -64,11 +64,11 @@ data Parser (Tok : Set) : Bool → Set → Set1 where
 -- to the end of the input.
 
 ------------------------------------------------------------------------
--- "Initial sets"
+-- "Initial bags"
 
--- The initial set of a parser is calculated in such a way that it is
+-- The initial bag of a parser is calculated in such a way that it is
 -- obvious, given the nullability of the parser, whether or not the
--- set is empty.
+-- bag is empty.
 
 mutual
 

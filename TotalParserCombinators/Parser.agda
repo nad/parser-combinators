@@ -29,14 +29,14 @@ infixl 50 _⊛_ _<$>_
 infixl 10 _>>=_ _>>=!_
 infixl  5 _∣_
 
--- The list index is the "initial set"; it contains the results which
+-- The list index is the "initial bag"; it contains the results which
 -- can be emitted without consuming any input. For
 --   p : Parser Tok R xs
 -- we have
 --   x ∈ xs  iff  x ∈ p · []
--- (see TotalParserCombinators.InitialSet).
+-- (see TotalParserCombinators.InitialBag).
 
-data Parser (Tok : Set) : (R : Set) → List R → Set1 where
+data Parser (Tok : Set) : (R : Set) → List R → Set₁ where
   return   : ∀ {R} (x : R) → Parser Tok R (return′ x)
   fail     : ∀ {R} → Parser Tok R fail′
   token    : Parser Tok Tok fail′
@@ -70,10 +70,10 @@ data Parser (Tok : Set) : (R : Set) → List R → Set1 where
 -- to require the index to be a function f such that f x ≡ [] for all
 -- x in xs, but this seems complicated.
 
--- The initial set of a parser:
+-- The initial bag of a parser:
 
-initial-set : ∀ {R Tok xs} → Parser Tok R xs → List R
-initial-set {xs = xs} _ = xs
+initial-bag : ∀ {R Tok xs} → Parser Tok R xs → List R
+initial-bag {xs = xs} _ = xs
 
 -- Note that these parsers can be both left and right recursive:
 

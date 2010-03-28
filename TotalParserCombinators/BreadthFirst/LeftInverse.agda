@@ -30,7 +30,7 @@ open import TotalParserCombinators.BreadthFirst.Derivative
 open import TotalParserCombinators.BreadthFirst.SoundComplete
 open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Lib
-import TotalParserCombinators.InitialSet as I
+import TotalParserCombinators.InitialBag as I
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
 

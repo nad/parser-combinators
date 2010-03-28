@@ -26,9 +26,9 @@ import TotalParserCombinators.Applicative
 import TotalParserCombinators.Parser
 import TotalParserCombinators.Semantics
 
--- Some lemmas about the initial set.
+-- Some lemmas about the initial bag.
 
-import TotalParserCombinators.InitialSet
+import TotalParserCombinators.InitialBag
 
 -- A small library of derived parser combinators.
 

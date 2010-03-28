@@ -15,7 +15,7 @@ open Inv.EquationalReasoning
 
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
-import TotalParserCombinators.InitialSet as I
+import TotalParserCombinators.InitialBag as I
 open import TotalParserCombinators.BreadthFirst
   using (∂; ∂-correct; ∂-cong)
 

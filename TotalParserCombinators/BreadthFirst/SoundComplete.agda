@@ -19,7 +19,7 @@ open import TotalParserCombinators.Applicative
 open import TotalParserCombinators.Lib
 open import TotalParserCombinators.BreadthFirst.Derivative
 open import TotalParserCombinators.Coinduction
-import TotalParserCombinators.InitialSet as I
+import TotalParserCombinators.InitialBag as I
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
 

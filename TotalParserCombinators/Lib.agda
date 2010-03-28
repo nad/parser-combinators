@@ -28,7 +28,7 @@ private
 
 open import TotalParserCombinators.Applicative using (_⊛′_)
 open import TotalParserCombinators.Coinduction
-import TotalParserCombinators.InitialSet as I
+import TotalParserCombinators.InitialBag as I
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics hiding (_≅_)
 

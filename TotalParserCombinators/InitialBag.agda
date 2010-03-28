@@ -1,8 +1,8 @@
 ------------------------------------------------------------------------
--- Lemmas about the initial set index
+-- Lemmas about the initial bag index
 ------------------------------------------------------------------------
 
-module TotalParserCombinators.InitialSet where
+module TotalParserCombinators.InitialBag where
 
 open import Data.List
 open import Data.List.Any as Any
