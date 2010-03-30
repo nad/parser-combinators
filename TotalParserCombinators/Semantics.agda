@@ -83,7 +83,7 @@ infix 4 _≈[_]_ _≈_ _≅_ _≲_
 open Any.Membership-≡ public
   using (Kind) renaming (bag to parser; set to language)
 
--- General definition of parser equivalence.
+-- General definition of equivalence between parsers.
 
 _≈[_]_ : ∀ {Tok R xs₁ xs₂} →
          Parser Tok R xs₁ → Kind → Parser Tok R xs₂ → Set₁
