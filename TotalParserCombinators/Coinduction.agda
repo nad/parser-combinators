@@ -15,9 +15,13 @@ data ∞? (A : Set₁) {B : Set} : List B → Set₁ where
   ⟪_⟫ :          (x : ∞ A) → ∞? A []
   ⟨_⟩ : ∀ {y ys} (x :   A) → ∞? A (y ∷ ys)
 
+-- Delays a parser, if necessary.
+
 ♯? : ∀ {A B} {xs : List B} → A → ∞? A xs
 ♯? {xs = []}    x = ⟪ ♯ x ⟫
 ♯? {xs = _ ∷ _} x = ⟨   x ⟩
+
+-- Forces a parser, if necessary.
 
 ♭? : ∀ {A B} {xs : List B} → ∞? A xs → A
 ♭? ⟪ x ⟫ = ♭ x
