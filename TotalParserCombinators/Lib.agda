@@ -7,14 +7,18 @@ module TotalParserCombinators.Lib where
 open import Category.Monad
 open import Coinduction
 open import Function
-open import Function.Equality using (_⟶_)
+open import Function.Equality using (_⟶_; _⟨$⟩_)
 open import Function.Injection using (Injection; Injective)
 open import Function.Inverse using (_⇿_; module Inverse)
+open import Data.Bool
+open import Data.Char using (Char; _==_)
 open import Data.List as List
 open import Data.List.Any as Any
 import Data.List.Any.Membership as ∈
+open import Data.Maybe
 open import Data.Nat
 open import Data.Product as Prod
+open import Data.Unit
 open import Data.Vec as Vec using (Vec; []; _∷_)
 open import Relation.Binary
 open import Relation.Binary.HeterogeneousEquality as H
@@ -547,3 +551,104 @@ module ⋁ where
        | Inverse.left-inverse-of (Return⋆.correct {Tok = Tok}) (refl , x∈xs)
   ... | (refl , .x∈xs) | refl
     rewrite Inverse.right-inverse-of (♭♯.correct xs) y∈fx = refl
+
+------------------------------------------------------------------------
+-- The sat parser
+
+module Sat where
+
+  -- Helper functions for sat′.
+
+  ok-index : {R : Set} → Maybe R → List R
+  ok-index nothing  = _
+  ok-index (just _) = _
+
+  ok : {Tok R : Set} → (x : Maybe R) → Parser Tok R (ok-index x)
+  ok nothing  = fail
+  ok (just x) = return x
+
+  ok-correct : ∀ {Tok R x s} (m : Maybe R) →
+               (s ≡ [] × m ≡ just x) ⇿ x ∈ ok {Tok} m · s
+  ok-correct {Tok} {x = x} m = record
+    { to         = P.→-to-⟶ (to m)
+    ; from       = P.→-to-⟶ (from m)
+    ; inverse-of = record
+      { left-inverse-of  = from∘to m
+      ; right-inverse-of = to∘from m
+      }
+    }
+    where
+    to : ∀ {s} m → (s ≡ [] × m ≡ just x) → x ∈ ok {Tok} m · s
+    to (just .x) (refl , refl) = return
+    to nothing   (refl , ())
+
+    from : ∀ {s} m → x ∈ ok {Tok} m · s → s ≡ [] × m ≡ just x
+    from (just .x) return = (refl , refl)
+    from nothing   ()
+
+    from∘to : ∀ {s} m (eqs : s ≡ [] × m ≡ just x) →
+              from m (to m eqs) ≡ eqs
+    from∘to (just .x) (refl , refl) = refl
+    from∘to nothing   (refl , ())
+
+    to∘from : ∀ {s} m (x∈ : x ∈ ok {Tok} m · s) →
+              to m (from m x∈) ≡ x∈
+    to∘from (just .x) return = refl
+    to∘from nothing   ()
+
+  -- sat′ p accepts a single token t iff p t ≡ just x for some x. The
+  -- returned value is x.
+
+  sat′ : ∀ {Tok R} → (Tok → Maybe R) → Parser Tok R _
+  sat′ p = token ≫= (ok ∘ p)
+
+  correct : ∀ {Tok R x s} (p : Tok → Maybe R) →
+            (∃ λ t → s ≡ [ t ] × p t ≡ just x) ⇿ x ∈ sat′ p · s
+  correct {x = x} p = record
+    { to         = P.→-to-⟶ to
+    ; from       = P.→-to-⟶ from
+    ; inverse-of = record
+      { left-inverse-of  = from∘to
+      ; right-inverse-of = to∘from
+      }
+    }
+    where
+    to : ∀ {s} → (∃ λ t → s ≡ [ t ] × p t ≡ just x) → x ∈ sat′ p · s
+    to (t , refl , p-t≡just-x) =
+      token >>= (Inverse.to (ok-correct (p t)) ⟨$⟩ (refl , p-t≡just-x))
+
+    from : ∀ {s} → x ∈ sat′ p · s → ∃ λ t → s ≡ [ t ] × p t ≡ just x
+    from (token {x = t} >>= x∈ok-p-t) =
+      (t , Prod.map (P.cong (_∷_ t)) id
+             (Inverse.from (ok-correct (p t)) ⟨$⟩ x∈ok-p-t))
+
+    from∘to : ∀ {s} (eqs : ∃ λ t → s ≡ [ t ] × p t ≡ just x) →
+              from (to eqs) ≡ eqs
+    from∘to (t , refl , p-t≡just-x) =
+      P.cong₂ (λ eq₁ eq₂ → (t , eq₁ , eq₂))
+              (P.proof-irrelevance _ _)
+              (P.proof-irrelevance _ _)
+
+    to∘from : ∀ {s} (x∈ : x ∈ sat′ p · s) → to (from x∈) ≡ x∈
+    to∘from (token {x = t} >>= x∈ok-p-t)
+      with Inverse.from (ok-correct (p t)) ⟨$⟩ x∈ok-p-t
+         | Inverse.right-inverse-of (ok-correct (p t)) x∈ok-p-t
+    to∘from (token {x = t} >>= .(Inverse.to (ok-correct (p t)) ⟨$⟩
+                                   (refl , p-t≡just-x)))
+      | (refl , p-t≡just-x) | refl = refl
+
+open Sat public using (sat′)
+
+-- A simplified variant of sat′. Does not return anything interesting.
+
+sat : ∀ {Tok} → (Tok → Bool) → Parser Tok ⊤ _
+sat p = sat′ (boolToMaybe ∘ p)
+
+-- Accepts a single whitespace character (from a limited set of such
+-- characters).
+
+whitespace : Parser Char ⊤ _
+whitespace = sat isSpace
+  where
+  isSpace = λ c →
+    (c == ' ') ∨ (c == '\t') ∨ (c == '\n') ∨ (c == '\r')
