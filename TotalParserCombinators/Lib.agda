@@ -11,7 +11,7 @@ open import Function.Equality using (_⟶_; _⟨$⟩_)
 open import Function.Injection using (Injection; Injective)
 open import Function.Inverse using (_⇿_; module Inverse)
 open import Data.Bool
-open import Data.Char using (Char; _==_)
+open import Data.Char as Char using (Char; _==_)
 open import Data.List as List
 open import Data.List.Any as Any
 import Data.List.Any.Membership as ∈
@@ -652,3 +652,26 @@ whitespace = sat isSpace
   where
   isSpace = λ c →
     (c == ' ') ∨ (c == '\t') ∨ (c == '\n') ∨ (c == '\r')
+
+------------------------------------------------------------------------
+-- Digits and numbers
+
+-- Digits.
+
+digit : Parser Char ℕ _
+digit = const 0 <$> tok '0'
+      ∣ const 1 <$> tok '1'
+      ∣ const 2 <$> tok '2'
+      ∣ const 3 <$> tok '3'
+      ∣ const 4 <$> tok '4'
+      ∣ const 5 <$> tok '5'
+      ∣ const 6 <$> tok '6'
+      ∣ const 7 <$> tok '7'
+      ∣ const 8 <$> tok '8'
+      ∣ const 9 <$> tok '9'
+  where open Token Char Char._≟_
+
+-- Numbers.
+
+number : Parser Char ℕ _
+number = return (foldl (λ n d → 10 * n + d) 0) ⊙ digit +
