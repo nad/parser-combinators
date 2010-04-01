@@ -73,6 +73,11 @@ import TotalParserCombinators.Simplification
 
 import TotalParserCombinators.Unambiguity
 
+-- An alternative definition of the parser type, which can lead to
+-- less noisy definitions of parsers.
+
+import TotalParserCombinators.LessNoisy
+
 -- An extended example: mixfix operator parsing.
 
 import Mixfix
