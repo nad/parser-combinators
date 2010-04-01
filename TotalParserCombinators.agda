@@ -78,6 +78,15 @@ import TotalParserCombinators.Unambiguity
 
 import TotalParserCombinators.LessNoisy
 
+-- Some small examples, using both noisy and less noisy combinators.
+
+import TotalParserCombinators.Examples.Noisy
+import TotalParserCombinators.Examples.LessNoisy
+
+-- An example: parsing PBM image files.
+
+import TotalParserCombinators.Examples.PBM
+
 -- An extended example: mixfix operator parsing.
 
 import Mixfix
