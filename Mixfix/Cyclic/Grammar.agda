@@ -70,7 +70,7 @@ mutual
 
     -- Non-associative infix operators.
     nonAssoc : Parser (ExprIn p non)
-    nonAssoc = (♯ (_⟨_⟩_ <$> p↑ ⊛ [ infx non ])) ⊛∞ (♯ p↑)
+    nonAssoc = ♯ (_⟨_⟩_ <$> p↑ ⊛ [ infx non ]) ⊛∞ ♯ p↑
 
     -- Right associative and prefix operators.
     preRight : Parser (Outer p right → ExprIn p right)
@@ -78,9 +78,9 @@ mutual
              ∣ _⟨_⟩ʳ_ <$> p↑ ⊛ [ infx right ]
 
     preRight⁺ : Parser (ExprIn p right)
-    preRight⁺ = (♯ preRight)
+    preRight⁺ = ♯ preRight
                 ⊛∞
-                (♯ (similar <$> preRight⁺ ∣ tighter <$> p↑))
+                ♯ (similar <$> preRight⁺ ∣ tighter <$> p↑)
 
     -- Left associative and postfix operators.
     postLeft : Parser (Outer p left → ExprIn p left)
@@ -88,11 +88,11 @@ mutual
              ∣ (λ op e₂ e₁ → e₁ ⟨ op ⟩ˡ e₂) <$> [ infx left ] ⊛ p↑
 
     postLeft⁺ : Parser (ExprIn p left)
-    postLeft⁺ = (♯ flip _$_ <$> ( similar <$> postLeft⁺
+    postLeft⁺ = ♯ (flip _$_ <$> ( similar <$> postLeft⁺
                                 ∣ tighter <$> p↑
                                 ))
                 ⊛∞
-                (♯ postLeft)
+                ♯ postLeft
 
   -- Internal parts (all name parts plus internal expressions) of
   -- operators of the given precedence and fixity.

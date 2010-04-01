@@ -87,8 +87,8 @@ data ParserProg : Set → Set1 where
                          ⟪ ♯ (⟦ just <$> p + ⟧ ∣ return nothing) ⟫
 ⟦ p between (t ∷ []) ⟧ = const [] <$> tok t
 ⟦ p between
-       (t ∷ t′ ∷ ts) ⟧ = ⟪ ♯ ♯? (const _∷_ <$> tok t) ⊛
-                         ⟪ ♯ ⟦ ♭ p ⟧ ⟫ ⟫ ⊛
+       (t ∷ t′ ∷ ts) ⟧ = ⟪ ♯ (♯? (const _∷_ <$> tok t) ⊛
+                         ⟪ ♯ ⟦ ♭ p ⟧ ⟫) ⟫ ⊛
                          ⟪ ♯ ⟦ p between (t′ ∷ ts) ⟧ ⟫
 ⟦ p₁ ∥ p₂            ⟧ = ,_ <$> ⟦ p₁ ⟧
                        ∣        ⟦ p₂ ⟧
