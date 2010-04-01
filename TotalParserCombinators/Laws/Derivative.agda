@@ -176,7 +176,7 @@ mutual
 
 right-zero-≫= : ∀ {Tok R₁ R₂} {xs : List R₁}
                 (p : Parser Tok R₁ xs) →
-                (p ≫= λ _ → fail) ≅P fail {Tok = Tok} {R = R₂}
+                p ≫= (λ _ → fail) ≅P fail {Tok = Tok} {R = R₂}
 right-zero-≫= {xs = xs} p =
   BagMonoid.reflexive (ListProp.Monad.right-zero xs) ∷ λ t → ♯ (
     ∂ (p ≫= λ _ → fail) t                               ≅⟨ ∂-≫= p (λ _ → fail) ⟩
