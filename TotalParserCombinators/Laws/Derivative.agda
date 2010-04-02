@@ -186,53 +186,53 @@ right-zero-≫= {xs = xs} p =
 
 private
 
-  -- Preliminary unfolding lemma for ∂ applied to _>>=!_.
+  -- Preliminary unfolding lemma for ∂ applied to _∞>>=_.
 
-  ∂->>=!′ : ∀ {Tok R₁ R₂ xs}
+  ∂-∞>>=′ : ∀ {Tok R₁ R₂ xs}
             (p₁ : ∞ (Parser Tok R₁ xs))
             (p₂ : (x : R₁) → ∞? (Parser Tok R₂ []) xs) {t} →
-            ∂ (p₁ >>=! p₂) t ≅P
-            ♯ (∂ (♭ p₁) t) >>=! (λ x → ♯? (♭? (p₂ x))) ∣
+            ∂ (p₁ ∞>>= p₂) t ≅P
+            ♯ (∂ (♭ p₁) t) ∞>>= (λ x → ♯? (♭? (p₂ x))) ∣
               return⋆ xs ≫= (λ x → ∂ (♭? (p₂ x)) t)
-  ∂->>=!′ {xs = []} p₁ p₂ {t} =
-    ∂ (p₁ >>=! p₂) t                     ≅⟨ (_ ∎) >>=! (λ _ → _ ∎) ⟩
+  ∂-∞>>=′ {xs = []} p₁ p₂ {t} =
+    ∂ (p₁ ∞>>= p₂) t                     ≅⟨ (_ ∎) ∞>>= (λ _ → _ ∎) ⟩
 
-    _ >>=! (λ x → ♯? (♭? (p₂ x)))        ≅⟨ sym $ AdditiveMonoid.right-identity
-                                                    (_ >>=! (λ x → ♯? (♭? (p₂ x)))) ⟩
-    _ >>=! (λ x → ♯? (♭? (p₂ x))) ∣ fail ≅⟨ (_ >>=! (λ x → ♯? (♭? (p₂ x))) ∎) ∣
+    _ ∞>>= (λ x → ♯? (♭? (p₂ x)))        ≅⟨ sym $ AdditiveMonoid.right-identity
+                                                    (_ ∞>>= (λ x → ♯? (♭? (p₂ x)))) ⟩
+    _ ∞>>= (λ x → ♯? (♭? (p₂ x))) ∣ fail ≅⟨ (_ ∞>>= (λ x → ♯? (♭? (p₂ x))) ∎) ∣
                                             sym (left-zero-≫= (λ x → ∂ (♭? (p₂ x)) t)) ⟩
-    _ >>=! (λ x → ♯? (♭? (p₂ x))) ∣
+    _ ∞>>= (λ x → ♯? (♭? (p₂ x))) ∣
     fail ≫= (λ x → ∂ (♭? (p₂ x)) t)      ∎
-  ∂->>=!′ {xs = x ∷ xs} p₁ p₂ {t} =
-    ∂ (p₁ >>=! p₂) t                              ≅⟨ (_ ∎) >>=! (λ _ → _ ∎) ∣ (_ ∎) ⟩
+  ∂-∞>>=′ {xs = x ∷ xs} p₁ p₂ {t} =
+    ∂ (p₁ ∞>>= p₂) t                              ≅⟨ (_ ∎) ∞>>= (λ _ → _ ∎) ∣ (_ ∎) ⟩
 
-    _ >>=! (λ x → ♯? (♭? (p₂ x))) ∣
-    return⋆ (x ∷ xs) >>= (λ x → ⟨ ∂! (p₂ x) t ⟩)  ≅⟨ (_ >>=! (λ x → ♯? (♭? (p₂ x))) ∎) ∣
+    _ ∞>>= (λ x → ♯? (♭? (p₂ x))) ∣
+    return⋆ (x ∷ xs) >>= (λ x → ⟨ ∂! (p₂ x) t ⟩)  ≅⟨ (_ ∞>>= (λ x → ♯? (♭? (p₂ x))) ∎) ∣
                                                      (return⋆ (x ∷ xs) ∎) >>= (λ x → ∂!≅∂ (p₂ x)) ⟩
-    _ >>=! (λ x → ♯? (♭? (p₂ x))) ∣
+    _ ∞>>= (λ x → ♯? (♭? (p₂ x))) ∣
     return⋆ (x ∷ xs) ≫= (λ x → ∂ (♭? (p₂ x)) t)   ∎
 
--- _>>=!_ and _>>=_ are equivalent (where their domains overlap).
+-- _∞>>=_ and _>>=_ are equivalent (where their domains overlap).
 
->>=!≅>>= : ∀ {Tok R₁ R₂ xs}
+∞>>=≅>>= : ∀ {Tok R₁ R₂ xs}
            (p₁ : ∞ (Parser Tok R₁ xs))
            (p₂ : (x : R₁) → ∞? (Parser Tok R₂ []) xs) →
-           p₁ >>=! p₂ ≅P ♭ p₁ >>= p₂
->>=!≅>>= {xs = xs} p₁ p₂ =
+           p₁ ∞>>= p₂ ≅P ♭ p₁ >>= p₂
+∞>>=≅>>= {xs = xs} p₁ p₂ =
   BagMonoid.reflexive (P.sym $ ListProp.Monad.right-zero xs) ∷ λ t → ♯ (
-    ∂ (p₁ >>=! p₂) t                                                       ≅⟨ ∂->>=!′ p₁ p₂ ⟩
-    _ >>=! (λ x → ♯? (♭? (p₂ x))) ∣ return⋆ xs ≫= (λ x → ∂ (♭? (p₂ x)) t)  ≅⟨ >>=!≅>>= _ _ ∣ (_ ∎) ⟩
+    ∂ (p₁ ∞>>= p₂) t                                                       ≅⟨ ∂-∞>>=′ p₁ p₂ ⟩
+    _ ∞>>= (λ x → ♯? (♭? (p₂ x))) ∣ return⋆ xs ≫= (λ x → ∂ (♭? (p₂ x)) t)  ≅⟨ ∞>>=≅>>= _ _ ∣ (_ ∎) ⟩
     ∂ (♭ p₁) t ≫= (♭? ∘ p₂) ∣ return⋆ xs ≫= (λ x → ∂ (♭? (p₂ x)) t)        ≅⟨ sym $ ∂->>= (♭ p₁) p₂ ⟩
     ∂ (♭ p₁ >>= p₂) t                                                      ∎)
 
--- Unfolding lemma for ∂ applied to _>>=!_.
+-- Unfolding lemma for ∂ applied to _∞>>=_.
 
-∂->>=! : ∀ {Tok R₁ R₂ xs}
+∂-∞>>= : ∀ {Tok R₁ R₂ xs}
          (p₁ : ∞ (Parser Tok R₁ xs))
          (p₂ : (x : R₁) → ∞? (Parser Tok R₂ []) xs) {t} →
-         ∂ (p₁ >>=! p₂) t ≅P
+         ∂ (p₁ ∞>>= p₂) t ≅P
          ∂ (♭ p₁) t ≫= (♭? ∘ p₂) ∣ return⋆ xs ≫= (λ x → ∂ (♭? (p₂ x)) t)
-∂->>=! {xs = xs} p₁ p₂ {t} =
-  ∂ (p₁ >>=! p₂) t                                                       ≅⟨ ∂->>=!′ p₁ p₂ ⟩
-  _ >>=! (λ x → ♯? (♭? (p₂ x))) ∣ return⋆ xs ≫= (λ x → ∂ (♭? (p₂ x)) t)  ≅⟨ >>=!≅>>= _ _ ∣ (_ ∎) ⟩
+∂-∞>>= {xs = xs} p₁ p₂ {t} =
+  ∂ (p₁ ∞>>= p₂) t                                                       ≅⟨ ∂-∞>>=′ p₁ p₂ ⟩
+  _ ∞>>= (λ x → ♯? (♭? (p₂ x))) ∣ return⋆ xs ≫= (λ x → ∂ (♭? (p₂ x)) t)  ≅⟨ ∞>>=≅>>= _ _ ∣ (_ ∎) ⟩
   ∂ (♭ p₁) t ≫= (♭? ∘ p₂) ∣ return⋆ xs ≫= (λ x → ∂ (♭? (p₂ x)) t)        ∎

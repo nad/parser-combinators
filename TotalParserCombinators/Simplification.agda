@@ -44,13 +44,13 @@ private
 -- return f ⊛ return x         → return (f x)
 -- fail     >>= p              → fail
 -- return x >>= p              → p x
--- fail     >>=! p             → fail
--- return x >>=! p             → p x
+-- fail     ∞>>= p             → fail
+-- return x ∞>>= p             → p x
 -- nonempty fail               → fail
 -- cast eq p                   → p
 --
 -- Some other changes may also be performed, such as the replacement
--- of _>>=!_ with _≫=_ (along with insertion of ♭?).
+-- of _∞>>=_ with _≫=_ (along with insertion of ♭?).
 --
 -- An example of a possible future addition:
 --
@@ -188,24 +188,24 @@ private
                                   p₁  ≫= (♭? ∘ p₂)  ≅⟨ p₁≅p₁′ ≫=′ (λ x → ♭? (p₂ x) ∎) ⟩
                                   p₁′ ≫= (♭? ∘ p₂)  ∎)
 
-  -- • _>>=!_:
+  -- • _∞>>=_:
 
-  simplify₁ (p₁ >>=! p₂) with force p₁
+  simplify₁ (p₁ ∞>>= p₂) with force p₁
   ... | (fail     , p₁≅∅)       = _ , _ , (
-                                  p₁       >>=! p₂        ≅⟨ p₁≅∅ >>=! (λ x → ♭? (p₂ x) ∎) ⟩
-                                  (♯ fail) >>=! p₂        ≅⟨ Monad.>>=!≅≫= _ p₂ ⟩
+                                  p₁       ∞>>= p₂        ≅⟨ p₁≅∅ ∞>>= (λ x → ♭? (p₂ x) ∎) ⟩
+                                  (♯ fail) ∞>>= p₂        ≅⟨ Monad.∞>>=≅≫= _ p₂ ⟩
                                   fail      ≫= (♭? ∘ p₂)  ≅⟨ Monad.left-zero (♭? ∘ p₂) ⟩
                                   fail                    ∎)
   ... | (return x , p₁≅ε) with simplify₁′ (p₂ x)
   ...   | (_ , p₂x′ , p₂x≅p₂x′) = _ , _ , (
-                                  p₁           >>=! p₂        ≅⟨ p₁≅ε >>=! (λ x → ♭? (p₂ x) ∎) ⟩
-                                  (♯ return x) >>=! p₂        ≅⟨ Monad.>>=!≅≫= _ p₂ ⟩
+                                  p₁           ∞>>= p₂        ≅⟨ p₁≅ε ∞>>= (λ x → ♭? (p₂ x) ∎) ⟩
+                                  (♯ return x) ∞>>= p₂        ≅⟨ Monad.∞>>=≅≫= _ p₂ ⟩
                                   return x      ≫= (♭? ∘ p₂)  ≅⟨ Monad.left-identity x (♭? ∘ p₂) ⟩
                                   ♭? (p₂ x)                   ≅⟨ p₂x≅p₂x′ ⟩
                                   p₂x′                        ∎)
-  simplify₁ (p₁ >>=! p₂)
+  simplify₁ (p₁ ∞>>= p₂)
       | (p₁′ , p₁≅p₁′)          = _ , _ , (
-                                  p₁  >>=! p₂        ≅⟨ Monad.>>=!≅≫= p₁ p₂ ⟩
+                                  p₁  ∞>>= p₂        ≅⟨ Monad.∞>>=≅≫= p₁ p₂ ⟩
                                   ♭ p₁ ≫= (♭? ∘ p₂)  ≅⟨ p₁≅p₁′ ≫=′ (λ x → ♭? (p₂ x) ∎) ⟩
                                   p₁′ ≫= (♭? ∘ p₂)   ∎)
 

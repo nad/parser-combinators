@@ -113,16 +113,16 @@ mutual
           | Cast∈.∘sym refl (♭?♯? (∂-initial p₁ t)) refl y∈p₂x =
     refl
 
-  ∂-sound∘∂-complete′ {Tok = Tok} (_>>=!_ {xs = x ∷ xs} p₁ p₂) (_>>=!_ {s₁ = []} x∈p₁ y∈p₂x) refl
+  ∂-sound∘∂-complete′ {Tok = Tok} (_∞>>=_ {xs = x ∷ xs} p₁ p₂) (_∞>>=_ {s₁ = []} x∈p₁ y∈p₂x) refl
     rewrite Return⋆.sound∘complete {Tok = Tok} (I.complete x∈p₁)
           | I.sound∘complete x∈p₁
           | ∂!-sound∘∂!-complete (p₂ _) y∈p₂x =
     refl
-  ∂-sound∘∂-complete′ (_>>=!_ {xs = x ∷ xs} p₁ p₂) (_>>=!_ {s₁ = t ∷ _} x∈p₁ y∈p₂x) refl
+  ∂-sound∘∂-complete′ (_∞>>=_ {xs = x ∷ xs} p₁ p₂) (_∞>>=_ {s₁ = t ∷ _} x∈p₁ y∈p₂x) refl
     rewrite ∂-sound∘∂-complete x∈p₁
           | Cast∈.∘sym refl (♭?♯? (∂-initial (♭ p₁) t)) refl y∈p₂x =
     refl
-  ∂-sound∘∂-complete′ (_>>=!_ {R₁} {xs = []} p₁ p₂) (_>>=!_ {s₁ = t ∷ _} x∈p₁ y∈p₂x) refl
+  ∂-sound∘∂-complete′ (_∞>>=_ {R₁} {xs = []} p₁ p₂) (_∞>>=_ {s₁ = t ∷ _} x∈p₁ y∈p₂x) refl
     rewrite ∂-sound∘∂-complete x∈p₁
           | Cast∈.∘sym refl (♭?♯? (∂-initial (♭ p₁) t)) refl y∈p₂x =
     refl
@@ -137,7 +137,7 @@ mutual
   ... | ()
   ∂-sound∘∂-complete′ (_>>=_  {xs = []} _ _) (_>>=_  {s₁ = []} x∈p₁ _) _ with I.complete x∈p₁
   ... | ()
-  ∂-sound∘∂-complete′ (_>>=!_ {xs = []} _ _) (_>>=!_ {s₁ = []} x∈p₁ _) _ with I.complete x∈p₁
+  ∂-sound∘∂-complete′ (_∞>>=_ {xs = []} _ _) (_∞>>=_ {s₁ = []} x∈p₁ _) _ with I.complete x∈p₁
   ... | ()
 
   ∂!-sound∘∂!-complete :

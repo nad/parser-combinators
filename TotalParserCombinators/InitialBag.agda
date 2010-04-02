@@ -49,13 +49,13 @@ mutual
 
     complete′ (_>>=_  {s₁ = []} {xs = []} x∈p₁ y∈p₂x) refl with complete x∈p₁
     ... | ()
-    complete′ (_>>=!_ {s₁ = []}           x∈p₁ y∈p₂x) refl with complete y∈p₂x
+    complete′ (_∞>>=_ {s₁ = []}           x∈p₁ y∈p₂x) refl with complete y∈p₂x
     ... | ()
 
     complete′ token                     ()
     complete′ (_⊛_    {s₁ = _ ∷ _} _ _) ()
     complete′ (_>>=_  {s₁ = _ ∷ _} _ _) ()
-    complete′ (_>>=!_ {s₁ = _ ∷ _} _ _) ()
+    complete′ (_∞>>=_ {s₁ = _ ∷ _} _ _) ()
     complete′ (nonempty _)              ()
 
 mutual
@@ -83,7 +83,7 @@ mutual
   sound fail         ()
   sound token        ()
   sound (⟪ _ ⟫ ⊛ _)  ()
-  sound (_ >>=! _)   ()
+  sound (_ ∞>>= _)   ()
   sound (nonempty _) ()
 
   private
@@ -145,13 +145,13 @@ mutual
     ... | ()
     sound∘complete′ (_>>=_  {s₁ = []} {xs = []} x∈p₁ y∈p₂x) refl with complete x∈p₁
     ... | ()
-    sound∘complete′ (_>>=!_ {s₁ = []}           x∈p₁ y∈p₂x) refl with complete y∈p₂x
+    sound∘complete′ (_∞>>=_ {s₁ = []}           x∈p₁ y∈p₂x) refl with complete y∈p₂x
     ... | ()
 
     sound∘complete′ token                     ()
     sound∘complete′ (_⊛_    {s₁ = _ ∷ _} _ _) ()
     sound∘complete′ (_>>=_  {s₁ = _ ∷ _} _ _) ()
-    sound∘complete′ (_>>=!_ {s₁ = _ ∷ _} _ _) ()
+    sound∘complete′ (_∞>>=_ {s₁ = _ ∷ _} _ _) ()
     sound∘complete′ (nonempty _)              ()
 
 complete∘sound : ∀ {Tok R xs x}
@@ -202,7 +202,7 @@ complete∘sound (return _)   (there ())
 complete∘sound fail         ()
 complete∘sound token        ()
 complete∘sound (⟪ _ ⟫ ⊛ _)  ()
-complete∘sound (_ >>=! _)   ()
+complete∘sound (_ ∞>>= _)   ()
 complete∘sound (nonempty _) ()
 
 correct : ∀ {Tok R xs x} {p : Parser Tok R xs} → x ∈ p · [] ⇿ x ∈ xs

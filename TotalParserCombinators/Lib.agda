@@ -92,7 +92,7 @@ module KleeneStar where
       sound′ (<$> _)      ()
       sound′ (_ ⊛ _)      ()
       sound′ (_ >>= _)    ()
-      sound′ (_ >>=! _)   ()
+      sound′ (_ ∞>>= _)   ()
       sound′ (nonempty _) ()
       sound′ (cast _)     ()
 
@@ -130,7 +130,7 @@ module KleeneStar where
       complete∘sound′ (<$> _)      ()
       complete∘sound′ (_ ⊛ _)      ()
       complete∘sound′ (_ >>= _)    ()
-      complete∘sound′ (_ >>=! _)   ()
+      complete∘sound′ (_ ∞>>= _)   ()
       complete∘sound′ (nonempty _) ()
       complete∘sound′ (cast _)     ()
 

@@ -23,16 +23,16 @@ open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Congruence as Eq
 import TotalParserCombinators.Laws.AdditiveMonoid as AdditiveMonoid
 open import TotalParserCombinators.Laws.Derivative as Derivative
-  hiding (>>=!≅>>=)
+  hiding (∞>>=≅>>=)
 open import TotalParserCombinators.Laws.ReturnStar as Return⋆
 open import TotalParserCombinators.Lib
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
 
 ------------------------------------------------------------------------
--- _>>=_, _>>=!_ and _≫=_ are equivalent (where their domains overlap)
+-- _>>=_, _∞>>=_ and _≫=_ are equivalent (where their domains overlap)
 
-open Derivative public using (>>=!≅>>=)
+open Derivative public using (∞>>=≅>>=)
 
 ≫=≅>>= : ∀ {Tok R₁ R₂ xs} {f : R₁ → List R₂}
          (p₁ : Parser Tok R₁ xs)
@@ -42,12 +42,12 @@ open Derivative public using (>>=!≅>>=)
   p₁ ≫= (♭? ∘ p₂)  ≅⟨ (p₁ ∎) >>= (λ _ → Eq.complete (♭♯.correct xs)) ⟩
   p₁ >>= p₂        ∎
 
->>=!≅≫= : ∀ {Tok R₁ R₂ xs}
+∞>>=≅≫= : ∀ {Tok R₁ R₂ xs}
           (p₁ : ∞ (Parser Tok R₁ xs))
           (p₂ : (x : R₁) → ∞? (Parser Tok R₂ []) xs) →
-          p₁ >>=! p₂ ≅P ♭ p₁ ≫= (♭? ∘ p₂)
->>=!≅≫= p₁ p₂ =
-  p₁   >>=! p₂        ≅⟨ >>=!≅>>= p₁ p₂ ⟩
+          p₁ ∞>>= p₂ ≅P ♭ p₁ ≫= (♭? ∘ p₂)
+∞>>=≅≫= p₁ p₂ =
+  p₁   ∞>>= p₂        ≅⟨ ∞>>=≅>>= p₁ p₂ ⟩
   ♭ p₁ >>=  p₂        ≅⟨ sym $ ≫=≅>>= (♭ p₁) p₂ ⟩
   ♭ p₁  ≫= (♭? ∘ p₂)  ∎
 

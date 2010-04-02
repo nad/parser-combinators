@@ -73,13 +73,13 @@ module Monadic where
  mutual
 
     term   = factor
-           ∣ ♯ term               >>=! λ e₁ → ♯ (
+           ∣ ♯ term               ∞>>= λ e₁ → ♯ (
              tok '+'              >>=  λ _  → ♯ (
              factor               >>=  λ e₂ → ♯
              return (plus e₁ e₂)              ))
 
     factor = atom
-           ∣ ♯ factor             >>=! λ e₁ → ♯ (
+           ∣ ♯ factor             ∞>>= λ e₁ → ♯ (
              tok '*'              >>=  λ _  → ♯ (
              atom                 >>=  λ e₂ → ♯
              return (times e₁ e₂)             ))

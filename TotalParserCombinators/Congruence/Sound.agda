@@ -149,20 +149,20 @@ private
     ∂ p₃ t ≫= (♭? ∘ p₄) ∣ return⋆ xs₂ ≫= (λ x → ∂ (♭? (p₄ x)) t)  ≅⟨ sym $ ∂->>= p₃ p₄ ⟩
     ∂ (p₃ >>= p₄) t                                               ∎
 
-  _>>=!W_ : ∀ {k Tok R₁ R₂ xs₁ xs₂}
+  _∞>>=W_ : ∀ {k Tok R₁ R₂ xs₁ xs₂}
               {p₁ : ∞ (Parser Tok R₁ xs₁)}
               {p₂ : (x : R₁) → ∞? (Parser Tok R₂ []) xs₁}
               {p₃ : ∞ (Parser Tok R₁ xs₂)}
               {p₄ : (x : R₁) → ∞? (Parser Tok R₂ []) xs₂} →
             ♭ p₁ ≈[ k ]W ♭ p₃ → (∀ x → ♭? (p₂ x) ≈[ k ]W ♭? (p₄ x)) →
-            p₁ >>=! p₂ ≈[ k ]W p₃ >>=! p₄
-  _>>=!W_ {xs₁ = xs₁} {xs₂} {p₁} {p₂} {p₃} {p₄}
+            p₁ ∞>>= p₂ ≈[ k ]W p₃ ∞>>= p₄
+  _∞>>=W_ {xs₁ = xs₁} {xs₂} {p₁} {p₂} {p₃} {p₄}
           (xs₁≈xs₂ ∷ ∂p₁≈∂p₃) p₂≈p₄ = (_ ∎′) ∷ λ t →
-    ∂ (p₁ >>=! p₂) t                                                  ≅⟨ ∂->>=! p₁ p₂ ⟩
+    ∂ (p₁ ∞>>= p₂) t                                                  ≅⟨ ∂-∞>>= p₁ p₂ ⟩
     ∂ (♭ p₁) t ≫= (♭? ∘ p₂) ∣ return⋆ xs₁ ≫= (λ x → ∂ (♭? (p₂ x)) t)  ≈⟨ ∂p₁≈∂p₃ t ≫=′ (forget ∘ p₂≈p₄) ∣
                                                                          Return⋆.cong xs₁≈xs₂ ≫=′ (λ x → tail (p₂≈p₄ x) t) ⟩
-    ∂ (♭ p₃) t ≫= (♭? ∘ p₄) ∣ return⋆ xs₂ ≫= (λ x → ∂ (♭? (p₄ x)) t)  ≅⟨ sym $ ∂->>=! p₃ p₄ ⟩
-    ∂ (p₃ >>=! p₄) t                                                  ∎
+    ∂ (♭ p₃) t ≫= (♭? ∘ p₄) ∣ return⋆ xs₂ ≫= (λ x → ∂ (♭? (p₄ x)) t)  ≅⟨ sym $ ∂-∞>>= p₃ p₄ ⟩
+    ∂ (p₃ ∞>>= p₄) t                                                  ∎
 
   _≫=W_ : ∀ {k Tok R₁ R₂ xs₁ xs₂} {f₁ f₂ : R₁ → List R₂}
              {p₁ : Parser Tok R₁ xs₁}
@@ -216,7 +216,7 @@ private
   whnf (p₁≈p₃ ⊙′ p₂≈p₄)      = whnf p₁≈p₃ ⊙W whnf p₂≈p₄
   whnf (p₁≈p₃ >>= p₂≈p₄)     = whnf p₁≈p₃ >>=W  λ x → whnf (p₂≈p₄ x)
   whnf (p₁≈p₃ ≫=′ p₂≈p₄)     = whnf p₁≈p₃ ≫=W   λ x → whnf (p₂≈p₄ x)
-  whnf (p₁≈p₃ >>=! p₂≈p₄)    = whnf p₁≈p₃ >>=!W λ x → whnf (p₂≈p₄ x)
+  whnf (p₁≈p₃ ∞>>= p₂≈p₄)    = whnf p₁≈p₃ ∞>>=W λ x → whnf (p₂≈p₄ x)
   whnf (nonempty p₁≈p₂)      = nonemptyW (whnf p₁≈p₂)
   whnf (cast p₁≈p₂)          = castW (whnf p₁≈p₂)
 

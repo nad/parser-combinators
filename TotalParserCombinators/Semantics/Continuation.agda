@@ -53,12 +53,12 @@ data _⊕_∈_·_ {Tok} : ∀ {R xs} → R → List Tok →
              (x∈p₁ : x ⊕ s₁ ∈ p₁ · s)
              (y∈p₂x : y ⊕ s₂ ∈ ♭? (p₂ x) · s₁) →
              y ⊕ s₂ ∈ p₁ >>= p₂ · s
-  _>>=!_   : ∀ {R₁ R₂ x y s s₁ s₂ xs}
+  _∞>>=_   : ∀ {R₁ R₂ x y s s₁ s₂ xs}
                {p₁ : ∞ (Parser Tok R₁ xs)}
                {p₂ : R₁ → ∞? (Parser Tok R₂ []) xs}
              (x∈p₁ : x ⊕ s₁ ∈ ♭ p₁ · s)
              (y∈p₂x : y ⊕ s₂ ∈ ♭? (p₂ x) · s₁) →
-             y ⊕ s₂ ∈ p₁ >>=! p₂ · s
+             y ⊕ s₂ ∈ p₁ ∞>>= p₂ · s
   nonempty : ∀ {R xs x y s₂} s₁ {p : Parser Tok R xs}
              (x∈p : y ⊕ s₂ ∈ p · x ∷ s₁ ++ s₂) →
              y ⊕ s₂ ∈ nonempty p · x ∷ s₁ ++ s₂
@@ -90,9 +90,9 @@ sound′ (f∈p₁ ⊛ x∈p₂)     | (s₁ , refl , f∈p₁′) | (s₂ , ref
 sound′ (x∈p₁ >>=  y∈p₂x) with sound′ x∈p₁ | sound′ y∈p₂x
 sound′ (x∈p₁ >>=  y∈p₂x) | (s₁ , refl , x∈p₁′) | (s₂ , refl , y∈p₂x′) =
   (s₁ ++ s₂ , sym (LM.assoc s₁ s₂ _) , x∈p₁′ >>= y∈p₂x′)
-sound′ (x∈p₁ >>=! y∈p₂x) with sound′ x∈p₁ | sound′ y∈p₂x
-sound′ (x∈p₁ >>=! y∈p₂x) | (s₁ , refl , x∈p₁′) | (s₂ , refl , y∈p₂x′) =
-  (s₁ ++ s₂ , sym (LM.assoc s₁ s₂ _) , x∈p₁′ >>=! y∈p₂x′)
+sound′ (x∈p₁ ∞>>= y∈p₂x) with sound′ x∈p₁ | sound′ y∈p₂x
+sound′ (x∈p₁ ∞>>= y∈p₂x) | (s₁ , refl , x∈p₁′) | (s₂ , refl , y∈p₂x′) =
+  (s₁ ++ s₂ , sym (LM.assoc s₁ s₂ _) , x∈p₁′ ∞>>= y∈p₂x′)
 sound′ (nonempty s₁ x∈p) with sound′ x∈p
 sound′ (nonempty s₁ x∈p) | (y ∷ s , eq , x∈p′) = (y ∷ s , eq , nonempty x∈p′)
 sound′ (nonempty s₁ x∈p) | ([]    , eq , x∈p′)
@@ -115,7 +115,7 @@ extend (∣ʳ e₁ x∈p₂)      = ∣ʳ e₁ (extend x∈p₂)
 extend (     <$> x∈p)    =             <$> extend x∈p
 extend (f∈p₁ ⊛   x∈p₂)   = extend f∈p₁ ⊛   extend x∈p₂
 extend (x∈p₁ >>=  y∈p₂x) = extend x∈p₁ >>=  extend y∈p₂x
-extend (x∈p₁ >>=! y∈p₂x) = extend x∈p₁ >>=! extend y∈p₂x
+extend (x∈p₁ ∞>>= y∈p₂x) = extend x∈p₁ ∞>>= extend y∈p₂x
 extend (cast x∈p)        = cast (extend x∈p)
 extend (nonempty s₁ x∈p) = cast₂ (nonempty s₁ (cast₁ (extend x∈p)))
   where
@@ -132,7 +132,7 @@ complete (∣ʳ e₁ x∈p₂)           = ∣ʳ e₁ (complete x∈p₂)
 complete (     <$> x∈p)         =                        <$> complete x∈p
 complete (f∈p₁ ⊛   x∈p₂)        = extend (complete f∈p₁) ⊛   complete x∈p₂
 complete (x∈p₁ >>=  y∈p₂x)      = extend (complete x∈p₁) >>=  complete y∈p₂x
-complete (x∈p₁ >>=! y∈p₂x)      = extend (complete x∈p₁) >>=! complete y∈p₂x
+complete (x∈p₁ ∞>>= y∈p₂x)      = extend (complete x∈p₁) ∞>>= complete y∈p₂x
 complete (cast x∈p)             = cast (complete x∈p)
 complete (nonempty {s = s} x∈p) = cast₂ (nonempty s (cast₁ (complete x∈p)))
   where

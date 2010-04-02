@@ -29,7 +29,7 @@ open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
 
 infixl 50 _⊛_ _⊙′_ _<$>_
-infixl 10 _>>=_ _≫=′_ _>>=!_
+infixl 10 _>>=_ _≫=′_ _∞>>=_
 infixl  5 _∣_
 infix   5 _∷_
 infix   4 _≈[_]P_ _≅P_ _≈P_
@@ -143,14 +143,14 @@ mutual
             (p₁≈p₃ : p₁ ≈[ k ]P p₃) (p₂≈p₄ : ∀ x → p₂ x ≈[ k ]P p₄ x) →
             p₁ ≫= p₂ ≈[ k ]P p₃ ≫= p₄
 
-    _>>=!_ : ∀ {k R₁ R₂ xs₁ xs₂}
+    _∞>>=_ : ∀ {k R₁ R₂ xs₁ xs₂}
                {p₁ : ∞ (Parser Tok R₁ xs₁)}
                {p₂ : R₁ → ∞? (Parser Tok R₂ []) xs₁}
                {p₃ : ∞ (Parser Tok R₁ xs₂)}
                {p₄ : R₁ → ∞? (Parser Tok R₂ []) xs₂}
              (p₁≈p₃ : ♭ p₁ ≈[ k ]P ♭ p₃)
              (p₂≈p₄ : ∀ x → ♭? (p₂ x) ≈[ k ]P ♭? (p₄ x)) →
-             p₁ >>=! p₂ ≈[ k ]P p₃ >>=! p₄
+             p₁ ∞>>= p₂ ≈[ k ]P p₃ ∞>>= p₄
 
     nonempty : ∀ {k R xs₁ xs₂}
                  {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂}

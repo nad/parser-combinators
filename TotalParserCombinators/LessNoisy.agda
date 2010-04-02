@@ -29,7 +29,7 @@ open import TotalParserCombinators.Semantics
   hiding (_≈_) renaming (_≈[_]_ to _P≈[_]_; _≅_ to _P≅_)
 
 infixl 50 _⊛_ _<$>_
-infixl 10 _>>=_ _>>=!_
+infixl 10 _>>=_ _∞>>=_
 infixl  5 _∣_
 
 ------------------------------------------------------------------------
@@ -60,7 +60,7 @@ mutual
                (p₁ :                   Parser Tok R₁  xs          )
                (p₂ : (x : R₁) → ∞⟨ xs ⟩Parser Tok R₂         (f x)) →
                                        Parser Tok R₂ (xs >>=′ f)
-    _>>=!_   : ∀ {R₁ R₂ xs}
+    _∞>>=_   : ∀ {R₁ R₂ xs}
                (p₁ :      ∞     (Parser Tok R₁ xs))
                (p₂ : R₁ → ∞⟨ xs ⟩Parser Tok R₂ fail′) →
                                  Parser Tok R₂ fail′
@@ -96,8 +96,8 @@ private
 ⟦ _⊛_ {fs = []   } {xs = []   } p₁ p₂ ⟧ = ⟪ ♯ ⟦ ♭ p₁ ⟧ ⟫ ⊛ ⟪ ♯ ⟦ ♭ p₂ ⟧ ⟫
 ⟦ _>>=_  {xs = _ ∷ _} p₁ p₂           ⟧ =    ⟦   p₁ ⟧  >>=  λ x → ⟨   ⟦    p₂ x  ⟧ ⟩
 ⟦ _>>=_  {xs = []   } p₁ p₂           ⟧ =    ⟦   p₁ ⟧  >>=  λ x → ⟪ ♯ ⟦ ♭ (p₂ x) ⟧ ⟫
-⟦ _>>=!_ {xs = _ ∷ _} p₁ p₂           ⟧ = (♯ ⟦ ♭ p₁ ⟧) >>=! λ x → ⟨   ⟦    p₂ x  ⟧ ⟩
-⟦ _>>=!_ {xs = []   } p₁ p₂           ⟧ = (♯ ⟦ ♭ p₁ ⟧) >>=! λ x → ⟪ ♯ ⟦ ♭ (p₂ x) ⟧ ⟫
+⟦ _∞>>=_ {xs = _ ∷ _} p₁ p₂           ⟧ = (♯ ⟦ ♭ p₁ ⟧) ∞>>= λ x → ⟨   ⟦    p₂ x  ⟧ ⟩
+⟦ _∞>>=_ {xs = []   } p₁ p₂           ⟧ = (♯ ⟦ ♭ p₁ ⟧) ∞>>= λ x → ⟪ ♯ ⟦ ♭ (p₂ x) ⟧ ⟫
 ⟦ nonempty p                          ⟧ = nonempty ⟦ p ⟧
 ⟦ cast xs₁≈xs₂ p                      ⟧ = cast xs₁≈xs₂ ⟦ p ⟧
 
@@ -117,8 +117,8 @@ mutual
   ⟦ ⟪ p₁ ⟫ ⊛ ⟪ p₂ ⟫           ⟧⁻¹ = ♯ ⟦ ♭ p₁ ⟧⁻¹ ⊛ ♯ ⟦ ♭ p₂ ⟧⁻¹
   ⟦ _>>=_  {xs = _ ∷ _} p₁ p₂ ⟧⁻¹ =   ⟦   p₁ ⟧⁻¹ >>=  λ x →   ⟦♭    p₂ x  ⟧⁻¹
   ⟦ _>>=_  {xs = []   } p₁ p₂ ⟧⁻¹ =   ⟦   p₁ ⟧⁻¹ >>=  λ x → ♯ ⟦ ♭? (p₂ x) ⟧⁻¹
-  ⟦ _>>=!_ {xs = _ ∷ _} p₁ p₂ ⟧⁻¹ = ♯ ⟦ ♭ p₁ ⟧⁻¹ >>=! λ x →   ⟦♭    p₂ x  ⟧⁻¹
-  ⟦ _>>=!_ {xs = []   } p₁ p₂ ⟧⁻¹ = ♯ ⟦ ♭ p₁ ⟧⁻¹ >>=! λ x → ♯ ⟦ ♭? (p₂ x) ⟧⁻¹
+  ⟦ _∞>>=_ {xs = _ ∷ _} p₁ p₂ ⟧⁻¹ = ♯ ⟦ ♭ p₁ ⟧⁻¹ ∞>>= λ x →   ⟦♭    p₂ x  ⟧⁻¹
+  ⟦ _∞>>=_ {xs = []   } p₁ p₂ ⟧⁻¹ = ♯ ⟦ ♭ p₁ ⟧⁻¹ ∞>>= λ x → ♯ ⟦ ♭? (p₂ x) ⟧⁻¹
   ⟦ nonempty p                ⟧⁻¹ = nonempty ⟦ p ⟧⁻¹
   ⟦ cast xs₁≈xs₂ p            ⟧⁻¹ = cast xs₁≈xs₂ ⟦ p ⟧⁻¹
 
@@ -175,8 +175,8 @@ p₁ ≈ p₂ = p₁ ≈[ language ] p₂
     to (⟪ p₁ ⟫ ⊛ ⟪ p₂ ⟫)           (f∈p₁ ⊛ x∈p₂)     = to _ f∈p₁ ⊛ to _ x∈p₂
     to (_>>=_  {xs = []   } p₁ p₂) (x∈p₁ >>=  y∈p₂x) = to _ x∈p₁     >>=               to  _      y∈p₂x
     to (_>>=_  {xs = _ ∷ _} p₁ p₂) (x∈p₁ >>=  y∈p₂x) = to _ x∈p₁ ⟨⟨ _>>=_ {p₂ = p₂} ⟩⟩ to♭ (p₂ _) y∈p₂x
-    to (_>>=!_ {xs = []   } p₁ p₂) (x∈p₁ >>=! y∈p₂x) = to _ x∈p₁     >>=!              to  _      y∈p₂x
-    to (_>>=!_ {xs = _ ∷ _} p₁ p₂) (x∈p₁ >>=! y∈p₂x) = to _ x∈p₁     >>=!              to♭ (p₂ _) y∈p₂x
+    to (_∞>>=_ {xs = []   } p₁ p₂) (x∈p₁ ∞>>= y∈p₂x) = to _ x∈p₁     ∞>>=              to  _      y∈p₂x
+    to (_∞>>=_ {xs = _ ∷ _} p₁ p₂) (x∈p₁ ∞>>= y∈p₂x) = to _ x∈p₁     ∞>>=              to♭ (p₂ _) y∈p₂x
     to (nonempty p)                (nonempty x∈p)    = nonempty (to _ x∈p)
     to (cast xs₁≈xs₂ p)            (cast x∈p)        = cast     (to _ x∈p)
 
@@ -200,8 +200,8 @@ p₁ ≈ p₂ = p₁ ≈[ language ] p₂
     from (_⊛_ {p₁ = ⟪ _ ⟫} {p₂ = ⟪ _ ⟫} f∈p₁ x∈p₂)  = from f∈p₁ ⊛ from x∈p₂
     from (_>>=_  {xs = []}              x∈p₁ y∈p₂x) = from x∈p₁     >>=                                      from         y∈p₂x
     from (_>>=_  {xs = _ ∷ _} {p₂ = p₂} x∈p₁ y∈p₂x) = from x∈p₁ ⟨⟨ _>>=_ {p₂ = λ x → ⟨ ⟦ ⟦♭ p₂ x ⟧⁻¹ ⟧ ⟩} ⟩⟩ from♭ (p₂ _) y∈p₂x
-    from (_>>=!_ {xs = []}              x∈p₁ y∈p₂x) = from x∈p₁     >>=!                                     from         y∈p₂x
-    from (_>>=!_ {xs = _ ∷ _} {p₂ = p₂} x∈p₁ y∈p₂x) = from x∈p₁     >>=!                                     from♭ (p₂ _) y∈p₂x
+    from (_∞>>=_ {xs = []}              x∈p₁ y∈p₂x) = from x∈p₁     ∞>>=                                     from         y∈p₂x
+    from (_∞>>=_ {xs = _ ∷ _} {p₂ = p₂} x∈p₁ y∈p₂x) = from x∈p₁     ∞>>=                                     from♭ (p₂ _) y∈p₂x
     from (nonempty x∈p)                             = nonempty (from x∈p)
     from (cast x∈p)                                 = cast (from x∈p)
 
@@ -227,8 +227,8 @@ p₁ ≈ p₂ = p₁ ≈[ language ] p₂
     from∘to (_>>=_  {xs = []   } p₁ p₂) (x∈p₁ >>=  y∈p₂x) = Eq.cong₂ _>>=_  (from∘to    p₁  x∈p₁) (from∘to (♭? (p₂ _)) y∈p₂x)
     from∘to (_>>=_  {xs = _ ∷ _} p₁ p₂) (x∈p₁ >>=  y∈p₂x) = Eq.cong₂ (_>>=_ {p₂ = λ x → ⟨ ⟦ ⟦♭ p₂ x ⟧⁻¹ ⟧ ⟩})
                                                                             (from∘to    p₁  x∈p₁) (from♭∘to♭   (p₂ _)  y∈p₂x)
-    from∘to (_>>=!_ {xs = []   } p₁ p₂) (x∈p₁ >>=! y∈p₂x) = Eq.cong₂ _>>=!_ (from∘to (♭ p₁) x∈p₁) (from∘to (♭? (p₂ _)) y∈p₂x)
-    from∘to (_>>=!_ {xs = _ ∷ _} p₁ p₂) (x∈p₁ >>=! y∈p₂x) = Eq.cong₂ _>>=!_ (from∘to (♭ p₁) x∈p₁) (from♭∘to♭   (p₂ _)  y∈p₂x)
+    from∘to (_∞>>=_ {xs = []   } p₁ p₂) (x∈p₁ ∞>>= y∈p₂x) = Eq.cong₂ _∞>>=_ (from∘to (♭ p₁) x∈p₁) (from∘to (♭? (p₂ _)) y∈p₂x)
+    from∘to (_∞>>=_ {xs = _ ∷ _} p₁ p₂) (x∈p₁ ∞>>= y∈p₂x) = Eq.cong₂ _∞>>=_ (from∘to (♭ p₁) x∈p₁) (from♭∘to♭   (p₂ _)  y∈p₂x)
     from∘to (nonempty p)                (nonempty x∈p)    = Eq.cong nonempty (from∘to p x∈p)
     from∘to (cast xs₁≈xs₂ p)            (cast x∈p)        = Eq.cong cast     (from∘to p x∈p)
 
@@ -252,8 +252,8 @@ p₁ ≈ p₂ = p₁ ≈[ language ] p₂
     to∘from (_⊛_ {p₁ = ⟪ _ ⟫} {p₂ = ⟪ _ ⟫} f∈p₁ x∈p₂)  = Eq.cong₂ _⊛_ (to∘from f∈p₁) (to∘from x∈p₂)
     to∘from (_>>=_  {xs = []}              x∈p₁ y∈p₂x) = Eq.cong₂  _>>=_            (to∘from x∈p₁) (to∘from y∈p₂x)
     to∘from (_>>=_  {xs = _ ∷ _} {p₂ = p₂} x∈p₁ y∈p₂x) = Eq.cong₂ (_>>=_ {p₂ = p₂}) (to∘from x∈p₁) (to♭∘from♭ (p₂ _) y∈p₂x)
-    to∘from (_>>=!_ {xs = []}              x∈p₁ y∈p₂x) = Eq.cong₂  _>>=!_           (to∘from x∈p₁) (to∘from          y∈p₂x)
-    to∘from (_>>=!_ {xs = _ ∷ _} {p₂ = p₂} x∈p₁ y∈p₂x) = Eq.cong₂  _>>=!_           (to∘from x∈p₁) (to♭∘from♭ (p₂ _) y∈p₂x)
+    to∘from (_∞>>=_ {xs = []}              x∈p₁ y∈p₂x) = Eq.cong₂  _∞>>=_           (to∘from x∈p₁) (to∘from          y∈p₂x)
+    to∘from (_∞>>=_ {xs = _ ∷ _} {p₂ = p₂} x∈p₁ y∈p₂x) = Eq.cong₂  _∞>>=_           (to∘from x∈p₁) (to♭∘from♭ (p₂ _) y∈p₂x)
     to∘from (nonempty x∈p)                             = Eq.cong nonempty (to∘from x∈p)
     to∘from (cast x∈p)                                 = Eq.cong cast     (to∘from x∈p)
 

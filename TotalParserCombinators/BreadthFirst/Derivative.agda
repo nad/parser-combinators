@@ -44,7 +44,7 @@ mutual
   ... | []     =  ∂-initial p₁ t >>=′ (λ x → initial-bag (♭? (p₂ x)))
   ... | x ∷ xs = (∂-initial p₁ t >>=′ (λ x → initial-bag (♭? (p₂ x)))) ∣′
                  ((x ∷ xs) >>=′ λ x → ∂!-initial (p₂ x) t)
-  ∂-initial (p₁ >>=! p₂)      t with initial-bag (♭ p₁)
+  ∂-initial (p₁ ∞>>= p₂)      t with initial-bag (♭ p₁)
   ... | []     = []
   ... | x ∷ xs = (x ∷ xs) >>=′ λ x → ∂!-initial (p₂ x) t
 
@@ -75,9 +75,9 @@ mutual
   ∂ (p₁ >>= p₂)       t | []     = ∂ p₁ t >>= (λ x → ♯? (♭? (p₂ x)))
   ∂ (p₁ >>= p₂)       t | x ∷ xs = ∂ p₁ t >>= (λ x → ♯? (♭? (p₂ x)))
                                  ∣ return⋆ (x ∷ xs) >>= λ x → ⟨ ∂! (p₂ x) t ⟩
-  ∂ (p₁ >>=! p₂)      t with initial-bag (♭ p₁)
-  ∂ (p₁ >>=! p₂)      t | []     = (♯ ∂ (♭ p₁) t) >>=! (λ x → ♯? (♭? (p₂ x)))
-  ∂ (p₁ >>=! p₂)      t | x ∷ xs = (♯ ∂ (♭ p₁) t) >>=! (λ x → ♯? (♭? (p₂ x)))
+  ∂ (p₁ ∞>>= p₂)      t with initial-bag (♭ p₁)
+  ∂ (p₁ ∞>>= p₂)      t | []     = (♯ ∂ (♭ p₁) t) ∞>>= (λ x → ♯? (♭? (p₂ x)))
+  ∂ (p₁ ∞>>= p₂)      t | x ∷ xs = (♯ ∂ (♭ p₁) t) ∞>>= (λ x → ♯? (♭? (p₂ x)))
                                  ∣ return⋆ (x ∷ xs) >>= λ x → ⟨ ∂! (p₂ x) t ⟩
 
   ∂! : ∀ {Tok R₁ R₂ xs y} {ys : List R₁}

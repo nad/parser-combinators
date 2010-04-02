@@ -32,7 +32,7 @@ open import TotalParserCombinators.Parser
 
 infix  60 <$>_
 infixl 50 _⊛_
-infixl 10 _>>=_ _>>=!_
+infixl 10 _>>=_ _∞>>=_
 infix   4 _∈_·_
 
 data _∈_·_ {Tok} :
@@ -59,12 +59,12 @@ data _∈_·_ {Tok} :
              (x∈p₁ : x ∈ p₁ · s₁)
              (y∈p₂x : y ∈ ♭? (p₂ x) · s₂) →
              y ∈ p₁ >>= p₂ · s₁ ++ s₂
-  _>>=!_   : ∀ {R₁ R₂ x y s₁ s₂ xs}
+  _∞>>=_   : ∀ {R₁ R₂ x y s₁ s₂ xs}
                {p₁ : ∞ (Parser Tok R₁ xs)}
                {p₂ : R₁ → ∞? (Parser Tok R₂ []) xs}
              (x∈p₁ : x ∈ ♭ p₁ · s₁)
              (y∈p₂x : y ∈ ♭? (p₂ x) · s₂) →
-             y ∈ p₁ >>=! p₂ · s₁ ++ s₂
+             y ∈ p₁ ∞>>= p₂ · s₁ ++ s₂
   nonempty : ∀ {R xs x y s} {p : Parser Tok R xs}
              (x∈p : y ∈ p · x ∷ s) → y ∈ nonempty p · x ∷ s
   cast     : ∀ {R xs₁ xs₂ x s}

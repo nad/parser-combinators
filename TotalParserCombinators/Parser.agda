@@ -26,7 +26,7 @@ open import TotalParserCombinators.Coinduction
 -- Parsers
 
 infixl 50 _⊛_ _<$>_
-infixl 10 _>>=_ _>>=!_
+infixl 10 _>>=_ _∞>>=_
 infixl  5 _∣_
 
 -- The list index is the "initial bag"; it contains the results which
@@ -56,7 +56,7 @@ data Parser (Tok : Set) : (R : Set) → List R → Set₁ where
              (p₁ :                Parser Tok R₁  xs              )
              (p₂ : (x : R₁) → ∞? (Parser Tok R₂         (f x)) xs) →
                                   Parser Tok R₂ (xs >>=′ f)
-  _>>=!_   : ∀ {R₁ R₂ xs}
+  _∞>>=_   : ∀ {R₁ R₂ xs}
              (p₁ :      ∞  (Parser Tok R₁ xs))
              (p₂ : R₁ → ∞? (Parser Tok R₂ fail′) xs) →
                             Parser Tok R₂ fail′
@@ -64,7 +64,7 @@ data Parser (Tok : Set) : (R : Set) → List R → Set₁ where
   cast     : ∀ {R xs₁ xs₂} (xs₁≈xs₂ : xs₁ ≈[ bag ] xs₂)
              (p : Parser Tok R xs₁) → Parser Tok R xs₂
 
--- The difference between the _>>=_ and _>>=!_ combinators is that the
+-- The difference between the _>>=_ and _∞>>=_ combinators is that the
 -- latter one accepts a delayed left parser, but requires the index of
 -- the right parser to be fail′ ([]). Another option would perhaps be
 -- to require the index to be a function f such that f x ≡ [] for all
