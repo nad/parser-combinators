@@ -66,7 +66,7 @@ grammar⇒pred p =
 -- decidable predicate there is a corresponding grammar.
 --
 -- Note that the grammars constructed by the proof are all "infinite
--- LL(0)".
+-- LL(1)".
 
 pred⇒grammar : (f : List Bool → Bool) →
                ∃ λ (p : P Bool (f [])) → ∀ {s} → s ∈ p ⇔ T (f s)

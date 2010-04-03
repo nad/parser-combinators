@@ -32,7 +32,7 @@ grammar⇒pred p =
   ((λ s → ⌊ s ∈? p ⌋) , λ _ → equivalent fromWitness toWitness)
 
 -- For every decidable predicate there is a corresponding grammar.
--- Note that these grammars are all "infinite LL(0)".
+-- Note that these grammars are all "infinite LL(1)".
 
 pred⇒grammar : (f : List Bool → Bool) →
                ∃ λ (p : P (f [])) → ∀ s → s ∈ p ⇔ T (f s)
