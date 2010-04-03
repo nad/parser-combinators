@@ -37,9 +37,7 @@ private
   P : Set → Bool → Set
   P Tok = LR.P {Tok}
 import TotalRecognisers.LeftRecursion.Lib as Lib
-open Lib Bool hiding (module Tok)
-private
-  open module Tok = Lib.Tok Bool Bool._≟_ using (tok)
+open Lib Bool
 
 ------------------------------------------------------------------------
 -- A boring lemma
@@ -75,18 +73,20 @@ pred⇒grammar f =
   where
   p : (f : List Bool → Bool) → P Bool (f [])
   p f = cast (lemma f)
-      ( ♯? (tok true ) · ⟪ ♯ p (f ∘ _∷_ true ) ⟫
-      ∣ ♯? (tok false) · ⟪ ♯ p (f ∘ _∷_ false) ⟫
+      ( ♯? (sat id ) · ⟪ ♯ p (f ∘ _∷_ true ) ⟫
+      ∣ ♯? (sat not) · ⟪ ♯ p (f ∘ _∷_ false) ⟫
       ∣ accept-if-true (f [])
       )
 
   p-sound : ∀ f {s} → s ∈ p f → T (f s)
   p-sound f (cast (∣ʳ s∈)) with AcceptIfTrue.sound (f []) s∈
   ... | (refl , ok) = ok
-  p-sound f (cast (∣ˡ (∣ˡ (t∈ · s∈)))) with Tok.sound (drop-♭♯ (f [ true  ]) t∈)
-  ... | refl = p-sound (f ∘ _∷_ true ) s∈
-  p-sound f (cast (∣ˡ (∣ʳ (t∈ · s∈)))) with Tok.sound (drop-♭♯ (f [ false ]) t∈)
-  ... | refl = p-sound (f ∘ _∷_ false) s∈
+  p-sound f (cast (∣ˡ (∣ˡ (t∈ · s∈)))) with drop-♭♯ (f [ true  ]) t∈
+  ... | sat {t = true}  _  = p-sound (f ∘ _∷_ true ) s∈
+  ... | sat {t = false} ()
+  p-sound f (cast (∣ˡ (∣ʳ (t∈ · s∈)))) with drop-♭♯ (f [ false ]) t∈
+  ... | sat {t = false} _  = p-sound (f ∘ _∷_ false) s∈
+  ... | sat {t = true}  ()
 
   p-complete : ∀ f s → T (f s) → s ∈ p f
   p-complete f [] ok =
@@ -94,11 +94,11 @@ pred⇒grammar f =
       AcceptIfTrue.complete ok)
   p-complete f (true  ∷ bs) ok =
     cast (∣ˡ $ ∣ˡ $
-      add-♭♯ (f [ true  ]) Tok.complete ·
+      add-♭♯ (f [ true  ]) (sat _) ·
       p-complete (f ∘ _∷_ true ) bs ok)
   p-complete f (false ∷ bs) ok =
     cast (∣ˡ $ ∣ʳ {n₁ = false ∧ f [ true ]} $
-      add-♭♯ (f [ false ]) Tok.complete ·
+      add-♭♯ (f [ false ]) (sat _) ·
       p-complete (f ∘ _∷_ false) bs ok)
 
 -- An alternative proof which uses a left recursive definition of the
@@ -113,17 +113,19 @@ pred⇒grammar′ f =
   extend f x = λ xs → f (xs ∷ʳ x)
 
   p : (f : List Bool → Bool) → P Bool (f [])
-  p f = ⟪ ♯ p (extend f true ) ⟫ · ♯? (tok true )
-      ∣ ⟪ ♯ p (extend f false) ⟫ · ♯? (tok false)
+  p f = ⟪ ♯ p (extend f true ) ⟫ · ♯? (sat id )
+      ∣ ⟪ ♯ p (extend f false) ⟫ · ♯? (sat not)
       ∣ accept-if-true (f [])
 
   p-sound : ∀ f {s} → s ∈ p f → T (f s)
   p-sound f (∣ʳ s∈) with AcceptIfTrue.sound (f []) s∈
   ... | (refl , ok) = ok
-  p-sound f (∣ˡ (∣ˡ (s∈ · t∈))) with Tok.sound (drop-♭♯ (f [ true  ]) t∈)
-  ... | refl = p-sound (extend f true ) s∈
-  p-sound f (∣ˡ (∣ʳ (s∈ · t∈))) with Tok.sound (drop-♭♯ (f [ false ]) t∈)
-  ... | refl = p-sound (extend f false) s∈
+  p-sound f (∣ˡ (∣ˡ (s∈ · t∈))) with drop-♭♯ (f [ true  ]) t∈
+  ... | sat {t = true}  _  = p-sound (extend f true ) s∈
+  ... | sat {t = false} ()
+  p-sound f (∣ˡ (∣ʳ (s∈ · t∈))) with drop-♭♯ (f [ false ]) t∈
+  ... | sat {t = false} _  = p-sound (extend f false) s∈
+  ... | sat {t = true}  ()
 
   p-complete′ : ∀ f {s} → Reverse s → T (f s) → s ∈ p f
   p-complete′ f [] ok =
@@ -131,11 +133,11 @@ pred⇒grammar′ f =
   p-complete′ f (bs ∶ rs ∶ʳ true ) ok =
     ∣ˡ {n₁ = false} $ ∣ˡ {n₁ = false} $
       p-complete′ (extend f true ) rs ok ·
-      add-♭♯ (f [ true  ]) Tok.complete
+      add-♭♯ (f [ true  ]) (sat _)
   p-complete′ f (bs ∶ rs ∶ʳ false) ok =
     ∣ˡ {n₁ = false} $ ∣ʳ {n₁ = false} $
       p-complete′ (extend f false) rs ok ·
-      add-♭♯ (f [ false ]) Tok.complete
+      add-♭♯ (f [ false ]) (sat _)
 
   p-complete : ∀ f s → T (f s) → s ∈ p f
   p-complete f s = p-complete′ f (reverseView s)
