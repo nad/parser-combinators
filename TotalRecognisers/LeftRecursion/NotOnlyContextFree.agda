@@ -29,7 +29,7 @@ open import Relation.Nullary
 open ≡-Reasoning
 
 import TotalRecognisers.LeftRecursion
-import TotalRecognisers.LeftRecursion.Lib
+import TotalRecognisers.LeftRecursion.Lib as Lib
 
 ------------------------------------------------------------------------
 -- The alphabet
@@ -48,10 +48,10 @@ c ≟ a = no λ()
 c ≟ b = no λ()
 c ≟ c = yes refl
 
-open TotalRecognisers.LeftRecursion     Tok
-open TotalRecognisers.LeftRecursion.Lib Tok
+open TotalRecognisers.LeftRecursion Tok
+open Lib Tok
 private
-  open module TokTok = Tok _≟_ using (tok)
+  open module TokTok = Lib.Tok Tok _≟_ using (tok)
 
 ------------------------------------------------------------------------
 -- An auxiliary definition and a boring lemma
