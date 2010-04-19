@@ -24,7 +24,8 @@ open RawMonadPlus List.monadPlus
 
 open import TotalParserCombinators.Applicative using (_⊛′_)
 open import TotalParserCombinators.Coinduction
-open import TotalParserCombinators.Parser as P hiding (Parser)
+open import TotalParserCombinators.Parser as P
+  hiding (Parser; module Parser)
 open import TotalParserCombinators.Semantics
   hiding (_≈_) renaming (_≈[_]_ to _P≈[_]_; _≅_ to _P≅_)
 

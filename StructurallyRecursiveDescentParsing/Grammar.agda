@@ -13,7 +13,7 @@ open import Level
 
 open import StructurallyRecursiveDescentParsing.Index
 import StructurallyRecursiveDescentParsing.Simplified as Simplified
-open Simplified hiding (Parser; ⟦_⟧)
+open Simplified hiding (Parser; module Parser; ⟦_⟧)
 
 infixl 10 _!>>=_ _?>>=_
 infixl  5 _∣_

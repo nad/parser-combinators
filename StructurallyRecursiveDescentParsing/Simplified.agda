@@ -26,7 +26,8 @@ private
 
 open import StructurallyRecursiveDescentParsing.Simplified.Lemmas
 open import TotalParserCombinators.Coinduction
-open import TotalParserCombinators.Parser as Parser hiding (Parser)
+open import TotalParserCombinators.Parser as P
+  hiding (Parser; module Parser)
 
 ------------------------------------------------------------------------
 -- Parsers
@@ -123,8 +124,7 @@ private
 
 -- The semantics of simplified parsers is defined by translation.
 
-⟦_⟧ : ∀ {Tok e R}
-      (p : Parser Tok e R) → Parser.Parser Tok R (initial p)
+⟦_⟧ : ∀ {Tok e R} (p : Parser Tok e R) → P.Parser Tok R (initial p)
 ⟦ return x   ⟧ = return x
 ⟦ fail       ⟧ = fail
 ⟦ token      ⟧ = token
