@@ -1,34 +1,61 @@
 ------------------------------------------------------------------------
--- Helper functions related to coinduction
+-- Helper types and functions related to coinduction
 ------------------------------------------------------------------------
 
 module TotalParserCombinators.Coinduction where
 
 open import Coinduction
-open import Data.Bool
-open import Data.List
+open import Data.List  using (List);  open Data.List.List
+open import Data.Maybe using (Maybe); open Data.Maybe.Maybe
 open import Relation.Binary.PropositionalEquality
 
--- Coinductive if the argument list is empty.
+-- A tiny universe of type constructors.
 
-data ∞? (A : Set₁) {B : Set} : List B → Set₁ where
-  ⟪_⟫ :          (x : ∞ A) → ∞? A []
-  ⟨_⟩ : ∀ {y ys} (x :   A) → ∞? A (y ∷ ys)
+data TypeConstr : Set where
+  list maybe : TypeConstr
 
--- Delays a parser, if necessary.
+El : TypeConstr → Set → Set
+El list  A = List  A
+El maybe A = Maybe A
 
-♯? : ∀ {A B} {xs : List B} → A → ∞? A xs
-♯? {xs = []}    x = ⟪ ♯ x ⟫
-♯? {xs = _ ∷ _} x = ⟨   x ⟩
+-- Coinductive if the index is [].
 
--- Forces a parser, if necessary.
+data ∞?L (A : Set₁) {B : Set} : List B → Set₁ where
+  ⟨_⟩  : ∀ {y ys} (x :   A) → ∞?L A (y ∷ ys)
+  ⟪_⟫  :          (x : ∞ A) → ∞?L A []
 
-♭? : ∀ {A B} {xs : List B} → ∞? A xs → A
-♭? ⟪ x ⟫ = ♭ x
-♭? ⟨ x ⟩ =   x
+-- Coinductive if the index is nothing.
+
+data ∞?M (A : Set₁) {B : Set} : Maybe B → Set₁ where
+  ⟨_⟩ : ∀ {y} (x :   A) → ∞?M A (just y)
+  ⟪_⟫ :       (x : ∞ A) → ∞?M A nothing
+
+-- Coinductive if the index is [] or nothing.
+
+∞? : ∀ {t} → Set₁ → {B : Set} → El t B → Set₁
+∞? {list}  = ∞?L
+∞? {maybe} = ∞?M
+
+-- Delays if necessary.
+
+♯? : ∀ {t A B} {n : El t B} → A → ∞? A n
+♯? {list}  {n = []}      x = ⟪ ♯ x ⟫
+♯? {list}  {n = y ∷ ys}  x = ⟨   x ⟩
+♯? {maybe} {n = nothing} x = ⟪ ♯ x ⟫
+♯? {maybe} {n = just y}  x = ⟨   x ⟩
+
+-- Forces if necessary.
+
+♭? : ∀ {t A B} {n : El t B} → ∞? A n → A
+♭? {list}  ⟨ x ⟩ =   x
+♭? {list}  ⟪ x ⟫ = ♭ x
+♭? {maybe} ⟨ x ⟩ =   x
+♭? {maybe} ⟪ x ⟫ = ♭ x
 
 -- A lemma.
 
-♭?♯? : ∀ {A B} (xs : List B) {x : A} → ♭? (♯? {xs = xs} x) ≡ x
-♭?♯? []      = refl
-♭?♯? (_ ∷ _) = refl
+♭?♯? : ∀ {t A B} (n : El t B) {x : A} → ♭? (♯? {n = n} x) ≡ x
+♭?♯? {list}  []       = refl
+♭?♯? {list}  (x ∷ xs) = refl
+♭?♯? {maybe} nothing  = refl
+♭?♯? {maybe} (just x) = refl

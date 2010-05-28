@@ -9,6 +9,7 @@ open import Coinduction
 open import Data.List as List
 import Data.List.Any as Any
 import Data.List.Properties as ListProp
+open import Data.Maybe using (Maybe)
 open import Data.Product as Prod
 open import Function
 open import Relation.Binary.PropositionalEquality
@@ -47,18 +48,12 @@ data _⊕_∈_·_ {Tok} : ∀ {R xs} → R → List Tok →
              (f∈p₁ : f ⊕ s₁ ∈ ♭? p₁ · s)
              (x∈p₂ : x ⊕ s₂ ∈ ♭? p₂ · s₁) →
              f x ⊕ s₂ ∈ p₁ ⊛ p₂ · s
-  _>>=_    : ∀ {R₁ R₂ x y s s₁ s₂ xs} {f : R₁ → List R₂}
-               {p₁ : Parser Tok R₁ xs}
-               {p₂ : (x : R₁) → ∞? (Parser Tok R₂ (f x)) xs}
-             (x∈p₁ : x ⊕ s₁ ∈ p₁ · s)
+  _>>=_    : ∀ {R₁ R₂ x y s s₁ s₂ xs} {f : Maybe (R₁ → List R₂)}
+               {p₁ : ∞? (Parser Tok R₁ xs) f}
+               {p₂ : (x : R₁) → ∞? (Parser Tok R₂ (app f x)) xs}
+             (x∈p₁ : x ⊕ s₁ ∈ ♭? p₁ · s)
              (y∈p₂x : y ⊕ s₂ ∈ ♭? (p₂ x) · s₁) →
              y ⊕ s₂ ∈ p₁ >>= p₂ · s
-  _∞>>=_   : ∀ {R₁ R₂ x y s s₁ s₂ xs}
-               {p₁ : ∞ (Parser Tok R₁ xs)}
-               {p₂ : R₁ → ∞? (Parser Tok R₂ []) xs}
-             (x∈p₁ : x ⊕ s₁ ∈ ♭ p₁ · s)
-             (y∈p₂x : y ⊕ s₂ ∈ ♭? (p₂ x) · s₁) →
-             y ⊕ s₂ ∈ p₁ ∞>>= p₂ · s
   nonempty : ∀ {R xs x y s₂} s₁ {p : Parser Tok R xs}
              (x∈p : y ⊕ s₂ ∈ p · x ∷ s₁ ++ s₂) →
              y ⊕ s₂ ∈ nonempty p · x ∷ s₁ ++ s₂
@@ -86,19 +81,16 @@ sound′ (∣ʳ e₁ x∈p₁)      = Prod.map id (Prod.map id (∣ʳ e₁))   (
 sound′ (<$> x∈p)         = Prod.map id (Prod.map id <$>_) (sound′ x∈p)
 sound′ (f∈p₁ ⊛ x∈p₂)     with sound′ f∈p₁ | sound′ x∈p₂
 sound′ (f∈p₁ ⊛ x∈p₂)     | (s₁ , refl , f∈p₁′) | (s₂ , refl , x∈p₂′) =
-  (s₁ ++ s₂ , sym (LM.assoc s₁ s₂ _) , f∈p₁′ ⊛ x∈p₂′)
-sound′ (x∈p₁ >>=  y∈p₂x) with sound′ x∈p₁ | sound′ y∈p₂x
-sound′ (x∈p₁ >>=  y∈p₂x) | (s₁ , refl , x∈p₁′) | (s₂ , refl , y∈p₂x′) =
-  (s₁ ++ s₂ , sym (LM.assoc s₁ s₂ _) , x∈p₁′ >>= y∈p₂x′)
-sound′ (x∈p₁ ∞>>= y∈p₂x) with sound′ x∈p₁ | sound′ y∈p₂x
-sound′ (x∈p₁ ∞>>= y∈p₂x) | (s₁ , refl , x∈p₁′) | (s₂ , refl , y∈p₂x′) =
-  (s₁ ++ s₂ , sym (LM.assoc s₁ s₂ _) , x∈p₁′ ∞>>= y∈p₂x′)
+                           (s₁ ++ s₂ , sym (LM.assoc s₁ s₂ _) , f∈p₁′ ⊛ x∈p₂′)
 sound′ (nonempty s₁ x∈p) with sound′ x∈p
 sound′ (nonempty s₁ x∈p) | (y ∷ s , eq , x∈p′) = (y ∷ s , eq , nonempty x∈p′)
 sound′ (nonempty s₁ x∈p) | ([]    , eq , x∈p′)
-  with ListProp.left-identity-unique (_ ∷ s₁) (sym eq)
+                           with ListProp.left-identity-unique (_ ∷ s₁) (sym eq)
 sound′ (nonempty s₁ x∈p) | ([]    , eq , x∈p′) | ()
 sound′ (cast x∈p)        = Prod.map id (Prod.map id cast) (sound′ x∈p)
+sound′ (x∈p₁ >>= y∈p₂x)             with sound′ x∈p₁ | sound′ y∈p₂x
+sound′ (_>>=_ {p₁ = p₁} x∈p₁ y∈p₂x) | (s₁ , refl , x∈p₁′) | (s₂ , refl , y∈p₂x′) =
+  (s₁ ++ s₂ , sym (LM.assoc s₁ s₂ _) , _>>=_ {p₁ = p₁} x∈p₁′ y∈p₂x′)
 
 sound : ∀ {Tok R xs x s} {p : Parser Tok R xs} →
         x ⊕ [] ∈ p · s → x ∈ p · s
@@ -108,16 +100,15 @@ sound x∈p | (s , refl , x∈p′) | .s | refl = x∈p′
 
 extend : ∀ {Tok R xs x s s′ s″} {p : Parser Tok R xs} →
          x ⊕ s′ ∈ p · s → x ⊕ s′ ++ s″ ∈ p · s ++ s″
-extend return            = return
-extend token             = token
-extend (∣ˡ x∈p₁)         = ∣ˡ    (extend x∈p₁)
-extend (∣ʳ e₁ x∈p₂)      = ∣ʳ e₁ (extend x∈p₂)
-extend (     <$> x∈p)    =             <$> extend x∈p
-extend (f∈p₁ ⊛   x∈p₂)   = extend f∈p₁ ⊛   extend x∈p₂
-extend (x∈p₁ >>=  y∈p₂x) = extend x∈p₁ >>=  extend y∈p₂x
-extend (x∈p₁ ∞>>= y∈p₂x) = extend x∈p₁ ∞>>= extend y∈p₂x
-extend (cast x∈p)        = cast (extend x∈p)
-extend (nonempty s₁ x∈p) = cast₂ (nonempty s₁ (cast₁ (extend x∈p)))
+extend return                       = return
+extend token                        = token
+extend (∣ˡ x∈p₁)                    = ∣ˡ    (extend x∈p₁)
+extend (∣ʳ e₁ x∈p₂)                 = ∣ʳ e₁ (extend x∈p₂)
+extend (     <$> x∈p)               =             <$> extend x∈p
+extend (f∈p₁ ⊛   x∈p₂)              = extend f∈p₁ ⊛   extend x∈p₂
+extend (_>>=_ {p₁ = p₁} x∈p₁ y∈p₂x) = _>>=_ {p₁ = p₁} (extend x∈p₁) (extend y∈p₂x)
+extend (cast x∈p)                   = cast (extend x∈p)
+extend (nonempty s₁ x∈p)            = cast₂ (nonempty s₁ (cast₁ (extend x∈p)))
   where
   lem   = LM.assoc (_ ∷ s₁) _ _
   cast₁ = cast∈′      lem
@@ -125,16 +116,16 @@ extend (nonempty s₁ x∈p) = cast₂ (nonempty s₁ (cast₁ (extend x∈p)))
 
 complete : ∀ {Tok R xs x s} {p : Parser Tok R xs} →
            x ∈ p · s → x ⊕ [] ∈ p · s
-complete return                 = return
-complete token                  = token
-complete (∣ˡ x∈p₁)              = ∣ˡ    (complete x∈p₁)
-complete (∣ʳ e₁ x∈p₂)           = ∣ʳ e₁ (complete x∈p₂)
-complete (     <$> x∈p)         =                        <$> complete x∈p
-complete (f∈p₁ ⊛   x∈p₂)        = extend (complete f∈p₁) ⊛   complete x∈p₂
-complete (x∈p₁ >>=  y∈p₂x)      = extend (complete x∈p₁) >>=  complete y∈p₂x
-complete (x∈p₁ ∞>>= y∈p₂x)      = extend (complete x∈p₁) ∞>>= complete y∈p₂x
-complete (cast x∈p)             = cast (complete x∈p)
-complete (nonempty {s = s} x∈p) = cast₂ (nonempty s (cast₁ (complete x∈p)))
+complete return                       = return
+complete token                        = token
+complete (∣ˡ x∈p₁)                    = ∣ˡ    (complete x∈p₁)
+complete (∣ʳ e₁ x∈p₂)                 = ∣ʳ e₁ (complete x∈p₂)
+complete (     <$> x∈p)               =                        <$> complete x∈p
+complete (f∈p₁ ⊛   x∈p₂)              = extend (complete f∈p₁) ⊛   complete x∈p₂
+complete (_>>=_ {p₁ = p₁} x∈p₁ y∈p₂x) = _>>=_ {p₁ = p₁} (extend (complete x∈p₁))
+                                                                (complete y∈p₂x)
+complete (cast x∈p)                   = cast (complete x∈p)
+complete (nonempty {s = s} x∈p)       = cast₂ (nonempty s (cast₁ (complete x∈p)))
   where
   lem   = Prod.proj₂ LM.identity _
   cast₁ = cast∈′ (sym lem)

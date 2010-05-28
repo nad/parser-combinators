@@ -6,7 +6,7 @@ module TotalParserCombinators.BreadthFirst.Derivative where
 
 open import Category.Monad
 open import Coinduction
-open import Data.List as List
+open import Data.List as List using (List; map); open List.List
 
 open RawMonadPlus List.monadPlus
   using ()
@@ -40,16 +40,16 @@ mutual
   ∂-initial (⟨ p₁ ⟩ ⊛ ⟨ p₂ ⟩) t = ∂-initial p₁ t     ⊛′ initial-bag    p₂  ∣′
                                   initial-bag    p₁  ⊛′ ∂-initial p₂ t
   ∂-initial (⟪ p₁ ⟫ ⊛ ⟨ p₂ ⟩) t = initial-bag (♭ p₁) ⊛′ ∂-initial p₂ t
-  ∂-initial (p₁ >>= p₂)       t with initial-bag p₁
+  ∂-initial (⟨ p₁ ⟩ >>= p₂)   t with initial-bag p₁
   ... | []     =  ∂-initial p₁ t >>=′ (λ x → initial-bag (♭? (p₂ x)))
   ... | x ∷ xs = (∂-initial p₁ t >>=′ (λ x → initial-bag (♭? (p₂ x)))) ∣′
                  ((x ∷ xs) >>=′ λ x → ∂!-initial (p₂ x) t)
-  ∂-initial (p₁ ∞>>= p₂)      t with initial-bag (♭ p₁)
+  ∂-initial (⟪ p₁ ⟫ >>= p₂)   t with initial-bag (♭ p₁)
   ... | []     = []
   ... | x ∷ xs = (x ∷ xs) >>=′ λ x → ∂!-initial (p₂ x) t
 
   ∂!-initial : ∀ {Tok R₁ R₂ xs y} {ys : List R₁} →
-               ∞? (Parser Tok R₂ xs) (y ∷ ys) → Tok → List R₂
+               ∞? (Parser Tok R₂ xs) (List._∷_ y ys) → Tok → List R₂
   ∂!-initial ⟨ p ⟩ t = ∂-initial p t
 
 -- "Derivative": x ∈ ∂ p t · s  iff  x ∈ p · t ∷ s.
@@ -71,14 +71,14 @@ mutual
                         ∣ ♯? (return⋆ (initial-bag    p₁ )) ⊛ ⟨ ∂ p₂ t ⟩
   ∂ (⟪ p₁ ⟫ ⊛ ⟨ p₂ ⟩) t = ⟪ ♯ ∂ (♭ p₁) t ⟫ ⊛ ♯?     p₂
                         ∣ ♯? (return⋆ (initial-bag (♭ p₁))) ⊛ ⟨ ∂ p₂ t ⟩
-  ∂ (p₁ >>= p₂)       t with initial-bag p₁
-  ∂ (p₁ >>= p₂)       t | []     = ∂ p₁ t >>= (λ x → ♯? (♭? (p₂ x)))
-  ∂ (p₁ >>= p₂)       t | x ∷ xs = ∂ p₁ t >>= (λ x → ♯? (♭? (p₂ x)))
-                                 ∣ return⋆ (x ∷ xs) >>= λ x → ⟨ ∂! (p₂ x) t ⟩
-  ∂ (p₁ ∞>>= p₂)      t with initial-bag (♭ p₁)
-  ∂ (p₁ ∞>>= p₂)      t | []     = (♯ ∂ (♭ p₁) t) ∞>>= (λ x → ♯? (♭? (p₂ x)))
-  ∂ (p₁ ∞>>= p₂)      t | x ∷ xs = (♯ ∂ (♭ p₁) t) ∞>>= (λ x → ♯? (♭? (p₂ x)))
-                                 ∣ return⋆ (x ∷ xs) >>= λ x → ⟨ ∂! (p₂ x) t ⟩
+  ∂ (⟨ p₁ ⟩ >>= p₂)   t with initial-bag p₁
+  ∂ (⟨ p₁ ⟩ >>= p₂)   t | []     = ⟨ ∂ p₁ t ⟩ >>= (λ x → ♯? (♭? (p₂ x)))
+  ∂ (⟨ p₁ ⟩ >>= p₂)   t | x ∷ xs = ⟨ ∂ p₁ t ⟩ >>= (λ x → ♯? (♭? (p₂ x)))
+                                 ∣ ⟨ return⋆ (x ∷ xs) ⟩ >>= λ x → ⟨ ∂! (p₂ x) t ⟩
+  ∂ (⟪ p₁ ⟫ >>= p₂)   t with initial-bag (♭ p₁)
+  ∂ (⟪ p₁ ⟫ >>= p₂)   t | []     = ⟪ ♯ ∂ (♭ p₁) t ⟫ >>= (λ x → ♯? (♭? (p₂ x)))
+  ∂ (⟪ p₁ ⟫ >>= p₂)   t | x ∷ xs = ⟪ ♯ ∂ (♭ p₁) t ⟫ >>= (λ x → ♯? (♭? (p₂ x)))
+                                 ∣ ⟨ return⋆ (x ∷ xs) ⟩ >>= λ x → ⟨ ∂! (p₂ x) t ⟩
 
   ∂! : ∀ {Tok R₁ R₂ xs y} {ys : List R₁}
        (p : ∞? (Parser Tok R₂ xs) (y ∷ ys)) (t : Tok) →

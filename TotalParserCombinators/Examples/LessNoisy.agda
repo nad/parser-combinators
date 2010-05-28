@@ -73,22 +73,22 @@ module Monadic where
  mutual
 
     term   = factor
-           ∣ ♯ term               ∞>>= λ e₁ → ♯ (
-             tok '+'              >>=  λ _  → ♯ (
-             factor               >>=  λ e₂ → ♯
-             return (plus e₁ e₂)              ))
+           ∣ ♯ term               >>= λ e₁ → ♯ (
+             tok '+'              >>= λ _  → ♯ (
+             factor               >>= λ e₂ → ♯
+             return (plus e₁ e₂)             ))
 
     factor = atom
-           ∣ ♯ factor             ∞>>= λ e₁ → ♯ (
-             tok '*'              >>=  λ _  → ♯ (
-             atom                 >>=  λ e₂ → ♯
-             return (times e₁ e₂)             ))
+           ∣ ♯ factor             >>= λ e₁ → ♯ (
+             tok '*'              >>= λ _  → ♯ (
+             atom                 >>= λ e₂ → ♯
+             return (times e₁ e₂)            ))
 
     atom   = return num ⊙ number
-           ∣ tok '('              >>=  λ _  → ♯ (
-             term                 >>=  λ e  → ♯ (
-             tok ')'              >>=  λ _  → ♯
-             return e                         ))
+           ∣ tok '('              >>= λ _  → ♯ (
+             term                 >>= λ e  → ♯ (
+             tok ')'              >>= λ _  → ♯
+             return e                        ))
 
 ------------------------------------------------------------------------
 -- Unit tests

@@ -39,13 +39,13 @@ private
   η-cast∈ : ∀ {Tok R x xs s} {p : Parser Tok R xs} {x∈} →
             ((x∈′ : x ∈ p · s) → x∈′ ≡ x∈) →
             ∀ {R′} (xs′ : List R′)
-            (x∈′ : x ∈ ♭? {xs = xs′} (♯? p) · s) →
+            (x∈′ : x ∈ ♭? {n = xs′} (♯? p) · s) →
             x∈′ ≡ cast∈ refl (P.sym (♭?♯? xs′)) refl x∈
   η-cast∈ hyp []      x∈′ = hyp x∈′
   η-cast∈ hyp (_ ∷ _) x∈′ = hyp x∈′
 
   tok-lemma : ∀ {R t}
-          (xs : List R) (t∈ : t ∈ ♭? {xs = xs} (♯? (tok t)) · [ t ]) →
+          (xs : List R) (t∈ : t ∈ ♭? {n = xs} (♯? (tok t)) · [ t ]) →
           t∈ ≡ cast∈ refl (P.sym (♭?♯? xs)) refl (Tok.complete {t = t})
   tok-lemma = η-cast∈ Tok.η
 
@@ -66,7 +66,7 @@ module Monadic where
   -- The parser.
 
   grammar : ∀ {Tok R} (f : List Tok → List R) → Parser Tok R (f [])
-  grammar f = token >>= (λ t → ⟪ ♯ grammar (f ∘ _∷_ t) ⟫)
+  grammar f = ⟨ token ⟩ >>= (λ t → ⟪ ♯ grammar (f ∘ _∷_ t) ⟫)
             ∣ return⋆ (f [])
 
   -- Correctness proof.
@@ -91,7 +91,7 @@ module Monadic where
     complete : ∀ {Tok R x} (f : List Tok → List R) s →
                x ∈ f s → x ∈ grammar f · s
     complete f []      x∈ = ∣ʳ [] (Return⋆.complete x∈)
-    complete f (t ∷ s) x∈ = ∣ˡ (token >>= complete (f ∘ _∷_ t) s x∈)
+    complete f (t ∷ s) x∈ = ∣ˡ (⟨ token ⟩>>= complete (f ∘ _∷_ t) s x∈)
 
     complete∘sound : ∀ {Tok R x s} (f : List Tok → List R)
                      (x∈pf : x ∈ grammar f · s) →

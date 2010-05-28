@@ -92,7 +92,6 @@ module KleeneStar where
       sound′ (<$> _)      ()
       sound′ (_ ⊛ _)      ()
       sound′ (_ >>= _)    ()
-      sound′ (_ ∞>>= _)   ()
       sound′ (nonempty _) ()
       sound′ (cast _)     ()
 
@@ -130,7 +129,6 @@ module KleeneStar where
       complete∘sound′ (<$> _)      ()
       complete∘sound′ (_ ⊛ _)      ()
       complete∘sound′ (_ >>= _)    ()
-      complete∘sound′ (_ ∞>>= _)   ()
       complete∘sound′ (nonempty _) ()
       complete∘sound′ (cast _)     ()
 
@@ -268,7 +266,7 @@ infixl 10 _≫=_
 _≫=_ : ∀ {Tok R₁ R₂ xs} {f : R₁ → List R₂} →
        Parser Tok R₁ xs → ((x : R₁) → Parser Tok R₂ (f x)) →
        Parser Tok R₂ (xs >>=′ f)
-p₁ ≫= p₂ = p₁ >>= λ x → ♯? (p₂ x)
+p₁ ≫= p₂ = ⟨ p₁ ⟩ >>= λ x → ♯? (p₂ x)
 
 module ≫= {Tok R₁ R₂ : Set} where
 
@@ -286,7 +284,7 @@ module ≫= {Tok R₁ R₂ : Set} where
                {p₁ : Parser Tok R₁ xs}
                {p₂ : ((x : R₁) → Parser Tok R₂ (f x))} →
              x ∈ p₁ · s₁ → y ∈ p₂ x · s₂ → y ∈ p₁ ≫= p₂ · s₁ ++ s₂
-  complete {xs} ∈p₁ ∈p₂x = ∈p₁ >>= ♭♯.add xs ∈p₂x
+  complete {xs} ∈p₁ ∈p₂x = ⟨ ∈p₁ ⟩>>= ♭♯.add xs ∈p₂x
 
   complete′ : ∀ {xs} {f : R₁ → List R₂} {y s}
                 {p₁ : Parser Tok R₁ xs}
@@ -470,7 +468,7 @@ module Token
     ... | no  _ = fail
 
   tok : Tok → Parser Tok Tok []
-  tok tok = token >>= λ tok′ → ♯? (ok tok tok′)
+  tok tok = token ≫= ok tok
 
   sound : ∀ {t t′ s} →
           t′ ∈ tok t · s → t ≡ t′ × s ≡ [ t′ ]
@@ -486,7 +484,7 @@ module Token
     ...   | ()
 
   complete : ∀ {t} → t ∈ tok t · [ t ]
-  complete {t} = token >>= ok-lemma t
+  complete {t} = ≫=.complete token (ok-lemma t)
 
   η : ∀ {t} (t∈ : t ∈ tok t · [ t ]) → t∈ ≡ complete {t = t}
   η {t = t} t∈ = H.≅-to-≡ $ helper t∈ refl
@@ -615,7 +613,9 @@ module Sat where
     where
     to : ∀ {s} → (∃ λ t → s ≡ [ t ] × p t ≡ just x) → x ∈ sat′ p · s
     to (t , refl , p-t≡just-x) =
-      token >>= (Inverse.to (ok-correct (p t)) ⟨$⟩ (refl , p-t≡just-x))
+      ≫=.complete
+        token
+        (Inverse.to (ok-correct (p t)) ⟨$⟩ (refl , p-t≡just-x))
 
     from : ∀ {s} → x ∈ sat′ p · s → ∃ λ t → s ≡ [ t ] × p t ≡ just x
     from (token {x = t} >>= x∈ok-p-t) =

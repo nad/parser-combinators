@@ -17,6 +17,7 @@ open import Coinduction
 open import Function
 open import Data.List as List
 open import Data.List.Any as Any
+open import Data.Maybe
 open import Data.Product
 open import Relation.Binary.HeterogeneousEquality as H using (_≅_; refl)
 open import Relation.Binary.PropositionalEquality
@@ -99,30 +100,30 @@ mutual
   ... | .(refl , I.complete f∈p₁) | refl
     rewrite I.sound∘complete f∈p₁ | ∂-sound∘∂-complete x∈p₂ = refl
 
-  ∂-sound∘∂-complete′ {Tok = Tok} (_>>=_ {xs = x ∷ xs} {f} p₁ p₂) (_>>=_ {s₁ = []} x∈p₁ y∈p₂x) refl
+  ∂-sound∘∂-complete′ {Tok = Tok} (_>>=_ {xs = x ∷ xs} {f = just f} ⟨ p₁ ⟩ p₂) (_>>=_ {s₁ = []} x∈p₁ y∈p₂x) refl
     rewrite Return⋆.sound∘complete {Tok = Tok} (I.complete x∈p₁)
           | I.sound∘complete x∈p₁
           | ∂!-sound∘∂!-complete (p₂ _) y∈p₂x =
     refl
-  ∂-sound∘∂-complete′ (_>>=_ {xs = x ∷ xs} p₁ p₂) (_>>=_ {s₁ = t ∷ _} x∈p₁ y∈p₂x) refl
+  ∂-sound∘∂-complete′ (_>>=_ {xs = x ∷ xs} ⟨ p₁ ⟩ p₂) (_>>=_ {s₁ = t ∷ _} x∈p₁ y∈p₂x) refl
     rewrite ∂-sound∘∂-complete x∈p₁
           | Cast∈.∘sym refl (♭?♯? (∂-initial p₁ t)) refl y∈p₂x =
     refl
-  ∂-sound∘∂-complete′ (_>>=_ {R₁} {xs = []} p₁ p₂) (_>>=_ {s₁ = t ∷ _} x∈p₁ y∈p₂x) refl
+  ∂-sound∘∂-complete′ (_>>=_ {R₁} {xs = []} ⟨ p₁ ⟩ p₂) (_>>=_ {s₁ = t ∷ _} x∈p₁ y∈p₂x) refl
     rewrite ∂-sound∘∂-complete x∈p₁
           | Cast∈.∘sym refl (♭?♯? (∂-initial p₁ t)) refl y∈p₂x =
     refl
 
-  ∂-sound∘∂-complete′ {Tok = Tok} (_∞>>=_ {xs = x ∷ xs} p₁ p₂) (_∞>>=_ {s₁ = []} x∈p₁ y∈p₂x) refl
+  ∂-sound∘∂-complete′ {Tok = Tok} (_>>=_ {xs = x ∷ xs} ⟪ p₁ ⟫ p₂) (_>>=_ {s₁ = []} x∈p₁ y∈p₂x) refl
     rewrite Return⋆.sound∘complete {Tok = Tok} (I.complete x∈p₁)
           | I.sound∘complete x∈p₁
           | ∂!-sound∘∂!-complete (p₂ _) y∈p₂x =
     refl
-  ∂-sound∘∂-complete′ (_∞>>=_ {xs = x ∷ xs} p₁ p₂) (_∞>>=_ {s₁ = t ∷ _} x∈p₁ y∈p₂x) refl
+  ∂-sound∘∂-complete′ (_>>=_ {xs = x ∷ xs} ⟪ p₁ ⟫ p₂) (_>>=_ {s₁ = t ∷ _} x∈p₁ y∈p₂x) refl
     rewrite ∂-sound∘∂-complete x∈p₁
           | Cast∈.∘sym refl (♭?♯? (∂-initial (♭ p₁) t)) refl y∈p₂x =
     refl
-  ∂-sound∘∂-complete′ (_∞>>=_ {R₁} {xs = []} p₁ p₂) (_∞>>=_ {s₁ = t ∷ _} x∈p₁ y∈p₂x) refl
+  ∂-sound∘∂-complete′ (_>>=_ {R₁} {xs = []} ⟪ p₁ ⟫ p₂) (_>>=_ {s₁ = t ∷ _} x∈p₁ y∈p₂x) refl
     rewrite ∂-sound∘∂-complete x∈p₁
           | Cast∈.∘sym refl (♭?♯? (∂-initial (♭ p₁) t)) refl y∈p₂x =
     refl
@@ -133,11 +134,9 @@ mutual
 
   ∂-sound∘∂-complete′ (return _) () refl
   ∂-sound∘∂-complete′ fail       () refl
-  ∂-sound∘∂-complete′ (_ ⊛ ⟪ _ ⟫)            (_⊛_    {s₁ = []} f∈p₁ _) _ with I.complete f∈p₁
+  ∂-sound∘∂-complete′ (_ ⊛ ⟪ _ ⟫)           (_⊛_   {s₁ = []} f∈p₁ _) _ with I.complete f∈p₁
   ... | ()
-  ∂-sound∘∂-complete′ (_>>=_  {xs = []} _ _) (_>>=_  {s₁ = []} x∈p₁ _) _ with I.complete x∈p₁
-  ... | ()
-  ∂-sound∘∂-complete′ (_∞>>=_ {xs = []} _ _) (_∞>>=_ {s₁ = []} x∈p₁ _) _ with I.complete x∈p₁
+  ∂-sound∘∂-complete′ (_>>=_ {xs = []} _ _) (_>>=_ {s₁ = []} x∈p₁ _) _ with I.complete x∈p₁
   ... | ()
 
   ∂!-sound∘∂!-complete :

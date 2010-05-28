@@ -7,6 +7,7 @@ module TotalParserCombinators.Semantics where
 open import Coinduction
 open import Data.List hiding (drop)
 import Data.List.Any as Any
+open import Data.Maybe using (Maybe)
 open import Data.Product
 open import Data.Unit using (⊤; tt)
 open import Function
@@ -32,7 +33,7 @@ open import TotalParserCombinators.Parser
 
 infix  60 <$>_
 infixl 50 _⊛_
-infixl 10 _>>=_ _∞>>=_
+infixl 10 _>>=_
 infix   4 _∈_·_
 
 data _∈_·_ {Tok} :
@@ -53,18 +54,12 @@ data _∈_·_ {Tok} :
              (f∈p₁ : f ∈ ♭? p₁ · s₁)
              (x∈p₂ : x ∈ ♭? p₂ · s₂) →
              f x ∈ p₁ ⊛ p₂ · s₁ ++ s₂
-  _>>=_    : ∀ {R₁ R₂ x y s₁ s₂ xs} {f : R₁ → List R₂}
-               {p₁ : Parser Tok R₁ xs}
-               {p₂ : (x : R₁) → ∞? (Parser Tok R₂ (f x)) xs}
-             (x∈p₁ : x ∈ p₁ · s₁)
+  _>>=_    : ∀ {R₁ R₂ x y s₁ s₂ xs} {f : Maybe (R₁ → List R₂)}
+               {p₁ : ∞? (Parser Tok R₁ xs) f}
+               {p₂ : (x : R₁) → ∞? (Parser Tok R₂ (app f x)) xs}
+             (x∈p₁ : x ∈ ♭? p₁ · s₁)
              (y∈p₂x : y ∈ ♭? (p₂ x) · s₂) →
              y ∈ p₁ >>= p₂ · s₁ ++ s₂
-  _∞>>=_   : ∀ {R₁ R₂ x y s₁ s₂ xs}
-               {p₁ : ∞ (Parser Tok R₁ xs)}
-               {p₂ : R₁ → ∞? (Parser Tok R₂ []) xs}
-             (x∈p₁ : x ∈ ♭ p₁ · s₁)
-             (y∈p₂x : y ∈ ♭? (p₂ x) · s₂) →
-             y ∈ p₁ ∞>>= p₂ · s₁ ++ s₂
   nonempty : ∀ {R xs x y s} {p : Parser Tok R xs}
              (x∈p : y ∈ p · x ∷ s) → y ∈ nonempty p · x ∷ s
   cast     : ∀ {R xs₁ xs₂ x s}
@@ -151,6 +146,25 @@ p₁ ≲ p₂ = ∀ {x s} → x ∈ p₁ · s → x ∈ p₂ · s
 ... | ()
 
 ------------------------------------------------------------------------
+-- Some abbreviations
+
+infix 10 ⟨_⟩>>=_ ⟪_⟫>>=_
+
+⟨_⟩>>=_ : ∀ {Tok R₁ R₂ x y s₁ s₂ xs} {f : R₁ → List R₂}
+            {p₁ : Parser Tok R₁ xs}
+            {p₂ : (x : R₁) → ∞? (Parser Tok R₂ (f x)) xs} →
+          x ∈ p₁ · s₁ → y ∈ ♭? (p₂ x) · s₂ →
+          y ∈ ⟨ p₁ ⟩ >>= p₂ · s₁ ++ s₂
+⟨_⟩>>=_ = _>>=_ {p₁ = ⟨ _ ⟩}
+
+⟪_⟫>>=_ : ∀ {Tok R₁ R₂ x y s₁ s₂ xs}
+            {p₁ : ∞ (Parser Tok R₁ xs)}
+            {p₂ : (x : R₁) → ∞? (Parser Tok R₂ []) xs} →
+          x ∈ ♭ p₁ · s₁ → y ∈ ♭? (p₂ x) · s₂ →
+          y ∈ ⟪ p₁ ⟫ >>= p₂ · s₁ ++ s₂
+⟪_⟫>>=_ = _>>=_ {p₁ = ⟪ _ ⟫}
+
+------------------------------------------------------------------------
 -- A simple cast lemma
 
 cast∈ : ∀ {Tok R xs} {p p′ : Parser Tok R xs} {x x′ s s′} →
@@ -197,14 +211,14 @@ module Cast∈ where
 
 module ♭♯ where
 
-  drop : ∀ {Tok R R′ xs′} {p : Parser Tok R′ xs′} (xs : List R) →
-         ♭? (♯? {xs = xs} p) ≲ p
-  drop xs = cast∈ P.refl (♭?♯? xs) P.refl
+  drop : ∀ {Tok R R′ xs t} {p : Parser Tok R xs} (n : El t R′) →
+         ♭? (♯? {n = n} p) ≲ p
+  drop n = cast∈ P.refl (♭?♯? n) P.refl
 
-  add : ∀ {Tok R R′ xs′} {p : Parser Tok R′ xs′} (xs : List R) →
-        p ≲ ♭? (♯? {xs = xs} p)
-  add xs = cast∈ P.refl (P.sym $ ♭?♯? xs) P.refl
+  add : ∀ {Tok R R′ xs t} {p : Parser Tok R xs} (n : El t R′) →
+        p ≲ ♭? (♯? {n = n} p)
+  add n = cast∈ P.refl (P.sym $ ♭?♯? n) P.refl
 
-  correct : ∀ {Tok R R′ xs′} (xs : List R) {p : Parser Tok R′ xs′} →
-            ♭? (♯? {xs = xs} p) ≅ p
-  correct xs = Cast∈.correct P.refl (♭?♯? xs) P.refl
+  correct : ∀ {Tok R R′ xs t} (n : El t R′) {p : Parser Tok R xs} →
+            ♭? (♯? {n = n} p) ≅ p
+  correct n = Cast∈.correct P.refl (♭?♯? n) P.refl

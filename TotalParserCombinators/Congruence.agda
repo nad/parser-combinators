@@ -15,6 +15,7 @@ module TotalParserCombinators.Congruence where
 open import Coinduction
 open import Data.List
 import Data.List.Any as Any
+open import Data.Maybe
 open import Function
 open import Relation.Binary.PropositionalEquality using (_≡_; _≗_)
 
@@ -29,7 +30,8 @@ open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
 
 infixl 50 _⊛_ _⊙′_ _<$>_
-infixl 10 _>>=_ _≫=′_ _∞>>=_
+infixl 10 _≫=′_
+infix  10 [_,_]_>>=_
 infixl  5 _∣_
 infix   5 _∷_
 infix   4 _≈[_]P_ _≅P_ _≈P_
@@ -87,7 +89,7 @@ mutual
     ♭♯ : ∀ {k R R₁ R₂ xs₁ xs₂} (ys₁ : List R₁) (ys₂ : List R₂)
            {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂}
          (p₁≈p₂ : p₁ ≈[ k ]P p₂) →
-         ♭? (♯? {xs = ys₁} p₁) ≈[ k ]P ♭? (♯? {xs = ys₂} p₂)
+         ♭? (♯? {n = ys₁} p₁) ≈[ k ]P ♭? (♯? {n = ys₂} p₂)
 
     return : ∀ {k R} {x₁ x₂ : R}
              (x₁≡x₂ : x₁ ≡ x₂) → return x₁ ≈[ k ]P return x₂
@@ -126,14 +128,14 @@ mutual
            (p₁≈p₃ : p₁ ≈[ k ]P p₃) (p₂≈p₄ : p₂ ≈[ k ]P p₄) →
            p₁ ⊙ p₂ ≈[ k ]P p₃ ⊙ p₄
 
-    _>>=_ : ∀ {k R₁ R₂ xs₁ xs₂} {f₁ f₂ : R₁ → List R₂}
-              {p₁ : Parser Tok R₁ xs₁}
-              {p₂ : (x : R₁) → ∞? (Parser Tok R₂ (f₁ x)) xs₁}
-              {p₃ : Parser Tok R₁ xs₂}
-              {p₄ : (x : R₁) → ∞? (Parser Tok R₂ (f₂ x)) xs₂}
-            (p₁≈p₃ : p₁ ≈[ k ]P p₃)
-            (p₂≈p₄ : ∀ x → ♭? (p₂ x) ≈[ k ]P ♭? (p₄ x)) →
-            p₁ >>= p₂ ≈[ k ]P p₃ >>= p₄
+    [_,_]_>>=_ : ∀ {k R₁ R₂ xs₁ xs₂} {f₁ f₂ : Maybe (R₁ → List R₂)}
+                   (p₁ : ∞? (Parser Tok R₁ xs₁) f₁)
+                   {p₂ : (x : R₁) → ∞? (Parser Tok R₂ (app f₁ x)) xs₁}
+                   (p₃ : ∞? (Parser Tok R₁ xs₂) f₂)
+                   {p₄ : (x : R₁) → ∞? (Parser Tok R₂ (app f₂ x)) xs₂}
+                 (p₁≈p₃ : ♭? p₁ ≈[ k ]P ♭? p₃)
+                 (p₂≈p₄ : ∀ x → ♭? (p₂ x) ≈[ k ]P ♭? (p₄ x)) →
+                 p₁ >>= p₂ ≈[ k ]P p₃ >>= p₄
 
     _≫=′_ : ∀ {k R₁ R₂ xs₁ xs₂} {f₁ f₂ : R₁ → List R₂}
               {p₁ : Parser Tok R₁ xs₁}
@@ -142,15 +144,6 @@ mutual
               {p₄ : (x : R₁) → Parser Tok R₂ (f₂ x)}
             (p₁≈p₃ : p₁ ≈[ k ]P p₃) (p₂≈p₄ : ∀ x → p₂ x ≈[ k ]P p₄ x) →
             p₁ ≫= p₂ ≈[ k ]P p₃ ≫= p₄
-
-    _∞>>=_ : ∀ {k R₁ R₂ xs₁ xs₂}
-               {p₁ : ∞ (Parser Tok R₁ xs₁)}
-               {p₂ : R₁ → ∞? (Parser Tok R₂ []) xs₁}
-               {p₃ : ∞ (Parser Tok R₁ xs₂)}
-               {p₄ : R₁ → ∞? (Parser Tok R₂ []) xs₂}
-             (p₁≈p₃ : ♭ p₁ ≈[ k ]P ♭ p₃)
-             (p₂≈p₄ : ∀ x → ♭? (p₂ x) ≈[ k ]P ♭? (p₄ x)) →
-             p₁ ∞>>= p₂ ≈[ k ]P p₃ ∞>>= p₄
 
     nonempty : ∀ {k R xs₁ xs₂}
                  {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂}

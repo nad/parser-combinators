@@ -5,7 +5,7 @@
 module TotalParserCombinators.Simplification where
 
 open import Coinduction
-open import Data.List
+open import Data.List using (List)
 open import Data.Product
 open import Function
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
@@ -34,27 +34,25 @@ private
 -- down to the first occurrences of ♯_. The following simplifications
 -- are applied in a bottom-up manner:
 --
--- f <$> fail                  → fail
--- f <$> return x              → return (f x)
--- fail         ∣ p            → p
--- p            ∣ fail         → p
--- token >>= p₁ ∣ token >>= p₂ → token ≫= (λ t → ♭? (p₁ t) ∣ ♭? (p₂ t))
--- fail     ⊛ p                → fail
--- p        ⊛ fail             → fail
--- return f ⊛ return x         → return (f x)
--- fail     >>= p              → fail
--- return x >>= p              → p x
--- fail     ∞>>= p             → fail
--- return x ∞>>= p             → p x
--- nonempty fail               → fail
--- cast eq p                   → p
+-- f <$> fail                          → fail
+-- f <$> return x                      → return (f x)
+-- fail             ∣ p                → p
+-- p                ∣ fail             → p
+-- ⟨ token ⟩ >>= p₁ ∣ ⟨ token ⟩ >>= p₂ → token ≫= (λ t → ♭? (p₁ t) ∣ ♭? (p₂ t))
+-- fail     ⊛ p                        → fail
+-- p        ⊛ fail                     → fail
+-- return f ⊛ return x                 → return (f x)
+-- fail     >>= p                      → fail
+-- return x >>= p                      → p x
+-- nonempty fail                       → fail
+-- cast eq p                           → p
 --
 -- Some other changes may also be performed, such as the replacement
--- of _∞>>=_ with _≫=_ (along with insertion of ♭?).
+-- of _>>=_ with _≫=_ (along with insertion of ♭?).
 --
 -- An example of a possible future addition:
 --
--- (p₁ >>= p₂) >>= p₃ → p₁ >>= λ x → p₂ >>= p₃
+-- ⟨ p₁ >>= p₂ ⟩ >>= p₃ → ♭? p₁ ≫= λ x → ♭? (p₂ x) ≫= p₃
 
 private
  mutual
@@ -92,28 +90,30 @@ private
   -- • _∣_:
 
   simplify₁ (p₁ ∣ p₂) with simplify₁ p₁ | simplify₁ p₂
-  ... | (._ , fail          , p₁≅∅)
-      | (_  , p₂′           , p₂≅p₂′) = _ , _ , (
-                                        p₁   ∣ p₂   ≅⟨ p₁≅∅ ∣ p₂≅p₂′ ⟩
-                                        fail ∣ p₂′  ≅⟨ AdditiveMonoid.left-identity p₂′ ⟩
-                                        p₂′         ∎)
-  ... | (_  , p₁′           , p₁≅p₁′)
-      | (._ , fail          , p₂≅∅)   = _ , _ , (
-                                        p₁  ∣ p₂       ≅⟨ p₁≅p₁′ ∣ p₂≅∅ ⟩
-                                        p₁′ ∣ fail     ≅⟨ AdditiveMonoid.right-identity p₁′ ⟩
-                                        p₁′            ∎)
-  ... | (._ , token >>= p₁′ , p₁≅…)
-      | (._ , token >>= p₂′ , p₂≅…)   = _ , _ , (
-                                        p₁            ∣ p₂                        ≅⟨ p₁≅… ∣ p₂≅… ⟩
-                                        token >>= p₁′ ∣ token >>= p₂′             ≅⟨ (token ∎) >>= (λ x → ♭? (p₁′ x) ∎) ∣
-                                                                                     (token ∎) >>= (λ x → ♭? (p₂′ x) ∎) ⟩
-                                        token ≫= (♭? ∘ p₁′) ∣ token ≫= (♭? ∘ p₂′) ≅⟨ sym $ Monad.left-distributive
-                                                                                             token (♭? ∘ p₁′) (♭? ∘ p₂′) ⟩
-                                        token ≫= (λ t → ♭? (p₁′ t) ∣ ♭? (p₂′ t))  ∎)
-  ... | (_  , p₁′           , p₁≅p₁′)
-      | (_  , p₂′           , p₂≅p₂′) = _ , _ , (
-                                        p₁  ∣ p₂   ≅⟨ p₁≅p₁′ ∣ p₂≅p₂′ ⟩
-                                        p₁′ ∣ p₂′  ∎)
+  ... | (._ , fail              , p₁≅∅)
+      | (_  , p₂′               , p₂≅p₂′) = _ , _ , (
+                                            p₁   ∣ p₂   ≅⟨ p₁≅∅ ∣ p₂≅p₂′ ⟩
+                                            fail ∣ p₂′  ≅⟨ AdditiveMonoid.left-identity p₂′ ⟩
+                                            p₂′         ∎)
+  ... | (_  , p₁′               , p₁≅p₁′)
+      | (._ , fail              , p₂≅∅)   = _ , _ , (
+                                            p₁  ∣ p₂       ≅⟨ p₁≅p₁′ ∣ p₂≅∅ ⟩
+                                            p₁′ ∣ fail     ≅⟨ AdditiveMonoid.right-identity p₁′ ⟩
+                                            p₁′            ∎)
+  ... | (._ , ⟨ token ⟩ >>= p₁′ , p₁≅…)
+      | (._ , ⟨ token ⟩ >>= p₂′ , p₂≅…)   = _ , _ , (
+                                            p₁                ∣ p₂                     ≅⟨ p₁≅… ∣ p₂≅… ⟩
+                                            ⟨ token ⟩ >>= p₁′ ∣ ⟨ token ⟩ >>= p₂′      ≅⟨ [ ⟨ _ ⟩ , ⟨ _ ⟩ ] token ∎ >>=
+                                                                                            (λ x → ♭? (p₁′ x) ∎) ∣
+                                                                                          [ ⟨ _ ⟩ , ⟨ _ ⟩ ] token ∎ >>=
+                                                                                            (λ x → ♭? (p₂′ x) ∎) ⟩
+                                            token ≫= (♭? ∘ p₁′) ∣ token ≫= (♭? ∘ p₂′)  ≅⟨ sym $ Monad.left-distributive
+                                                                                                  token (♭? ∘ p₁′) (♭? ∘ p₂′) ⟩
+                                            token ≫= (λ t → ♭? (p₁′ t) ∣ ♭? (p₂′ t))   ∎)
+  ... | (_  , p₁′               , p₁≅p₁′)
+      | (_  , p₂′               , p₂≅p₂′) = _ , _ , (
+                                            p₁  ∣ p₂   ≅⟨ p₁≅p₁′ ∣ p₂≅p₂′ ⟩
+                                            p₁′ ∣ p₂′  ∎)
 
   -- • _⊛_:
 
@@ -171,43 +171,22 @@ private
 
   -- • _>>=_:
 
-  simplify₁ (p₁ >>= p₂) with simplify₁ p₁
+  simplify₁ (p₁ >>= p₂) with simplify₁′ p₁
   ... | (._ , fail     , p₁≅∅)  = _ , _ , (
-                                  p₁  >>= p₂         ≅⟨ p₁≅∅ >>= (λ x → ♭? (p₂ x) ∎) ⟩
+                                  p₁  >>= p₂         ≅⟨ [ p₁ , ⟨ _ ⟩ ] p₁≅∅ >>= (λ x → ♭? (p₂ x) ∎) ⟩
                                   fail ≫= (♭? ∘ p₂)  ≅⟨ Monad.left-zero (♭? ∘ p₂) ⟩
                                   fail               ∎)
   ... | (._ , return x , p₁≅ε) with simplify₁′ (p₂ x)
   ...   | (_ , p₂x′ , p₂x≅p₂x′) = _ , _ , (
-                                  p₁      >>= p₂         ≅⟨ p₁≅ε >>= (λ x → ♭? (p₂ x) ∎) ⟩
+                                  p₁      >>= p₂         ≅⟨ [ p₁ , ⟨ _ ⟩ ] p₁≅ε >>= (λ x → ♭? (p₂ x) ∎) ⟩
                                   return x ≫= (♭? ∘ p₂)  ≅⟨ Monad.left-identity x (♭? ∘ p₂) ⟩
                                   ♭? (p₂ x)              ≅⟨ p₂x≅p₂x′ ⟩
                                   p₂x′                   ∎)
   simplify₁ (p₁ >>= p₂)
       | (_ , p₁′ , p₁≅p₁′)      = _ , _ , (
-                                  p₁  >>= p₂        ≅⟨ sym $ Monad.≫=≅>>= p₁ p₂ ⟩
-                                  p₁  ≫= (♭? ∘ p₂)  ≅⟨ p₁≅p₁′ ≫=′ (λ x → ♭? (p₂ x) ∎) ⟩
-                                  p₁′ ≫= (♭? ∘ p₂)  ∎)
-
-  -- • _∞>>=_:
-
-  simplify₁ (p₁ ∞>>= p₂) with force p₁
-  ... | (fail     , p₁≅∅)       = _ , _ , (
-                                  p₁       ∞>>= p₂        ≅⟨ p₁≅∅ ∞>>= (λ x → ♭? (p₂ x) ∎) ⟩
-                                  (♯ fail) ∞>>= p₂        ≅⟨ Monad.∞>>=≅≫= _ p₂ ⟩
-                                  fail      ≫= (♭? ∘ p₂)  ≅⟨ Monad.left-zero (♭? ∘ p₂) ⟩
-                                  fail                    ∎)
-  ... | (return x , p₁≅ε) with simplify₁′ (p₂ x)
-  ...   | (_ , p₂x′ , p₂x≅p₂x′) = _ , _ , (
-                                  p₁           ∞>>= p₂        ≅⟨ p₁≅ε ∞>>= (λ x → ♭? (p₂ x) ∎) ⟩
-                                  (♯ return x) ∞>>= p₂        ≅⟨ Monad.∞>>=≅≫= _ p₂ ⟩
-                                  return x      ≫= (♭? ∘ p₂)  ≅⟨ Monad.left-identity x (♭? ∘ p₂) ⟩
-                                  ♭? (p₂ x)                   ≅⟨ p₂x≅p₂x′ ⟩
-                                  p₂x′                        ∎)
-  simplify₁ (p₁ ∞>>= p₂)
-      | (p₁′ , p₁≅p₁′)          = _ , _ , (
-                                  p₁  ∞>>= p₂        ≅⟨ Monad.∞>>=≅≫= p₁ p₂ ⟩
-                                  ♭ p₁ ≫= (♭? ∘ p₂)  ≅⟨ p₁≅p₁′ ≫=′ (λ x → ♭? (p₂ x) ∎) ⟩
-                                  p₁′ ≫= (♭? ∘ p₂)   ∎)
+                                  p₁   >>= p₂         ≅⟨ sym $ Monad.≫=≅>>= p₁ p₂ ⟩
+                                  ♭? p₁ ≫= (♭? ∘ p₂)  ≅⟨ p₁≅p₁′ ≫=′ (λ x → ♭? (p₂ x) ∎) ⟩
+                                  p₁′   ≫= (♭? ∘ p₂)  ∎)
 
   -- • nonempty:
 
@@ -234,11 +213,13 @@ private
   -- predetermined depth, would be possible, but for simplicity
   -- delayed parsers are simply forced and returned.
 
-  simplify₁′ : ∀ {Tok R R′ xs} {ys : List R′}
-               (p : ∞? (Parser Tok R xs) ys) →
+  simplify₁′ : ∀ {t Tok R R′ xs} {n : El t R′}
+               (p : ∞? (Parser Tok R xs) n) →
                ∃₂ λ xs (p′ : Parser Tok R xs) → ♭? p ≅P p′
-  simplify₁′ ⟪ p ⟫ = (_ , ♭ p , (♭ p ∎))
-  simplify₁′ ⟨ p ⟩ = simplify₁ p
+  simplify₁′ {list}  ⟪ p ⟫ = (_ , ♭ p , (♭ p ∎))
+  simplify₁′ {list}  ⟨ p ⟩ = simplify₁ p
+  simplify₁′ {maybe} ⟪ p ⟫ = (_ , ♭ p , (♭ p ∎))
+  simplify₁′ {maybe} ⟨ p ⟩ = simplify₁ p
 
 -- A simplifier.
 

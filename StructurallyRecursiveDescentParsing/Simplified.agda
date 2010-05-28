@@ -132,8 +132,8 @@ private
                  where
                  lem : _ Bag-≈ _
                  lem = BagS.reflexive (∣-lemma p₁ p₂)
-⟦ p₁ !>>= p₂ ⟧ =           ⟦ p₁ ⟧ >>= λ x → ⟪ ♯ ⟦ ♭ (p₂ x) ⟧ ⟫
-⟦ p₁ ?>>= p₂ ⟧ = cast lem (⟦ p₁ ⟧ >>= λ x → ⟨   ⟦    p₂ x  ⟧ ⟩)
+⟦ p₁ !>>= p₂ ⟧ =           ⟨ ⟦ p₁ ⟧ ⟩ >>= λ x → ⟪ ♯ ⟦ ♭ (p₂ x) ⟧ ⟫
+⟦ p₁ ?>>= p₂ ⟧ = cast lem (⟨ ⟦ p₁ ⟧ ⟩ >>= λ x → ⟨   ⟦    p₂ x  ⟧ ⟩)
                  where
                  lem : _ Bag-≈ _
                  lem = BagS.reflexive (?>>=-lemma p₁ p₂)

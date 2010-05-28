@@ -22,7 +22,7 @@ open import Relation.Nullary
 open import Relation.Binary.PropositionalEquality
   using (_≡_; refl; sym)
 
-open import TotalParserCombinators.Coinduction
+open import TotalParserCombinators.Coinduction hiding (maybe)
 open import TotalParserCombinators.Parser
 import TotalParserCombinators.Lib as Lib
 open import TotalParserCombinators.Semantics as Sem

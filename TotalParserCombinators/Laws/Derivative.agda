@@ -9,7 +9,8 @@ open import Coinduction
 open import Data.List
 import Data.List.Any.BagAndSetEquality as BSEq
 import Data.List.Properties as ListProp
-open import Function
+open import Data.Maybe using (Maybe)
+open import Function using (_∘_; _$_)
 import Relation.Binary.PropositionalEquality as P
 
 private
@@ -50,14 +51,14 @@ mutual
     ∂ p₁ t ⊙ ♭ p₂ ∣ fail               ≅⟨ (∂ p₁ t ⊙ ♭ p₂ ∎) ∣ sym (left-zero-⊙ (∂ (♭ p₂) t)) ⟩
     ∂ p₁ t ⊙ ♭ p₂ ∣ fail ⊙ ∂ (♭ p₂) t  ∎
   ∂-⊛ ⟪ p₁ ⟫ ⟪ p₂ ⟫ {t} =
-    ∂ (⟪ p₁ ⟫ ⊛ ⟪ p₂ ⟫) t                  ≅⟨ (∂ (♭ p₁) t ∎) ⊛ (♭? {xs = ∂-initial (♭ p₁) t} (♯? (♭ p₂)) ∎) ⟩
+    ∂ (⟪ p₁ ⟫ ⊛ ⟪ p₂ ⟫) t                  ≅⟨ (∂ (♭ p₁) t ∎) ⊛ (♭? {n = ∂-initial (♭ p₁) t} (♯? (♭ p₂)) ∎) ⟩
     ∂ (♭ p₁) t ⊙ ♭ p₂                      ≅⟨ sym $ AdditiveMonoid.right-identity (∂ (♭ p₁) t ⊙ ♭ p₂) ⟩
     ∂ (♭ p₁) t ⊙ ♭ p₂ ∣ fail               ≅⟨ (∂ (♭ p₁) t ⊙ ♭ p₂ ∎) ∣ sym (left-zero-⊙ (∂ (♭ p₂) t)) ⟩
     ∂ (♭ p₁) t ⊙ ♭ p₂ ∣ fail ⊙ ∂ (♭ p₂) t  ∎
   ∂-⊛ ⟨ p₁ ⟩ ⟨ p₂ ⟩ {t} =
     ∂ (⟨ p₁ ⟩ ⊛ ⟨ p₂ ⟩) t ∎
   ∂-⊛ ⟪ p₁ ⟫ (⟨_⟩ {f} {fs} p₂) {t} =
-    ∂ (⟪ p₁ ⟫ ⊛ ⟨ p₂ ⟩) t                        ≅⟨ (∂ (♭ p₁) t ∎) ⊛ (♭? {xs = ∂-initial (♭ p₁) t} (♯? p₂) ∎) ∣
+    ∂ (⟪ p₁ ⟫ ⊛ ⟨ p₂ ⟩) t                        ≅⟨ (∂ (♭ p₁) t ∎) ⊛ (♭? {n = ∂-initial (♭ p₁) t} (♯? p₂) ∎) ∣
                                                     (♯? (return⋆ (f ∷ fs)) ⊛ ⟨ ∂ p₂ t ⟩ ∎) ⟩
     ∂ (♭ p₁) t ⊙ p₂ ∣ return⋆ (f ∷ fs) ⊙ ∂ p₂ t  ∎
 
@@ -68,13 +69,13 @@ mutual
           (p₂ : Parser Tok  R₁       xs) {t} →
         ∂ (p₁ ⊙ p₂) t ≅P ∂ p₁ t ⊙ p₂ ∣ return⋆ fs ⊙ ∂ p₂ t
   ∂-⊙ {fs = fs} {xs} p₁ p₂ {t} =
-    ∂ (p₁ ⊙ p₂) t                                        ≅⟨ ∂-⊛ (♯? p₁) (♯? p₂) ⟩
+    ∂ (p₁ ⊙ p₂) t                                       ≅⟨ ∂-⊛ (♯? p₁) (♯? p₂) ⟩
 
-    ∂ (♭? {xs = xs} (♯? p₁)) t ⊙ ♭? {xs = fs} (♯? p₂) ∣
-    return⋆ fs ⊙ ∂ (♭? {xs = fs} (♯? p₂)) t              ≅⟨ Eq.complete (∂-cong (♭♯.correct xs {p₁})) ⊙′
-                                                              Eq.complete (♭♯.correct fs {p₂}) ∣
-                                                            (return⋆ fs ∎) ⊙′
-                                                              Eq.complete (∂-cong (♭♯.correct fs {p₂}) {t}) ⟩
+    ∂ (♭? {n = xs} (♯? p₁)) t ⊙ ♭? {n = fs} (♯? p₂) ∣
+    return⋆ fs ⊙ ∂ (♭? {n = fs} (♯? p₂)) t              ≅⟨ Eq.complete (∂-cong (♭♯.correct xs {p₁})) ⊙′
+                                                             Eq.complete (♭♯.correct fs {p₂}) ∣
+                                                           (return⋆ fs ∎) ⊙′
+                                                             Eq.complete (∂-cong (♭♯.correct fs {p₂}) {t}) ⟩
     ∂ p₁ t ⊙ p₂ ∣ return⋆ fs ⊙ ∂ p₂ t                     ∎
 
   -- fail is a left zero of ⊙.
@@ -130,20 +131,33 @@ mutual
 
   -- Unfolding lemma for ∂ applied to _>>=_.
 
-  ∂->>= : ∀ {Tok R₁ R₂ xs} {f : R₁ → List R₂}
-          (p₁ : Parser Tok R₁ xs)
-          (p₂ : (x : R₁) → ∞? (Parser Tok R₂ (f x)) xs) {t} →
+  ∂->>= : ∀ {Tok R₁ R₂ xs} {f : Maybe (R₁ → List R₂)}
+          (p₁ : ∞? (Parser Tok R₁ xs) f)
+          (p₂ : (x : R₁) → ∞? (Parser Tok R₂ (app f x)) xs) {t} →
           ∂ (p₁ >>= p₂) t ≅P
-          ∂ p₁ t ≫= (♭? ∘ p₂) ∣ return⋆ xs ≫= (λ x → ∂ (♭? (p₂ x)) t)
-  ∂->>= {xs = []} p₁ p₂ {t} =
+          ∂ (♭? p₁) t ≫= (♭? ∘ p₂) ∣ return⋆ xs ≫= (λ x → ∂ (♭? (p₂ x)) t)
+  ∂->>= {xs = []} ⟨ p₁ ⟩ p₂ {t} =
     ∂ p₁ t ≫= (♭? ∘ p₂)                                    ≅⟨ sym $ AdditiveMonoid.right-identity (∂ p₁ t ≫= (♭? ∘ p₂)) ⟩
     ∂ p₁ t ≫= (♭? ∘ p₂) ∣ fail                             ≅⟨ (∂ p₁ t ≫= (♭? ∘ p₂) ∎) ∣
                                                               sym (left-zero-≫= (λ x → ∂ (♭? (p₂ x)) t)) ⟩
     ∂ p₁ t ≫= (♭? ∘ p₂) ∣ fail ≫= (λ x → ∂ (♭? (p₂ x)) t)  ∎
-  ∂->>= {xs = x ∷ xs} p₁ p₂ {t} =
-    ∂ p₁ t ≫= (♭? ∘ p₂) ∣ return⋆ (x ∷ xs) >>= (λ x → ⟨ ∂! (p₂ x) t ⟩)  ≅⟨ (∂ p₁ t ≫= (♭? ∘ p₂) ∎) ∣
-                                                                           (return⋆ (x ∷ xs) ∎) >>= (λ x → ∂!≅∂ (p₂ x)) ⟩
-    ∂ p₁ t ≫= (♭? ∘ p₂) ∣ return⋆ (x ∷ xs)  ≫= (λ x → ∂ (♭? (p₂ x)) t)  ∎
+  ∂->>= {xs = x ∷ xs} ⟨ p₁ ⟩ p₂ {t} =
+    ∂ p₁ t ≫= (♭? ∘ p₂) ∣ ⟨ return⋆ (x ∷ xs) ⟩ >>= (λ x → ⟨ ∂! (p₂ x) t ⟩)  ≅⟨ (∂ p₁ t ≫= (♭? ∘ p₂) ∎) ∣
+                                                                               [ ⟨ _ ⟩ ,  ⟨ _ ⟩ ] return⋆ (x ∷ xs) ∎ >>=
+                                                                               (λ x → ∂!≅∂ (p₂ x)) ⟩
+    ∂ p₁ t ≫= (♭? ∘ p₂) ∣   return⋆ (x ∷ xs)    ≫= (λ x → ∂ (♭? (p₂ x)) t)  ∎
+  ∂->>= {xs = []} ⟪ p₁ ⟫ p₂ {t} =
+    ∂ (⟪ p₁ ⟫ >>= p₂) t                                        ≅⟨ [ ⟪ _ ⟫ , ⟨ _ ⟩ ] _ ∎ >>= (λ _ → _ ∎) ⟩
+    ∂ (♭ p₁) t ≫= (♭? ∘ p₂)                                    ≅⟨ sym $ AdditiveMonoid.right-identity (∂ (♭ p₁) t ≫= (♭? ∘ p₂)) ⟩
+    ∂ (♭ p₁) t ≫= (♭? ∘ p₂) ∣ fail                             ≅⟨ (∂ (♭ p₁) t ≫= (♭? ∘ p₂) ∎) ∣
+                                                                  sym (left-zero-≫= (λ x → ∂ (♭? (p₂ x)) t)) ⟩
+    ∂ (♭ p₁) t ≫= (♭? ∘ p₂) ∣ fail ≫= (λ x → ∂ (♭? (p₂ x)) t)  ∎
+  ∂->>= {xs = x ∷ xs} ⟪ p₁ ⟫ p₂ {t} =
+    ∂ (⟪ p₁ ⟫ >>= p₂) t                                                          ≅⟨ [ ⟪ _ ⟫ , ⟨ _ ⟩ ] _ ∎ >>= (λ _ → _ ∎) ∣ (_ ∎) ⟩
+    ∂ (♭ p₁) t ≫= (♭? ∘ p₂) ∣ ⟨ return⋆ (x ∷ xs) ⟩ >>= (λ x → ⟨ ∂! (p₂ x) t ⟩)   ≅⟨ (∂ (♭ p₁) t ≫= (♭? ∘ p₂) ∎) ∣
+                                                                                    [ ⟨ _ ⟩ , ⟨ _ ⟩ ] return⋆ (x ∷ xs) ∎ >>=
+                                                                                    (λ x → ∂!≅∂ (p₂ x)) ⟩
+    ∂ (♭ p₁) t ≫= (♭? ∘ p₂) ∣   return⋆ (x ∷ xs)     ≫= (λ x → ∂ (♭? (p₂ x)) t)  ∎
 
   -- Unfolding lemma for ∂ applied to _≫=_.
 
@@ -153,12 +167,12 @@ mutual
          ∂ (p₁ ≫= p₂) t ≅P
          ∂ p₁ t ≫= p₂ ∣ return⋆ xs ≫= (λ x → ∂ (p₂ x) t)
   ∂-≫= {xs = xs} p₁ p₂ {t} =
-    ∂ (p₁ ≫= p₂) t                                        ≅⟨ ∂->>= p₁ (♯? ∘ p₂) ⟩
+    ∂ (p₁ ≫= p₂) t                                       ≅⟨ ∂->>= ⟨ p₁ ⟩ (♯? ∘ p₂) ⟩
 
-    ∂ p₁ t ≫= (♭? ∘ ♯? {xs = xs} ∘ p₂) ∣
-    return⋆ xs ≫= (λ x → ∂ (♭? (♯? {xs = xs} (p₂ x))) t)  ≅⟨ (∂ p₁ t ∎) ≫=′ (λ _ → Eq.complete (♭♯.correct xs)) ∣
-                                                             (return⋆ xs ∎) ≫=′ (λ _ → Eq.complete (∂-cong (♭♯.correct xs))) ⟩
-    ∂ p₁ t ≫= p₂ ∣ return⋆ xs ≫= (λ x → ∂ (p₂ x) t)       ∎
+    ∂ p₁ t ≫= (♭? ∘ ♯? {n = xs} ∘ p₂) ∣
+    return⋆ xs ≫= (λ x → ∂ (♭? (♯? {n = xs} (p₂ x))) t)  ≅⟨ (∂ p₁ t ∎) ≫=′ (λ _ → Eq.complete (♭♯.correct xs)) ∣
+                                                            (return⋆ xs ∎) ≫=′ (λ _ → Eq.complete (∂-cong (♭♯.correct xs))) ⟩
+    ∂ p₁ t ≫= p₂ ∣ return⋆ xs ≫= (λ x → ∂ (p₂ x) t)      ∎
 
   -- fail is a left zero of _≫=_.
 
@@ -183,56 +197,3 @@ right-zero-≫= {xs = xs} p =
     ∂ p t ≫= (λ _ → fail) ∣ return⋆ xs ≫= (λ _ → fail)  ≅⟨ right-zero-≫= (∂ p t) ∣ right-zero-≫= (return⋆ xs) ⟩
     fail ∣ fail                                         ≅⟨ AdditiveMonoid.left-identity fail ⟩
     fail                                                ∎)
-
-private
-
-  -- Preliminary unfolding lemma for ∂ applied to _∞>>=_.
-
-  ∂-∞>>=′ : ∀ {Tok R₁ R₂ xs}
-            (p₁ : ∞ (Parser Tok R₁ xs))
-            (p₂ : (x : R₁) → ∞? (Parser Tok R₂ []) xs) {t} →
-            ∂ (p₁ ∞>>= p₂) t ≅P
-            ♯ (∂ (♭ p₁) t) ∞>>= (λ x → ♯? (♭? (p₂ x))) ∣
-              return⋆ xs ≫= (λ x → ∂ (♭? (p₂ x)) t)
-  ∂-∞>>=′ {xs = []} p₁ p₂ {t} =
-    ∂ (p₁ ∞>>= p₂) t                     ≅⟨ (_ ∎) ∞>>= (λ _ → _ ∎) ⟩
-
-    _ ∞>>= (λ x → ♯? (♭? (p₂ x)))        ≅⟨ sym $ AdditiveMonoid.right-identity
-                                                    (_ ∞>>= (λ x → ♯? (♭? (p₂ x)))) ⟩
-    _ ∞>>= (λ x → ♯? (♭? (p₂ x))) ∣ fail ≅⟨ (_ ∞>>= (λ x → ♯? (♭? (p₂ x))) ∎) ∣
-                                            sym (left-zero-≫= (λ x → ∂ (♭? (p₂ x)) t)) ⟩
-    _ ∞>>= (λ x → ♯? (♭? (p₂ x))) ∣
-    fail ≫= (λ x → ∂ (♭? (p₂ x)) t)      ∎
-  ∂-∞>>=′ {xs = x ∷ xs} p₁ p₂ {t} =
-    ∂ (p₁ ∞>>= p₂) t                              ≅⟨ (_ ∎) ∞>>= (λ _ → _ ∎) ∣ (_ ∎) ⟩
-
-    _ ∞>>= (λ x → ♯? (♭? (p₂ x))) ∣
-    return⋆ (x ∷ xs) >>= (λ x → ⟨ ∂! (p₂ x) t ⟩)  ≅⟨ (_ ∞>>= (λ x → ♯? (♭? (p₂ x))) ∎) ∣
-                                                     (return⋆ (x ∷ xs) ∎) >>= (λ x → ∂!≅∂ (p₂ x)) ⟩
-    _ ∞>>= (λ x → ♯? (♭? (p₂ x))) ∣
-    return⋆ (x ∷ xs) ≫= (λ x → ∂ (♭? (p₂ x)) t)   ∎
-
--- _∞>>=_ and _>>=_ are equivalent (where their domains overlap).
-
-∞>>=≅>>= : ∀ {Tok R₁ R₂ xs}
-           (p₁ : ∞ (Parser Tok R₁ xs))
-           (p₂ : (x : R₁) → ∞? (Parser Tok R₂ []) xs) →
-           p₁ ∞>>= p₂ ≅P ♭ p₁ >>= p₂
-∞>>=≅>>= {xs = xs} p₁ p₂ =
-  BagMonoid.reflexive (P.sym $ ListProp.Monad.right-zero xs) ∷ λ t → ♯ (
-    ∂ (p₁ ∞>>= p₂) t                                                       ≅⟨ ∂-∞>>=′ p₁ p₂ ⟩
-    _ ∞>>= (λ x → ♯? (♭? (p₂ x))) ∣ return⋆ xs ≫= (λ x → ∂ (♭? (p₂ x)) t)  ≅⟨ ∞>>=≅>>= _ _ ∣ (_ ∎) ⟩
-    ∂ (♭ p₁) t ≫= (♭? ∘ p₂) ∣ return⋆ xs ≫= (λ x → ∂ (♭? (p₂ x)) t)        ≅⟨ sym $ ∂->>= (♭ p₁) p₂ ⟩
-    ∂ (♭ p₁ >>= p₂) t                                                      ∎)
-
--- Unfolding lemma for ∂ applied to _∞>>=_.
-
-∂-∞>>= : ∀ {Tok R₁ R₂ xs}
-         (p₁ : ∞ (Parser Tok R₁ xs))
-         (p₂ : (x : R₁) → ∞? (Parser Tok R₂ []) xs) {t} →
-         ∂ (p₁ ∞>>= p₂) t ≅P
-         ∂ (♭ p₁) t ≫= (♭? ∘ p₂) ∣ return⋆ xs ≫= (λ x → ∂ (♭? (p₂ x)) t)
-∂-∞>>= {xs = xs} p₁ p₂ {t} =
-  ∂ (p₁ ∞>>= p₂) t                                                       ≅⟨ ∂-∞>>=′ p₁ p₂ ⟩
-  _ ∞>>= (λ x → ♯? (♭? (p₂ x))) ∣ return⋆ xs ≫= (λ x → ∂ (♭? (p₂ x)) t)  ≅⟨ ∞>>=≅>>= _ _ ∣ (_ ∎) ⟩
-  ∂ (♭ p₁) t ≫= (♭? ∘ p₂) ∣ return⋆ xs ≫= (λ x → ∂ (♭? (p₂ x)) t)        ∎

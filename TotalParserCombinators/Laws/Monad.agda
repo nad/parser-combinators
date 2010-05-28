@@ -10,6 +10,7 @@ open import Coinduction
 open import Data.List as List
 import Data.List.Any.BagAndSetEquality as BSEq
 import Data.List.Properties as ListProp
+open import Data.Maybe using (Maybe)
 open import Function
 
 private
@@ -23,33 +24,22 @@ open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Congruence as Eq
 import TotalParserCombinators.Laws.AdditiveMonoid as AdditiveMonoid
 open import TotalParserCombinators.Laws.Derivative as Derivative
-  hiding (∞>>=≅>>=)
 open import TotalParserCombinators.Laws.ReturnStar as Return⋆
 open import TotalParserCombinators.Lib
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
 
 ------------------------------------------------------------------------
--- _>>=_, _∞>>=_ and _≫=_ are equivalent (where their domains overlap)
+-- _>>=_ and _≫=_ are equivalent (where their domains overlap)
 
-open Derivative public using (∞>>=≅>>=)
-
-≫=≅>>= : ∀ {Tok R₁ R₂ xs} {f : R₁ → List R₂}
-         (p₁ : Parser Tok R₁ xs)
-         (p₂ : (x : R₁) → ∞? (Parser Tok R₂ (f x)) xs) →
-         p₁ ≫= (♭? ∘ p₂) ≅P p₁ >>= p₂
+≫=≅>>= : ∀ {Tok R₁ R₂ xs} {f : Maybe (R₁ → List R₂)}
+         (p₁ : ∞? (Parser Tok R₁ xs) f)
+         (p₂ : (x : R₁) → ∞? (Parser Tok R₂ (app f x)) xs) →
+         ♭? p₁ ≫= (♭? ∘ p₂) ≅P p₁ >>= p₂
 ≫=≅>>= {xs = xs} p₁ p₂ =
-  p₁ ≫= (♭? ∘ p₂)  ≅⟨ (p₁ ∎) >>= (λ _ → Eq.complete (♭♯.correct xs)) ⟩
-  p₁ >>= p₂        ∎
-
-∞>>=≅≫= : ∀ {Tok R₁ R₂ xs}
-          (p₁ : ∞ (Parser Tok R₁ xs))
-          (p₂ : (x : R₁) → ∞? (Parser Tok R₂ []) xs) →
-          p₁ ∞>>= p₂ ≅P ♭ p₁ ≫= (♭? ∘ p₂)
-∞>>=≅≫= p₁ p₂ =
-  p₁   ∞>>= p₂        ≅⟨ ∞>>=≅>>= p₁ p₂ ⟩
-  ♭ p₁ >>=  p₂        ≅⟨ sym $ ≫=≅>>= (♭ p₁) p₂ ⟩
-  ♭ p₁  ≫= (♭? ∘ p₂)  ∎
+  ♭? p₁ ≫= (♭? ∘ p₂)  ≅⟨ [ ⟨ _ ⟩ , p₁ ] ♭? p₁ ∎ >>=
+                         (λ _ → Eq.complete (♭♯.correct xs)) ⟩
+  p₁ >>= p₂           ∎
 
 ------------------------------------------------------------------------
 -- _≫=_, return, _∣_ and fail form a monad with a zero and a plus
