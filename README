@@ -5,9 +5,7 @@ Total parser combinators and parsing of mixfix operators
 TotalRecognisers and TotalParserCombinators
 Author: Nils Anders Danielsson
 
-  Described in the paper "Total Parser Combinators". A short
-  description is also included in "Mixing Induction and Coinduction"
-  (coauthored by Thorsten Altenkirch).
+  Described in the paper "Total Parser Combinators".
 
 StructurallyRecursiveDescentParsing
 Authors: Nils Anders Danielsson and Ulf Norell

@@ -91,11 +91,6 @@ import TotalParserCombinators.Examples.PBM
 
 import Mixfix
 
--- If you are only interested in code related to the paper "Mixing
--- Induction and Coinduction", see the following module:
-
-import TotalParserCombinators.MixingInductionAndCoinduction
-
 -- For code related to the paper "Structurally Recursive Descent
 -- Parsing", developed together with Ulf Norell, see the following
 -- module:
