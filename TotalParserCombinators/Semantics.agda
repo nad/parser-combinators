@@ -7,7 +7,7 @@ module TotalParserCombinators.Semantics where
 open import Coinduction
 open import Data.List hiding (drop)
 import Data.List.Any as Any
-open import Data.Maybe using (Maybe)
+open import Data.Maybe using (Maybe); open Data.Maybe.Maybe
 open import Data.Product
 open import Data.Unit using (⊤; tt)
 open import Function
@@ -15,13 +15,13 @@ open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence as Eq using (_⇔_; module Equivalent)
 open import Function.Inverse as Inv
   using (_⇿_; module Inverse; Isomorphism)
+open import Level
 import Relation.Binary.HeterogeneousEquality as H
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 open import Relation.Nullary
 
 open Any.Membership-≡ using (bag) renaming (_≈[_]_ to _List-≈[_]_)
 
-open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Parser
 
 ------------------------------------------------------------------------
@@ -32,8 +32,8 @@ open import TotalParserCombinators.Parser
 -- semantics is defined inductively.
 
 infix  60 <$>_
-infixl 50 _⊛_
-infixl 10 _>>=_
+infixl 50 _⊛_   [_-_]_⊛_
+infixl 10 _>>=_ [_-_]_>>=_
 infix   4 _∈_·_
 
 data _∈_·_ {Tok} :
@@ -49,14 +49,14 @@ data _∈_·_ {Tok} :
   <$>_     : ∀ {R₁ R₂ x s xs} {p : Parser Tok R₁ xs} {f : R₁ → R₂}
              (x∈p : x ∈ p · s) → f x ∈ f <$> p · s
   _⊛_      : ∀ {R₁ R₂ f x s₁ s₂ fs xs}
-               {p₁ : ∞? (Parser Tok (R₁ → R₂) fs) xs}
-               {p₂ : ∞? (Parser Tok  R₁       xs) fs} →
+               {p₁ : ∞⟨ xs ⟩Parser Tok (R₁ → R₂) (flatten fs)}
+               {p₂ : ∞⟨ fs ⟩Parser Tok  R₁       (flatten xs)} →
              (f∈p₁ : f ∈ ♭? p₁ · s₁)
              (x∈p₂ : x ∈ ♭? p₂ · s₂) →
              f x ∈ p₁ ⊛ p₂ · s₁ ++ s₂
   _>>=_    : ∀ {R₁ R₂ x y s₁ s₂ xs} {f : Maybe (R₁ → List R₂)}
-               {p₁ : ∞? (Parser Tok R₁ xs) f}
-               {p₂ : (x : R₁) → ∞? (Parser Tok R₂ (app f x)) xs}
+               {p₁ : ∞⟨ f ⟩Parser Tok R₁ (flatten xs)}
+               {p₂ : (x : R₁) → ∞⟨ xs ⟩Parser Tok R₂ (app f x)}
              (x∈p₁ : x ∈ ♭? p₁ · s₁)
              (y∈p₂x : y ∈ ♭? (p₂ x) · s₂) →
              y ∈ p₁ >>= p₂ · s₁ ++ s₂
@@ -65,6 +65,24 @@ data _∈_·_ {Tok} :
   cast     : ∀ {R xs₁ xs₂ x s}
                {xs₁≈xs₂ : xs₁ List-≈[ bag ] xs₂} {p : Parser Tok R xs₁}
              (x∈p : x ∈ p · s) → x ∈ cast xs₁≈xs₂ p · s
+
+-- Some variants with fewer implicit arguments. (The arguments xs and
+-- fs can usually not be inferred, but I do not want to mention them
+-- in the paper, so I have made them implicit in the definition
+-- above.)
+
+[_-_]_⊛_ : ∀ {Tok R₁ R₂ f x s₁ s₂} xs fs
+             {p₁ : ∞⟨ xs ⟩Parser Tok (R₁ → R₂) (flatten fs)}
+             {p₂ : ∞⟨ fs ⟩Parser Tok  R₁       (flatten xs)} →
+           f ∈ ♭? p₁ · s₁ → x ∈ ♭? p₂ · s₂ → f x ∈ p₁ ⊛ p₂ · s₁ ++ s₂
+[ xs - fs ] f∈p₁ ⊛ x∈p₂ = _⊛_ {fs = fs} {xs = xs} f∈p₁ x∈p₂
+
+[_-_]_>>=_ : ∀ {Tok R₁ R₂ x y s₁ s₂} (f : Maybe (R₁ → List R₂)) xs
+               {p₁ : ∞⟨ f ⟩Parser Tok R₁ (flatten xs)}
+               {p₂ : (x : R₁) → ∞⟨ xs ⟩Parser Tok R₂ (app f x)} →
+             x ∈ ♭? p₁ · s₁ → y ∈ ♭? (p₂ x) · s₂ →
+             y ∈ p₁ >>= p₂ · s₁ ++ s₂
+[ f - xs ] x∈p₁ >>= y∈p₂x = _>>=_ {xs = xs} {f = f} x∈p₁ y∈p₂x
 
 ------------------------------------------------------------------------
 -- Parser and language equivalence
@@ -105,7 +123,7 @@ p₁ ≲ p₂ = ∀ {x s} → x ∈ p₁ · s → x ∈ p₂ · s
 ≈⇔≲≳ : ∀ {Tok R xs₁ xs₂}
          {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
        p₁ ≈ p₂ ⇔ (p₁ ≲ p₂ × p₂ ≲ p₁)
-≈⇔≲≳ = Eq.equivalent
+≈⇔≲≳ = Eq.equivalent {t = suc zero}
          (λ p₁≈p₂  → ((λ {_} → _⟨$⟩_ (Equivalent.to   p₁≈p₂))
                      , λ {_} → _⟨$⟩_ (Equivalent.from p₁≈p₂)))
          (λ p₁≲≳p₂ {s} → Eq.equivalent (proj₁ p₁≲≳p₂ {s})
@@ -146,79 +164,8 @@ p₁ ≲ p₂ = ∀ {x s} → x ∈ p₁ · s → x ∈ p₂ · s
 ... | ()
 
 ------------------------------------------------------------------------
--- Some abbreviations
-
-infix 10 ⟨_⟩>>=_ ⟪_⟫>>=_
-
-⟨_⟩>>=_ : ∀ {Tok R₁ R₂ x y s₁ s₂ xs} {f : R₁ → List R₂}
-            {p₁ : Parser Tok R₁ xs}
-            {p₂ : (x : R₁) → ∞? (Parser Tok R₂ (f x)) xs} →
-          x ∈ p₁ · s₁ → y ∈ ♭? (p₂ x) · s₂ →
-          y ∈ ⟨ p₁ ⟩ >>= p₂ · s₁ ++ s₂
-⟨_⟩>>=_ = _>>=_ {p₁ = ⟨ _ ⟩}
-
-⟪_⟫>>=_ : ∀ {Tok R₁ R₂ x y s₁ s₂ xs}
-            {p₁ : ∞ (Parser Tok R₁ xs)}
-            {p₂ : (x : R₁) → ∞? (Parser Tok R₂ []) xs} →
-          x ∈ ♭ p₁ · s₁ → y ∈ ♭? (p₂ x) · s₂ →
-          y ∈ ⟪ p₁ ⟫ >>= p₂ · s₁ ++ s₂
-⟪_⟫>>=_ = _>>=_ {p₁ = ⟪ _ ⟫}
-
-------------------------------------------------------------------------
 -- A simple cast lemma
 
 cast∈ : ∀ {Tok R xs} {p p′ : Parser Tok R xs} {x x′ s s′} →
         x ≡ x′ → p ≡ p′ → s ≡ s′ → x ∈ p · s → x′ ∈ p′ · s′
 cast∈ P.refl P.refl P.refl x∈ = x∈
-
-module Cast∈ where
-
-  drop : ∀ {Tok R xs} {p p′ : Parser Tok R xs} {x x′ s s′}
-         (x≡x′ : x ≡ x′) (p≡p′ : p ≡ p′) (s≡s′ : s ≡ s′)
-         (x∈p : x ∈ p · s) →
-         H._≅_ (cast∈ x≡x′ p≡p′ s≡s′ x∈p) x∈p
-  drop P.refl P.refl P.refl _ = H.refl
-
-  sym∘ : ∀ {Tok R xs} {p p′ : Parser Tok R xs} {x x′ s s′}
-         (x≡x′ : x ≡ x′) (p≡p′ : p ≡ p′) (s≡s′ : s ≡ s′)
-         (x∈p : x ∈ p · s) →
-         cast∈ (P.sym x≡x′) (P.sym p≡p′) (P.sym s≡s′)
-               (cast∈ x≡x′ p≡p′ s≡s′ x∈p) ≡ x∈p
-  sym∘ P.refl P.refl P.refl _ = P.refl
-
-  ∘sym : ∀ {Tok R xs} {p p′ : Parser Tok R xs} {x x′ s s′}
-         (x≡x′ : x ≡ x′) (p≡p′ : p ≡ p′) (s≡s′ : s ≡ s′)
-         (x∈p : x′ ∈ p′ · s′) →
-         cast∈ x≡x′ p≡p′ s≡s′
-               (cast∈ (P.sym x≡x′) (P.sym p≡p′) (P.sym s≡s′) x∈p) ≡ x∈p
-  ∘sym P.refl P.refl P.refl _ = P.refl
-
-  correct : ∀ {Tok R xs} {p p′ : Parser Tok R xs} {x x′ s s′}
-            (x≡x′ : x ≡ x′) (p≡p′ : p ≡ p′) (s≡s′ : s ≡ s′) →
-            x ∈ p · s ⇿ x′ ∈ p′ · s′
-  correct x≡x′ p≡p′ s≡s′ = record
-    { to         = P.→-to-⟶ $ cast∈ x≡x′ p≡p′ s≡s′
-    ; from       = P.→-to-⟶ $
-                     cast∈ (P.sym x≡x′) (P.sym p≡p′) (P.sym s≡s′)
-    ; inverse-of = record
-      { left-inverse-of  = sym∘ x≡x′ p≡p′ s≡s′
-      ; right-inverse-of = ∘sym x≡x′ p≡p′ s≡s′
-      }
-    }
-
-------------------------------------------------------------------------
--- Lemmas about conditional coinduction
-
-module ♭♯ where
-
-  drop : ∀ {Tok R R′ xs t} {p : Parser Tok R xs} (n : El t R′) →
-         ♭? (♯? {n = n} p) ≲ p
-  drop n = cast∈ P.refl (♭?♯? n) P.refl
-
-  add : ∀ {Tok R R′ xs t} {p : Parser Tok R xs} (n : El t R′) →
-        p ≲ ♭? (♯? {n = n} p)
-  add n = cast∈ P.refl (P.sym $ ♭?♯? n) P.refl
-
-  correct : ∀ {Tok R R′ xs t} (n : El t R′) {p : Parser Tok R xs} →
-            ♭? (♯? {n = n} p) ≅ p
-  correct n = Cast∈.correct P.refl (♭?♯? n) P.refl

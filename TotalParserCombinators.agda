@@ -12,15 +12,6 @@ module TotalParserCombinators where
 
 import TotalRecognisers
 
--- Helper functions related to coinduction.
-
-import TotalParserCombinators.Coinduction
-
--- An alternative implementation of _⊛_ for lists, along with some
--- lemmas.
-
-import TotalParserCombinators.Applicative
-
 -- The parser type, and its semantics.
 
 import TotalParserCombinators.Parser
@@ -73,17 +64,11 @@ import TotalParserCombinators.Simplification
 
 import TotalParserCombinators.Unambiguity
 
--- An alternative definition of the parser type, which can lead to
--- less noisy definitions of parsers.
+-- An example: a left recursive expression grammar.
 
-import TotalParserCombinators.LessNoisy
+import TotalParserCombinators.Examples.Expression
 
--- Some small examples, using both noisy and less noisy combinators.
-
-import TotalParserCombinators.Examples.Noisy
-import TotalParserCombinators.Examples.LessNoisy
-
--- An example: parsing PBM image files.
+-- Another example: parsing PBM image files.
 
 import TotalParserCombinators.Examples.PBM
 

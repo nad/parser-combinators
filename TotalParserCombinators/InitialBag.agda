@@ -4,9 +4,10 @@
 
 module TotalParserCombinators.InitialBag where
 
-open import Data.List
+open import Category.Monad
+open import Data.List as List
 open import Data.List.Any as Any
-open import Data.List.Any.Membership
+open import Data.List.Any.Membership as M hiding (⊛-∈⇿)
 open import Data.List.Any.Properties
 open import Data.Maybe
 open import Data.Product
@@ -21,11 +22,21 @@ open import Relation.Binary.HeterogeneousEquality as H
 
 open Any.Membership-≡ using (_∈_) renaming (_≈[_]_ to _List-≈[_]_)
 open Inv.Inverse
+open RawMonadPlus List.monadPlus using () renaming (_⊛_ to _⊛′_)
 
-import TotalParserCombinators.Applicative as ⊛
-open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
+
+------------------------------------------------------------------------
+-- Optimisation
+
+private
+
+  abstract
+
+    ⊛-∈⇿ : ∀ {A B : Set} (fs : List (A → B)) {xs y} →
+           (∃₂ λ f x → f ∈ fs × x ∈ xs × y ≡ f x) ⇿ y ∈ fs ⊛′ xs
+    ⊛-∈⇿ = M.⊛-∈⇿
 
 ------------------------------------------------------------------------
 -- Sanity check: The initial set index is correctly defined
@@ -40,18 +51,21 @@ mutual
 
     complete′ : ∀ {Tok R xs x s} {p : Parser Tok R xs} →
                 x ∈ p · s → s ≡ [] → x ∈ xs
-    complete′ return                                                  refl = to return⇿          ⟨$⟩ refl
-    complete′ (∣ˡ     x∈p₁)                                           refl = to ++⇿              ⟨$⟩ inj₁ (complete x∈p₁)
-    complete′ (∣ʳ xs₁ x∈p₂)                                           refl = to (++⇿ {xs = xs₁}) ⟨$⟩ inj₂ (complete x∈p₂)
-    complete′ (<$> x∈p)                                               refl = to map-∈⇿           ⟨$⟩ (_ , complete x∈p , refl)
-    complete′ (_⊛_   {s₁ = []} {fs = fs}                  f∈p₁ x∈p₂)  refl = to ⊛.⇿              ⟨$⟩ (_ , _ , complete f∈p₁
-                                                                                                            , complete x∈p₂ , refl)
-    complete′ (_>>=_ {s₁ = []} {xs = _ ∷ _} {f = just f}  x∈p₁ y∈p₂x) refl = to (>>=-∈⇿ {f = f}) ⟨$⟩ (_ , complete x∈p₁ , complete y∈p₂x)
-    complete′ (cast {xs₁≈xs₂ = xs₁≈xs₂} x∈p)                          refl = to xs₁≈xs₂          ⟨$⟩ complete x∈p
+    complete′ return                                                    refl = to return⇿          ⟨$⟩ refl
+    complete′ (∣ˡ     x∈p₁)                                             refl = to ++⇿              ⟨$⟩ inj₁ (complete x∈p₁)
+    complete′ (∣ʳ xs₁ x∈p₂)                                             refl = to (++⇿ {xs = xs₁}) ⟨$⟩ inj₂ (complete x∈p₂)
+    complete′ (<$> x∈p)                                                 refl = to map-∈⇿           ⟨$⟩ (_ , complete x∈p , refl)
+    complete′ (_⊛_   {s₁ = []} {xs = just _}                f∈p₁ x∈p₂)  refl = to (⊛-∈⇿ _)         ⟨$⟩ (_ , _ , complete f∈p₁
+                                                                                                              , complete x∈p₂ , refl)
+    complete′ (_>>=_ {s₁ = []} {xs = just _}  {f = just _}  x∈p₁ y∈p₂x) refl = to >>=-∈⇿           ⟨$⟩ (_ , complete x∈p₁
+                                                                                                          , complete y∈p₂x)
+    complete′ (cast {xs₁≈xs₂ = xs₁≈xs₂} x∈p)                            refl = to xs₁≈xs₂          ⟨$⟩ complete x∈p
 
-    complete′ (_>>=_ {s₁ = []} {xs = []}                  x∈p₁ y∈p₂x) refl with complete x∈p₁
+    complete′ (_⊛_   {s₁ = []} {xs = nothing}               f∈p₁ x∈p₂)  refl with complete x∈p₂
     ... | ()
-    complete′ (_>>=_ {s₁ = []} {xs = _ ∷ _} {f = nothing} x∈p₁ y∈p₂x) refl with complete y∈p₂x
+    complete′ (_>>=_ {s₁ = []} {xs = nothing}               x∈p₁ y∈p₂x) refl with complete x∈p₁
+    ... | ()
+    complete′ (_>>=_ {s₁ = []} {xs = just _}  {f = nothing} x∈p₁ y∈p₂x) refl with complete y∈p₂x
     ... | ()
 
     complete′ token                     ()
@@ -69,31 +83,31 @@ mutual
   ... | inj₂ x∈xs₂ = ∣ʳ xs₁ (sound p₂ x∈xs₂)
   sound (_<$>_ {xs = xs} f p) x∈xs with from (map-∈⇿ {xs = xs}) ⟨$⟩ x∈xs
   ... | (y , y∈xs , refl) = <$> sound p y∈xs
-  sound (_⊛_ {fs = fs} {x ∷ xs} ⟨ p₁ ⟩ p₂) y∈ys
-    with from (⊛.⇿ {fs = fs} {xs = x ∷ xs}) ⟨$⟩ y∈ys
-  sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟪ p₂ ⟫)  y∈ys | (f′ , x′ , ()    , x′∈x∷xs , refl)
-  sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟨ p₂ ⟩)  y∈ys | (f′ , x′ , f′∈fs , x′∈x∷xs , refl) =
-    sound p₁ f′∈fs ⊛ sound p₂ x′∈x∷xs
-  sound (_>>=_ {xs = zs} {f = just f} ⟨ p₁ ⟩ p₂) y∈ys
-    with from (>>=-∈⇿ {xs = zs} {f = f}) ⟨$⟩ y∈ys
+  sound (_⊛_ {fs = fs} {just xs} p₁ p₂) y∈ys
+    with from (⊛-∈⇿ (flatten fs) {xs = xs}) ⟨$⟩ y∈ys
+  sound (_⊛_ {fs = nothing} {just xs} p₁ p₂)  y∈ys | (f′ , x′ , ()    , x′∈xs , refl)
+  sound (_⊛_ {fs = just fs} {just xs} p₁ p₂)  y∈ys | (f′ , x′ , f′∈fs , x′∈xs , refl) =
+    _⊛_ {fs = ○} {xs = ○} (sound p₁ f′∈fs) (sound p₂ x′∈xs)
+  sound (_>>=_ {xs = zs} {f = just f} p₁ p₂) y∈ys
+    with from (>>=-∈⇿ {xs = flatten zs} {f = f}) ⟨$⟩ y∈ys
   ... | (x , x∈zs , y∈fx) =
-    _>>=_ {f = just f} (sound p₁ x∈zs) (sound′ (p₂ x) x∈zs y∈fx)
+    _>>=_ {xs = zs} {f = just f} (sound p₁ x∈zs) (sound′ (p₂ x) x∈zs y∈fx)
   sound (cast xs₁≈xs₂ p) x∈xs = cast (sound p (from xs₁≈xs₂ ⟨$⟩ x∈xs))
 
-  sound (return _)    (there ())
-  sound fail          ()
-  sound token         ()
-  sound (⟪ _ ⟫ ⊛ _)   ()
-  sound (⟪ _ ⟫ >>= _) ()
-  sound (nonempty _)  ()
+  sound (return _)                 (there ())
+  sound fail                       ()
+  sound token                      ()
+  sound (_⊛_   {xs = nothing} _ _) ()
+  sound (_>>=_ {f  = nothing} _ _) ()
+  sound (nonempty _)               ()
 
   private
 
-    sound′ : ∀ {Tok R₁ R₂ x y xs} {zs : List R₁}
-               (p : ∞? (Parser Tok R₂ xs) zs) →
-               x ∈ zs → y ∈ xs → y ∈ ♭? p · []
-    sound′ ⟨ p ⟩ _  = sound p
-    sound′ ⟪ p ⟫ ()
+    sound′ : ∀ {Tok R₁ R₂ x y xs} {zs : Maybe (List R₁)}
+               (p : ∞⟨ zs ⟩Parser Tok R₂ xs) →
+               x ∈ flatten zs → y ∈ xs → y ∈ ♭? p · []
+    sound′ {zs = just _}  p _  = sound p
+    sound′ {zs = nothing} p ()
 
 mutual
 
@@ -114,39 +128,39 @@ mutual
                                                            H.cong ((_ → _ ∈ _ · _) ∶ ∣ʳ xs₁) (sound∘complete′ x∈p₂ refl)
     sound∘complete′ (<$>_ {f = f} x∈p)                refl rewrite left-inverse-of (map-∈⇿ {f = f}) (_ , complete x∈p , refl) =
                                                            H.cong ((_ → _ ∈ _ · _) ∶ <$>_) (sound∘complete′ x∈p refl)
-    sound∘complete′ (_⊛_ {s₁ = []} {fs = fs} {xs = x ∷ xs} {p₁ = ⟨ p₁ ⟩} f∈p₁ x∈p₂) refl
+    sound∘complete′ (_⊛_ {s₁ = []} {fs = fs} {xs = just xs} f∈p₁ x∈p₂) refl
       with complete f∈p₁ | complete x∈p₂
-      | from (⊛.⇿ {fs = fs} {xs = x ∷ xs}) ⟨$⟩
-          (to ⊛.⇿ ⟨$⟩ (_ , _ , complete f∈p₁ , complete x∈p₂ , refl))
-      | left-inverse-of ⊛.⇿ (_ , _ , complete f∈p₁ , complete x∈p₂ , refl)
+      | from inv ⟨$⟩ (to inv ⟨$⟩ (_ , _ , complete f∈p₁ , complete x∈p₂ , refl))
+      | left-inverse-of inv (_ , _ , complete f∈p₁ , complete x∈p₂ , refl)
       | sound∘complete f∈p₁ | sound∘complete x∈p₂
-    sound∘complete′ (_⊛_ {s₁ = []} {fs = []}     {xs = _ ∷ _}  {p₁ = ⟨ _  ⟩} {p₂ = ⟪ _  ⟫} _ _) refl | () | _ | _ | _ | _ | _
-    sound∘complete′ (_⊛_ {s₁ = []} {fs = f ∷ fs} {xs = x ∷ xs} {p₁ = ⟨ p₁ ⟩} {p₂ = ⟨ p₂ ⟩}
-                             .(sound p₁ ∈f∷fs) .(sound p₂ ∈x∷xs)) refl
-      | ∈f∷fs | ∈x∷xs | ._ | refl | refl | refl = refl
-    sound∘complete′ (_>>=_ {x = x} {y = y} {s₁ = []} {xs = _ ∷ _} {f = just f} {p₁ = ⟨ p₁ ⟩} {p₂ = p₂} x∈p₁ y∈p₂x) refl
+      where inv = ⊛-∈⇿ (flatten fs) {xs = xs}
+    sound∘complete′ (_⊛_ {s₁ = []} {fs = nothing} {xs = just xs} _ _) refl | () | _ | _ | _ | _ | _
+    sound∘complete′ (_⊛_ {s₁ = []} {fs = just fs} {xs = just xs} {p₁ = p₁} {p₂ = p₂}
+                         .(sound p₁ ∈fs) .(sound p₂ ∈xs)) refl
+      | ∈fs | ∈xs | ._ | refl | refl | refl = refl
+    sound∘complete′ (_>>=_ {x = x} {y = y} {s₁ = []} {xs = just _} {f = just f} {p₁ = p₁} {p₂ = p₂} x∈p₁ y∈p₂x) refl
       rewrite left-inverse-of (>>=-∈⇿ {f = f}) (_ , complete x∈p₁ , complete y∈p₂x)
          with sound p₁ (complete x∈p₁)
             | sound∘complete x∈p₁
             | sound′ (p₂ x) (complete x∈p₁) (complete y∈p₂x)
             | helper (p₂ x) (complete x∈p₁) y∈p₂x
          where
-         helper : ∀ {Tok R₁ R₂ x y ys} {xs : List R₁}
-                  (p : ∞? (Parser Tok R₂ ys) xs) →
-                  (x∈xs : x ∈ xs) (y∈p : y ∈ ♭? p · []) →
+         helper : ∀ {Tok R₁ R₂ x y ys} {xs : Maybe (List R₁)}
+                  (p : ∞⟨ xs ⟩Parser Tok R₂ ys) →
+                  (x∈xs : x ∈ flatten xs) (y∈p : y ∈ ♭? p · []) →
                   sound′ p x∈xs (complete y∈p) ≡ y∈p
-         helper ⟪ p ⟫ () _
-         helper ⟨ p ⟩ _  y∈p = sound∘complete y∈p
+         helper {xs = nothing} p () _
+         helper {xs = just _}  p _  y∈p = sound∘complete y∈p
     ... | ._ | refl | ._ | refl = refl
     sound∘complete′ (cast {xs₁≈xs₂ = xs₁≈xs₂} x∈p)             refl with complete x∈p | sound∘complete x∈p
     sound∘complete′ (cast {xs₁≈xs₂ = xs₁≈xs₂} .(sound _ x∈xs)) refl | x∈xs | refl
       rewrite left-inverse-of xs₁≈xs₂ x∈xs = refl
 
-    sound∘complete′ (_⊛_    {s₁ = []} {xs = []}                  _    x∈p₂)  refl with complete x∈p₂
+    sound∘complete′ (_⊛_    {s₁ = []} {xs = nothing}              _    x∈p₂)  refl with complete x∈p₂
     ... | ()
-    sound∘complete′ (_>>=_  {s₁ = []} {xs = []}                  x∈p₁ y∈p₂x) refl with complete x∈p₁
+    sound∘complete′ (_>>=_  {s₁ = []} {xs = nothing}              x∈p₁ y∈p₂x) refl with complete x∈p₁
     ... | ()
-    sound∘complete′ (_>>=_  {s₁ = []} {xs = _ ∷ _} {f = nothing} x∈p₁ y∈p₂x) refl with complete y∈p₂x
+    sound∘complete′ (_>>=_  {s₁ = []} {xs = just _} {f = nothing} x∈p₁ y∈p₂x) refl with complete y∈p₂x
     ... | ()
 
     sound∘complete′ token                     ()
@@ -170,40 +184,34 @@ complete∘sound (_<$>_ {xs = xs} f p) x∈xs
      | right-inverse-of map-∈⇿                x∈xs
 complete∘sound (_<$>_ {xs = xs} f p) .(to map-∈⇿ ⟨$⟩ (y , y∈xs , refl)) | (y , y∈xs , refl) | refl =
   P.cong (λ y∈ → to map-∈⇿ ⟨$⟩ (y , y∈ , refl)) $ complete∘sound p y∈xs
-complete∘sound (_⊛_ {fs = fs} {x ∷ xs} ⟨ p₁ ⟩ p₂) y∈ys
-  with from             (⊛.⇿ {fs = fs} {xs = x ∷ xs}) ⟨$⟩ y∈ys
-     | right-inverse-of (⊛.⇿ {fs = fs} {xs = x ∷ xs})     y∈ys
-complete∘sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟪ p₂ ⟫)
-               y∈ys                                             | (f′ , x′ , ()    , x′∈x∷xs , refl) | _
-complete∘sound (_⊛_ {xs = x ∷ xs} ⟨ p₁ ⟩ ⟨ p₂ ⟩)
-               .(to ⊛.⇿ ⟨$⟩ (f′ , x′ , f′∈fs , x′∈x∷xs , refl)) | (f′ , x′ , f′∈fs , x′∈x∷xs , refl) | refl =
-  P.cong₂ (λ f′∈ x′∈ → to ⊛.⇿ ⟨$⟩ (f′ , x′ , f′∈ , x′∈ , refl))
+complete∘sound (_⊛_ {fs = fs} {just xs} p₁ p₂) y∈ys
+  with from             (⊛-∈⇿ (flatten fs) {xs = xs}) ⟨$⟩ y∈ys
+     | right-inverse-of (⊛-∈⇿ (flatten fs) {xs = xs})     y∈ys
+complete∘sound (_⊛_ {fs = nothing} {xs = just xs} p₁ p₂)
+               y∈ys                                                | (f′ , x′ , ()    , x′∈xs , refl) | _
+complete∘sound (_⊛_ {fs = just fs} {xs = just xs} p₁ p₂)
+               .(to (⊛-∈⇿ _) ⟨$⟩ (f′ , x′ , f′∈fs , x′∈xs , refl)) | (f′ , x′ , f′∈fs , x′∈xs , refl) | refl =
+  P.cong₂ (λ f′∈ x′∈ → to (⊛-∈⇿ _) ⟨$⟩ (f′ , x′ , f′∈ , x′∈ , refl))
           (complete∘sound p₁ f′∈fs)
-          (complete∘sound p₂ x′∈x∷xs)
-complete∘sound (_>>=_ {xs = zs}     {just f} ⟨ p₁ ⟩ p₂) y∈ys
-  with from             (>>=-∈⇿ {xs = zs} {f = f}) ⟨$⟩ y∈ys
-     | right-inverse-of (>>=-∈⇿ {xs = zs} {f = f})     y∈ys
-complete∘sound (_>>=_ {xs = []}     {just f} ⟨ p₁ ⟩ p₂) ._                                             | (x , ()     , y∈fx) | refl
-complete∘sound (_>>=_ {xs = z ∷ zs} {just f} ⟨ p₁ ⟩ p₂) .(to (>>=-∈⇿ {f = f}) ⟨$⟩ (x , x∈z∷zs , y∈fx)) | (x , x∈z∷zs , y∈fx) | refl =
+          (complete∘sound p₂ x′∈xs)
+complete∘sound (_>>=_ {xs = zs}      {just f} p₁ p₂) y∈ys
+  with from             (>>=-∈⇿ {xs = flatten zs} {f = f}) ⟨$⟩ y∈ys
+     | right-inverse-of (>>=-∈⇿ {xs = flatten zs} {f = f})     y∈ys
+complete∘sound (_>>=_ {xs = nothing} {just f} p₁ p₂) ._                                           | (x , ()   , y∈fx) | refl
+complete∘sound (_>>=_ {xs = just zs} {just f} p₁ p₂) .(to (>>=-∈⇿ {f = f}) ⟨$⟩ (x , x∈zs , y∈fx)) | (x , x∈zs , y∈fx) | refl =
   P.cong₂ (λ x∈ y∈ → to (>>=-∈⇿ {f = f}) ⟨$⟩ (x , x∈ , y∈))
-          (complete∘sound p₁ x∈z∷zs)
-          (helper (p₂ x) x∈z∷zs y∈fx)
-  where
-  helper : ∀ {Tok R₁ R₂ x y xs z} {zs : List R₁}
-           (p : ∞? (Parser Tok R₂ xs) (z ∷ zs))
-           (x∈z∷zs : x ∈ z ∷ zs) (y∈xs : y ∈ xs) →
-           complete (sound′ p x∈z∷zs y∈xs) ≡ y∈xs
-  helper ⟨ p ⟩ x∈z∷zs y∈xs = complete∘sound p y∈xs
+          (complete∘sound p₁ x∈zs)
+          (complete∘sound (p₂ x) y∈fx)
 complete∘sound (cast xs₁≈xs₂ p) x∈xs
   rewrite complete∘sound p (from xs₁≈xs₂ ⟨$⟩ x∈xs) =
     right-inverse-of xs₁≈xs₂ x∈xs
 
-complete∘sound (return _)    (there ())
-complete∘sound fail          ()
-complete∘sound token         ()
-complete∘sound (⟪ _ ⟫ ⊛ _)   ()
-complete∘sound (⟪ _ ⟫ >>= _) ()
-complete∘sound (nonempty _)  ()
+complete∘sound (return _)                 (there ())
+complete∘sound fail                       ()
+complete∘sound token                      ()
+complete∘sound (_⊛_   {xs = nothing} _ _) ()
+complete∘sound (_>>=_ {f  = nothing} _ _) ()
+complete∘sound (nonempty _)               ()
 
 correct : ∀ {Tok R xs x} {p : Parser Tok R xs} → x ∈ p · [] ⇿ x ∈ xs
 correct {p = p} = record

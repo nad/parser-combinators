@@ -22,32 +22,14 @@ open import Relation.Binary.HeterogeneousEquality
   using (_≅_; _≇_; refl)
 open import Relation.Nullary
 
-open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Parser
-open import TotalParserCombinators.Semantics hiding (_≅_)
+open import TotalParserCombinators.Semantics as S
+  hiding (_≅_; token)
 open import TotalParserCombinators.Lib
 private
   open module Tok = Token Bool _≟_ using (tok)
 open import TotalParserCombinators.BreadthFirst as Backend
   using (parseComplete)
-
-------------------------------------------------------------------------
--- Boring lemmas
-
-private
-
-  η-cast∈ : ∀ {Tok R x xs s} {p : Parser Tok R xs} {x∈} →
-            ((x∈′ : x ∈ p · s) → x∈′ ≡ x∈) →
-            ∀ {R′} (xs′ : List R′)
-            (x∈′ : x ∈ ♭? {n = xs′} (♯? p) · s) →
-            x∈′ ≡ cast∈ refl (P.sym (♭?♯? xs′)) refl x∈
-  η-cast∈ hyp []      x∈′ = hyp x∈′
-  η-cast∈ hyp (_ ∷ _) x∈′ = hyp x∈′
-
-  tok-lemma : ∀ {R t}
-          (xs : List R) (t∈ : t ∈ ♭? {n = xs} (♯? (tok t)) · [ t ]) →
-          t∈ ≡ cast∈ refl (P.sym (♭?♯? xs)) refl (Tok.complete {t = t})
-  tok-lemma = η-cast∈ Tok.η
 
 ------------------------------------------------------------------------
 -- Expressive strength
@@ -66,7 +48,7 @@ module Monadic where
   -- The parser.
 
   grammar : ∀ {Tok R} (f : List Tok → List R) → Parser Tok R (f [])
-  grammar f = ⟨ token ⟩ >>= (λ t → ⟪ ♯ grammar (f ∘ _∷_ t) ⟫)
+  grammar f = token >>= (λ t → ♯ grammar (f ∘ _∷_ t))
             ∣ return⋆ (f [])
 
   -- Correctness proof.
@@ -86,17 +68,18 @@ module Monadic where
             x ∈ grammar f · s → x ∈ f s
     sound f (∣ʳ ._ x∈) with Return⋆.sound (f []) x∈
     ... | (refl , x∈′) = x∈′
-    sound f (∣ˡ (token {t} >>= x∈)) = sound (f ∘ _∷_ t) x∈
+    sound f (∣ˡ (S.token {t} >>= x∈)) = sound (f ∘ _∷_ t) x∈
 
     complete : ∀ {Tok R x} (f : List Tok → List R) s →
                x ∈ f s → x ∈ grammar f · s
     complete f []      x∈ = ∣ʳ [] (Return⋆.complete x∈)
-    complete f (t ∷ s) x∈ = ∣ˡ (⟨ token ⟩>>= complete (f ∘ _∷_ t) s x∈)
+    complete f (t ∷ s) x∈ =
+      ∣ˡ ([ ○ - ◌ ] S.token >>= complete (f ∘ _∷_ t) s x∈)
 
     complete∘sound : ∀ {Tok R x s} (f : List Tok → List R)
                      (x∈pf : x ∈ grammar f · s) →
                      complete f s (sound f x∈pf) ≡ x∈pf
-    complete∘sound f (∣ˡ (token {t} >>= x∈))
+    complete∘sound f (∣ˡ (S.token {t} >>= x∈))
       rewrite complete∘sound (f ∘ _∷_ t) x∈ = refl
     complete∘sound f (∣ʳ .[] x∈)
       with Return⋆.sound (f []) x∈ | Return⋆.complete∘sound (f []) x∈
@@ -139,8 +122,8 @@ module Applicative where
 
   grammar : ∀ {R} (f : List Bool → List R) → Parser Bool R (f [])
   grammar f =
-      ⟪ ♯ (const <$> grammar (specialise f true )) ⟫ ⊛ ♯? (tok true)
-    ∣ ⟪ ♯ (const <$> grammar (specialise f false)) ⟫ ⊛ ♯? (tok false)
+      ♯ (const <$> grammar (specialise f true )) ⊛ tok true
+    ∣ ♯ (const <$> grammar (specialise f false)) ⊛ tok false
     ∣ return⋆ (f [])
 
   -- Correctness proof.
@@ -160,11 +143,9 @@ module Applicative where
     sound : ∀ {x : R} {s} f → x ∈ grammar f · s → x ∈ f s
     sound f (∣ʳ ._ x∈) with Return⋆.sound (f []) x∈
     ... | (refl , x∈′) = x∈′
-    sound f (∣ˡ (∣ˡ (<$> x∈ ⊛ t∈))) with
-      Tok.sound (cast∈ refl (♭?♯? (List.map const (f [ true  ]))) refl t∈)
+    sound f (∣ˡ (∣ˡ (<$> x∈ ⊛ t∈))) with Tok.sound t∈
     ... | (refl , refl) = sound (specialise f true ) x∈
-    sound f (∣ˡ (∣ʳ ._ (<$> x∈ ⊛ t∈))) with
-      Tok.sound (cast∈ refl (♭?♯? (List.map const (f [ false ]))) refl t∈)
+    sound f (∣ˡ (∣ʳ ._ (<$> x∈ ⊛ t∈))) with Tok.sound t∈
     ... | (refl , refl) = sound (specialise f false) x∈
 
     complete : ∀ {x : R} {s} f → Reverse s →
@@ -172,33 +153,19 @@ module Applicative where
     complete f []                 x∈ = ∣ʳ [] (Return⋆.complete x∈)
     complete f (bs ∶ rs ∶ʳ true ) x∈ =
       ∣ˡ {xs₁ = []} (∣ˡ (
-        <$> complete (specialise f true ) rs x∈ ⊛
-        cast∈ refl (P.sym (♭?♯? (List.map const (f [ true  ])))) refl
-              Tok.complete))
+        [ ◌ - ○ ] <$> complete (specialise f true ) rs x∈ ⊛ Tok.complete))
     complete f (bs ∶ rs ∶ʳ false) x∈ =
       ∣ˡ (∣ʳ [] (
-        <$> complete (specialise f false) rs x∈ ⊛
-        cast∈ refl (P.sym (♭?♯? (List.map const (f [ false ])))) refl
-              Tok.complete))
+        [ ◌ - ○ ] <$> complete (specialise f false) rs x∈ ⊛ Tok.complete))
 
     sound∘complete : ∀ {x : R} {s} f (rs : Reverse s) (x∈fs : x ∈ f s) →
                      sound f (complete f rs x∈fs) ≡ x∈fs
     sound∘complete f [] x∈
       rewrite Return⋆.sound∘complete {Tok = Bool} x∈ = refl
-    sound∘complete f (bs ∶ rs ∶ʳ true) x∈
-      with cast∈ refl lem refl $ cast∈ refl (P.sym lem) refl true∈
-         | Cast∈.∘sym refl lem refl true∈
-      where
-      lem   = ♭?♯? (List.map (const {B = Bool}) (f [ true ]))
-      true∈ = Tok.complete {t = true}
-    ... | .Tok.complete | refl = sound∘complete (specialise f true) rs x∈
-    sound∘complete f (bs ∶ rs ∶ʳ false) x∈
-      with cast∈ refl lem refl $ cast∈ refl (P.sym lem) refl false∈
-         | Cast∈.∘sym refl lem refl false∈
-      where
-      lem    = ♭?♯? (List.map (const {B = Bool}) (f [ false ]))
-      false∈ = Tok.complete {t = false}
-    ... | .Tok.complete | refl = sound∘complete (specialise f false) rs x∈
+    sound∘complete f (bs ∶ rs ∶ʳ true) x∈ =
+      sound∘complete (specialise f true) rs x∈
+    sound∘complete f (bs ∶ rs ∶ʳ false) x∈ =
+      sound∘complete (specialise f false) rs x∈
 
     complete∘sound : ∀ {x : R} {s s′ : List Bool}
                      f (rs : Reverse s) (rs′ : Reverse s′)
@@ -212,28 +179,26 @@ module Applicative where
     complete∘sound f _  ([]      ∶ _ ∶ʳ _) (∣ʳ ._ .(Return⋆.complete x∈′)) ()   _    | (refl , x∈′) | refl
     complete∘sound f _  ((_ ∷ _) ∶ _ ∶ʳ _) (∣ʳ ._ .(Return⋆.complete x∈′)) ()   _    | (refl , x∈′) | refl
 
-    complete∘sound f rs rs′ (∣ˡ (∣ˡ (<$> x∈ ⊛ t∈))) s≡ rs≅
-      with Tok.sound (cast∈ refl (♭?♯? (List.map const (f [ true  ]))) refl t∈)
+    complete∘sound f rs rs′ (∣ˡ (∣ˡ (<$> x∈ ⊛ t∈))) s≡ rs≅ with Tok.sound t∈
     complete∘sound f rs (bs′ ∶ rs′ ∶ʳ true)  (∣ˡ (∣ˡ (_⊛_ {s₁ = bs}    (<$> x∈) t∈))) s≡ rs≅ | (refl , refl)
       with proj₁ $ ListProp.∷ʳ-injective bs bs′ s≡
     complete∘sound f rs (.bs ∶ rs′ ∶ʳ true)  (∣ˡ (∣ˡ (_⊛_ {s₁ = bs}    (<$> x∈) t∈))) s≡ rs≅ | (refl , refl) | refl with s≡ | rs≅
     complete∘sound f ._ (.bs ∶ rs′ ∶ʳ true)  (∣ˡ (∣ˡ (_⊛_ {s₁ = bs}    (<$> x∈) t∈))) s≡ rs≅ | (refl , refl) | refl | refl | refl
       rewrite complete∘sound (specialise f true) rs′ rs′ x∈ refl refl
-            | tok-lemma (List.map const (f [ true  ])) t∈ = refl
+            | Tok.η t∈ = refl
     complete∘sound f rs (bs′ ∶ rs′ ∶ʳ false) (∣ˡ (∣ˡ (_⊛_ {s₁ = bs}    (<$> x∈) t∈))) s≡ rs≅ | (refl , refl)
       with proj₂ $ ListProp.∷ʳ-injective bs bs′ s≡
     ... | ()
     complete∘sound f rs []                   (∣ˡ (∣ˡ (_⊛_ {s₁ = []}    (<$> x∈) t∈))) () _   | (refl , refl)
     complete∘sound f rs []                   (∣ˡ (∣ˡ (_⊛_ {s₁ = _ ∷ _} (<$> x∈) t∈))) () _   | (refl , refl)
 
-    complete∘sound f rs rs′ (∣ˡ (∣ʳ ._ (<$> x∈ ⊛ t∈))) s≡ rs≅
-      with Tok.sound (cast∈ refl (♭?♯? (List.map const (f [ false ]))) refl t∈)
+    complete∘sound f rs rs′ (∣ˡ (∣ʳ ._ (<$> x∈ ⊛ t∈))) s≡ rs≅ with Tok.sound t∈
     complete∘sound f rs (bs′ ∶ rs′ ∶ʳ false) (∣ˡ (∣ʳ ._ (_⊛_ {s₁ = bs}    (<$> x∈) t∈))) s≡ rs≅ | (refl , refl)
       with proj₁ $ ListProp.∷ʳ-injective bs bs′ s≡
     complete∘sound f rs (.bs ∶ rs′ ∶ʳ false) (∣ˡ (∣ʳ ._ (_⊛_ {s₁ = bs}    (<$> x∈) t∈))) s≡ rs≅ | (refl , refl) | refl with s≡ | rs≅
     complete∘sound f ._ (.bs ∶ rs′ ∶ʳ false) (∣ˡ (∣ʳ ._ (_⊛_ {s₁ = bs}    (<$> x∈) t∈))) s≡ rs≅ | (refl , refl) | refl | refl | refl
       rewrite complete∘sound (specialise f false) rs′ rs′ x∈ refl refl
-            | tok-lemma (List.map const (f [ false ])) t∈ = refl
+            | Tok.η t∈ = refl
     complete∘sound f rs (bs′ ∶ rs′ ∶ʳ true)  (∣ˡ (∣ʳ ._ (_⊛_ {s₁ = bs}    (<$> x∈) t∈))) s≡ rs≅ | (refl , refl)
       with proj₂ $ ListProp.∷ʳ-injective bs bs′ s≡
     ... | ()

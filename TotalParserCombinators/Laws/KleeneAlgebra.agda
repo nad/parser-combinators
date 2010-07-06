@@ -16,6 +16,7 @@ open import Relation.Nullary
 open import TotalParserCombinators.Lib
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
+  renaming (_⊛_ to _⊛′_)
 
 ------------------------------------------------------------------------
 -- A variant of _≲_
@@ -46,8 +47,6 @@ p₁ ≲′ p₂ = p₁ ∣ p₂ ≈ p₂
 ------------------------------------------------------------------------
 -- A limited notion of *-continuity
 
-open ⊙ using (_⊙′_)
-
 -- Least upper bounds.
 
 record _LeastUpperBoundOf_
@@ -67,22 +66,18 @@ record _LeastUpperBoundOf_
   (p₁ : Parser Tok (List R₁ → R₂ → R₃) fs)
   (p₂ : Parser Tok R₁ [])
   (p₃ : Parser Tok R₂ xs) →
-  (p₁ ⊙ p₂ ⋆ ⊙ p₃) LeastUpperBoundOf (λ n → p₁ ⊙ p₂ ↑ n ⊙ p₃)
+  (p₁ ⊛ p₂ ⋆ ⊛ p₃) LeastUpperBoundOf (λ n → p₁ ⊛ p₂ ↑ n ⊛ p₃)
 *-continuous {Tok} {R₁ = R₁} {R₃ = R₃} {fs} {xs} p₁ p₂ p₃ =
   record { upper-bound = upper-bound; least = least }
   where
-  upper-bound : ∀ n → p₁ ⊙ p₂ ↑ n ⊙ p₃ ≲ p₁ ⊙ p₂ ⋆ ⊙ p₃
-  upper-bound n ∈⊙ⁿ⊙ with ⊙.sound xs ∈⊙ⁿ⊙
-  ... | ∈⊙ⁿ ⊙′ ∈p₃ with ⊙.sound (↑-initial [] n) ∈⊙ⁿ
-  ... | ∈p₁ ⊙′ ∈p₂ⁿ =
-    ⊙.complete (⊙.complete ∈p₁ (Exactly.↑≲⋆ n ∈p₂ⁿ)) ∈p₃
+  upper-bound : ∀ n → p₁ ⊛ p₂ ↑ n ⊛ p₃ ≲ p₁ ⊛ p₂ ⋆ ⊛ p₃
+  upper-bound n (∈p₁ ⊛′ ∈p₂ⁿ ⊛′ ∈p₃) =
+    [ ○ - ○ ] [ ○ - ○ ] ∈p₁ ⊛ Exactly.↑≲⋆ n ∈p₂ⁿ ⊛ ∈p₃
 
   least : ∀ {ys} {p : Parser Tok R₃ ys} →
-          (∀ i → p₁ ⊙ p₂ ↑ i ⊙ p₃ ≲ p) → p₁ ⊙ p₂ ⋆ ⊙ p₃ ≲ p
-  least ub ∈⊙⋆⊙ with ⊙.sound xs ∈⊙⋆⊙
-  ... | ∈⊙⋆ ⊙′ ∈p₃ with ⊙.sound {fs = fs} [ [] ] ∈⊙⋆
-  ... | ∈p₁ ⊙′ ∈p₂⋆ with Exactly.⋆≲∃↑ ∈p₂⋆
-  ... | (n , ∈p₂ⁿ) = ub n (⊙.complete (⊙.complete ∈p₁ ∈p₂ⁿ) ∈p₃)
+          (∀ i → p₁ ⊛ p₂ ↑ i ⊛ p₃ ≲ p) → p₁ ⊛ p₂ ⋆ ⊛ p₃ ≲ p
+  least ub (∈p₁ ⊛′ ∈p₂⋆ ⊛′ ∈p₃) with Exactly.⋆≲∃↑ ∈p₂⋆
+  ... | (n , ∈p₂ⁿ) = ub n ([ ○ - ○ ] [ ○ - ○ ] ∈p₁ ⊛ ∈p₂ⁿ ⊛ ∈p₃)
 
 ------------------------------------------------------------------------
 -- The parser combinators do not form a Kleene algebra
@@ -95,7 +90,7 @@ not-Kleene-algebra :
   (_⋆′ : ∀ {Tok R xs} (p : Parser Tok R xs) →
          Parser Tok (List R) (f p)) →
   ¬ (∀ {Tok R xs} {p : Parser Tok R xs} →
-     return [] ∣ _∷_ <$> p ⊙ (p ⋆′) ≲ (p ⋆′))
+     return [] ∣ _∷_ <$> p ⊛ (p ⋆′) ≲ (p ⋆′))
 not-Kleene-algebra f _⋆′ fold =
   KleeneStar.unrestricted-incomplete tt f _⋆′ ⋆′-complete
   where
@@ -103,10 +98,10 @@ not-Kleene-algebra f _⋆′ fold =
                 xs ∈[ p ]⋆· s → xs ∈ p ⋆′ · s
   ⋆′-complete                   []         = fold (∣ˡ return)
   ⋆′-complete {ys = ys} {p = p} (∈p ∷ ∈p⋆) =
-    fold (∣ʳ [ [] ] (⊙.complete (<$> ∈p) (⋆′-complete ∈p⋆)))
+    fold (∣ʳ [ [] ] ([ ○ - ○ ] <$> ∈p ⊛ ⋆′-complete ∈p⋆))
 
 -- This shows that the parser combinators do not form a Kleene
--- algebra (interpreted liberally) using _⊙_ for composition, return
+-- algebra (interpreted liberally) using _⊛_ for composition, return
 -- for unit, etc. However, it should be straightforward to build a
 -- recogniser library, based on the parser combinators, which does
 -- satisfy the Kleene algebra axioms (see

@@ -19,15 +19,11 @@ import Data.String as String
 open import Relation.Binary
 open DecSetoid String.decSetoid using (_≟_)
 open import Relation.Nullary
-open import Relation.Binary.PropositionalEquality
-  using (_≡_; refl; sym)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 
-open import TotalParserCombinators.Coinduction hiding (maybe)
 open import TotalParserCombinators.Parser
+  renaming (_⊛_ to _⊛′_; _<$>_ to _<$>′_)
 import TotalParserCombinators.Lib as Lib
-open import TotalParserCombinators.Semantics as Sem
-open import TotalParserCombinators.Semantics.Continuation as ContSem
-  hiding (sound; complete)
 open import Mixfix.Operator using (NamePart)
 
 private
@@ -80,23 +76,27 @@ data ParserProg : Set → Set1 where
 ⟦_⟧ : ∀ {R} → ParserProg R → Parser NamePart R []
 ⟦ fail               ⟧ = fail
 ⟦ p₁ ∣ p₂            ⟧ = ⟦ p₁ ⟧ ∣ ⟦ p₂ ⟧
-⟦ p₁ ⊛  p₂           ⟧ = ⟪ ♯ ⟦   p₁ ⟧ ⟫ ⊛ ⟪ ♯ ⟦   p₂ ⟧ ⟫
-⟦ p₁ ⊛∞ p₂           ⟧ = ⟪ ♯ ⟦ ♭ p₁ ⟧ ⟫ ⊛ ⟪ ♯ ⟦ ♭ p₂ ⟧ ⟫
-⟦ f <$> p            ⟧ = f <$> ⟦ p ⟧
-⟦ p +                ⟧ = ⟨ (λ x → maybe (_∷_ x) [ x ]) <$> ⟦ p ⟧ ⟩ ⊛
-                         ⟪ ♯ (⟦ just <$> p + ⟧ ∣ return nothing) ⟫
-⟦ p between (t ∷ []) ⟧ = const [] <$> tok t
+⟦ p₁ ⊛  p₂           ⟧ =   ⟦   p₁ ⟧ ⊛′   ⟦   p₂ ⟧
+⟦ p₁ ⊛∞ p₂           ⟧ = ♯ ⟦ ♭ p₁ ⟧ ⊛′ ♯ ⟦ ♭ p₂ ⟧
+⟦ f <$> p            ⟧ = f <$>′ ⟦ p ⟧
+⟦ p +                ⟧ = one <$>′  ⟦ p ⟧
+                              ⊛′ ♯ (⟦ just <$> p + ⟧ ∣ return nothing)
+                         where one = λ x → maybe (_∷_ x) [ x ]
+⟦ p between (t ∷ []) ⟧ = const [] <$>′ tok t
 ⟦ p between
-       (t ∷ t′ ∷ ts) ⟧ = ⟪ ♯ (♯? (const _∷_ <$> tok t) ⊛
-                         ⟪ ♯ ⟦ ♭ p ⟧ ⟫) ⟫ ⊛
-                         ⟪ ♯ ⟦ p between (t′ ∷ ts) ⟧ ⟫
-⟦ p₁ ∥ p₂            ⟧ = ,_ <$> ⟦ p₁ ⟧
-                       ∣        ⟦ p₂ ⟧
+       (t ∷ t′ ∷ ts) ⟧ = const _∷_ <$>′  tok t
+                                    ⊛′ ♯ ⟦ ♭ p ⟧
+                                    ⊛′ ♯ ⟦ p between (t′ ∷ ts) ⟧
+⟦ p₁ ∥ p₂            ⟧ = ,_ <$>′ ⟦ p₁ ⟧
+                       ∣         ⟦ p₂ ⟧
 
 ------------------------------------------------------------------------
 -- Semantics of the programs
 
 module Semantics where
+
+  open import TotalParserCombinators.Semantics as Sem
+    renaming ([_-_]_⊛_ to [_-_]_⊛′_)
 
   -- This definition may seem unnecessary: why not simply define
   --
@@ -162,18 +162,17 @@ module Semantics where
           x ∈⟦ p ⟧· s → x ∈ ⟦ p ⟧ · s
   sound (∣ˡ x∈p₁)      = ∣ˡ    (sound x∈p₁)
   sound (∣ʳ x∈p₂)      = ∣ʳ [] (sound x∈p₂)
-  sound (f∈p₁ ⊛  x∈p₂) = sound f∈p₁ ⊛ sound x∈p₂
-  sound (f∈p₁ ⊛∞ x∈p₂) = sound f∈p₁ ⊛ sound x∈p₂
+  sound (f∈p₁ ⊛  x∈p₂) = [ ○ - ○ ] sound f∈p₁ ⊛′ sound x∈p₂
+  sound (f∈p₁ ⊛∞ x∈p₂) = [ ◌ - ◌ ] sound f∈p₁ ⊛′ sound x∈p₂
   sound (<$> x∈p)      = <$> sound x∈p
   sound (+-[] x∈p)     = cast∈ refl refl (proj₂ LM.identity _)
-                           (<$> sound x∈p ⊛ ∣ʳ [] return)
-  sound (+-∷ x∈p xs∈p) = _⊛_ {xs = _ ∷ []} (<$> sound x∈p)
-                                           (∣ˡ (<$> sound xs∈p))
+                           ([ ○ - ◌ ] <$> sound x∈p ⊛′ ∣ʳ [] return)
+  sound (+-∷ x∈p xs∈p) = [ ○ - ◌ ] <$> sound x∈p ⊛′ ∣ˡ (<$> sound xs∈p)
   sound (∥ˡ x∈p₁)      = ∣ˡ {x = (, _)} (<$> sound x∈p₁)
   sound (∥ʳ x∈p₂)      = ∣ʳ [] (sound x∈p₂)
   sound between-[]     = <$> Tok.complete
   sound (between-∷ {ts = _ ∷ _} x∈p xs∈⋯) =
-    <$> Tok.complete ⊛ sound x∈p ⊛ sound xs∈⋯
+    [ ○ - ◌ ] [ ○ - ◌ ] <$> Tok.complete ⊛′ sound x∈p ⊛′ sound xs∈⋯
 
   complete : ∀ {R x s} (p : ParserProg R) →
              x ∈ ⟦ p ⟧ · s → x ∈⟦ p ⟧· s
@@ -211,6 +210,9 @@ module Semantics where
 -- it simplifies the proof in Mixfix.Cyclic.Show.
 
 module Semantics-⊕ where
+
+  open import TotalParserCombinators.Semantics.Continuation as ContSem
+    hiding (sound; complete)
 
   infix  60 <$>_
   infixl 50 _⊛_
@@ -274,17 +276,16 @@ module Semantics-⊕ where
           x ⊕ s′ ∈⟦ p ⟧· s → x ⊕ s′ ∈ ⟦ p ⟧ · s
   sound (∣ˡ x∈p₁)      = ∣ˡ    (sound x∈p₁)
   sound (∣ʳ x∈p₂)      = ∣ʳ [] (sound x∈p₂)
-  sound (f∈p₁ ⊛  x∈p₂) = sound f∈p₁ ⊛ sound x∈p₂
-  sound (f∈p₁ ⊛∞ x∈p₂) = sound f∈p₁ ⊛ sound x∈p₂
+  sound (f∈p₁ ⊛  x∈p₂) = [ ○ - ○ ] sound f∈p₁ ⊛ sound x∈p₂
+  sound (f∈p₁ ⊛∞ x∈p₂) = [ ◌ - ◌ ] sound f∈p₁ ⊛ sound x∈p₂
   sound (<$> x∈p)      = <$> sound x∈p
-  sound (+-[] x∈p)     = <$> sound x∈p ⊛ ∣ʳ [] return
-  sound (+-∷ x∈p xs∈p) = _⊛_ {xs = _ ∷ []} (<$> sound x∈p)
-                                           (∣ˡ (<$> sound xs∈p))
+  sound (+-[] x∈p)     = [ ○ - ◌ ] <$> sound x∈p ⊛ ∣ʳ [] return
+  sound (+-∷ x∈p xs∈p) = [ ○ - ◌ ] <$> sound x∈p ⊛ ∣ˡ (<$> sound xs∈p)
   sound (∥ˡ x∈p₁)      = ∣ˡ {x = (, _)} (<$> sound x∈p₁)
   sound (∥ʳ x∈p₂)      = ∣ʳ [] (sound x∈p₂)
   sound between-[]     = <$> tok-complete
   sound (between-∷ {ts = _ ∷ _} x∈p xs∈⋯) =
-    <$> tok-complete ⊛ sound x∈p ⊛ sound xs∈⋯
+    [ ○ - ◌ ] [ ○ - ◌ ] <$> tok-complete ⊛ sound x∈p ⊛ sound xs∈⋯
 
   complete : ∀ {R x s s′} (p : ParserProg R) →
              x ⊕ s′ ∈ ⟦ p ⟧ · s → x ⊕ s′ ∈⟦ p ⟧· s
@@ -293,17 +294,17 @@ module Semantics-⊕ where
   complete (p₁ ∣ p₂) (∣ˡ     x∈p₁) = ∣ˡ (complete p₁ x∈p₁)
   complete (p₁ ∣ p₂) (∣ʳ .[] x∈p₂) = ∣ʳ (complete p₂ x∈p₂)
 
-  complete (p₁ ⊛  p₂) (f∈p₁ ⊛ y∈p₂) = complete    p₁  f∈p₁ ⊛  complete    p₂  y∈p₂
-  complete (p₁ ⊛∞ p₂) (f∈p₁ ⊛ y∈p₂) = complete (♭ p₁) f∈p₁ ⊛∞ complete (♭ p₂) y∈p₂
+  complete (p₁ ⊛  p₂) ([ .○ - .○ ] f∈p₁ ⊛ y∈p₂) = complete    p₁  f∈p₁ ⊛  complete    p₂  y∈p₂
+  complete (p₁ ⊛∞ p₂) ([ .◌ - .◌ ] f∈p₁ ⊛ y∈p₂) = complete (♭ p₁) f∈p₁ ⊛∞ complete (♭ p₂) y∈p₂
 
   complete (f <$> p) (<$> x∈p) = <$> complete p x∈p
 
-  complete (p +) (<$> x∈p ⊛ ∣ˡ (<$> xs∈p+)) = +-∷  (complete p x∈p) (complete (p +) xs∈p+)
-  complete (p +) (<$> x∈p ⊛ ∣ʳ .[] return)  = +-[] (complete p x∈p)
+  complete (p +) ([ .○ - .◌ ] <$> x∈p ⊛ ∣ˡ (<$> xs∈p+)) = +-∷  (complete p x∈p) (complete (p +) xs∈p+)
+  complete (p +) ([ .○ - .◌ ] <$> x∈p ⊛ ∣ʳ .[] return)  = +-[] (complete p x∈p)
 
   complete (p between (t ∷ [])) (<$> t∈) with tok-sound t∈
   ... | (refl , refl) = between-[]
-  complete (p between (t ∷ t′ ∷ ts)) (<$> t∈ ⊛ x∈p ⊛ xs∈)
+  complete (p between (t ∷ t′ ∷ ts)) ([ .○ - .◌ ] [ .○ - .◌ ] <$> t∈ ⊛ x∈p ⊛ xs∈)
     with tok-sound t∈
   ... | (refl , refl) =
     between-∷ (complete (♭ p) x∈p) (complete (p between (t′ ∷ ts)) xs∈)

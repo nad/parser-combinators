@@ -81,9 +81,9 @@ open PBM
 
 comment : Parser Char ⊤ _
 comment =
-  tok '#'                 ≫= λ _ →
-  sat (not ∘ _==_ '\n') ⋆ ≫= λ _ →
-  tok '\n'                ≫= λ _ →
+  tok '#'                 >>= λ _ →
+  sat (not ∘ _==_ '\n') ⋆ >>= λ _ →
+  tok '\n'                >>= λ _ →
   return tt
 
 colour : Parser Char Colour _
@@ -92,15 +92,15 @@ colour = const white <$> tok '0'
 
 pbm : Parser Char PBM _
 pbm =
-  w∣c ⋆                                 ≫= λ _ →
-  tok 'P' ≫= λ _ → tok '1'              ≫= λ _ →
-  w∣c ⋆                                 ≫= λ _ →
-  number                                ≫= λ cols →
-  w∣c +                                 ≫= λ _ →
-  number                                ≫= λ rows →
-  w∣c                                   ≫= λ _ →
-  (w∣c ⋆ ≫= λ _ → colour) ^ cols ^ rows ≫= λ m →
-  token ⋆                               ≫= λ _ →
+  w∣c ⋆                                  >>= λ _ →
+  tok 'P' >>= λ _ → tok '1'              >>= λ _ →
+  w∣c ⋆                                  >>= λ _ →
+  number                                 >>= λ cols →
+  w∣c +                                  >>= λ _ →
+  number                                 >>= λ rows →
+  w∣c                                    >>= λ _ →
+  (w∣c ⋆ >>= λ _ → colour) ^ cols ^ rows >>= λ m →
+  token ⋆                                >>= λ _ →
   return (toPBM m)
   where
   w∣c = whitespace ∣ comment

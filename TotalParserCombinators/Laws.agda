@@ -8,6 +8,7 @@
 module TotalParserCombinators.Laws where
 
 open import Algebra
+open import Category.Monad
 open import Coinduction
 open import Data.List as List
 import Data.List.Any as Any
@@ -19,13 +20,14 @@ open Any.Membership-≡ using (bag) renaming (_≈[_]_ to _List-≈[_]_)
 private
   module BagMonoid {A : Set} =
     CommutativeMonoid (Eq.commutativeMonoid _ A)
+  open module ListMonad = RawMonad List.monad
+    using () renaming (_⊛_ to _⊛′_)
 
-open import TotalParserCombinators.Applicative using (_⊛′_)
 open import TotalParserCombinators.BreadthFirst hiding (correct)
 open import TotalParserCombinators.Congruence
+  hiding (return; fail)
 open import TotalParserCombinators.Lib hiding (module Return⋆)
 open import TotalParserCombinators.Parser
-open import TotalParserCombinators.Semantics
 
 ------------------------------------------------------------------------
 -- Reexported modules
@@ -39,15 +41,15 @@ module AdditiveMonoid = TotalParserCombinators.Laws.AdditiveMonoid
 
 import TotalParserCombinators.Laws.Derivative
 module ∂ = TotalParserCombinators.Laws.Derivative
-  hiding (left-zero-⊙; right-zero-⊙;
-          left-zero-≫=; right-zero-≫=)
+  hiding (left-zero-⊛; right-zero-⊛;
+          left-zero->>=; right-zero->>=)
 
 -- Laws related to return⋆.
 
 import TotalParserCombinators.Laws.ReturnStar
 module Return⋆ = TotalParserCombinators.Laws.ReturnStar
 
--- Laws related to _⊙_.
+-- Laws related to _⊛_.
 
 import TotalParserCombinators.Laws.ApplicativeFunctor
 module ApplicativeFunctor =
@@ -70,15 +72,15 @@ module <$> where
 
   open ∂
 
-  -- _<$>_ could have been defined using return and _⊙_.
+  -- _<$>_ could have been defined using return and _⊛_.
 
-  return-⊙ : ∀ {Tok R₁ R₂ xs} {f : R₁ → R₂} {p : Parser Tok R₁ xs} →
-             f <$> p ≅P return f ⊙ p
-  return-⊙ {xs = xs} {f} {p} =
+  return-⊛ : ∀ {Tok R₁ R₂ xs} {f : R₁ → R₂} {p : Parser Tok R₁ xs} →
+             f <$> p ≅P return f ⊛ p
+  return-⊛ {xs = xs} {f} {p} =
     BagMonoid.reflexive (lemma xs) ∷ λ t → ♯ (
-      f <$> ∂ p t         ≅⟨ return-⊙ ⟩
-      return f ⊙ ∂ p t    ≅⟨ sym $ ∂-return-⊙ f p ⟩
-      ∂ (return f ⊙ p) t  ∎)
+      f <$> ∂ p t         ≅⟨ return-⊛ ⟩
+      return f ⊛ ∂ p t    ≅⟨ sym $ ∂-return-⊛ f p ⟩
+      ∂ (return f ⊛ p) t  ∎)
     where
     lemma : ∀ xs → List.map f xs ≡ [ f ] ⊛′ xs
     lemma []       = P.refl
@@ -89,8 +91,8 @@ module <$> where
   zero : ∀ {Tok R₁ R₂} {f : R₁ → R₂} →
          f <$> fail {Tok = Tok} ≅P fail
   zero {f = f} =
-    f <$> fail       ≅⟨ return-⊙ ⟩
-    return f ⊙ fail  ≅⟨ ApplicativeFunctor.right-zero (return f) ⟩
+    f <$> fail       ≅⟨ return-⊛ ⟩
+    return f ⊛ fail  ≅⟨ ApplicativeFunctor.right-zero (return f) ⟩
     fail             ∎
 
   -- A variant of ApplicativeFunctor.homomorphism.
@@ -98,8 +100,8 @@ module <$> where
   homomorphism : ∀ {Tok R₁ R₂} (f : R₁ → R₂) {x} →
                  f <$> return {Tok = Tok} x ≅P return (f x)
   homomorphism f {x} =
-    f <$> return x       ≅⟨ return-⊙ {f = f} ⟩
-    return f ⊙ return x  ≅⟨ ApplicativeFunctor.homomorphism f x ⟩
+    f <$> return x       ≅⟨ return-⊛ {f = f} ⟩
+    return f ⊛ return x  ≅⟨ ApplicativeFunctor.homomorphism f x ⟩
     return (f x)         ∎
 
 ------------------------------------------------------------------------

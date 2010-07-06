@@ -6,14 +6,15 @@ module TotalParserCombinators.Simplification where
 
 open import Coinduction
 open import Data.List using (List)
+open import Data.Maybe using (Maybe); open Data.Maybe.Maybe
 open import Data.Product
 open import Function
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 open import Relation.Binary.HeterogeneousEquality
   using (refl) renaming (_≅_ to _≅H_)
 
-open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Congruence
+  hiding (return; fail; token) renaming (_∣_ to _∣′_)
 open import TotalParserCombinators.Laws
 open import TotalParserCombinators.Lib
 open import TotalParserCombinators.Parser
@@ -34,25 +35,24 @@ private
 -- down to the first occurrences of ♯_. The following simplifications
 -- are applied in a bottom-up manner:
 --
--- f <$> fail                          → fail
--- f <$> return x                      → return (f x)
--- fail             ∣ p                → p
--- p                ∣ fail             → p
--- ⟨ token ⟩ >>= p₁ ∣ ⟨ token ⟩ >>= p₂ → token ≫= (λ t → ♭? (p₁ t) ∣ ♭? (p₂ t))
--- fail     ⊛ p                        → fail
--- p        ⊛ fail                     → fail
--- return f ⊛ return x                 → return (f x)
--- fail     >>= p                      → fail
--- return x >>= p                      → p x
--- nonempty fail                       → fail
--- cast eq p                           → p
+-- f <$> fail                  → fail
+-- f <$> return x              → return (f x)
+-- fail         ∣ p            → p
+-- p            ∣ fail         → p
+-- token >>= p₁ ∣ token >>= p₂ → token >>= (λ t → p₁ t ∣ p₂ t)  (*)
+-- fail     ⊛ p                → fail
+-- p        ⊛ fail             → fail
+-- return f ⊛ return x         → return (f x)
+-- fail     >>= p              → fail
+-- return x >>= p              → p x
+-- nonempty fail               → fail
+-- cast eq p                   → p
 --
--- Some other changes may also be performed, such as the replacement
--- of _>>=_ with _≫=_ (along with insertion of ♭?).
+-- (*) Currently only when p₁ and p₂ are not delayed.
 --
 -- An example of a possible future addition:
 --
--- ⟨ p₁ >>= p₂ ⟩ >>= p₃ → ♭? p₁ ≫= λ x → ♭? (p₂ x) ≫= p₃
+-- (p₁ >>= p₂) >>= p₃ → ♭? p₁ >>= λ x → ♭? (p₂ x) >>= (♭? ∘ p₃)
 
 private
  mutual
@@ -90,103 +90,102 @@ private
   -- • _∣_:
 
   simplify₁ (p₁ ∣ p₂) with simplify₁ p₁ | simplify₁ p₂
-  ... | (._ , fail              , p₁≅∅)
-      | (_  , p₂′               , p₂≅p₂′) = _ , _ , (
-                                            p₁   ∣ p₂   ≅⟨ p₁≅∅ ∣ p₂≅p₂′ ⟩
-                                            fail ∣ p₂′  ≅⟨ AdditiveMonoid.left-identity p₂′ ⟩
-                                            p₂′         ∎)
-  ... | (_  , p₁′               , p₁≅p₁′)
-      | (._ , fail              , p₂≅∅)   = _ , _ , (
-                                            p₁  ∣ p₂       ≅⟨ p₁≅p₁′ ∣ p₂≅∅ ⟩
-                                            p₁′ ∣ fail     ≅⟨ AdditiveMonoid.right-identity p₁′ ⟩
-                                            p₁′            ∎)
-  ... | (._ , ⟨ token ⟩ >>= p₁′ , p₁≅…)
-      | (._ , ⟨ token ⟩ >>= p₂′ , p₂≅…)   = _ , _ , (
-                                            p₁                ∣ p₂                     ≅⟨ p₁≅… ∣ p₂≅… ⟩
-                                            ⟨ token ⟩ >>= p₁′ ∣ ⟨ token ⟩ >>= p₂′      ≅⟨ [ ⟨ _ ⟩ , ⟨ _ ⟩ ] token ∎ >>=
-                                                                                            (λ x → ♭? (p₁′ x) ∎) ∣
-                                                                                          [ ⟨ _ ⟩ , ⟨ _ ⟩ ] token ∎ >>=
-                                                                                            (λ x → ♭? (p₂′ x) ∎) ⟩
-                                            token ≫= (♭? ∘ p₁′) ∣ token ≫= (♭? ∘ p₂′)  ≅⟨ sym $ Monad.left-distributive
-                                                                                                  token (♭? ∘ p₁′) (♭? ∘ p₂′) ⟩
-                                            token ≫= (λ t → ♭? (p₁′ t) ∣ ♭? (p₂′ t))   ∎)
-  ... | (_  , p₁′               , p₁≅p₁′)
-      | (_  , p₂′               , p₂≅p₂′) = _ , _ , (
-                                            p₁  ∣ p₂   ≅⟨ p₁≅p₁′ ∣ p₂≅p₂′ ⟩
-                                            p₁′ ∣ p₂′  ∎)
+  ... | (._ , fail          , p₁≅∅)
+      | (_  , p₂′           , p₂≅p₂′) = _ , _ , (
+                                        p₁   ∣ p₂   ≅⟨ p₁≅∅ ∣′ p₂≅p₂′ ⟩
+                                        fail ∣ p₂′  ≅⟨ AdditiveMonoid.left-identity p₂′ ⟩
+                                        p₂′         ∎)
+  ... | (_  , p₁′           , p₁≅p₁′)
+      | (._ , fail          , p₂≅∅)   = _ , _ , (
+                                        p₁  ∣ p₂    ≅⟨ p₁≅p₁′ ∣′ p₂≅∅ ⟩
+                                        p₁′ ∣ fail  ≅⟨ AdditiveMonoid.right-identity p₁′ ⟩
+                                        p₁′         ∎)
+  ... | (._ , _>>=_ {xs = just ._}
+                    {f  = just _}
+                    token p₁′ , p₁≅…)
+      | (._ , _>>=_ {xs = just ._}
+                    {f  = just _}
+                    token p₂′ , p₂≅…) = _ , _ , (
+                                        p₁            ∣ p₂               ≅⟨ p₁≅… ∣′ p₂≅… ⟩
+                                        token >>= p₁′ ∣ token >>= p₂′    ≅⟨ [ ○ - ○ - ○ - ○ ] token ∎ >>= (λ x → p₁′ x ∎) ∣′
+                                                                            [ ○ - ○ - ○ - ○ ] token ∎ >>= (λ x → p₂′ x ∎) ⟩
+                                        token >>= p₁′ ∣ token >>= p₂′    ≅⟨ sym $ Monad.left-distributive token p₁′ p₂′ ⟩
+                                        token >>= (λ t → p₁′ t ∣ p₂′ t)  ∎)
+  ... | (_  , p₁′           , p₁≅p₁′)
+      | (_  , p₂′           , p₂≅p₂′) = _ , _ , (
+                                        p₁  ∣ p₂   ≅⟨ p₁≅p₁′ ∣′ p₂≅p₂′ ⟩
+                                        p₁′ ∣ p₂′  ∎)
 
   -- • _⊛_:
 
   simplify₁ (p₁ ⊛ p₂) =
-    helper _ _ (simplify₁′ p₁) (simplify₁′ p₂) refl refl
+    helper _ _ p₁ p₂ (simplify₁′ p₁) (simplify₁′ p₂) refl refl
     where
     -- token ⊛ token is never type correct, but Agda's case-splitting
     -- machinery cannot see this, so instead of a with clause the
     -- following ugly machinery is used.
 
-    cast₁ : ∀ {Tok R R₁ R₁′ xs xs′} {ys : List R} →
+    cast₁ : ∀ {Tok R R₁ R₁′ xs xs′} {ys : Maybe (List R)} →
             (R≡  : R₁ ≡ R₁′) → xs ≅H xs′ →
-            ∞? (Parser Tok R₁′ xs′) ys →
-            ∞? (Parser Tok R₁  xs ) ys
+            ∞⟨ ys ⟩Parser Tok R₁′ (flatten xs′) →
+            ∞⟨ ys ⟩Parser Tok R₁  (flatten xs)
     cast₁ refl refl p = p
 
-    helper : ∀ {Tok R₁ R₁′ R₂ fs xs xs′}
-               (p₁ : ∞? (Parser Tok (R₁ → R₂) fs ) xs)
-               (p₂ : ∞? (Parser Tok  R₁′      xs′) fs) →
+    helper : ∀ {Tok R₁ R₁′ R₂} fs xs {xs′}
+               (p₁ : ∞⟨ xs ⟩Parser Tok (R₁ → R₂) (flatten fs))
+               (p₂ : ∞⟨ fs ⟩Parser Tok  R₁′      (flatten xs′)) →
              (∃₂ λ xs (p₁′ : Parser _ _ xs) → ♭? p₁ ≅P p₁′) →
              (∃₂ λ xs (p₂′ : Parser _ _ xs) → ♭? p₂ ≅P p₂′) →
              (R≡  : R₁ ≡ R₁′) →
              (xs≅ : xs ≅H xs′) →
              ∃₂ λ xs (p′ : Parser _ _ xs) → p₁ ⊛ cast₁ R≡ xs≅ p₂ ≅P p′
-    helper {xs = xs} p₁ p₂ (._ , fail , p₁≅∅) _ refl refl = _ , _ , (
-      p₁    ⊛ p₂      ≅⟨ sym $ ApplicativeFunctor.⊙≅⊛ p₁ p₂ ⟩
-      ♭? p₁ ⊙ ♭? p₂   ≅⟨ p₁≅∅ ⊙′ (♭? p₂ ∎) ⟩
-      fail  ⊙ ♭? p₂   ≅⟨ ApplicativeFunctor.left-zero (♭? p₂) ⟩
-      fail            ∎)
-    helper {fs = fs} p₁ p₂ _ (._ , fail , p₂≅∅) refl refl = _ , _ , (
-      p₁    ⊛ p₂      ≅⟨ sym $ ApplicativeFunctor.⊙≅⊛ p₁ p₂ ⟩
-      ♭? p₁ ⊙ ♭? p₂   ≅⟨ (♭? p₁ ∎) ⊙′ p₂≅∅ ⟩
-      ♭? p₁ ⊙ fail    ≅⟨ ApplicativeFunctor.right-zero (♭? p₁) ⟩
-      fail            ∎)
-    helper p₁ p₂ (._ , return f , p₁≅ε) (._ , return x , p₂≅ε)
+    helper fs xs p₁ p₂ (._ , fail , p₁≅∅) _ refl refl = _ , _ , (
+      p₁   ⊛ p₂     ≅⟨ [ xs - ○ - fs - ○ ] p₁≅∅ ⊛ (♭? p₂ ∎) ⟩
+      fail ⊛ ♭? p₂  ≅⟨ ApplicativeFunctor.left-zero (♭? p₂) ⟩
+      fail          ∎)
+    helper fs xs p₁ p₂ _ (._ , fail , p₂≅∅) refl refl = _ , _ , (
+      p₁    ⊛ p₂    ≅⟨ [ xs - ○ - fs - ○ ] ♭? p₁ ∎ ⊛ p₂≅∅ ⟩
+      ♭? p₁ ⊛ fail  ≅⟨ ApplicativeFunctor.right-zero (♭? p₁) ⟩
+      fail          ∎)
+    helper fs xs p₁ p₂ (._ , return f , p₁≅ε) (._ , return x , p₂≅ε)
            refl refl = _ , _ , (
-      p₁       ⊛ p₂        ≅⟨ p₁≅ε ⊛ p₂≅ε ⟩
-      return f ⊙ return x  ≅⟨ ApplicativeFunctor.homomorphism f x ⟩
+      p₁       ⊛ p₂        ≅⟨ [ xs - ○ - fs - ○ ] p₁≅ε ⊛ p₂≅ε ⟩
+      return f ⊛ return x  ≅⟨ ApplicativeFunctor.homomorphism f x ⟩
       return (f x)         ∎)
-    helper p₁ p₂ p₁′ p₂′ R≡ xs≅ = helper′ p₁ p₂ p₁′ p₂′ R≡ xs≅
+    helper fs xs p₁ p₂ p₁′ p₂′ R≡ xs≅ =
+      helper′ fs xs p₁ p₂ p₁′ p₂′ R≡ xs≅
       where
-      helper′ : ∀ {Tok R₁ R₁′ R₂ fs xs xs′}
-                  (p₁ : ∞? (Parser Tok (R₁ → R₂) fs ) xs)
-                  (p₂ : ∞? (Parser Tok  R₁′      xs′) fs) →
-                (∃₂ λ xs (p₁′ : Parser _ _ xs) → ♭? p₁ ≅P p₁′) →
-                (∃₂ λ xs (p₂′ : Parser _ _ xs) → ♭? p₂ ≅P p₂′) →
-                (R≡  : R₁ ≡ R₁′) →
-                (xs≅ : xs ≅H xs′) →
-                ∃₂ λ xs (p′ : Parser _ _ xs) → p₁ ⊛ cast₁ R≡ xs≅ p₂ ≅P p′
-      helper′ {fs = fs} {xs} p₁ p₂ (_ , p₁′ , p₁≅p₁′) (_ , p₂′ , p₂≅p₂′)
+      helper′ :
+        ∀ {Tok R₁ R₁′ R₂} fs xs {xs′}
+          (p₁ : ∞⟨ xs ⟩Parser Tok (R₁ → R₂) (flatten fs))
+          (p₂ : ∞⟨ fs ⟩Parser Tok  R₁′      (flatten xs′)) →
+        (∃₂ λ xs (p₁′ : Parser _ _ xs) → ♭? p₁ ≅P p₁′) →
+        (∃₂ λ xs (p₂′ : Parser _ _ xs) → ♭? p₂ ≅P p₂′) →
+        (R≡  : R₁ ≡ R₁′) →
+        (xs≅ : xs ≅H xs′) →
+        ∃₂ λ xs (p′ : Parser _ _ xs) → p₁ ⊛ cast₁ R≡ xs≅ p₂ ≅P p′
+      helper′ fs xs p₁ p₂ (_ , p₁′ , p₁≅p₁′) (_ , p₂′ , p₂≅p₂′)
               refl refl = _ , _ , (
-        p₁    ⊛ p₂     ≅⟨ sym $ ApplicativeFunctor.⊙≅⊛ p₁ p₂ ⟩
-        ♭? p₁ ⊙ ♭? p₂  ≅⟨ p₁≅p₁′ ⊙′ p₂≅p₂′ ⟩
-        p₁′   ⊙ p₂′    ∎)
+        p₁  ⊛ p₂   ≅⟨ [ xs - ○ - fs - ○ ] p₁≅p₁′ ⊛ p₂≅p₂′ ⟩
+        p₁′ ⊛ p₂′  ∎)
 
   -- • _>>=_:
 
-  simplify₁ (p₁ >>= p₂) with simplify₁′ p₁
+  simplify₁ (_>>=_ {xs = xs} {f = f} p₁ p₂) with simplify₁′ p₁
   ... | (._ , fail     , p₁≅∅)  = _ , _ , (
-                                  p₁  >>= p₂         ≅⟨ [ p₁ , ⟨ _ ⟩ ] p₁≅∅ >>= (λ x → ♭? (p₂ x) ∎) ⟩
-                                  fail ≫= (♭? ∘ p₂)  ≅⟨ Monad.left-zero (♭? ∘ p₂) ⟩
-                                  fail               ∎)
+                                  p₁   >>= p₂         ≅⟨ [ f - ○ - xs - ○ ] p₁≅∅ >>= (λ x → ♭? (p₂ x) ∎) ⟩
+                                  fail >>= (♭? ∘ p₂)  ≅⟨ Monad.left-zero (♭? ∘ p₂) ⟩
+                                  fail                ∎)
   ... | (._ , return x , p₁≅ε) with simplify₁′ (p₂ x)
   ...   | (_ , p₂x′ , p₂x≅p₂x′) = _ , _ , (
-                                  p₁      >>= p₂         ≅⟨ [ p₁ , ⟨ _ ⟩ ] p₁≅ε >>= (λ x → ♭? (p₂ x) ∎) ⟩
-                                  return x ≫= (♭? ∘ p₂)  ≅⟨ Monad.left-identity x (♭? ∘ p₂) ⟩
-                                  ♭? (p₂ x)              ≅⟨ p₂x≅p₂x′ ⟩
-                                  p₂x′                   ∎)
-  simplify₁ (p₁ >>= p₂)
+                                  p₁       >>= p₂         ≅⟨ [ f - ○ - xs - ○ ] p₁≅ε >>= (λ x → ♭? (p₂ x) ∎) ⟩
+                                  return x >>= (♭? ∘ p₂)  ≅⟨ Monad.left-identity x (♭? ∘ p₂) ⟩
+                                  ♭? (p₂ x)               ≅⟨ p₂x≅p₂x′ ⟩
+                                  p₂x′                    ∎)
+  simplify₁ (_>>=_ {xs = xs} {f = f} p₁ p₂)
       | (_ , p₁′ , p₁≅p₁′)      = _ , _ , (
-                                  p₁   >>= p₂         ≅⟨ sym $ Monad.≫=≅>>= p₁ p₂ ⟩
-                                  ♭? p₁ ≫= (♭? ∘ p₂)  ≅⟨ p₁≅p₁′ ≫=′ (λ x → ♭? (p₂ x) ∎) ⟩
-                                  p₁′   ≫= (♭? ∘ p₂)  ∎)
+                                  p₁  >>= p₂         ≅⟨ [ f - ○ - xs - ○ ] p₁≅p₁′ >>= (λ x → ♭? (p₂ x) ∎) ⟩
+                                  p₁′ >>= (♭? ∘ p₂)  ∎)
 
   -- • nonempty:
 
@@ -213,13 +212,11 @@ private
   -- predetermined depth, would be possible, but for simplicity
   -- delayed parsers are simply forced and returned.
 
-  simplify₁′ : ∀ {t Tok R R′ xs} {n : El t R′}
-               (p : ∞? (Parser Tok R xs) n) →
+  simplify₁′ : ∀ {Tok R R′ xs} {m : Maybe R′}
+               (p : ∞⟨ m ⟩Parser Tok R xs) →
                ∃₂ λ xs (p′ : Parser Tok R xs) → ♭? p ≅P p′
-  simplify₁′ {list}  ⟪ p ⟫ = (_ , ♭ p , (♭ p ∎))
-  simplify₁′ {list}  ⟨ p ⟩ = simplify₁ p
-  simplify₁′ {maybe} ⟪ p ⟫ = (_ , ♭ p , (♭ p ∎))
-  simplify₁′ {maybe} ⟨ p ⟩ = simplify₁ p
+  simplify₁′ {m = nothing} p = (_ , ♭ p , (♭ p ∎))
+  simplify₁′ {m = just _}  p = simplify₁ p
 
 -- A simplifier.
 

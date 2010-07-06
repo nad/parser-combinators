@@ -25,7 +25,6 @@ private
     using () renaming (_≈_ to _Bag-≈_)
 
 open import StructurallyRecursiveDescentParsing.Simplified.Lemmas
-open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.Parser as P
   hiding (Parser; module Parser)
 
@@ -132,8 +131,8 @@ private
                  where
                  lem : _ Bag-≈ _
                  lem = BagS.reflexive (∣-lemma p₁ p₂)
-⟦ p₁ !>>= p₂ ⟧ =           ⟨ ⟦ p₁ ⟧ ⟩ >>= λ x → ⟪ ♯ ⟦ ♭ (p₂ x) ⟧ ⟫
-⟦ p₁ ?>>= p₂ ⟧ = cast lem (⟨ ⟦ p₁ ⟧ ⟩ >>= λ x → ⟨   ⟦    p₂ x  ⟧ ⟩)
+⟦ p₁ !>>= p₂ ⟧ =           ⟦ p₁ ⟧ >>= λ x → ♯ ⟦ ♭ (p₂ x) ⟧
+⟦ p₁ ?>>= p₂ ⟧ = cast lem (⟦ p₁ ⟧ >>= λ x →   ⟦    p₂ x  ⟧)
                  where
                  lem : _ Bag-≈ _
                  lem = BagS.reflexive (?>>=-lemma p₁ p₂)

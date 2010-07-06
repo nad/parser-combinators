@@ -34,7 +34,6 @@ open import Relation.Nullary
 open import Relation.Binary.PropositionalEquality
   using (_≡_; refl; cong)
 
-open import TotalParserCombinators.Coinduction
 import StructurallyRecursiveDescentParsing.Simplified as Simplified
 open Simplified hiding (⟦_⟧)
 open import StructurallyRecursiveDescentParsing.Simplified.Semantics
@@ -181,8 +180,7 @@ module Semantics where
 
     add-[] : ∀ {R s x} {p : ParserProg R} →
              x ∈⟦ p ⟧· s → x ∈⟦ p ⟧· s ++ []
-    add-[] {s = s} x∈p with s ++ [] | proj₂ LM.identity s
-    ... | .s | refl = x∈p
+    add-[] {s = s} x∈p rewrite proj₂ LM.identity s = x∈p
 
   ⊛-complete : ∀ {s₁ s₂ R₁ R₂ f x}
                  {p₁ : ParserProg (R₁ → R₂)} {p₂ : ParserProg R₁} →

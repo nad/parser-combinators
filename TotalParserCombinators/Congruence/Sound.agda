@@ -7,30 +7,28 @@ module TotalParserCombinators.Congruence.Sound where
 open import Algebra
 open import Category.Monad
 open import Coinduction
-open import Data.Empty
 open import Data.List as List
-open import Data.List.Any as Any using (Any)
-open import Data.List.Any.Properties
+import Data.List.Properties as ListProp
+import Data.List.Any as Any
 import Data.List.Any.BagAndSetEquality as BSEq
 open import Data.Maybe as Maybe using (Maybe); open Maybe.Maybe
 open import Function
 import Function.Inverse as Inv
-open import Relation.Binary.PropositionalEquality as P using (_≡_; _≗_)
+open import Relation.Binary.PropositionalEquality as P using (_≗_)
 
 open Any.Membership-≡ using (_∈_; bag) renaming (_≈[_]_ to _List-≈[_]_)
 open Inv.EquationalReasoning
   renaming (_≈⟨_⟩_ to _≈⟨_⟩′_; _∎ to _∎′; sym to sym′)
-open RawMonad List.monad using () renaming (_>>=_ to _>>=′_)
+open RawMonad List.monad
+  using () renaming (_⊛_ to _⊛′_; _>>=_ to _>>=′_)
 private
   module BSMonoid {k} {A : Set} =
     CommutativeMonoid (BSEq.commutativeMonoid k A)
 
-import TotalParserCombinators.Applicative as ⊛
 open import TotalParserCombinators.BreadthFirst hiding (sound)
-open import TotalParserCombinators.Coinduction
 open import TotalParserCombinators.CoinductiveEquality as CE
   using (_≈[_]′_; _∷_)
-open import TotalParserCombinators.Congruence as Eq
+open import TotalParserCombinators.Congruence
 open import TotalParserCombinators.Laws
 open import TotalParserCombinators.Lib
 open import TotalParserCombinators.Parser
@@ -39,20 +37,28 @@ open import TotalParserCombinators.Semantics
 open ∂
 
 ------------------------------------------------------------------------
--- A lemma
+-- Some lemmas
 
 private
 
-  []-lemma : ∀ {A B : Set} (f : A → List B) xs {k} →
-             (∀ x → [] List-≈[ k ] f x) →
-             [] List-≈[ k ] (xs >>=′ f)
-  []-lemma f xs f≈[] {x} =
-    x ∈ []                  ⇿⟨ sym′ ⊥⇿∈[] ⟩
-    ⊥                       ⇿⟨ ⊥⇿Any⊥ ⟩
-    Any (const ⊥)       xs  ⇿⟨ Any-cong (λ _ → ⊥⇿∈[])  BSMonoid.refl ⟩
-    Any (λ _ → x ∈ [])  xs  ≈⟨ Any-cong (λ x → f≈[] x) BSMonoid.refl ⟩′
-    Any (λ y → x ∈ f y) xs  ⇿⟨ >>=⇿ ⟩
+  >>=-[]-lemma : ∀ {A B : Set} xs (f : A → List B) {k} →
+                 (∀ x → [] List-≈[ k ] f x) →
+                 [] List-≈[ k ] (xs >>=′ f)
+  >>=-[]-lemma xs f []≈f {x} =
+    x ∈ []                  ≈⟨ BSMonoid.reflexive $ P.sym $
+                                 ListProp.Monad.right-zero xs ⟩′
+    x ∈ (xs >>=′ λ _ → [])  ≈⟨ BSEq.>>=-cong (BSMonoid.refl {x = xs})
+                                             []≈f ⟩′
     x ∈ (xs >>=′ f)         ∎′
+
+  ⊛-[]-lemma : ∀ {A B : Set} (fs : List (A → B)) xs {k} →
+               [] List-≈[ k ] xs →
+               [] List-≈[ k ] (fs ⊛′ xs)
+  ⊛-[]-lemma fs xs []≈xs {x} =
+    x ∈ []          ≈⟨ BSMonoid.reflexive $ P.sym $
+                         ListProp.Applicative.right-zero fs ⟩′
+    x ∈ (fs ⊛′ [])  ≈⟨ BSEq.⊛-cong (BSMonoid.refl {x = fs}) []≈xs ⟩′
+    x ∈ (fs ⊛′ xs)  ∎′
 
 ------------------------------------------------------------------------
 -- Soundness
@@ -103,15 +109,6 @@ private
          p₁ ≈[ k ]W p₂ → p₂ ≈[ k ]W p₁
   symW (xs₁≈xs₂ ∷ ∂p₁≈∂p₂) = sym′ xs₁≈xs₂ ∷ λ t → sym (∂p₁≈∂p₂ t)
 
-  ♭♯W : ∀ {k Tok R R₁ R₂ xs₁ xs₂} (ys₁ : List R₁) (ys₂ : List R₂)
-          {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
-       p₁ ≈[ k ]W p₂ → ♭? (♯? {n = ys₁} p₁) ≈[ k ]W ♭? (♯? {n = ys₂} p₂)
-  ♭♯W ys₁ ys₂ {p₁} {p₂} (xs₁≈xs₂ ∷ ∂p₁≈∂p₂) = xs₁≈xs₂ ∷ λ t →
-     ∂ (♭? {n = ys₁} (♯? p₁)) t  ≅⟨ Eq.complete (∂-cong (♭♯.correct ys₁)) ⟩
-     ∂ p₁ t                      ≈⟨ ∂p₁≈∂p₂ t ⟩
-     ∂ p₂ t                      ≅⟨ sym $ Eq.complete (∂-cong (♭♯.correct ys₂)) ⟩
-     ∂ (♭? {n = ys₂} (♯? p₂)) t  ∎
-
   _∣W_ : ∀ {k Tok R xs₁ xs₂ xs₃ xs₄}
            {p₁ : Parser Tok R xs₁}
            {p₂ : Parser Tok R xs₂}
@@ -128,74 +125,55 @@ private
   f₁≗f₂ <$>W (xs₁≈xs₂ ∷ ∂p₁≈∂p₂) =
     BSEq.map-cong f₁≗f₂ xs₁≈xs₂ ∷ λ t → f₁≗f₂ <$> ∂p₁≈∂p₂ t
 
-  _⊛W_ : ∀ {k Tok R₁ R₂ xs₁ xs₂ xs₃ xs₄}
-           {p₁ : ∞? (Parser Tok (R₁ → R₂) xs₁) xs₂}
-           {p₂ : ∞? (Parser Tok R₁        xs₂) xs₁}
-           {p₃ : ∞? (Parser Tok (R₁ → R₂) xs₃) xs₄}
-           {p₄ : ∞? (Parser Tok R₁        xs₄) xs₃} →
-        ♭? p₁ ≈[ k ]W ♭? p₃ → ♭? p₂ ≈[ k ]W ♭? p₄ → p₁ ⊛ p₂ ≈[ k ]W p₃ ⊛ p₄
-  _⊛W_ {xs₁ = fs₁} {xs₃ = fs₃} {p₁ = p₁} {p₂} {p₃} {p₄}
-       (fs₁≈fs₃ ∷ ∂p₁≈∂p₃) (xs₂≈xs₄ ∷ ∂p₂≈∂p₄) =
-    ⊛.cong fs₁≈fs₃ xs₂≈xs₄ ∷ λ t →
-      ∂ (p₁ ⊛ p₂) t                                    ≅⟨ ∂-⊛ p₁ p₂ ⟩
-      ∂ (♭? p₁) t ⊙ ♭? p₂ ∣ return⋆ fs₁ ⊙ ∂ (♭? p₂) t  ≈⟨ ∂p₁≈∂p₃ t ⊙′ (xs₂≈xs₄ ∷ λ t → ♯ ∂p₂≈∂p₄ t) ∣
-                                                          Return⋆.cong fs₁≈fs₃ ⊙′ ∂p₂≈∂p₄ t ⟩
-      ∂ (♭? p₃) t ⊙ ♭? p₄ ∣ return⋆ fs₃ ⊙ ∂ (♭? p₄) t  ≅⟨ sym $ ∂-⊛ p₃ p₄ ⟩
-      ∂ (p₃ ⊛ p₄) t                                    ∎
+  [_-_-_-_]_⊛W_ :
+    ∀ {k Tok R₁ R₂} xs₁ xs₂ fs₁ fs₂
+      {p₁ : ∞⟨ xs₁ ⟩Parser Tok (R₁ → R₂) (flatten fs₁)}
+      {p₂ : ∞⟨ fs₁ ⟩Parser Tok  R₁       (flatten xs₁)}
+      {p₃ : ∞⟨ xs₂ ⟩Parser Tok (R₁ → R₂) (flatten fs₂)}
+      {p₄ : ∞⟨ fs₂ ⟩Parser Tok  R₁       (flatten xs₂)} →
+    ♭? p₁ ≈[ k ]W ♭? p₃ → ♭? p₂ ≈[ k ]W ♭? p₄ → p₁ ⊛ p₂ ≈[ k ]W p₃ ⊛ p₄
+  [_-_-_-_]_⊛W_ {k} {R₁ = R₁} xs₁ xs₂ fs₁ fs₂ {p₁} {p₂} {p₃} {p₄}
+       (fs₁≈fs₂ ∷ ∂p₁≈∂p₃) (xs₁≈xs₂ ∷ ∂p₂≈∂p₄) =
+    lemma xs₁ xs₂ xs₁≈xs₂ ∷ λ t →
+      ∂ (p₁ ⊛ p₂) t                                              ≅⟨ ∂-⊛ p₁ p₂ ⟩
+      ∂ (♭? p₁) t ⊛ ♭? p₂ ∣ return⋆ (flatten fs₁) ⊛ ∂ (♭? p₂) t  ≈⟨ [ ○ - ○ - ○ - ○ ] ∂p₁≈∂p₃ t ⊛ (xs₁≈xs₂ ∷ λ t → ♯ ∂p₂≈∂p₄ t) ∣
+                                                                    [ ○ - ○ - ○ - ○ ] Return⋆.cong fs₁≈fs₂ ⊛ ∂p₂≈∂p₄ t ⟩
+      ∂ (♭? p₃) t ⊛ ♭? p₄ ∣ return⋆ (flatten fs₂) ⊛ ∂ (♭? p₄) t  ≅⟨ sym $ ∂-⊛ p₃ p₄ ⟩
+      ∂ (p₃ ⊛ p₄) t                                              ∎
+    where
+    lemma : (xs₁ xs₂ : Maybe (List R₁)) →
+            flatten xs₁ List-≈[ k ] flatten xs₂ →
+            flatten fs₁ ⊛flatten xs₁ List-≈[ k ]
+            flatten fs₂ ⊛flatten xs₂
+    lemma nothing    nothing     []≈[]  = BSMonoid.refl
+    lemma nothing    (just xs₂)  []≈xs₂ = ⊛-[]-lemma (flatten fs₂) xs₂ []≈xs₂
+    lemma (just xs₁) nothing    xs₁≈[]  = BSMonoid.sym $ ⊛-[]-lemma (flatten fs₁) xs₁ (BSMonoid.sym xs₁≈[])
+    lemma (just xs₁) (just xs₂) xs₁≈xs₂ = BSEq.⊛-cong fs₁≈fs₂ xs₁≈xs₂
 
-  _⊙W_ : ∀ {k Tok R₁ R₂ xs₁ xs₂ xs₃ xs₄}
-           {p₁ : Parser Tok (R₁ → R₂) xs₁}
-           {p₂ : Parser Tok R₁        xs₂}
-           {p₃ : Parser Tok (R₁ → R₂) xs₃}
-           {p₄ : Parser Tok R₁        xs₄} →
-         p₁ ≈[ k ]W p₃ → p₂ ≈[ k ]W p₄ → p₁ ⊙ p₂ ≈[ k ]W p₃ ⊙ p₄
-  _⊙W_ {xs₁ = fs₁} {xs₃ = fs₃} {p₁ = p₁} {p₂} {p₃} {p₄}
-       (fs₁≈fs₃ ∷ ∂p₁≈∂p₃) (xs₂≈xs₄ ∷ ∂p₂≈∂p₄) =
-    ⊛.cong fs₁≈fs₃ xs₂≈xs₄ ∷ λ t →
-      ∂ (p₁ ⊙ p₂) t                       ≅⟨ ∂-⊙ p₁ p₂ ⟩
-      ∂ p₁ t ⊙ p₂ ∣ return⋆ fs₁ ⊙ ∂ p₂ t  ≈⟨ ∂p₁≈∂p₃ t ⊙′ (xs₂≈xs₄ ∷ λ t → ♯ ∂p₂≈∂p₄ t) ∣
-                                             Return⋆.cong fs₁≈fs₃ ⊙′ ∂p₂≈∂p₄ t ⟩
-      ∂ p₃ t ⊙ p₄ ∣ return⋆ fs₃ ⊙ ∂ p₄ t  ≅⟨ sym $ ∂-⊙ p₃ p₄ ⟩
-      ∂ (p₃ ⊙ p₄) t                       ∎
-
-  [_,_]_>>=W_ : ∀ {k Tok R₁ R₂ xs₁ xs₂} {f₁ f₂ : Maybe (R₁ → List R₂)}
-                  (p₁ : ∞? (Parser Tok R₁ xs₁) f₁)
-                  {p₂ : (x : R₁) → ∞? (Parser Tok R₂ (app f₁ x)) xs₁}
-                  (p₃ : ∞? (Parser Tok R₁ xs₂) f₂)
-                  {p₄ : (x : R₁) → ∞? (Parser Tok R₂ (app f₂ x)) xs₂} →
-                ♭? p₁ ≈[ k ]W ♭? p₃ → (∀ x → ♭? (p₂ x) ≈[ k ]W ♭? (p₄ x)) →
-                p₁ >>= p₂ ≈[ k ]W p₃ >>= p₄
-  [_,_]_>>=W_ {k} {R₁ = R₁} {R₂} {xs₁} {xs₂} {f₁} {f₂} p₁ {p₂} p₃ {p₄}
-              (xs₁≈xs₂ ∷ ∂p₁≈∂p₃) p₂≈p₄ = lemma f₁ f₂ (head ∘ p₂≈p₄) ∷ λ t →
-    ∂ (p₁ >>= p₂) t                                                    ≅⟨ ∂->>= p₁ p₂ ⟩
-    ∂ (♭? p₁) t ≫= (♭? ∘ p₂) ∣ return⋆ xs₁ ≫= (λ x → ∂ (♭? (p₂ x)) t)  ≈⟨ ∂p₁≈∂p₃ t ≫=′ (forget ∘ p₂≈p₄) ∣
-                                                                          Return⋆.cong xs₁≈xs₂ ≫=′ (λ x → tail (p₂≈p₄ x) t) ⟩
-    ∂ (♭? p₃) t ≫= (♭? ∘ p₄) ∣ return⋆ xs₂ ≫= (λ x → ∂ (♭? (p₄ x)) t)  ≅⟨ sym $ ∂->>= p₃ p₄ ⟩
-    ∂ (p₃ >>= p₄) t                                                    ∎
+  [_-_-_-_]_>>=W_ :
+    ∀ {k Tok R₁ R₂} (f₁ f₂ : Maybe (R₁ → List R₂)) xs₁ xs₂
+      {p₁ : ∞⟨ f₁ ⟩Parser Tok R₁ (flatten xs₁)}
+      {p₂ : (x : R₁) → ∞⟨ xs₁ ⟩Parser Tok R₂ (app f₁ x)}
+      {p₃ : ∞⟨ f₂ ⟩Parser Tok R₁ (flatten xs₂)}
+      {p₄ : (x : R₁) → ∞⟨ xs₂ ⟩Parser Tok R₂ (app f₂ x)} →
+    ♭? p₁ ≈[ k ]W ♭? p₃ → (∀ x → ♭? (p₂ x) ≈[ k ]W ♭? (p₄ x)) →
+    p₁ >>= p₂ ≈[ k ]W p₃ >>= p₄
+  [_-_-_-_]_>>=W_ {k} {R₁ = R₁} {R₂} f₁ f₂ xs₁ xs₂ {p₁} {p₂} {p₃} {p₄}
+                  (xs₁≈xs₂ ∷ ∂p₁≈∂p₃) p₂≈p₄ = lemma f₁ f₂ (head ∘ p₂≈p₄) ∷ λ t →
+    ∂ (p₁ >>= p₂) t                                                                ≅⟨ ∂->>= p₁ p₂ ⟩
+    ∂ (♭? p₁) t >>= (♭? ∘ p₂) ∣ return⋆ (flatten xs₁) >>= (λ x → ∂ (♭? (p₂ x)) t)  ≈⟨ [ ○ - ○ - ○ - ○ ] ∂p₁≈∂p₃ t >>= (forget ∘ p₂≈p₄) ∣
+                                                                                      [ ○ - ○ - ○ - ○ ] Return⋆.cong xs₁≈xs₂ >>=
+                                                                                                        (λ x → tail (p₂≈p₄ x) t) ⟩
+    ∂ (♭? p₃) t >>= (♭? ∘ p₄) ∣ return⋆ (flatten xs₂) >>= (λ x → ∂ (♭? (p₄ x)) t)  ≅⟨ sym $ ∂->>= p₃ p₄ ⟩
+    ∂ (p₃ >>= p₄) t                                                                ∎
     where
     lemma : (f₁ f₂ : Maybe (R₁ → List R₂)) →
             (∀ x → app f₁ x List-≈[ k ] app f₂ x) →
-            Maybe.maybe (_>>=′_ xs₁) [] f₁ List-≈[ k ]
-            Maybe.maybe (_>>=′_ xs₂) [] f₂
+            flatten xs₁ >>=app f₁ List-≈[ k ] flatten xs₂ >>=app f₂
     lemma nothing   nothing   f₁≈f₂ = BSMonoid.refl
-    lemma nothing   (just f₂) f₁≈f₂ = []-lemma f₂ xs₂ f₁≈f₂
-    lemma (just f₁) nothing   f₁≈f₂ = BSMonoid.sym $ []-lemma f₁ xs₁ (BSMonoid.sym ∘ f₁≈f₂)
+    lemma nothing   (just f₂) f₁≈f₂ = >>=-[]-lemma (flatten xs₂) f₂ f₁≈f₂
+    lemma (just f₁) nothing   f₁≈f₂ = BSMonoid.sym $ >>=-[]-lemma (flatten xs₁) f₁ (BSMonoid.sym ∘ f₁≈f₂)
     lemma (just f₁) (just f₂) f₁≈f₂ = BSEq.>>=-cong xs₁≈xs₂ f₁≈f₂
-
-  _≫=W_ : ∀ {k Tok R₁ R₂ xs₁ xs₂} {f₁ f₂ : R₁ → List R₂}
-             {p₁ : Parser Tok R₁ xs₁}
-             {p₂ : (x : R₁) → Parser Tok R₂ (f₁ x)}
-             {p₃ : Parser Tok R₁ xs₂}
-             {p₄ : (x : R₁) → Parser Tok R₂ (f₂ x)} →
-           p₁ ≈[ k ]W p₃ → (∀ x → p₂ x ≈[ k ]W p₄ x) → p₁ ≫= p₂ ≈[ k ]W p₃ ≫= p₄
-  _≫=W_ {xs₁ = xs₁} {xs₂} {p₁ = p₁} {p₂} {p₃} {p₄}
-        (xs₁≈xs₂ ∷ ∂p₁≈∂p₃) p₂≈p₄ =
-    BSEq.>>=-cong xs₁≈xs₂ (head ∘ p₂≈p₄) ∷ λ t →
-      ∂ (p₁ ≫= p₂) t                                    ≅⟨ ∂-≫= p₁ p₂ ⟩
-      ∂ p₁ t ≫= p₂ ∣ return⋆ xs₁ ≫= (λ x → ∂ (p₂ x) t)  ≈⟨ ∂p₁≈∂p₃ t ≫=′ (forget ∘ p₂≈p₄) ∣
-                                                           Return⋆.cong xs₁≈xs₂ ≫=′ (λ x → tail (p₂≈p₄ x) t) ⟩
-      ∂ p₃ t ≫= p₄ ∣ return⋆ xs₂ ≫= (λ x → ∂ (p₄ x) t)  ≅⟨ sym $ ∂-≫= p₃ p₄ ⟩
-      ∂ (p₃ ≫= p₄) t                                    ∎
 
   nonemptyW : ∀ {k Tok R xs₁ xs₂}
                 {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
@@ -219,23 +197,20 @@ private
            {p₁ : Parser Tok R xs₁}
            {p₂ : Parser Tok R xs₂} →
          p₁ ≈[ k ]P p₂ → p₁ ≈[ k ]W p₂
-  whnf (xs₁≈xs₂ ∷ ∂p₁≈∂p₂)           = xs₁≈xs₂ ∷ λ t → ♭ (∂p₁≈∂p₂ t)
-  whnf (p ∎)                         = reflW p
-  whnf (p₁ ≈⟨ p₁≈p₂ ⟩ p₂≈p₃)         = transW  (whnf p₁≈p₂) (whnf p₂≈p₃)
-  whnf (p₁ ≅⟨ p₁≅p₂ ⟩ p₂≈p₃)         = transW≅ (whnf p₁≅p₂) (whnf p₂≈p₃)
-  whnf (sym p₁≈p₂)                   = symW (whnf p₁≈p₂)
-  whnf (♭♯ ys₁ ys₂ p₁≈p₂)            = ♭♯W ys₁ ys₂ (whnf p₁≈p₂)
-  whnf (return P.refl)               = reflW (return _)
-  whnf fail                          = reflW fail
-  whnf token                         = reflW token
-  whnf (p₁≈p₃ ∣ p₂≈p₄)               = whnf p₁≈p₃ ∣W whnf p₂≈p₄
-  whnf (f₁≗f₂ <$> p₁≈p₂)             = f₁≗f₂ <$>W whnf p₁≈p₂
-  whnf (p₁≈p₃ ⊛ p₂≈p₄)               = whnf p₁≈p₃ ⊛W whnf p₂≈p₄
-  whnf (p₁≈p₃ ⊙′ p₂≈p₄)              = whnf p₁≈p₃ ⊙W whnf p₂≈p₄
-  whnf ([ p₁ , p₃ ] p₁≈p₃ >>= p₂≈p₄) = [ p₁ , p₃ ] whnf p₁≈p₃ >>=W λ x → whnf (p₂≈p₄ x)
-  whnf (p₁≈p₃ ≫=′ p₂≈p₄)             = whnf p₁≈p₃ ≫=W   λ x → whnf (p₂≈p₄ x)
-  whnf (nonempty p₁≈p₂)              = nonemptyW (whnf p₁≈p₂)
-  whnf (cast p₁≈p₂)                  = castW (whnf p₁≈p₂)
+  whnf (xs₁≈xs₂ ∷ ∂p₁≈∂p₂)                         = xs₁≈xs₂ ∷ λ t → ♭ (∂p₁≈∂p₂ t)
+  whnf (p ∎)                                       = reflW p
+  whnf (p₁ ≈⟨ p₁≈p₂ ⟩ p₂≈p₃)                       = transW  (whnf p₁≈p₂) (whnf p₂≈p₃)
+  whnf (p₁ ≅⟨ p₁≅p₂ ⟩ p₂≈p₃)                       = transW≅ (whnf p₁≅p₂) (whnf p₂≈p₃)
+  whnf (sym p₁≈p₂)                                 = symW (whnf p₁≈p₂)
+  whnf (return P.refl)                             = reflW (return _)
+  whnf fail                                        = reflW fail
+  whnf token                                       = reflW token
+  whnf (p₁≈p₃ ∣ p₂≈p₄)                             = whnf p₁≈p₃ ∣W whnf p₂≈p₄
+  whnf (f₁≗f₂ <$> p₁≈p₂)                           = f₁≗f₂ <$>W whnf p₁≈p₂
+  whnf ([ fs₁ - fs₂ - xs₁ - xs₂ ] p₁≈p₃ ⊛ p₂≈p₄)   = [ fs₁ - fs₂ - xs₁ - xs₂ ] whnf p₁≈p₃ ⊛W whnf p₂≈p₄
+  whnf ([  f₁ -  f₂ - xs₁ - xs₂ ] p₁≈p₃ >>= p₂≈p₄) = [  f₁ -  f₂ - xs₁ - xs₂ ] whnf p₁≈p₃ >>=W λ x → whnf (p₂≈p₄ x)
+  whnf (nonempty p₁≈p₂)                            = nonemptyW (whnf p₁≈p₂)
+  whnf (cast p₁≈p₂)                                = castW (whnf p₁≈p₂)
 
 sound : ∀ {k Tok R xs₁ xs₂}
           {p₁ : Parser Tok R xs₁}
