@@ -10,7 +10,6 @@ open import Coinduction
 open import Data.List as List
 import Data.List.Any.BagAndSetEquality as BSEq
 import Data.List.Properties as ListProp
-open import Data.Maybe using (Maybe)
 open import Function
 
 private
