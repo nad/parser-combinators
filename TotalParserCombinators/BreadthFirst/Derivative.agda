@@ -40,7 +40,7 @@ open import TotalParserCombinators.Parser
 ... | just f  | nothing =  ∂-initial p₁ t >>=′ f
 ... | just f  | just xs = (∂-initial p₁ t >>=′ f) ∣′
                           (xs >>=′ λ x → ∂-initial (p₂ x) t)
-... | nothing | nothing = []
+... | nothing | nothing = fail′
 ... | nothing | just xs =  xs >>=′ λ x → ∂-initial (p₂ x) t
 
 -- "Derivative": x ∈ ∂ p t · s  iff  x ∈ p · t ∷ s.
