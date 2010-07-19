@@ -62,7 +62,7 @@ xs >>=app mf = maybeToList mf (λ f → xs >>=′ f)
 
 -- Verification of some claims made above.
 
-private
+module Claims where
 
   claim₁ : {A B : Set} (m : Maybe A) (f : A → List B) →
            maybeToList m f ≡ (List.fromMaybe m >>=′ f)

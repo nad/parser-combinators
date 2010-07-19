@@ -8,22 +8,21 @@ open import Algebra
 open import Category.Monad
 open import Coinduction
 open import Data.List as List
-import Data.List.Properties as ListProp
 import Data.List.Any.BagAndSetEquality as BSEq
 open import Function
 
+open RawMonad List.monad
+  using () renaming (_⊛_ to _⊛′_; _>>=_ to _>>=′_)
 private
   module BagMonoid {A : Set} =
     CommutativeMonoid (BSEq.commutativeMonoid _ A)
-  open module ListMonad = RawMonad List.monad
-    using () renaming (_⊛_ to _⊛′_)
 
 open import TotalParserCombinators.BreadthFirst
-open import TotalParserCombinators.Congruence as Eq
+open import TotalParserCombinators.Congruence
   hiding (return; fail) renaming (_∣_ to _∣′_)
 import TotalParserCombinators.Laws.AdditiveMonoid as AdditiveMonoid
 open import TotalParserCombinators.Laws.Derivative as Derivative
-import TotalParserCombinators.Laws.ReturnStar as Return⋆
+import TotalParserCombinators.Laws.Monad as Monad
 open import TotalParserCombinators.Lib
 open import TotalParserCombinators.Parser
 
@@ -35,7 +34,63 @@ open import TotalParserCombinators.Parser
 -- resembles an idempotent semiring (if we restrict ourselves to
 -- language equivalence).
 
--- The zero lemmas are proved elsewhere.
+-- First note that _⊛_ can be defined using _>>=_.
+
+private
+
+  -- A variant of "flip map".
+
+  pam : ∀ {Tok R₁ R₂ xs} →
+        Parser Tok R₁ xs → (f : R₁ → R₂) →
+        Parser Tok R₂ (xs >>=′ [_] ∘ f)
+  pam p f = p >>= (return ∘ f)
+
+  infixl 10 _⊛″_
+
+  -- Note that this definition forces the argument parsers.
+
+  _⊛″_ : ∀ {Tok R₁ R₂ fs xs} →
+         ∞⟨ xs ⟩Parser Tok (R₁ → R₂) (flatten fs)               →
+         ∞⟨ fs ⟩Parser Tok  R₁                     (flatten xs) →
+                Parser Tok       R₂  (flatten fs ⊛′ flatten xs)
+  p₁ ⊛″ p₂ = ♭? p₁ >>= pam (♭? p₂)
+
+⊛-in-terms-of->>= :
+  ∀ {Tok R₁ R₂ fs xs}
+  (p₁ : ∞⟨ xs ⟩Parser Tok (R₁ → R₂) (flatten fs)            )
+  (p₂ : ∞⟨ fs ⟩Parser Tok  R₁                   (flatten xs)) →
+  p₁ ⊛ p₂ ≅P p₁ ⊛″ p₂
+⊛-in-terms-of->>= {R₁ = R₁} {R₂} {fs} {xs} p₁ p₂ =
+  BagMonoid.reflexive (Claims.claim₂ (flatten fs) xs) ∷ λ t → ♯ (
+    ∂ (p₁ ⊛ p₂) t                                         ≅⟨ ∂-⊛ p₁ p₂ ⟩
+
+    ∂ (♭? p₁) t ⊛ ♭? p₂ ∣
+    return⋆ (flatten fs) ⊛ ∂ (♭? p₂) t                    ≅⟨ ⊛-in-terms-of->>= (∂ (♭? p₁) t) (♭? p₂) ∣′
+                                                             ⊛-in-terms-of->>= (return⋆ (flatten fs)) (∂ (♭? p₂) t) ⟩
+    ∂ (♭? p₁) t ⊛″ ♭? p₂ ∣
+    return⋆ (flatten fs) ⊛″ ∂ (♭? p₂) t                   ≅⟨ (∂ (♭? p₁) t ⊛″ ♭? p₂ ∎) ∣′
+                                                             ([ ○ - ○ - ○ - ○ ] return⋆ (flatten fs) ∎ >>= λ f →
+                                                                                sym $ lemma t f) ⟩
+    ∂ (♭? p₁) t >>= pam (♭? p₂) ∣
+    return⋆ (flatten fs) >>= (λ f → ∂ (pam (♭? p₂) f) t)  ≅⟨ sym $ ∂->>= (♭? p₁) (pam (♭? p₂)) ⟩
+
+    ∂ (♭? p₁ >>= pam (♭? p₂)) t                           ∎)
+  where
+  lemma : ∀ t (f : R₁ → R₂) →
+          ∂ (♭? p₂ >>= λ x → return (f x)) t ≅P
+          ∂ (♭? p₂) t >>= λ x → return (f x)
+  lemma t f =
+    ∂ (pam (♭? p₂) f) t                    ≅⟨ ∂->>= (♭? p₂) (return ∘ f) ⟩
+
+    pam (∂ (♭? p₂) t) f ∣
+    (return⋆ (flatten xs) >>= λ _ → fail)  ≅⟨ (pam (∂ (♭? p₂) t) f ∎) ∣′
+                                              Monad.right-zero (return⋆ (flatten xs)) ⟩
+    pam (∂ (♭? p₂) t) f ∣ fail             ≅⟨ AdditiveMonoid.right-identity (pam (∂ (♭? p₂) t) f) ⟩
+    pam (∂ (♭? p₂) t) f                    ∎
+
+-- We can then reduce all the laws to corresponding laws for _>>=_.
+
+-- The zero laws have already been proved.
 
 open Derivative public
   using () renaming (left-zero-⊛  to left-zero;
@@ -48,21 +103,14 @@ left-distributive : ∀ {Tok R₁ R₂ fs xs₁ xs₂}
                     (p₂ : Parser Tok R₁ xs₁)
                     (p₃ : Parser Tok R₁ xs₂) →
                     p₁ ⊛ (p₂ ∣ p₃) ≅P p₁ ⊛ p₂ ∣ p₁ ⊛ p₃
-left-distributive {fs = fs} {xs₁} {xs₂} p₁ p₂ p₃ =
-  BSEq.⊛-left-distributive fs xs₁ xs₂ ∷ λ t → ♯ (
-    ∂ (p₁ ⊛ (p₂ ∣ p₃)) t                         ≅⟨ ∂-⊛ p₁ (p₂ ∣ p₃) ⟩
-
-    ∂ p₁ t ⊛ (p₂ ∣ p₃) ∣
-    return⋆ fs ⊛ ∂ (p₂ ∣ p₃) t                   ≅⟨ left-distributive (∂ p₁ t) p₂ p₃ ∣′
-                                                    left-distributive (return⋆ fs) (∂ p₂ t) (∂ p₃ t) ⟩
-    (∂ p₁ t ⊛ p₂ ∣ ∂ p₁ t ⊛ p₃) ∣
-    (return⋆ fs ⊛ ∂ p₂ t ∣ return⋆ fs ⊛ ∂ p₃ t)  ≅⟨ AdditiveMonoid.swap
-                                                      (∂ p₁ t ⊛ p₂) (∂ p₁ t ⊛ p₃)
-                                                      (return⋆ fs ⊛ ∂ p₂ t) (return⋆ fs ⊛ ∂ p₃ t) ⟩
-    (∂ p₁ t ⊛ p₂ ∣ return⋆ fs ⊛ ∂ p₂ t) ∣
-    (∂ p₁ t ⊛ p₃ ∣ return⋆ fs ⊛ ∂ p₃ t)          ≅⟨ sym (∂-⊛ p₁ p₂) ∣′ sym (∂-⊛ p₁ p₃) ⟩
-
-    ∂ (p₁ ⊛ p₂) t ∣ ∂ (p₁ ⊛ p₃) t                ∎)
+left-distributive p₁ p₂ p₃ =
+  p₁ ⊛  (p₂ ∣ p₃)                     ≅⟨ ⊛-in-terms-of->>= p₁ (p₂ ∣ p₃) ⟩
+  p₁ ⊛″ (p₂ ∣ p₃)                     ≅⟨ ([ ○ - ○ - ○ - ○ ] p₁ ∎ >>= λ f →
+                                            Monad.right-distributive p₂ p₃ (return ∘ f)) ⟩
+  (p₁ >>= λ f → pam p₂ f ∣ pam p₃ f)  ≅⟨ Monad.left-distributive p₁ (pam p₂) (pam p₃) ⟩
+  p₁ ⊛″ p₂ ∣ p₁ ⊛″ p₃                 ≅⟨ sym $ ⊛-in-terms-of->>= p₁ p₂ ∣′
+                                               ⊛-in-terms-of->>= p₁ p₃ ⟩
+  p₁ ⊛  p₂ ∣ p₁ ⊛  p₃                 ∎
 
 -- _⊛_ distributes from the right over _∣_.
 
@@ -71,42 +119,54 @@ right-distributive : ∀ {Tok R₁ R₂ fs₁ fs₂ xs}
                      (p₂ : Parser Tok (R₁ → R₂) fs₂)
                      (p₃ : Parser Tok R₁ xs) →
                      (p₁ ∣ p₂) ⊛ p₃ ≅P p₁ ⊛ p₃ ∣ p₂ ⊛ p₃
-right-distributive {fs₁ = fs₁} {fs₂} {xs} p₁ p₂ p₃ =
-  BagMonoid.reflexive (ListProp.Applicative.right-distributive fs₁ fs₂ xs) ∷ λ t → ♯ (
-    ∂ ((p₁ ∣ p₂) ⊛ p₃) t                           ≅⟨ ∂-⊛ (p₁ ∣ p₂) p₃ ⟩
+right-distributive p₁ p₂ p₃ =
+  (p₁ ∣ p₂) ⊛  p₃      ≅⟨ ⊛-in-terms-of->>= (p₁ ∣ p₂) p₃ ⟩
+  (p₁ ∣ p₂) ⊛″ p₃      ≅⟨ Monad.right-distributive p₁ p₂ (pam p₃) ⟩
+  p₁ ⊛″ p₃ ∣ p₂ ⊛″ p₃  ≅⟨ sym $ ⊛-in-terms-of->>= p₁ p₃ ∣′
+                                ⊛-in-terms-of->>= p₂ p₃ ⟩
+  p₁ ⊛  p₃ ∣ p₂ ⊛  p₃  ∎
 
-    ∂ (p₁ ∣ p₂) t ⊛ p₃ ∣
-    return⋆ (fs₁ ++ fs₂) ⊛ ∂ p₃ t                  ≅⟨ (∂ (p₁ ∣ p₂) t ⊛ p₃ ∎) ∣′
-                                                      [ ○ - ○ - ○ - ○ ] Return⋆.distrib-∣ fs₁ fs₂ ⊛ (∂ p₃ t ∎) ⟩
-    ∂ (p₁ ∣ p₂) t ⊛ p₃ ∣
-    (return⋆ fs₁ ∣ return⋆ fs₂) ⊛ ∂ p₃ t           ≅⟨ right-distributive (∂ p₁ t) (∂ p₂ t) p₃ ∣′
-                                                      right-distributive (return⋆ fs₁) (return⋆ fs₂) (∂ p₃ t) ⟩
-    (∂ p₁ t ⊛ p₃ ∣ ∂ p₂ t ⊛ p₃) ∣
-    (return⋆ fs₁ ⊛ ∂ p₃ t ∣ return⋆ fs₂ ⊛ ∂ p₃ t)  ≅⟨ AdditiveMonoid.swap
-                                                        (∂ p₁ t ⊛ p₃) (∂ p₂ t ⊛ p₃)
-                                                        (return⋆ fs₁ ⊛ ∂ p₃ t) (return⋆ fs₂ ⊛ ∂ p₃ t) ⟩
-    (∂ p₁ t ⊛ p₃ ∣ return⋆ fs₁ ⊛ ∂ p₃ t) ∣
-    (∂ p₂ t ⊛ p₃ ∣ return⋆ fs₂ ⊛ ∂ p₃ t)           ≅⟨ sym $ ∂-⊛ p₁ p₃ ∣′ ∂-⊛ p₂ p₃ ⟩
-
-    ∂ (p₁ ⊛ p₃) t ∣ ∂ (p₂ ⊛ p₃) t                  ∎)
+-- Applicative functor laws.
 
 identity : ∀ {Tok R xs} (p : Parser Tok R xs) → return id ⊛ p ≅P p
-identity {xs = xs} p =
-  BagMonoid.reflexive (ListProp.Applicative.identity xs) ∷ λ t → ♯ (
-    ∂ (return id ⊛ p) t                    ≅⟨ ∂-⊛ (return id) p ⟩
-    fail ⊛ p ∣ (return id ∣ fail) ⊛ ∂ p t  ≅⟨ left-zero p ∣′
-                                              [ ○ - ○ - ○ - ○ ] AdditiveMonoid.right-identity (return id) ⊛ (∂ p t ∎) ⟩
-    fail ∣ return id ⊛ ∂ p t               ≅⟨ AdditiveMonoid.left-identity (return id ⊛ ∂ p t) ⟩
-    return id ⊛ ∂ p t                      ≅⟨ identity (∂ p t) ⟩
-    ∂ p t                                  ∎)
+identity p =
+  return id ⊛  p  ≅⟨ ⊛-in-terms-of->>= (return id) p ⟩
+  return id ⊛″ p  ≅⟨ Monad.left-identity id (pam p) ⟩
+  p >>= return    ≅⟨ Monad.right-identity p ⟩
+  p               ∎
 
 homomorphism : ∀ {Tok R₁ R₂} (f : R₁ → R₂) (x : R₁) →
                return f ⊛ return x ≅P return {Tok = Tok} (f x)
-homomorphism f x = BagMonoid.refl ∷ λ t → ♯ (
-  ∂ (return f ⊛ return x) t  ≅⟨ ∂-return-⊛ f (return x) {t} ⟩
-  return f ⊛ fail            ≅⟨ right-zero (return f) ⟩
-  fail                       ≅⟨ fail ∎ ⟩
-  ∂ (return (f x)) t         ∎)
+homomorphism f x =
+  return f ⊛  return x  ≅⟨ ⊛-in-terms-of->>= (return f) (return x) ⟩
+  return f ⊛″ return x  ≅⟨ Monad.left-identity f (pam (return x)) ⟩
+  pam (return x) f      ≅⟨ Monad.left-identity x (return ∘ f) ⟩
+  return (f x)          ∎
+
+private
+
+  infixl 10 _⊛-cong_
+
+  _⊛-cong_ :
+    ∀ {k Tok R₁ R₂ xs₁ xs₂ fs₁ fs₂}
+      {p₁ : Parser Tok (R₁ → R₂) fs₁} {p₂ : Parser Tok R₁ xs₁}
+      {p₃ : Parser Tok (R₁ → R₂) fs₂} {p₄ : Parser Tok R₁ xs₂} →
+    p₁ ≈[ k ]P p₃ → p₂ ≈[ k ]P p₄ → p₁ ⊛″ p₂ ≈[ k ]P p₃ ⊛″ p₄
+  _⊛-cong_ {p₁ = p₁} {p₂} {p₃} {p₄} p₁≈p₃ p₂≈p₄ =
+    p₁ ⊛″ p₂  ≅⟨ sym $ ⊛-in-terms-of->>= p₁ p₂ ⟩
+    p₁ ⊛  p₂  ≈⟨ [ ○ - ○ - ○ - ○ ] p₁≈p₃ ⊛ p₂≈p₄ ⟩
+    p₃ ⊛  p₄  ≅⟨ ⊛-in-terms-of->>= p₃ p₄ ⟩
+    p₃ ⊛″ p₄  ∎
+
+  pam-lemma : ∀ {Tok R₁ R₂ R₃ xs} {g : R₂ → List R₃}
+              (p₁ : Parser Tok R₁ xs) (f : R₁ → R₂)
+              (p₂ : (x : R₂) → Parser Tok R₃ (g x)) →
+              pam p₁ f >>= p₂ ≅P p₁ >>= λ x → p₂ (f x)
+  pam-lemma p₁ f p₂ =
+    pam p₁ f >>= p₂                     ≅⟨ sym $ Monad.associative p₁ (return ∘ f) p₂ ⟩
+    (p₁ >>= λ x → return (f x) >>= p₂)  ≅⟨ ([ ○ - ○ - ○ - ○ ] p₁ ∎ >>= λ x →
+                                              Monad.left-identity (f x) p₂) ⟩
+    (p₁ >>= λ x → p₂ (f x))             ∎
 
 composition :
   ∀ {Tok R₁ R₂ R₃ fs gs xs}
@@ -114,67 +174,32 @@ composition :
   (p₂ : Parser Tok (R₁ → R₂) gs)
   (p₃ : Parser Tok R₁        xs) →
   return _∘′_ ⊛ p₁ ⊛ p₂ ⊛ p₃ ≅P p₁ ⊛ (p₂ ⊛ p₃)
-composition {fs = fs} {gs} {xs} p₁ p₂ p₃ =
-  BagMonoid.reflexive (ListProp.Applicative.composition fs gs xs) ∷ λ t → ♯ (
-    ∂ (return _∘′_ ⊛ p₁ ⊛ p₂ ⊛ p₃) t                 ≅⟨ ∂-⊛ (return _∘′_ ⊛ p₁ ⊛ p₂) p₃ ⟩
-
-    ∂ (return _∘′_ ⊛ p₁ ⊛ p₂) t ⊛ p₃ ∣
-    return⋆ ([ _∘′_ ] ⊛′ fs ⊛′ gs) ⊛ ∂ p₃ t          ≅⟨ [ ○ - ○ - ○ - ○ ] ∂-⊛ (return _∘′_ ⊛ p₁) p₂ ⊛ (p₃ ∎) ∣′
-                                                        [ ○ - ○ - ○ - ○ ] Return⋆.distrib-⊛ ([ _∘′_ ] ⊛′ fs) gs ⊛ (∂ p₃ t ∎) ⟩
-    (∂ (return _∘′_ ⊛ p₁) t ⊛ p₂ ∣
-     return⋆ ([ _∘′_ ] ⊛′ fs) ⊛ ∂ p₂ t) ⊛ p₃ ∣
-    return⋆ ([ _∘′_ ] ⊛′ fs) ⊛ return⋆ gs ⊛ ∂ p₃ t   ≅⟨ [ ○ - ○ - ○ - ○ ]
-                                                          ([ ○ - ○ - ○ - ○ ] ∂-return-⊛ _∘′_ p₁ ⊛ (p₂ ∎) ∣′
-                                                           [ ○ - ○ - ○ - ○ ] distrib-⊛′ _∘′_ fs ⊛ (∂ p₂ t ∎)) ⊛
-                                                          (p₃ ∎) ∣′
-                                                        [ ○ - ○ - ○ - ○ ]
-                                                          ([ ○ - ○ - ○ - ○ ] distrib-⊛′ _∘′_ fs ⊛ (return⋆ gs ∎)) ⊛
-                                                          (∂ p₃ t ∎) ⟩
-    (return _∘′_ ⊛ ∂ p₁ t ⊛ p₂ ∣
-     return _∘′_ ⊛ return⋆ fs ⊛ ∂ p₂ t) ⊛ p₃ ∣
-    return _∘′_ ⊛ return⋆ fs ⊛ return⋆ gs ⊛ ∂ p₃ t   ≅⟨ right-distributive (return _∘′_ ⊛ ∂ p₁ t ⊛ p₂)
-                                                                           (return _∘′_ ⊛ return⋆ fs ⊛ ∂ p₂ t) p₃ ∣′
-                                                        (return _∘′_ ⊛ return⋆ fs ⊛ return⋆ gs ⊛ ∂ p₃ t ∎) ⟩
-    return _∘′_ ⊛ ∂ p₁ t ⊛ p₂ ⊛ p₃ ∣
-    return _∘′_ ⊛ return⋆ fs ⊛ ∂ p₂ t ⊛ p₃ ∣
-    return _∘′_ ⊛ return⋆ fs ⊛ return⋆ gs ⊛ ∂ p₃ t   ≅⟨ composition (∂ p₁ t) p₂ p₃ ∣′
-                                                        composition (return⋆ fs) (∂ p₂ t) p₃ ∣′
-                                                        composition (return⋆ fs) (return⋆ gs) (∂ p₃ t) ⟩
-    ∂ p₁ t ⊛ (p₂ ⊛ p₃) ∣
-    return⋆ fs ⊛ (∂ p₂ t ⊛ p₃) ∣
-    return⋆ fs ⊛ (return⋆ gs ⊛ ∂ p₃ t)               ≅⟨ AdditiveMonoid.associative
-                                                          (∂ p₁ t ⊛ (p₂ ⊛ p₃))
-                                                          (return⋆ fs ⊛ (∂ p₂ t ⊛ p₃))
-                                                          (return⋆ fs ⊛ (return⋆ gs ⊛ ∂ p₃ t)) ⟩
-    ∂ p₁ t ⊛ (p₂ ⊛ p₃) ∣
-    (return⋆ fs ⊛ (∂ p₂ t ⊛ p₃) ∣
-     return⋆ fs ⊛ (return⋆ gs ⊛ ∂ p₃ t))             ≅⟨ sym $ (∂ p₁ t ⊛ (p₂ ⊛ p₃) ∎) ∣′
-                                                              left-distributive
-                                                                (return⋆ fs) (∂ p₂ t ⊛ p₃) (return⋆ gs ⊛ ∂ p₃ t) ⟩
-    ∂ p₁ t ⊛ (p₂ ⊛ p₃) ∣
-    return⋆ fs ⊛ (∂ p₂ t ⊛ p₃ ∣
-                   return⋆ gs ⊛ ∂ p₃ t)              ≅⟨ sym $ (∂ p₁ t ⊛ (p₂ ⊛ p₃) ∎) ∣′
-                                                              [ ○ - ○ - ○ - ○ ] return⋆ fs ∎ ⊛ ∂-⊛ p₂ p₃ ⟩
-
-    ∂ p₁ t ⊛ (p₂ ⊛ p₃) ∣ return⋆ fs ⊛ ∂ (p₂ ⊛ p₃) t  ≅⟨ sym $ ∂-⊛ p₁ (p₂ ⊛ p₃) ⟩
-
-    ∂ (p₁ ⊛ (p₂ ⊛ p₃)) t                             ∎)
-  where
-  distrib-⊛′ : ∀ {Tok R₁ R₂} (f : R₁ → R₂) xs →
-               return⋆ {Tok = Tok} ([ f ] ⊛′ xs) ≅P
-               return f ⊛ return⋆ xs
-  distrib-⊛′ f xs =
-    return⋆ ([ f ] ⊛′ xs)           ≅⟨ Return⋆.distrib-⊛ [ f ] xs ⟩
-    (return f ∣ fail) ⊛ return⋆ xs  ≅⟨ [ ○ - ○ - ○ - ○ ] AdditiveMonoid.right-identity (return f) ⊛
-                                       (return⋆ xs ∎) ⟩
-    return f ⊛ return⋆ xs           ∎
+composition p₁ p₂ p₃ =
+  return _∘′_ ⊛  p₁ ⊛  p₂ ⊛  p₃                   ≅⟨ ⊛-in-terms-of->>= (return _∘′_ ⊛ p₁ ⊛ p₂) p₃ ⟩
+  return _∘′_ ⊛  p₁ ⊛  p₂ ⊛″ p₃                   ≅⟨ ⊛-in-terms-of->>= (return _∘′_ ⊛ p₁) p₂ ⊛-cong (p₃ ∎) ⟩
+  return _∘′_ ⊛  p₁ ⊛″ p₂ ⊛″ p₃                   ≅⟨ ⊛-in-terms-of->>= (return _∘′_) p₁ ⊛-cong (p₂ ∎) ⊛-cong (p₃ ∎) ⟩
+  return _∘′_ ⊛″ p₁ ⊛″ p₂ ⊛″ p₃                   ≅⟨ Monad.left-identity _∘′_ (pam p₁) ⊛-cong (p₂ ∎) ⊛-cong (p₃ ∎) ⟩
+  pam p₁ _∘′_ ⊛″ p₂ ⊛″ p₃                         ≅⟨ pam-lemma p₁ _∘′_ (pam p₂) ⊛-cong (p₃ ∎) ⟩
+  ((p₁ >>= λ f → pam p₂ (_∘′_ f)) ⊛″ p₃)          ≅⟨ sym $ Monad.associative p₁ (λ f → pam p₂ (_∘′_ f)) (pam p₃) ⟩
+  (p₁ >>= λ f → pam p₂ (_∘′_ f) >>= pam p₃)       ≅⟨ ([ ○ - ○ - ○ - ○ ] p₁ ∎ >>= λ f →
+                                                      pam-lemma p₂ (_∘′_ f) (pam p₃)) ⟩
+  (p₁ >>= λ f → p₂ >>= λ g → pam p₃ (f ∘′ g))     ≅⟨ ([ ○ - ○ - ○ - ○ ] p₁ ∎ >>= λ f →
+                                                      [ ○ - ○ - ○ - ○ ] p₂ ∎ >>= λ g →
+                                                      sym $ pam-lemma p₃ g (return ∘ f)) ⟩
+  (p₁ >>= λ f → p₂ >>= λ g → pam (pam p₃ g) f)    ≅⟨ ([ ○ - ○ - ○ - ○ ] p₁ ∎ >>= λ f →
+                                                      Monad.associative p₂ (pam p₃) (return ∘ f)) ⟩
+  p₁ ⊛″ (p₂ ⊛″ p₃)                                ≅⟨ sym $ (p₁ ∎) ⊛-cong ⊛-in-terms-of->>= p₂ p₃ ⟩
+  p₁ ⊛″ (p₂ ⊛  p₃)                                ≅⟨ sym $ ⊛-in-terms-of->>= p₁ (p₂ ⊛ p₃) ⟩
+  p₁ ⊛  (p₂ ⊛  p₃)                                ∎
 
 interchange : ∀ {Tok R₁ R₂ fs}
               (p : Parser Tok (R₁ → R₂) fs) (x : R₁) →
               p ⊛ return x ≅P return (λ f → f x) ⊛ p
-interchange {fs = fs} p x =
-  BagMonoid.reflexive (ListProp.Applicative.interchange fs) ∷ λ t → ♯ (
-    ∂ (p ⊛ return x) t            ≅⟨ ∂-⊛-return p x ⟩
-    ∂ p t ⊛ return x              ≅⟨ interchange (∂ p t) x ⟩
-    return (λ f → f x) ⊛ ∂ p t    ≅⟨ sym $ ∂-return-⊛ (λ f → f x) p ⟩
-    ∂ (return (λ f → f x) ⊛ p) t  ∎)
+interchange p x =
+  p ⊛  return x               ≅⟨ ⊛-in-terms-of->>= p (return x) ⟩
+  p ⊛″ return x               ≅⟨ ([ ○ - ○ - ○ - ○ ] p ∎ >>= λ f →
+                                    Monad.left-identity x (return ∘ f)) ⟩
+  (p >>= λ f → return (f x))  ≅⟨ pam p (λ f → f x) ∎ ⟩
+  pam p (λ f → f x)           ≅⟨ sym $ Monad.left-identity (λ f → f x) (pam p) ⟩
+  return (λ f → f x) ⊛″ p     ≅⟨ sym $ ⊛-in-terms-of->>= (return (λ f → f x)) p ⟩
+  return (λ f → f x) ⊛  p     ∎

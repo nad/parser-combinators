@@ -11,14 +11,12 @@ import Data.List.Any.BagAndSetEquality as BSEq
 import Data.List.Properties as ListProp
 open import Data.Maybe using (Maybe); open Data.Maybe.Maybe
 open import Function using (_∘_; _$_)
-import Relation.Binary.PropositionalEquality as P
 
 private
   module BagMonoid {A : Set} =
     CommutativeMonoid (BSEq.commutativeMonoid _ A)
 
 open import TotalParserCombinators.BreadthFirst
-open import TotalParserCombinators.BreadthFirst.Derivative
 open import TotalParserCombinators.Congruence as Eq
   hiding (return; fail)
 import TotalParserCombinators.Laws.AdditiveMonoid as AdditiveMonoid
@@ -71,6 +69,8 @@ mutual
       fail ∣ fail              ≅⟨ AdditiveMonoid.right-identity fail ⟩
       fail                     ∎)
 
+-- fail is a right zero of ⊛.
+
 right-zero-⊛ : ∀ {Tok R₁ R₂ fs} (p : Parser Tok (R₁ → R₂) fs) →
                p ⊛ fail ≅P fail
 right-zero-⊛ {fs = fs} p =
@@ -80,7 +80,7 @@ right-zero-⊛ {fs = fs} p =
     fail ∣ fail                       ≅⟨ AdditiveMonoid.left-identity fail ⟩
     fail                              ∎)
 
--- Some simplified instances of ∂-⊛.
+-- A simplified instance of ∂-⊛.
 
 ∂-return-⊛ : ∀ {Tok R₁ R₂ xs}
              (f : R₁ → R₂) (p : Parser Tok R₁ xs) {t} →
@@ -91,15 +91,6 @@ right-zero-⊛ {fs = fs} p =
                                        [ ○ - ○ - ○ - ○ ] AdditiveMonoid.right-identity (return f) ⊛ (∂ p t ∎) ⟩
   fail ∣ return f ⊛ ∂ p t           ≅⟨ AdditiveMonoid.left-identity (return f ⊛ ∂ p t) ⟩
   return f ⊛ ∂ p t                  ∎
-
-∂-⊛-return : ∀ {Tok R₁ R₂ fs}
-             (p : Parser Tok (R₁ → R₂) fs) (x : R₁) {t} →
-             ∂ (p ⊛ return x) t ≅P ∂ p t ⊛ return x
-∂-⊛-return {fs = fs} p x {t} =
-  ∂ (p ⊛ return x) t                    ≅⟨ ∂-⊛ p (return x) ⟩
-  ∂ p t ⊛ return x ∣ return⋆ fs ⊛ fail  ≅⟨ (∂ p t ⊛ return x ∎) ∣ right-zero-⊛ (return⋆ fs) ⟩
-  ∂ p t ⊛ return x ∣ fail               ≅⟨ AdditiveMonoid.right-identity (∂ p t ⊛ return x) ⟩
-  ∂ p t ⊛ return x                      ∎
 
 mutual
 
