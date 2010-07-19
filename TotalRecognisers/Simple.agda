@@ -25,43 +25,48 @@ open import Data.Product
 open import Relation.Nullary
 
 ------------------------------------------------------------------------
--- Conditional coinduction
-
--- Coinductive if the index is /false/.
-
-∞? : Bool → Set → Set
-∞? true  A =   A
-∞? false A = ∞ A
-
-♯? : ∀ b {A} → A → ∞? b A
-♯? true  x =   x
-♯? false x = ♯ x
-
-♭? : ∀ b {A} → ∞? b A → A
-♭? true  x =   x
-♭? false x = ♭ x
-
--- A lemma.
-
-♭?♯? : ∀ {A} b {x : A} → ♭? b (♯? b x) ≡ x
-♭?♯? true  = refl
-♭?♯? false = refl
-
-------------------------------------------------------------------------
 -- Recogniser combinators
 
 infixl 10 _·_
 infixl  5 _∣_
 
--- The index is true if the corresponding language contains the empty
--- string (is nullable).
+mutual
 
-data P : Bool → Set where
-  ∅        : P false
-  ε        : P true
-  tok      : Tok → P false
-  _∣_      : ∀ {n₁ n₂} → P n₁ →        P n₂  → P (n₁ ∨ n₂)
-  _·_      : ∀ {n₁ n₂} → P n₁ → ∞? n₁ (P n₂) → P (n₁ ∧ n₂)
+  -- The index is true if the corresponding language contains the
+  -- empty string (is nullable).
+
+  data P : Bool → Set where
+    ∅   : P false
+    ε   : P true
+    tok : Tok → P false
+    _∣_ : ∀ {n₁ n₂} → P n₁ →            P n₂ → P (n₁ ∨ n₂)
+    _·_ : ∀ {n₁ n₂} → P n₁ → ∞⟨ not n₁ ⟩P n₂ → P (n₁ ∧ n₂)
+
+  -- Coinductive if the index is true.
+
+  ∞⟨_⟩P : Bool → Bool → Set
+  ∞⟨ true  ⟩P n = ∞ (P n)
+  ∞⟨ false ⟩P n =    P n
+
+------------------------------------------------------------------------
+-- Conditional coinduction helpers
+
+delayed? : ∀ {b n} → ∞⟨ b ⟩P n → Bool
+delayed? {b = b} _ = b
+
+♭? : ∀ {b n} → ∞⟨ b ⟩P n → P n
+♭? {true}  x = ♭ x
+♭? {false} x =   x
+
+♯? : ∀ {b n} → P n → ∞⟨ b ⟩P n
+♯? {true}  x = ♯ x
+♯? {false} x =   x
+
+-- A lemma.
+
+♭?♯? : ∀ b {n} {p : P n} → ♭? {b} (♯? p) ≡ p
+♭?♯? true  = refl
+♭?♯? false = refl
 
 ------------------------------------------------------------------------
 -- Semantics
@@ -72,14 +77,14 @@ data P : Bool → Set where
 infix 4 _∈_
 
 data _∈_ : ∀ {n} → List Tok → P n → Set where
-  ε        : [] ∈ ε
-  tok      : ∀ {t} → [ t ] ∈ tok t
-  ∣ˡ       : ∀ {s n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
-             s ∈ p₁ → s ∈ p₁ ∣ p₂
-  ∣ʳ       : ∀ {s n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
-             s ∈ p₂ → s ∈ p₁ ∣ p₂
-  _·_      : ∀ {s₁ s₂ n₁ n₂} {p₁ : P n₁} {p₂ : ∞? n₁ (P n₂)} →
-             s₁ ∈ p₁ → s₂ ∈ ♭? n₁ p₂ → s₁ ++ s₂ ∈ p₁ · p₂
+  ε   : [] ∈ ε
+  tok : ∀ {t} → [ t ] ∈ tok t
+  ∣ˡ  : ∀ {s n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
+        s ∈ p₁ → s ∈ p₁ ∣ p₂
+  ∣ʳ  : ∀ {s n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
+        s ∈ p₂ → s ∈ p₁ ∣ p₂
+  _·_ : ∀ {s₁ s₂ n₁ n₂} {p₁ : P n₁} {p₂ : ∞⟨ not n₁ ⟩P n₂} →
+        s₁ ∈ p₁ → s₂ ∈ ♭? p₂ → s₁ ++ s₂ ∈ p₁ · p₂
 
 -- A lemma.
 
@@ -127,32 +132,34 @@ nullable? {false} p = no helper
 ------------------------------------------------------------------------
 -- Derivative
 
--- The index of the derivative. The right-hand sides (excluding
--- t′ ≟ t) are inferable, but included here so that they can easily be
--- inspected.
+-- The index of the derivative. The right-hand sides (excluding t′ ≟ t
+-- and delayed? p₂) are inferable, but included here so that they can
+-- easily be inspected.
 
 ∂n : ∀ {n} → P n → Tok → Bool
-∂n ∅                        t = false
-∂n ε                        t = false
-∂n (tok t′)                 t with t′ ≟ t
-∂n (tok t′)                 t | yes t′≡t = true
-∂n (tok t′)                 t | no  t′≢t = false
-∂n (p₁ ∣ p₂)                t = ∂n p₁ t ∨ ∂n p₂ t
-∂n (_·_ {true}  {n₂} p₁ p₂) t = ∂n p₁ t ∧ n₂ ∨ ∂n p₂ t
-∂n (_·_ {false} {n₂} p₁ p₂) t = ∂n p₁ t ∧ n₂
+∂n ∅         t = false
+∂n ε         t = false
+∂n (tok t′)  t with t′ ≟ t
+∂n (tok t′)  t | yes t′≡t = true
+∂n (tok t′)  t | no  t′≢t = false
+∂n (p₁ ∣ p₂) t = ∂n p₁ t ∨ ∂n p₂ t
+∂n (p₁ · p₂) t with delayed? p₂
+∂n (p₁ · p₂) t | true  = ∂n p₁ t ∧ _
+∂n (p₁ · p₂) t | false = ∂n p₁ t ∧ _ ∨ ∂n p₂ t
 
 -- ∂ p t is the "derivative" of p with respect to t. It is specified
 -- by the equivalence s ∈ ∂ p t ⇔ t ∷ s ∈ p (proved below).
 
 ∂ : ∀ {n} (p : P n) (t : Tok) → P (∂n p t)
-∂ ∅                   t = ∅
-∂ ε                   t = ∅
-∂ (tok t′)            t with t′ ≟ t
-∂ (tok t′)            t | yes t′≡t = ε
-∂ (tok t′)            t | no  t′≢t = ∅
-∂ (p₁ ∣ p₂)           t = ∂ p₁ t ∣ ∂ p₂ t
-∂ (_·_ {true}  p₁ p₂) t = ∂ p₁ t · ♯? (∂n p₁ t)    p₂ ∣ ∂ p₂ t
-∂ (_·_ {false} p₁ p₂) t = ∂ p₁ t · ♯? (∂n p₁ t) (♭ p₂)
+∂ ∅         t = ∅
+∂ ε         t = ∅
+∂ (tok t′)  t with t′ ≟ t
+∂ (tok t′)  t | yes t′≡t = ε
+∂ (tok t′)  t | no  t′≢t = ∅
+∂ (p₁ ∣ p₂) t = ∂ p₁ t ∣ ∂ p₂ t
+∂ (p₁ · p₂) t with delayed? p₂
+∂ (p₁ · p₂) t | true  = ∂ p₁ t · ♯? (♭ p₂)
+∂ (p₁ · p₂) t | false = ∂ p₁ t · ♯?    p₂ ∣ ∂ p₂ t
 
 -- ∂ is correct.
 
@@ -167,9 +174,9 @@ nullable? {false} p = no helper
   ∂-sound′ (tok t′)            t ()             | no  t′≢t
   ∂-sound′ (p₁ ∣ p₂)           t (∣ˡ ∈₁)        = ∣ˡ (∂-sound′ p₁ t ∈₁)
   ∂-sound′ (p₁ ∣ p₂)           t (∣ʳ ∈₂)        = ∣ʳ {p₁ = p₁} (∂-sound′ p₂ t ∈₂)
-  ∂-sound′ (_·_ {true} p₁ p₂)  t (∣ˡ (∈₁ · ∈₂)) = ∂-sound′ p₁ t ∈₁ · cast (♭?♯? (∂n p₁ t)) ∈₂
+  ∂-sound′ (_·_ {true} p₁ p₂)  t (∣ˡ (∈₁ · ∈₂)) = ∂-sound′ p₁ t ∈₁ · cast (♭?♯? (not (∂n p₁ t))) ∈₂
   ∂-sound′ (_·_ {true} p₁ p₂)  t (∣ʳ ∈₂)        = ⇐ p₁ refl · ∂-sound′ p₂ t ∈₂
-  ∂-sound′ (_·_ {false} p₁ p₂) t (∈₁ · ∈₂)      = ∂-sound′ p₁ t ∈₁ · cast (♭?♯? (∂n p₁ t)) ∈₂
+  ∂-sound′ (_·_ {false} p₁ p₂) t (∈₁ · ∈₂)      = ∂-sound′ p₁ t ∈₁ · cast (♭?♯? (not (∂n p₁ t))) ∈₂
 
 ∂-complete : ∀ {s n} {p : P n} {t} → t ∷ s ∈ p → s ∈ ∂ p t
 ∂-complete {t = t} t∷s∈ = ∂-complete′ _ t∷s∈ refl
@@ -185,10 +192,10 @@ nullable? {false} p = no helper
   ∂-complete′ (p₁ ∣ p₂)           (∣ˡ ∈₁)              refl = ∣ˡ (∂-complete ∈₁)
   ∂-complete′ (p₁ ∣ p₂)           (∣ʳ ∈₂)              refl = ∣ʳ {p₁ = ∂ p₁ t} (∂-complete ∈₂)
   ∂-complete′ (_·_ {true} p₁ p₂)  (_·_ {[]}     ∈₁ ∈₂) refl = ∣ʳ {p₁ = ∂ p₁ t · _} (∂-complete ∈₂)
-  ∂-complete′ (_·_ {true} p₁ p₂)  (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∣ˡ (∂-complete ∈₁ · cast (sym (♭?♯? (∂n p₁ t))) ∈₂)
+  ∂-complete′ (_·_ {true} p₁ p₂)  (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∣ˡ (∂-complete ∈₁ · cast (sym (♭?♯? (not (∂n p₁ t)))) ∈₂)
   ∂-complete′ (_·_ {false} p₁ p₂) (_·_ {[]}     ∈₁ ∈₂) refl with ⇒ ∈₁
   ∂-complete′ (_·_ {false} p₁ p₂) (_·_ {[]}     ∈₁ ∈₂) refl | ()
-  ∂-complete′ (_·_ {false} p₁ p₂) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∂-complete ∈₁ · cast (sym (♭?♯? (∂n p₁ t))) ∈₂
+  ∂-complete′ (_·_ {false} p₁ p₂) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∂-complete ∈₁ · cast (sym (♭?♯? (not (∂n p₁ t)))) ∈₂
 
 ------------------------------------------------------------------------
 -- _∈_ is decidable
