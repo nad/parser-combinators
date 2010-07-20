@@ -93,8 +93,8 @@ private
   aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-index _ = _
 
   aⁿbⁱ⁺ⁿcⁱ⁺ⁿ : (i : ℕ) → P (aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-index i)
-  aⁿbⁱ⁺ⁿcⁱ⁺ⁿ i = cast lem (♯? (tok a) · ⟪ ♯ aⁿbⁱ⁺ⁿcⁱ⁺ⁿ (suc i) ⟫)
-               ∣ ♯? (tok b ^ i) · ♯? (tok c ^ i)
+  aⁿbⁱ⁺ⁿcⁱ⁺ⁿ i = cast lem (♯? (tok a) · ♯ aⁿbⁱ⁺ⁿcⁱ⁺ⁿ (suc i))
+               ∣ tok b ^ i ⊙ tok c ^ i
     where lem = left-zero (aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-index (suc i))
 
 aⁿbⁿcⁿ : P true

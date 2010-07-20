@@ -18,7 +18,7 @@ open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary.Decidable
 
 import TotalRecognisers.LeftRecursion
-open TotalRecognisers.LeftRecursion Tok hiding (left-zero)
+open TotalRecognisers.LeftRecursion Tok
 
 ------------------------------------------------------------------------
 -- Kleene star
@@ -40,7 +40,7 @@ module KleeneStar₁ where
   -- nullable.
 
   _⋆ : P false → P true
-  p ⋆ = ε ∣ ⟨ p ⟩ · ⟪ ♯ (p ⋆) ⟫
+  p ⋆ = ε ∣ p · ♯ (p ⋆)
 
   -- The definition of _⋆ above is correct.
 
@@ -88,7 +88,7 @@ module KleeneStar₂ where
 infixl 10 _⊙_
 
 _⊙_ : ∀ {n₁ n₂} → P n₁ → P n₂ → P (n₁ ∧ n₂)
-p₁ ⊙ p₂ = ♯? p₁ · ♯? p₂
+p₁ ⊙ p₂ = ♯? p₁ · ♯? {b = index p₁} p₂
 
 module ⊙ where
 

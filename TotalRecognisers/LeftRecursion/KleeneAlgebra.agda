@@ -67,7 +67,7 @@ module Equivalence where
 
 ♭♯-cong : ∀ {n₁ n₂} b₁ b₂ {p₁ : P n₁} {p₂ : P n₂} →
           p₁ ≈ p₂ → ♭? (♯? {b₁} p₁) ≈ ♭? (♯? {b₂} p₂)
-♭♯-cong b₁ b₂ {p₁} {p₂} rewrite ♭?♯? b₁ {p₁} | ♭?♯? b₂ {p₂} = id
+♭♯-cong b₁ b₂ {p₁} {p₂} rewrite ♭?♯? b₁ {p = p₁} | ♭?♯? b₂ {p = p₂} = id
 
 ∅-cong : ∅ ≈ ∅
 ∅-cong = Equivalence.reflexive
@@ -88,8 +88,8 @@ sat-cong f₁≗f₂ = equivalent (helper f₁≗f₂) (helper (P.sym ∘ f₁�
   refl ∷ λ t → ♯ ∣-cong (♭ (rest₁ t)) (♭ (rest₂ t))
 
 ·-cong : ∀ {n₁ n₂ n₃ n₄}
-           {p₁ : ∞? (P n₁) n₂} {p₂ : ∞? (P n₂) n₁}
-           {p₃ : ∞? (P n₃) n₄} {p₄ : ∞? (P n₄) n₃} →
+           {p₁ : ∞⟨ n₂ ⟩P n₁} {p₂ : ∞⟨ n₁ ⟩P n₂}
+           {p₃ : ∞⟨ n₄ ⟩P n₃} {p₄ : ∞⟨ n₃ ⟩P n₄} →
          ♭? p₁ ≈ ♭? p₃ → ♭? p₂ ≈ ♭? p₄ → p₁ · p₂ ≈ p₃ · p₄
 ·-cong p₁≈p₃ p₂≈p₄ =
   Equivalent.from ≈⇔≤≥ ⟨$⟩
@@ -98,8 +98,8 @@ sat-cong f₁≗f₂ = equivalent (helper f₁≗f₂) (helper (P.sym ∘ f₁�
              (Equivalent.to ≈⇔≤≥ ⟨$⟩ p₂≈p₄)
   where
   helper : ∀ {n₁ n₂ n₃ n₄}
-             {p₁ : ∞? (P n₁) n₂} {p₂ : ∞? (P n₂) n₁}
-             {p₃ : ∞? (P n₃) n₄} {p₄ : ∞? (P n₄) n₃} →
+             {p₁ : ∞⟨ n₂ ⟩P n₁} {p₂ : ∞⟨ n₁ ⟩P n₂}
+             {p₃ : ∞⟨ n₄ ⟩P n₃} {p₄ : ∞⟨ n₃ ⟩P n₄} →
            ♭? p₁ ≤ ♭? p₃ → ♭? p₂ ≤ ♭? p₄ → p₁ · p₂ ≤ p₃ · p₄
   helper ₁≤₃ ₂≤₄ (∈p₁ · ∈p₂) = ₁≤₃ ∈p₁ · ₂≤₄ ∈p₂
 

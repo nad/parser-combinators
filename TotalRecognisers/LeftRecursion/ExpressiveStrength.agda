@@ -33,9 +33,14 @@ private
 import TotalRecognisers.LeftRecursion
 private
   open module LR {Tok : Set} = TotalRecognisers.LeftRecursion Tok
-    hiding (P)
+    hiding (P; ∞⟨_⟩P)
+
   P : Set → Bool → Set
   P Tok = LR.P {Tok}
+
+  ∞⟨_⟩P : Bool → Set → Bool → Set
+  ∞⟨ b ⟩P Tok n = LR.∞⟨_⟩P {Tok} b n
+
 import TotalRecognisers.LeftRecursion.Lib as Lib
 open Lib Bool
 
@@ -73,8 +78,8 @@ pred⇒grammar f =
   where
   p : (f : List Bool → Bool) → P Bool (f [])
   p f = cast (lemma f)
-      ( ♯? (sat id ) · ⟪ ♯ p (f ∘ _∷_ true ) ⟫
-      ∣ ♯? (sat not) · ⟪ ♯ p (f ∘ _∷_ false) ⟫
+      ( ♯? (sat id ) · ♯ p (f ∘ _∷_ true )
+      ∣ ♯? (sat not) · ♯ p (f ∘ _∷_ false)
       ∣ accept-if-true (f [])
       )
 
@@ -113,8 +118,8 @@ pred⇒grammar′ f =
   extend f x = λ xs → f (xs ∷ʳ x)
 
   p : (f : List Bool → Bool) → P Bool (f [])
-  p f = ⟪ ♯ p (extend f true ) ⟫ · ♯? (sat id )
-      ∣ ⟪ ♯ p (extend f false) ⟫ · ♯? (sat not)
+  p f = ♯ p (extend f true ) · ♯? (sat id )
+      ∣ ♯ p (extend f false) · ♯? (sat not)
       ∣ accept-if-true (f [])
 
   p-sound : ∀ f {s} → s ∈ p f → T (f s)
@@ -193,8 +198,7 @@ module NotExpressible where
   -- and j, then p₁ · p₂ would accept both ni and nj, and if p₁
   -- accepted mm and p₂ accepted n then p₁ · p₂ would accept mmn.
 
-  at-most-one : ∀ {n₁ n₂} {p₁ : ∞? {ℕ} (P ℕ n₁) n₂}
-                          {p₂ : ∞? {ℕ} (P ℕ n₂) n₁} →
+  at-most-one : ∀ {n₁ n₂} {p₁ : ∞⟨ n₂ ⟩P ℕ n₁} {p₂ : ∞⟨ n₁ ⟩P ℕ n₂} →
                 OnlyPairs (p₁ · p₂) →
                 ManyPairs (p₁ · p₂) →
                 AcceptsNonEmptyString (♭? p₁) →
@@ -270,10 +274,11 @@ module NotExpressible where
     excluded-middle λ a₂? →
     helper a₁? a₂?
     where
-    continue : {n n′ : Bool} (p : ∞? {ℕ} (P ℕ n) n′) → n′ ≡ true →
+    continue : {n n′ : Bool} (p : ∞⟨ n′ ⟩P ℕ n) → n′ ≡ true →
                OnlyPairs (♭? p) → ManyPairs (♭? p) → ⊥
-    continue ⟨ p ⟩ refl = ¬pairs p
-    continue ⟪ p ⟫ ()
+    continue p eq with forced? p
+    continue p refl | true = ¬pairs p
+    continue p ()   | false
 
     helper : Dec (AcceptsNonEmptyString (♭? p₁)) →
              Dec (AcceptsNonEmptyString (♭? p₂)) → ⊥
