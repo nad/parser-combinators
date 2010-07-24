@@ -18,12 +18,13 @@ import Data.List.Any.Membership as ∈
 open import Data.Maybe
 open import Data.Nat
 open import Data.Product as Prod
-open import Data.Unit
+open import Data.Unit using (⊤)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 open import Relation.Binary
 open import Relation.Binary.HeterogeneousEquality as H
 open import Relation.Binary.PropositionalEquality as P
 open import Relation.Nullary
+open import Relation.Nullary.Decidable
 
 open Any.Membership-≡
 private
@@ -504,18 +505,14 @@ whitespace = sat isSpace
 
 -- Digits.
 
-digit : Parser Char ℕ _
-digit = const 0 <$> tok '0'
-      ∣ const 1 <$> tok '1'
-      ∣ const 2 <$> tok '2'
-      ∣ const 3 <$> tok '3'
-      ∣ const 4 <$> tok '4'
-      ∣ const 5 <$> tok '5'
-      ∣ const 6 <$> tok '6'
-      ∣ const 7 <$> tok '7'
-      ∣ const 8 <$> tok '8'
-      ∣ const 9 <$> tok '9'
-  where open Token Char Char._≟_
+digit = sat′ (λ t → if in-range t then just (to-number t) else nothing)
+  where
+  in-range : Char → Bool
+  in-range t = ⌊ Char.toNat '0' ≤? Char.toNat  t  ⌋ ∧
+               ⌊ Char.toNat  t  ≤? Char.toNat '9' ⌋
+
+  to-number : Char → ℕ
+  to-number t = Char.toNat t ∸ Char.toNat '0'
 
 -- Numbers.
 
