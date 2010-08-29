@@ -37,10 +37,10 @@ open import TotalParserCombinators.Parser
 import TotalParserCombinators.Laws.AdditiveMonoid
 module AdditiveMonoid = TotalParserCombinators.Laws.AdditiveMonoid
 
--- Laws related to ∂.
+-- Laws related to D.
 
 import TotalParserCombinators.Laws.Derivative
-module ∂ = TotalParserCombinators.Laws.Derivative
+module D = TotalParserCombinators.Laws.Derivative
   hiding (left-zero-⊛; right-zero-⊛;
           left-zero->>=; right-zero->>=)
 
@@ -70,7 +70,7 @@ module KleeneAlgebra = TotalParserCombinators.Laws.KleeneAlgebra
 
 module <$> where
 
-  open ∂
+  open D
 
   -- _<$>_ could have been defined using return and _⊛_.
 
@@ -78,9 +78,9 @@ module <$> where
              f <$> p ≅P return f ⊛ p
   return-⊛ {xs = xs} {f} {p} =
     BagMonoid.reflexive (lemma xs) ∷ λ t → ♯ (
-      f <$> ∂ p t         ≅⟨ return-⊛ ⟩
-      return f ⊛ ∂ p t    ≅⟨ sym $ ∂-return-⊛ f p ⟩
-      ∂ (return f ⊛ p) t  ∎)
+      f <$> D t p         ≅⟨ return-⊛ ⟩
+      return f ⊛ D t p    ≅⟨ sym $ D-return-⊛ f p ⟩
+      D t (return f ⊛ p)  ∎)
     where
     lemma : ∀ xs → List.map f xs ≡ [ f ] ⊛′ xs
     lemma []       = P.refl
@@ -126,4 +126,4 @@ module Cast where
               {p : Parser Tok R xs₁} →
             cast xs₁≈xs₂ p ≅P p
   correct {xs₁≈xs₂ = xs₁≈xs₂} {p} =
-    BagMonoid.sym xs₁≈xs₂ ∷ λ t → ♯ (∂ p t ∎)
+    BagMonoid.sym xs₁≈xs₂ ∷ λ t → ♯ (D t p ∎)

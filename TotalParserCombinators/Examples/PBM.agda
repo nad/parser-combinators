@@ -81,9 +81,9 @@ open PBM
 
 comment : Parser Char ⊤ _
 comment =
-  tok '#'                 >>= λ _ →
-  sat (not ∘ _==_ '\n') ⋆ >>= λ _ →
-  tok '\n'                >>= λ _ →
+  tok '#'                  >>= λ _ →
+  sat′ (not ∘ _==_ '\n') ⋆ >>= λ _ →
+  tok '\n'                 >>= λ _ →
   return tt
 
 colour : Parser Char Colour _
@@ -116,5 +116,5 @@ pbm =
 --                  (black ∷ white ∷ []) ∷
 --                  (black ∷ black ∷ []) ∷ [])
 
---   ex : parseComplete pbm (String.toList $ show image) ≡ List.[_] image
+--   ex : parse pbm (String.toList $ show image) ≡ List.[_] image
 --   ex = refl

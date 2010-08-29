@@ -27,15 +27,15 @@ commutative : ∀ {Tok R xs₁ xs₂}
               (p₁ : Parser Tok R xs₁) (p₂ : Parser Tok R xs₂) →
               p₁ ∣ p₂ ≅P p₂ ∣ p₁
 commutative {xs₁ = xs₁} {xs₂} p₁ p₂ =
-  BagMonoid.comm xs₁ xs₂ ∷ λ t → ♯ commutative (∂ p₁ t) (∂ p₂ t)
+  BagMonoid.comm xs₁ xs₂ ∷ λ t → ♯ commutative (D t p₁) (D t p₂)
 
 left-identity : ∀ {Tok R xs} (p : Parser Tok R xs) → fail ∣ p ≅P p
 left-identity {xs = xs} p =
-  proj₁ BagMonoid.identity xs ∷ λ t → ♯ left-identity (∂ p t)
+  proj₁ BagMonoid.identity xs ∷ λ t → ♯ left-identity (D t p)
 
 right-identity : ∀ {Tok R xs} (p : Parser Tok R xs) → p ∣ fail ≅P p
 right-identity {xs = xs} p =
-  proj₂ BagMonoid.identity xs ∷ λ t → ♯ right-identity (∂ p t)
+  proj₂ BagMonoid.identity xs ∷ λ t → ♯ right-identity (D t p)
 
 associative : ∀ {Tok R xs₁ xs₂ xs₃}
               (p₁ : Parser Tok R xs₁) (p₂ : Parser Tok R xs₂)
@@ -43,14 +43,14 @@ associative : ∀ {Tok R xs₁ xs₂ xs₃}
               (p₁ ∣ p₂) ∣ p₃ ≅P p₁ ∣ (p₂ ∣ p₃)
 associative {xs₁ = xs₁} p₁ p₂ p₃ =
   BagMonoid.assoc xs₁ _ _ ∷ λ t →
-  ♯ associative (∂ p₁ t) (∂ p₂ t) (∂ p₃ t)
+  ♯ associative (D t p₁) (D t p₂) (D t p₃)
 
 -- Note that this law uses language equivalence, not parser
 -- equivalence.
 
 idempotent : ∀ {Tok R xs} (p : Parser Tok R xs) → p ∣ p ≈P p
 idempotent {xs = xs} p =
-  Eq.++-idempotent xs ∷ λ t → ♯ idempotent (∂ p t)
+  Eq.++-idempotent xs ∷ λ t → ♯ idempotent (D t p)
 
 ------------------------------------------------------------------------
 -- A lemma which can be convenient when proving distributivity laws

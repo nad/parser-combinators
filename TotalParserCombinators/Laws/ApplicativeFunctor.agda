@@ -61,32 +61,32 @@ private
   (p₂ : ∞⟨ fs ⟩Parser Tok  R₁                   (flatten xs)) →
   p₁ ⊛ p₂ ≅P p₁ ⊛″ p₂
 ⊛-in-terms-of->>= {R₁ = R₁} {R₂} {fs} {xs} p₁ p₂ =
-  BagMonoid.reflexive (Claims.claim₂ (flatten fs) xs) ∷ λ t → ♯ (
-    ∂ (p₁ ⊛ p₂) t                                         ≅⟨ ∂-⊛ p₁ p₂ ⟩
+  BagMonoid.reflexive (Claims.⊛flatten-⊛-flatten (flatten fs) xs) ∷ λ t → ♯ (
+    D t (p₁ ⊛ p₂)                                         ≅⟨ D-⊛ p₁ p₂ ⟩
 
-    ∂ (♭? p₁) t ⊛ ♭? p₂ ∣
-    return⋆ (flatten fs) ⊛ ∂ (♭? p₂) t                    ≅⟨ ⊛-in-terms-of->>= (∂ (♭? p₁) t) (♭? p₂) ∣′
-                                                             ⊛-in-terms-of->>= (return⋆ (flatten fs)) (∂ (♭? p₂) t) ⟩
-    ∂ (♭? p₁) t ⊛″ ♭? p₂ ∣
-    return⋆ (flatten fs) ⊛″ ∂ (♭? p₂) t                   ≅⟨ (∂ (♭? p₁) t ⊛″ ♭? p₂ ∎) ∣′
+    D t (♭? p₁) ⊛ ♭? p₂ ∣
+    return⋆ (flatten fs) ⊛ D t (♭? p₂)                    ≅⟨ ⊛-in-terms-of->>= (D t (♭? p₁)) (♭? p₂) ∣′
+                                                             ⊛-in-terms-of->>= (return⋆ (flatten fs)) (D t (♭? p₂)) ⟩
+    D t (♭? p₁) ⊛″ ♭? p₂ ∣
+    return⋆ (flatten fs) ⊛″ D t (♭? p₂)                   ≅⟨ (D t (♭? p₁) ⊛″ ♭? p₂ ∎) ∣′
                                                              ([ ○ - ○ - ○ - ○ ] return⋆ (flatten fs) ∎ >>= λ f →
                                                                                 sym $ lemma t f) ⟩
-    ∂ (♭? p₁) t >>= pam (♭? p₂) ∣
-    return⋆ (flatten fs) >>= (λ f → ∂ (pam (♭? p₂) f) t)  ≅⟨ sym $ ∂->>= (♭? p₁) (pam (♭? p₂)) ⟩
+    D t (♭? p₁) >>= pam (♭? p₂) ∣
+    return⋆ (flatten fs) >>= (λ f → D t (pam (♭? p₂) f))  ≅⟨ sym $ D->>= (♭? p₁) (pam (♭? p₂)) ⟩
 
-    ∂ (♭? p₁ >>= pam (♭? p₂)) t                           ∎)
+    D t (♭? p₁ >>= pam (♭? p₂))                           ∎)
   where
   lemma : ∀ t (f : R₁ → R₂) →
-          ∂ (♭? p₂ >>= λ x → return (f x)) t ≅P
-          ∂ (♭? p₂) t >>= λ x → return (f x)
+          D t (♭? p₂ >>= λ x → return (f x)) ≅P
+          D t (♭? p₂) >>= λ x → return (f x)
   lemma t f =
-    ∂ (pam (♭? p₂) f) t                    ≅⟨ ∂->>= (♭? p₂) (return ∘ f) ⟩
+    D t (pam (♭? p₂) f)                    ≅⟨ D->>= (♭? p₂) (return ∘ f) ⟩
 
-    pam (∂ (♭? p₂) t) f ∣
-    (return⋆ (flatten xs) >>= λ _ → fail)  ≅⟨ (pam (∂ (♭? p₂) t) f ∎) ∣′
+    pam (D t (♭? p₂)) f ∣
+    (return⋆ (flatten xs) >>= λ _ → fail)  ≅⟨ (pam (D t (♭? p₂)) f ∎) ∣′
                                               Monad.right-zero (return⋆ (flatten xs)) ⟩
-    pam (∂ (♭? p₂) t) f ∣ fail             ≅⟨ AdditiveMonoid.right-identity (pam (∂ (♭? p₂) t) f) ⟩
-    pam (∂ (♭? p₂) t) f                    ∎
+    pam (D t (♭? p₂)) f ∣ fail             ≅⟨ AdditiveMonoid.right-identity (pam (D t (♭? p₂)) f) ⟩
+    pam (D t (♭? p₂)) f                    ∎
 
 -- We can then reduce all the laws to corresponding laws for _>>=_.
 

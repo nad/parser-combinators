@@ -4,19 +4,21 @@
 
 module TotalParserCombinators.Laws.KleeneAlgebra where
 
-open import Data.List
+open import Algebra
+open import Data.List as List
 open import Data.Nat using (ℕ)
-open import Data.Product using (_,_)
-open import Data.Unit using (⊤; tt)
+open import Data.Product using (_,_; proj₂)
+open import Function using (_$_)
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence
   using (_⇔_; equivalent; module Equivalent)
+import Relation.Binary.PropositionalEquality as P
 open import Relation.Nullary
 
 open import TotalParserCombinators.Lib
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
-  renaming (_⊛_ to _⊛′_)
+  hiding (_>>=_) renaming (return to return′; _⊛_ to _⊛′_)
 
 ------------------------------------------------------------------------
 -- A variant of _≲_
@@ -37,12 +39,12 @@ p₁ ≲′ p₂ = p₁ ∣ p₂ ≈ p₂
        p₁ ≲ p₂ ⇔ p₁ ≲′ p₂
 ≲⇔≲′ {xs₁ = xs₁} p₁ p₂ =
   equivalent
-    (λ (p₁≲p₂ : p₁ ≲ p₂) {_} → equivalent (helper p₁≲p₂) (∣ʳ xs₁))
-    (λ (p₁≲′p₂ : p₁ ≲′ p₂) s∈p₁ → Equivalent.to p₁≲′p₂ ⟨$⟩ ∣ˡ s∈p₁)
+    (λ (p₁≲p₂ : p₁ ≲ p₂) {_} → equivalent (helper p₁≲p₂) (∣-right xs₁))
+    (λ (p₁≲′p₂ : p₁ ≲′ p₂) s∈p₁ → Equivalent.to p₁≲′p₂ ⟨$⟩ ∣-left s∈p₁)
   where
   helper : p₁ ≲ p₂ → p₁ ∣ p₂ ≲ p₂
-  helper p₁≲p₂ (∣ˡ      s∈p₁) = p₁≲p₂ s∈p₁
-  helper p₁≲p₂ (∣ʳ .xs₁ s∈p₂) = s∈p₂
+  helper p₁≲p₂ (∣-left       s∈p₁) = p₁≲p₂ s∈p₁
+  helper p₁≲p₂ (∣-right .xs₁ s∈p₂) = s∈p₂
 
 ------------------------------------------------------------------------
 -- A limited notion of *-continuity
@@ -86,19 +88,27 @@ record _LeastUpperBoundOf_
 -- following (variant of a) Kleene algebra axiom.
 
 not-Kleene-algebra :
-  (f : ∀ {Tok R xs} → Parser Tok R xs → List (List R)) →
-  (_⋆′ : ∀ {Tok R xs} (p : Parser Tok R xs) →
+  ∀ {Tok} →
+  Tok →
+  (f : ∀ {R xs} → Parser Tok R xs → List (List R)) →
+  (_⋆′ : ∀ {R xs} (p : Parser Tok R xs) →
          Parser Tok (List R) (f p)) →
-  ¬ (∀ {Tok R xs} {p : Parser Tok R xs} →
-     return [] ∣ _∷_ <$> p ⊛ (p ⋆′) ≲ (p ⋆′))
-not-Kleene-algebra f _⋆′ fold =
-  KleeneStar.unrestricted-incomplete tt f _⋆′ ⋆′-complete
+  ¬ (∀ {R xs} {p : Parser Tok R xs} →
+     return [] ∣ (p >>= λ x → (p ⋆′) >>= λ xs → return (x ∷ xs))
+       ≲ (p ⋆′))
+not-Kleene-algebra {Tok} t f _⋆′ fold =
+  KleeneStar.unrestricted-incomplete t f _⋆′ ⋆′-complete
   where
-  ⋆′-complete : ∀ {xs ys s} {p : Parser ⊤ ⊤ ys} →
+  ⋆′-complete : ∀ {xs ys s} {p : Parser Tok Tok ys} →
                 xs ∈[ p ]⋆· s → xs ∈ p ⋆′ · s
-  ⋆′-complete                   []         = fold (∣ˡ return)
-  ⋆′-complete {ys = ys} {p = p} (∈p ∷ ∈p⋆) =
-    fold (∣ʳ [ [] ] ([ ○ - ○ ] <$> ∈p ⊛ ⋆′-complete ∈p⋆))
+  ⋆′-complete []         = fold (∣-left return′)
+  ⋆′-complete (∈p ∷ ∈p⋆) =
+    fold (∣-right [ [] ]
+            ([ ○ - ○ ] ∈p >>=
+                       fix ([ ○ - ○ ] ⋆′-complete ∈p⋆ >>= return′)))
+    where
+    fix = cast∈ P.refl P.refl $
+                proj₂ (Monoid.identity $ List.monoid Tok) _
 
 -- This shows that the parser combinators do not form a Kleene
 -- algebra (interpreted liberally) using _⊛_ for composition, return

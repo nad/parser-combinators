@@ -34,10 +34,10 @@ data _⊕_∈_·_ {Tok} : ∀ {R xs} → R → List Tok →
                      Parser Tok R xs → List Tok → Set₁ where
   return     : ∀ {R} {x : R} {s} → x ⊕ s ∈ return x · s
   token      : ∀ {x s} → x ⊕ s ∈ token · x ∷ s
-  ∣ˡ         : ∀ {R x xs₁ xs₂ s s₁}
+  ∣-left     : ∀ {R x xs₁ xs₂ s s₁}
                  {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂}
                (x∈p₁ : x ⊕ s₁ ∈ p₁ · s) → x ⊕ s₁ ∈ p₁ ∣ p₂ · s
-  ∣ʳ         : ∀ {R x xs₂ s s₁} xs₁
+  ∣-right    : ∀ {R x xs₂ s s₁} xs₁
                  {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂}
                (x∈p₂ : x ⊕ s₁ ∈ p₂ · s) → x ⊕ s₁ ∈ p₁ ∣ p₂ · s
   <$>_       : ∀ {R₁ R₂ x s s₁ xs} {p : Parser Tok R₁ xs} {f : R₁ → R₂}
@@ -50,7 +50,7 @@ data _⊕_∈_·_ {Tok} : ∀ {R xs} → R → List Tok →
                f x ⊕ s₂ ∈ p₁ ⊛ p₂ · s
   [_-_]_>>=_ : ∀ {R₁ R₂ x y s s₁ s₂} (f : Maybe (R₁ → List R₂)) xs
                  {p₁ : ∞⟨ f ⟩Parser Tok R₁ (flatten xs)}
-                 {p₂ : (x : R₁) → ∞⟨ xs ⟩Parser Tok R₂ (app f x)} →
+                 {p₂ : (x : R₁) → ∞⟨ xs ⟩Parser Tok R₂ (apply f x)} →
                (x∈p₁ : x ⊕ s₁ ∈ ♭? p₁ · s)
                (y∈p₂x : y ⊕ s₂ ∈ ♭? (p₂ x) · s₁) →
                y ⊕ s₂ ∈ p₁ >>= p₂ · s
@@ -76,9 +76,9 @@ sound′ : ∀ {Tok R xs x s₂ s} {p : Parser Tok R xs} →
          x ⊕ s₂ ∈ p · s → ∃ λ s₁ → s ≡ s₁ ++ s₂ × x ∈ p · s₁
 sound′ return                      = ([]    , refl , return)
 sound′ {x = x} token               = ([ x ] , refl , token)
-sound′ (∣ˡ x∈p₁)                   = Prod.map id (Prod.map id ∣ˡ)        (sound′ x∈p₁)
-sound′ (∣ʳ e₁ x∈p₁)                = Prod.map id (Prod.map id (∣ʳ e₁))   (sound′ x∈p₁)
-sound′ (<$> x∈p)                   = Prod.map id (Prod.map id <$>_) (sound′ x∈p)
+sound′ (∣-left x∈p₁)               = Prod.map id (Prod.map id ∣-left)       (sound′ x∈p₁)
+sound′ (∣-right e₁ x∈p₁)           = Prod.map id (Prod.map id (∣-right e₁)) (sound′ x∈p₁)
+sound′ (<$> x∈p)                   = Prod.map id (Prod.map id <$>_)         (sound′ x∈p)
 sound′ ([ xs - fs ] f∈p₁ ⊛ x∈p₂)   with sound′ f∈p₁ | sound′ x∈p₂
 sound′ ([ xs - fs ] f∈p₁ ⊛ x∈p₂)   | (s₁ , refl , f∈p₁′) | (s₂ , refl , x∈p₂′) =
                                      (s₁ ++ s₂ , sym (LM.assoc s₁ s₂ _) ,
@@ -103,9 +103,9 @@ extend : ∀ {Tok R xs x s s′ s″} {p : Parser Tok R xs} →
          x ⊕ s′ ∈ p · s → x ⊕ s′ ++ s″ ∈ p · s ++ s″
 extend return                       = return
 extend token                        = token
-extend (∣ˡ x∈p₁)                    = ∣ˡ    (extend x∈p₁)
-extend (∣ʳ e₁ x∈p₂)                 = ∣ʳ e₁ (extend x∈p₂)
-extend (     <$> x∈p)               =             <$> extend x∈p
+extend (∣-left x∈p₁)                = ∣-left     (extend x∈p₁)
+extend (∣-right e₁ x∈p₂)            = ∣-right e₁ (extend x∈p₂)
+extend (<$> x∈p)                    = <$> extend x∈p
 extend ([ xs - fs ] f∈p₁ ⊛   x∈p₂)  = [ xs - fs ] extend f∈p₁ ⊛   extend x∈p₂
 extend ([ f  - xs ] x∈p₁ >>= y∈p₂x) = [ f  - xs ] extend x∈p₁ >>= extend y∈p₂x
 extend (cast x∈p)                   = cast (extend x∈p)
@@ -119,9 +119,9 @@ complete : ∀ {Tok R xs x s} {p : Parser Tok R xs} →
            x ∈ p · s → x ⊕ [] ∈ p · s
 complete return                                 = return
 complete token                                  = token
-complete (∣ˡ x∈p₁)                              = ∣ˡ    (complete x∈p₁)
-complete (∣ʳ e₁ x∈p₂)                           = ∣ʳ e₁ (complete x∈p₂)
-complete (     <$> x∈p)                         =                        <$> complete x∈p
+complete (∣-left x∈p₁)                          = ∣-left     (complete x∈p₁)
+complete (∣-right e₁ x∈p₂)                      = ∣-right e₁ (complete x∈p₂)
+complete (<$> x∈p)                              = <$> complete x∈p
 complete (_⊛_   {fs = fs} {xs = xs} f∈p₁ x∈p₂)  = [ xs - fs ] extend (complete f∈p₁) ⊛   complete x∈p₂
 complete (_>>=_ {xs = xs} {f  = f}  x∈p₁ y∈p₂x) = [ f  - xs ] extend (complete x∈p₁) >>= complete y∈p₂x
 complete (cast x∈p)                             = cast (complete x∈p)

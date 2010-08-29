@@ -83,9 +83,9 @@ module KleeneStar where
       sound′ : ∀ {Tok R xs ys s}
                  {p : Parser Tok R []} {p⋆ : Parser Tok (List R) ys} →
                xs ∈ p⋆ · s → p⋆ ≅ p ⋆ → xs ∈[ p ]⋆· s
-      sound′ (∣ˡ []∈)             refl with []∈
+      sound′ (∣-left []∈)              refl with []∈
       ... | S.return = []
-      sound′ (∣ʳ .([ [] ]) x∷xs∈) refl with x∷xs∈
+      sound′ (∣-right .([ [] ]) x∷xs∈) refl with x∷xs∈
       ... | <$> x∈p ⊛ xs∈p⋆ = x∈p ∷ sound xs∈p⋆
       sound′ S.return     ()
       sound′ S.token      ()
@@ -97,11 +97,11 @@ module KleeneStar where
 
   complete : ∀ {Tok R xs s} {p : Parser Tok R []} →
              xs ∈[ p ]⋆· s → xs ∈ p ⋆ · s
-  complete []                           = ∣ˡ S.return
+  complete []                           = ∣-left S.return
   complete (_∷_ {s₁ = []}    x∈p xs∈p⋆) with I.complete x∈p
   ... | ()
   complete (_∷_ {s₁ = _ ∷ _} x∈p xs∈p⋆) =
-    ∣ʳ [ [] ] ([ ○ - ◌ ] <$> x∈p ⊛ complete xs∈p⋆)
+    ∣-right [ [] ] ([ ○ - ◌ ] <$> x∈p ⊛ complete xs∈p⋆)
 
   mutual
 
@@ -117,9 +117,9 @@ module KleeneStar where
           {p : Parser Tok R []} {p⋆ : Parser Tok (List R) ys}
         (xs∈ : xs ∈ p⋆ · s) (eq : p⋆ ≅ p ⋆) →
         complete (sound′ xs∈ eq) ≅ xs∈
-      complete∘sound′ (∣ˡ []∈)             refl with []∈
+      complete∘sound′ (∣-left []∈)              refl with []∈
       ... | S.return = refl
-      complete∘sound′ (∣ʳ .([ [] ]) x∷xs∈) refl with x∷xs∈
+      complete∘sound′ (∣-right .([ [] ]) x∷xs∈) refl with x∷xs∈
       ... | _⊛_ {s₁ = _ ∷ _} (<$> x∈p) xs∈p⋆
             rewrite complete∘sound xs∈p⋆ = refl
       ... | _⊛_ {s₁ = []}    (<$> x∈p) xs∈p⋆ with I.complete x∈p
@@ -247,24 +247,24 @@ module Return⋆ where
   sound : ∀ {Tok R x} {s : List Tok}
           (xs : List R) → x ∈ return⋆ xs · s → s ≡ [] × x ∈ xs
   sound []       ()
-  sound (y ∷ ys) (∣ˡ S.return)      = (refl , here refl)
-  sound (y ∷ ys) (∣ʳ .([ y ]) x∈ys) =
+  sound (y ∷ ys) (∣-left S.return)       = (refl , here refl)
+  sound (y ∷ ys) (∣-right .([ y ]) x∈ys) =
     Prod.map id there $ sound ys x∈ys
 
   complete : ∀ {Tok R x} {xs : List R} →
              x ∈ xs → x ∈ return⋆ {Tok} xs · []
-  complete (here refl)  = ∣ˡ S.return
+  complete (here refl)  = ∣-left S.return
   complete (there x∈xs) =
-    ∣ʳ [ _ ] (complete x∈xs)
+    ∣-right [ _ ] (complete x∈xs)
 
   complete∘sound : ∀ {Tok R x} {s : List Tok}
                    (xs : List R) (x∈xs : x ∈ return⋆ xs · s) →
                    complete {Tok = Tok} (proj₂ $ sound xs x∈xs) ≅ x∈xs
   complete∘sound []       ()
-  complete∘sound (y ∷ ys) (∣ˡ S.return)      = refl
-  complete∘sound (y ∷ ys) (∣ʳ .([ y ]) x∈ys)
+  complete∘sound (y ∷ ys) (∣-left S.return)       = refl
+  complete∘sound (y ∷ ys) (∣-right .([ y ]) x∈ys)
     with sound ys x∈ys | complete∘sound ys x∈ys
-  complete∘sound (y ∷ ys) (∣ʳ .([ y ]) .(complete p))
+  complete∘sound (y ∷ ys) (∣-right .([ y ]) .(complete p))
     | (refl , p) | refl = refl
 
   sound∘complete : ∀ {Tok R x} {xs : List R} (x∈xs : x ∈ xs) →
@@ -302,6 +302,108 @@ module Return⋆ where
     complete′∘sound xs .(complete x∈xs) | (refl , x∈xs) | refl = refl
 
 ------------------------------------------------------------------------
+-- The sat parser
+
+module Sat where
+
+  -- Helper functions for sat.
+
+  ok-bag : {R : Set} → Maybe R → List R
+  ok-bag nothing  = _
+  ok-bag (just _) = _
+
+  ok : {Tok R : Set} → (x : Maybe R) → Parser Tok R (ok-bag x)
+  ok nothing  = fail
+  ok (just x) = return x
+
+  ok-correct : ∀ {Tok R x s} (m : Maybe R) →
+               (s ≡ [] × m ≡ just x) ⇿ x ∈ ok {Tok} m · s
+  ok-correct {Tok} {x = x} m = record
+    { to         = P.→-to-⟶ (to m)
+    ; from       = P.→-to-⟶ (from m)
+    ; inverse-of = record
+      { left-inverse-of  = from∘to m
+      ; right-inverse-of = to∘from m
+      }
+    }
+    where
+    to : ∀ {s} m → (s ≡ [] × m ≡ just x) → x ∈ ok {Tok} m · s
+    to (just .x) (refl , refl) = S.return
+    to nothing   (refl , ())
+
+    from : ∀ {s} m → x ∈ ok {Tok} m · s → s ≡ [] × m ≡ just x
+    from (just .x) S.return = (refl , refl)
+    from nothing   ()
+
+    from∘to : ∀ {s} m (eqs : s ≡ [] × m ≡ just x) →
+              from m (to m eqs) ≡ eqs
+    from∘to (just .x) (refl , refl) = refl
+    from∘to nothing   (refl , ())
+
+    to∘from : ∀ {s} m (x∈ : x ∈ ok {Tok} m · s) →
+              to m (from m x∈) ≡ x∈
+    to∘from (just .x) S.return = refl
+    to∘from nothing   ()
+
+  -- sat p accepts a single token t iff p t ≡ just x for some x. The
+  -- returned value is x.
+
+  sat : ∀ {Tok R} → (Tok → Maybe R) → Parser Tok R _
+  sat p = token >>= (ok ∘ p)
+
+  correct : ∀ {Tok R x s} (p : Tok → Maybe R) →
+            (∃ λ t → s ≡ [ t ] × p t ≡ just x) ⇿ x ∈ sat p · s
+  correct {x = x} p = record
+    { to         = P.→-to-⟶ to
+    ; from       = P.→-to-⟶ from
+    ; inverse-of = record
+      { left-inverse-of  = from∘to
+      ; right-inverse-of = to∘from
+      }
+    }
+    where
+    to : ∀ {s} → (∃ λ t → s ≡ [ t ] × p t ≡ just x) → x ∈ sat p · s
+    to (t , refl , p-t≡just-x) =
+      [ ○ - ○ ] S.token >>=
+                (Inverse.to (ok-correct (p t)) ⟨$⟩ (refl , p-t≡just-x))
+
+    from : ∀ {s} → x ∈ sat p · s → ∃ λ t → s ≡ [ t ] × p t ≡ just x
+    from (S.token {x = t} >>= x∈ok-p-t) =
+      (t , Prod.map (P.cong (_∷_ t)) id
+             (Inverse.from (ok-correct (p t)) ⟨$⟩ x∈ok-p-t))
+
+    from∘to : ∀ {s} (eqs : ∃ λ t → s ≡ [ t ] × p t ≡ just x) →
+              from (to eqs) ≡ eqs
+    from∘to (t , refl , p-t≡just-x) =
+      P.cong₂ (λ eq₁ eq₂ → (t , eq₁ , eq₂))
+              (P.proof-irrelevance _ _)
+              (P.proof-irrelevance _ _)
+
+    to∘from : ∀ {s} (x∈ : x ∈ sat p · s) → to (from x∈) ≡ x∈
+    to∘from (S.token {x = t} >>= x∈ok-p-t)
+      with Inverse.from (ok-correct (p t)) ⟨$⟩ x∈ok-p-t
+         | Inverse.right-inverse-of (ok-correct (p t)) x∈ok-p-t
+    to∘from (S.token {x = t} >>= .(Inverse.to (ok-correct (p t)) ⟨$⟩
+                                     (refl , p-t≡just-x)))
+      | (refl , p-t≡just-x) | refl = refl
+
+open Sat public using (sat)
+
+-- A simplified variant of sat. Does not return anything interesting.
+
+sat′ : ∀ {Tok} → (Tok → Bool) → Parser Tok ⊤ _
+sat′ p = sat (boolToMaybe ∘ p)
+
+-- Accepts a single whitespace character (from a limited set of such
+-- characters).
+
+whitespace : Parser Char ⊤ _
+whitespace = sat′ isSpace
+  where
+  isSpace = λ c →
+    (c == ' ') ∨ (c == '\t') ∨ (c == '\n') ∨ (c == '\r')
+
+------------------------------------------------------------------------
 -- A parser for a given token
 
 module Token
@@ -310,39 +412,36 @@ module Token
          where
 
   private
-    ok-index : Tok → Tok → List Tok
-    ok-index tok tok′ with tok ≟ tok′
-    ... | yes _ = tok′ ∷ []
-    ... | no  _ = []
-
-    ok : (tok tok′ : Tok) → Parser Tok Tok (ok-index tok tok′)
-    ok tok tok′ with tok ≟ tok′
-    ... | yes _ = return tok′
-    ... | no  _ = fail
+    p : Tok → Tok → Maybe Tok
+    p t t′ = if ⌊ t ≟ t′ ⌋ then just t′ else nothing
 
   tok : Tok → Parser Tok Tok []
-  tok tok = token >>= ok tok
+  tok t = sat (p t)
 
-  sound : ∀ {t t′ s} →
+  sound : ∀ t {t′ s} →
           t′ ∈ tok t · s → t ≡ t′ × s ≡ [ t′ ]
-  sound {t} (_>>=_ {x = t″} S.token t′∈) with t ≟ t″
-  sound (S.token >>= S.return) | yes t≈t″ = (t≈t″ , refl)
-  sound (S.token >>= ())       | no  t≉t″
+  sound t t′∈ with Inverse.from (Sat.correct (p t)) ⟨$⟩ t′∈
+  sound t t′∈ | (t″ , refl , p-t-t″≡just-t′) with t ≟ t″
+  sound t t∈  | (.t , refl , refl) | yes refl = (refl , refl)
+  sound t t′∈ | (t″ , refl , ())   | no  _
 
   private
-    ok-lemma : ∀ t → t ∈ ok t t · []
-    ok-lemma t with t ≟ t
-    ... | yes refl = S.return
+    p-lemma : ∀ t → p t t ≡ just t
+    p-lemma t with t ≟ t
+    ... | yes refl = refl
     ... | no  t≢t  with t≢t refl
     ...   | ()
 
   complete : ∀ {t} → t ∈ tok t · [ t ]
-  complete {t} = [ ○ - ○ ] S.token >>= ok-lemma t
+  complete {t} =
+    Inverse.to (Sat.correct (p t)) ⟨$⟩ (t , refl , p-lemma t)
 
   η : ∀ {t} (t∈ : t ∈ tok t · [ t ]) → t∈ ≡ complete {t = t}
   η {t = t} t∈ = H.≅-to-≡ $ helper t∈ refl
     where
-    helper₂ : (t∈ : t ∈ ok t t · []) → t∈ ≡ ok-lemma t
+    helper₂ : (t∈ : t ∈ Sat.ok {Tok = Tok} (p t t) · []) →
+              t∈ ≡ Inverse.to (Sat.ok-correct (p t t)) ⟨$⟩
+                     (refl , p-lemma t)
     helper₂ t∈       with t ≟ t
     helper₂ S.return | yes refl = refl
     helper₂ t∈       | no  t≢t  with t≢t refl
@@ -399,113 +498,11 @@ module ⋁ where
   ... | (refl , .x∈xs) | refl = refl
 
 ------------------------------------------------------------------------
--- The sat parser
-
-module Sat where
-
-  -- Helper functions for sat′.
-
-  ok-index : {R : Set} → Maybe R → List R
-  ok-index nothing  = _
-  ok-index (just _) = _
-
-  ok : {Tok R : Set} → (x : Maybe R) → Parser Tok R (ok-index x)
-  ok nothing  = fail
-  ok (just x) = return x
-
-  ok-correct : ∀ {Tok R x s} (m : Maybe R) →
-               (s ≡ [] × m ≡ just x) ⇿ x ∈ ok {Tok} m · s
-  ok-correct {Tok} {x = x} m = record
-    { to         = P.→-to-⟶ (to m)
-    ; from       = P.→-to-⟶ (from m)
-    ; inverse-of = record
-      { left-inverse-of  = from∘to m
-      ; right-inverse-of = to∘from m
-      }
-    }
-    where
-    to : ∀ {s} m → (s ≡ [] × m ≡ just x) → x ∈ ok {Tok} m · s
-    to (just .x) (refl , refl) = S.return
-    to nothing   (refl , ())
-
-    from : ∀ {s} m → x ∈ ok {Tok} m · s → s ≡ [] × m ≡ just x
-    from (just .x) S.return = (refl , refl)
-    from nothing   ()
-
-    from∘to : ∀ {s} m (eqs : s ≡ [] × m ≡ just x) →
-              from m (to m eqs) ≡ eqs
-    from∘to (just .x) (refl , refl) = refl
-    from∘to nothing   (refl , ())
-
-    to∘from : ∀ {s} m (x∈ : x ∈ ok {Tok} m · s) →
-              to m (from m x∈) ≡ x∈
-    to∘from (just .x) S.return = refl
-    to∘from nothing   ()
-
-  -- sat′ p accepts a single token t iff p t ≡ just x for some x. The
-  -- returned value is x.
-
-  sat′ : ∀ {Tok R} → (Tok → Maybe R) → Parser Tok R _
-  sat′ p = token >>= (ok ∘ p)
-
-  correct : ∀ {Tok R x s} (p : Tok → Maybe R) →
-            (∃ λ t → s ≡ [ t ] × p t ≡ just x) ⇿ x ∈ sat′ p · s
-  correct {x = x} p = record
-    { to         = P.→-to-⟶ to
-    ; from       = P.→-to-⟶ from
-    ; inverse-of = record
-      { left-inverse-of  = from∘to
-      ; right-inverse-of = to∘from
-      }
-    }
-    where
-    to : ∀ {s} → (∃ λ t → s ≡ [ t ] × p t ≡ just x) → x ∈ sat′ p · s
-    to (t , refl , p-t≡just-x) =
-      [ ○ - ○ ] S.token >>=
-                (Inverse.to (ok-correct (p t)) ⟨$⟩ (refl , p-t≡just-x))
-
-    from : ∀ {s} → x ∈ sat′ p · s → ∃ λ t → s ≡ [ t ] × p t ≡ just x
-    from (S.token {x = t} >>= x∈ok-p-t) =
-      (t , Prod.map (P.cong (_∷_ t)) id
-             (Inverse.from (ok-correct (p t)) ⟨$⟩ x∈ok-p-t))
-
-    from∘to : ∀ {s} (eqs : ∃ λ t → s ≡ [ t ] × p t ≡ just x) →
-              from (to eqs) ≡ eqs
-    from∘to (t , refl , p-t≡just-x) =
-      P.cong₂ (λ eq₁ eq₂ → (t , eq₁ , eq₂))
-              (P.proof-irrelevance _ _)
-              (P.proof-irrelevance _ _)
-
-    to∘from : ∀ {s} (x∈ : x ∈ sat′ p · s) → to (from x∈) ≡ x∈
-    to∘from (S.token {x = t} >>= x∈ok-p-t)
-      with Inverse.from (ok-correct (p t)) ⟨$⟩ x∈ok-p-t
-         | Inverse.right-inverse-of (ok-correct (p t)) x∈ok-p-t
-    to∘from (S.token {x = t} >>= .(Inverse.to (ok-correct (p t)) ⟨$⟩
-                                     (refl , p-t≡just-x)))
-      | (refl , p-t≡just-x) | refl = refl
-
-open Sat public using (sat′)
-
--- A simplified variant of sat′. Does not return anything interesting.
-
-sat : ∀ {Tok} → (Tok → Bool) → Parser Tok ⊤ _
-sat p = sat′ (boolToMaybe ∘ p)
-
--- Accepts a single whitespace character (from a limited set of such
--- characters).
-
-whitespace : Parser Char ⊤ _
-whitespace = sat isSpace
-  where
-  isSpace = λ c →
-    (c == ' ') ∨ (c == '\t') ∨ (c == '\n') ∨ (c == '\r')
-
-------------------------------------------------------------------------
 -- Digits and numbers
 
 -- Digits.
 
-digit = sat′ (λ t → if in-range t then just (to-number t) else nothing)
+digit = sat (λ t → if in-range t then just (to-number t) else nothing)
   where
   in-range : Char → Bool
   in-range t = ⌊ Char.toNat '0' ≤? Char.toNat  t  ⌋ ∧
@@ -517,4 +514,4 @@ digit = sat′ (λ t → if in-range t then just (to-number t) else nothing)
 -- Numbers.
 
 number : Parser Char ℕ _
-number = return (foldl (λ n d → 10 * n + d) 0) ⊛ digit +
+number = digit + >>= (return ∘ foldl (λ n d → 10 * n + d) 0)

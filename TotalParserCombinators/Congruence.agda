@@ -23,7 +23,7 @@ open Any.Membership-≡ using (bag) renaming (_≈[_]_ to _List-≈[_]_)
 
 open import TotalParserCombinators.BreadthFirst hiding (complete)
 open import TotalParserCombinators.CoinductiveEquality as CE
-  using (_≈[_]′_; _∷_)
+  using (_≈[_]c_; _∷_)
 open import TotalParserCombinators.Lib
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
@@ -56,7 +56,7 @@ mutual
             {p₁ : Parser Tok R xs₁}
             {p₂ : Parser Tok R xs₂}
           (xs₁≈xs₂ : xs₁ List-≈[ k ] xs₂)
-          (∂p₁≈∂p₂ : ∀ t → ∞ (∂ p₁ t ≈[ k ]P ∂ p₂ t)) →
+          (Dp₁≈Dp₂ : ∀ t → ∞ (D t p₁ ≈[ k ]P D t p₂)) →
           p₁ ≈[ k ]P p₂
 
     -- Equational reasoning.
@@ -117,9 +117,9 @@ mutual
     [_-_-_-_]_>>=_ :
       ∀ {k R₁ R₂} (f₁ f₂ : Maybe (R₁ → List R₂)) xs₁ xs₂
         {p₁ : ∞⟨ f₁ ⟩Parser Tok R₁ (flatten xs₁)}
-        {p₂ : (x : R₁) → ∞⟨ xs₁ ⟩Parser Tok R₂ (app f₁ x)}
+        {p₂ : (x : R₁) → ∞⟨ xs₁ ⟩Parser Tok R₂ (apply f₁ x)}
         {p₃ : ∞⟨ f₂ ⟩Parser Tok R₁ (flatten xs₂)}
-        {p₄ : (x : R₁) → ∞⟨ xs₂ ⟩Parser Tok R₂ (app f₂ x)}
+        {p₄ : (x : R₁) → ∞⟨ xs₂ ⟩Parser Tok R₂ (apply f₂ x)}
       (p₁≈p₃ : ♭? p₁ ≈[ k ]P ♭? p₃)
       (p₂≈p₄ : ∀ x → ♭? (p₂ x) ≈[ k ]P ♭? (p₄ x)) →
       p₁ >>= p₂ ≈[ k ]P p₃ >>= p₄
@@ -146,6 +146,6 @@ complete = complete′ ∘ CE.complete
   complete′ : ∀ {k Tok R xs₁ xs₂}
                 {p₁ : Parser Tok R xs₁}
                 {p₂ : Parser Tok R xs₂} →
-              p₁ ≈[ k ]′ p₂ → p₁ ≈[ k ]P p₂
-  complete′ (xs₁≈xs₂ ∷ ∂p₁≈∂p₂) =
-    xs₁≈xs₂ ∷ λ t → ♯ complete′ (♭ (∂p₁≈∂p₂ t))
+              p₁ ≈[ k ]c p₂ → p₁ ≈[ k ]P p₂
+  complete′ (xs₁≈xs₂ ∷ Dp₁≈Dp₂) =
+    xs₁≈xs₂ ∷ λ t → ♯ complete′ (♭ (Dp₁≈Dp₂ t))

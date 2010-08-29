@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Laws related to ∂
+-- Laws related to D
 ------------------------------------------------------------------------
 
 module TotalParserCombinators.Laws.Derivative where
@@ -23,40 +23,40 @@ import TotalParserCombinators.Laws.AdditiveMonoid as AdditiveMonoid
 open import TotalParserCombinators.Lib
 open import TotalParserCombinators.Parser
 
--- Unfolding lemma for ∂ applied to return⋆.
+-- Unfolding lemma for D applied to return⋆.
 
-∂-return⋆ : ∀ {Tok R} (xs : List R) {t} →
-            ∂ (return⋆ xs) t ≅P fail {Tok = Tok}
-∂-return⋆ []           = fail ∎
-∂-return⋆ (x ∷ xs) {t} =
-  fail ∣ ∂ (return⋆ xs) t  ≅⟨ AdditiveMonoid.left-identity (∂ (return⋆ xs) t) ⟩
-  ∂ (return⋆ xs) t         ≅⟨ ∂-return⋆ xs ⟩
+D-return⋆ : ∀ {Tok R t} (xs : List R) →
+            D t (return⋆ xs) ≅P fail {Tok = Tok}
+D-return⋆         []       = fail ∎
+D-return⋆ {t = t} (x ∷ xs) =
+  fail ∣ D t (return⋆ xs)  ≅⟨ AdditiveMonoid.left-identity (D t (return⋆ xs)) ⟩
+  D t (return⋆ xs)         ≅⟨ D-return⋆ xs ⟩
   fail                     ∎
 
 mutual
 
-  -- Unfolding lemma for ∂ applied to _⊛_.
+  -- Unfolding lemma for D applied to _⊛_.
 
-  ∂-⊛ : ∀ {Tok R₁ R₂ fs xs}
+  D-⊛ : ∀ {Tok R₁ R₂ fs xs t}
         (p₁ : ∞⟨ xs ⟩Parser Tok (R₁ → R₂) (flatten fs))
-        (p₂ : ∞⟨ fs ⟩Parser Tok  R₁       (flatten xs)) {t} →
-        ∂ (p₁ ⊛ p₂) t ≅P
-        ∂ (♭? p₁) t ⊛ ♭? p₂ ∣ return⋆ (flatten fs) ⊛ ∂ (♭? p₂) t
-  ∂-⊛ {fs = nothing} {xs = just _} p₁ p₂ {t} =
-    ∂ p₁ t ⊛ ♭ p₂                      ≅⟨ sym $ AdditiveMonoid.right-identity (∂ p₁ t ⊛ ♭ p₂) ⟩
-    ∂ p₁ t ⊛ ♭ p₂ ∣ fail               ≅⟨ (∂ p₁ t ⊛ ♭ p₂ ∎) ∣ sym (left-zero-⊛ (∂ (♭ p₂) t)) ⟩
-    ∂ p₁ t ⊛ ♭ p₂ ∣ fail ⊛ ∂ (♭ p₂) t  ∎
-  ∂-⊛ {fs = nothing} {xs = nothing} p₁ p₂ {t} =
-    ∂ (p₁ ⊛ p₂) t                          ≅⟨ [ ◌ - ○ - ○ - ○ ] ∂ (♭ p₁) t ∎ ⊛ (♭ p₂ ∎) ⟩
-    ∂ (♭ p₁) t ⊛ ♭ p₂                      ≅⟨ sym $ AdditiveMonoid.right-identity (∂ (♭ p₁) t ⊛ ♭ p₂) ⟩
-    ∂ (♭ p₁) t ⊛ ♭ p₂ ∣ fail               ≅⟨ (∂ (♭ p₁) t ⊛ ♭ p₂ ∎) ∣ sym (left-zero-⊛ (∂ (♭ p₂) t)) ⟩
-    ∂ (♭ p₁) t ⊛ ♭ p₂ ∣ fail ⊛ ∂ (♭ p₂) t  ∎
-  ∂-⊛ {fs = just _} {xs = just _} p₁ p₂ {t} =
-    ∂ (p₁ ⊛ p₂) t ∎
-  ∂-⊛ {fs = just fs} {xs = nothing} p₁ p₂ {t} =
-    ∂ (p₁ ⊛ p₂) t                          ≅⟨ [ ◌ - ○ - ○ - ○ ] ∂ (♭ p₁) t ∎ ⊛ (p₂ ∎) ∣
-                                              (return⋆ fs ⊛ ∂ p₂ t ∎) ⟩
-    ∂ (♭ p₁) t ⊛ p₂ ∣ return⋆ fs ⊛ ∂ p₂ t  ∎
+        (p₂ : ∞⟨ fs ⟩Parser Tok  R₁       (flatten xs)) →
+        D t (p₁ ⊛ p₂) ≅P
+        D t (♭? p₁) ⊛ ♭? p₂ ∣ return⋆ (flatten fs) ⊛ D t (♭? p₂)
+  D-⊛ {fs = nothing} {xs = just _} {t = t} p₁ p₂ =
+    D t p₁ ⊛ ♭ p₂                      ≅⟨ sym $ AdditiveMonoid.right-identity (D t p₁ ⊛ ♭ p₂) ⟩
+    D t p₁ ⊛ ♭ p₂ ∣ fail               ≅⟨ (D t p₁ ⊛ ♭ p₂ ∎) ∣ sym (left-zero-⊛ (D t (♭ p₂))) ⟩
+    D t p₁ ⊛ ♭ p₂ ∣ fail ⊛ D t (♭ p₂)  ∎
+  D-⊛ {fs = nothing} {xs = nothing} {t = t} p₁ p₂ =
+    D t (p₁ ⊛ p₂)                          ≅⟨ [ ◌ - ○ - ○ - ○ ] D t (♭ p₁) ∎ ⊛ (♭ p₂ ∎) ⟩
+    D t (♭ p₁) ⊛ ♭ p₂                      ≅⟨ sym $ AdditiveMonoid.right-identity (D t (♭ p₁) ⊛ ♭ p₂) ⟩
+    D t (♭ p₁) ⊛ ♭ p₂ ∣ fail               ≅⟨ (D t (♭ p₁) ⊛ ♭ p₂ ∎) ∣ sym (left-zero-⊛ (D t (♭ p₂))) ⟩
+    D t (♭ p₁) ⊛ ♭ p₂ ∣ fail ⊛ D t (♭ p₂)  ∎
+  D-⊛ {fs = just _} {xs = just _} {t = t} p₁ p₂ =
+    D t (p₁ ⊛ p₂) ∎
+  D-⊛ {fs = just fs} {xs = nothing} {t = t} p₁ p₂ =
+    D t (p₁ ⊛ p₂)                          ≅⟨ [ ◌ - ○ - ○ - ○ ] D t (♭ p₁) ∎ ⊛ (p₂ ∎) ∣
+                                              (return⋆ fs ⊛ D t p₂ ∎) ⟩
+    D t (♭ p₁) ⊛ p₂ ∣ return⋆ fs ⊛ D t p₂  ∎
 
   -- fail is a left zero of ⊛.
 
@@ -64,8 +64,8 @@ mutual
                 fail ⊛ p ≅P fail {R = R₂}
   left-zero-⊛ {xs = xs} p =
     BagMonoid.reflexive (ListProp.Applicative.left-zero xs) ∷ λ t → ♯ (
-      ∂ (fail ⊛ p) t           ≅⟨ ∂-⊛ fail p ⟩
-      fail ⊛ p ∣ fail ⊛ ∂ p t  ≅⟨ left-zero-⊛ p ∣ left-zero-⊛ (∂ p t) ⟩
+      D t (fail ⊛ p)           ≅⟨ D-⊛ fail p ⟩
+      fail ⊛ p ∣ fail ⊛ D t p  ≅⟨ left-zero-⊛ p ∣ left-zero-⊛ (D t p) ⟩
       fail ∣ fail              ≅⟨ AdditiveMonoid.right-identity fail ⟩
       fail                     ∎)
 
@@ -75,49 +75,49 @@ right-zero-⊛ : ∀ {Tok R₁ R₂ fs} (p : Parser Tok (R₁ → R₂) fs) →
                p ⊛ fail ≅P fail
 right-zero-⊛ {fs = fs} p =
   BagMonoid.reflexive (ListProp.Applicative.right-zero fs) ∷ λ t → ♯ (
-    ∂ (p ⊛ fail) t                    ≅⟨ ∂-⊛ p fail ⟩
-    ∂ p t ⊛ fail ∣ return⋆ fs ⊛ fail  ≅⟨ right-zero-⊛ (∂ p t) ∣ right-zero-⊛ (return⋆ fs) ⟩
+    D t (p ⊛ fail)                    ≅⟨ D-⊛ p fail ⟩
+    D t p ⊛ fail ∣ return⋆ fs ⊛ fail  ≅⟨ right-zero-⊛ (D t p) ∣ right-zero-⊛ (return⋆ fs) ⟩
     fail ∣ fail                       ≅⟨ AdditiveMonoid.left-identity fail ⟩
     fail                              ∎)
 
--- A simplified instance of ∂-⊛.
+-- A simplified instance of D-⊛.
 
-∂-return-⊛ : ∀ {Tok R₁ R₂ xs}
-             (f : R₁ → R₂) (p : Parser Tok R₁ xs) {t} →
-             ∂ (return f ⊛ p) t ≅P return f ⊛ ∂ p t
-∂-return-⊛ f p {t} =
-  ∂ (return f ⊛ p) t                ≅⟨ ∂-⊛ (return f) p ⟩
-  fail ⊛ p ∣ return⋆ [ f ] ⊛ ∂ p t  ≅⟨ left-zero-⊛ p ∣
-                                       [ ○ - ○ - ○ - ○ ] AdditiveMonoid.right-identity (return f) ⊛ (∂ p t ∎) ⟩
-  fail ∣ return f ⊛ ∂ p t           ≅⟨ AdditiveMonoid.left-identity (return f ⊛ ∂ p t) ⟩
-  return f ⊛ ∂ p t                  ∎
+D-return-⊛ : ∀ {Tok R₁ R₂ xs t}
+             (f : R₁ → R₂) (p : Parser Tok R₁ xs) →
+             D t (return f ⊛ p) ≅P return f ⊛ D t p
+D-return-⊛ {t = t} f p =
+  D t (return f ⊛ p)                ≅⟨ D-⊛ (return f) p ⟩
+  fail ⊛ p ∣ return⋆ [ f ] ⊛ D t p  ≅⟨ left-zero-⊛ p ∣
+                                       [ ○ - ○ - ○ - ○ ] AdditiveMonoid.right-identity (return f) ⊛ (D t p ∎) ⟩
+  fail ∣ return f ⊛ D t p           ≅⟨ AdditiveMonoid.left-identity (return f ⊛ D t p) ⟩
+  return f ⊛ D t p                  ∎
 
 mutual
 
-  -- Unfolding lemma for ∂ applied to _>>=_.
+  -- Unfolding lemma for D applied to _>>=_.
 
-  ∂->>= : ∀ {Tok R₁ R₂ xs} {f : Maybe (R₁ → List R₂)}
+  D->>= : ∀ {Tok R₁ R₂ xs t} {f : Maybe (R₁ → List R₂)}
           (p₁ : ∞⟨ f ⟩Parser Tok R₁ (flatten xs))
-          (p₂ : (x : R₁) → ∞⟨ xs ⟩Parser Tok R₂ (app f x)) {t} →
-          ∂ (p₁ >>= p₂) t ≅P
-          ∂ (♭? p₁) t >>= (♭? ∘ p₂) ∣
-          return⋆ (flatten xs) >>= (λ x → ∂ (♭? (p₂ x)) t)
-  ∂->>= {xs = nothing} {f = just _} p₁ p₂ {t} =
-    ∂ p₁ t >>= (♭ ∘ p₂)                                    ≅⟨ sym $ AdditiveMonoid.right-identity (∂ p₁ t >>= (♭ ∘ p₂)) ⟩
-    ∂ p₁ t >>= (♭ ∘ p₂) ∣ fail                             ≅⟨ (∂ p₁ t >>= (♭ ∘ p₂) ∎) ∣
-                                                              sym (left-zero->>= (λ x → ∂ (♭ (p₂ x)) t)) ⟩
-    ∂ p₁ t >>= (♭ ∘ p₂) ∣ fail >>= (λ x → ∂ (♭ (p₂ x)) t)  ∎
-  ∂->>= {xs = just xs} {f = just _} p₁ p₂ {t} =
-    ∂ p₁ t >>= p₂ ∣ return⋆ xs >>= (λ x → ∂ (p₂ x) t)  ∎
-  ∂->>= {xs = nothing} {f = nothing} p₁ p₂ {t} =
-    ∂ (p₁ >>= p₂) t                                            ≅⟨ [ ◌ - ○ - ○ - ○ ] _ ∎ >>= (λ _ → _ ∎) ⟩
-    ∂ (♭ p₁) t >>= (♭ ∘ p₂)                                    ≅⟨ sym $ AdditiveMonoid.right-identity (∂ (♭ p₁) t >>= (♭ ∘ p₂)) ⟩
-    ∂ (♭ p₁) t >>= (♭ ∘ p₂) ∣ fail                             ≅⟨ (∂ (♭ p₁) t >>= (♭ ∘ p₂) ∎) ∣
-                                                                  sym (left-zero->>= (λ x → ∂ (♭ (p₂ x)) t)) ⟩
-    ∂ (♭ p₁) t >>= (♭ ∘ p₂) ∣ fail >>= (λ x → ∂ (♭ (p₂ x)) t)  ∎
-  ∂->>= {xs = just xs} {f = nothing} p₁ p₂ {t} =
-    ∂ (p₁ >>= p₂) t                                        ≅⟨ [ ◌ - ○ - ○ - ○ ] _ ∎ >>= (λ _ → _ ∎) ∣ (_ ∎) ⟩
-    ∂ (♭ p₁) t >>= p₂ ∣ return⋆ xs >>= (λ x → ∂ (p₂ x) t)  ∎
+          (p₂ : (x : R₁) → ∞⟨ xs ⟩Parser Tok R₂ (apply f x)) →
+          D t (p₁ >>= p₂) ≅P
+          D t (♭? p₁) >>= (♭? ∘ p₂) ∣
+          return⋆ (flatten xs) >>= (λ x → D t (♭? (p₂ x)))
+  D->>= {xs = nothing} {t = t} {f = just _} p₁ p₂ =
+    D t p₁ >>= (♭ ∘ p₂)                                    ≅⟨ sym $ AdditiveMonoid.right-identity (D t p₁ >>= (♭ ∘ p₂)) ⟩
+    D t p₁ >>= (♭ ∘ p₂) ∣ fail                             ≅⟨ (D t p₁ >>= (♭ ∘ p₂) ∎) ∣
+                                                              sym (left-zero->>= (λ x → D t (♭ (p₂ x)))) ⟩
+    D t p₁ >>= (♭ ∘ p₂) ∣ fail >>= (λ x → D t (♭ (p₂ x)))  ∎
+  D->>= {xs = just xs} {t = t} {f = just _} p₁ p₂ =
+    D t p₁ >>= p₂ ∣ return⋆ xs >>= (λ x → D t (p₂ x))  ∎
+  D->>= {xs = nothing} {t = t} {f = nothing} p₁ p₂ =
+    D t (p₁ >>= p₂)                                            ≅⟨ [ ◌ - ○ - ○ - ○ ] _ ∎ >>= (λ _ → _ ∎) ⟩
+    D t (♭ p₁) >>= (♭ ∘ p₂)                                    ≅⟨ sym $ AdditiveMonoid.right-identity (D t (♭ p₁) >>= (♭ ∘ p₂)) ⟩
+    D t (♭ p₁) >>= (♭ ∘ p₂) ∣ fail                             ≅⟨ (D t (♭ p₁) >>= (♭ ∘ p₂) ∎) ∣
+                                                                  sym (left-zero->>= (λ x → D t (♭ (p₂ x)))) ⟩
+    D t (♭ p₁) >>= (♭ ∘ p₂) ∣ fail >>= (λ x → D t (♭ (p₂ x)))  ∎
+  D->>= {xs = just xs} {t = t} {f = nothing} p₁ p₂ =
+    D t (p₁ >>= p₂)                                        ≅⟨ [ ◌ - ○ - ○ - ○ ] _ ∎ >>= (λ _ → _ ∎) ∣ (_ ∎) ⟩
+    D t (♭ p₁) >>= p₂ ∣ return⋆ xs >>= (λ x → D t (p₂ x))  ∎
 
   -- fail is a left zero of _>>=_.
 
@@ -126,8 +126,8 @@ mutual
                  fail >>= p ≅P fail
   left-zero->>= {f = f} p =
     BagMonoid.reflexive (ListProp.Monad.left-zero f) ∷ λ t → ♯ (
-      ∂ (fail >>= p) t                         ≅⟨ ∂->>= fail p {t} ⟩
-      fail >>= p ∣ fail >>= (λ x → ∂ (p x) t)  ≅⟨ left-zero->>= p ∣ left-zero->>= (λ x → ∂ (p x) t) ⟩
+      D t (fail >>= p)                         ≅⟨ D->>= {t = t} fail p ⟩
+      fail >>= p ∣ fail >>= (λ x → D t (p x))  ≅⟨ left-zero->>= p ∣ left-zero->>= (λ x → D t (p x)) ⟩
       fail ∣ fail                              ≅⟨ AdditiveMonoid.right-identity fail ⟩
       fail                                     ∎)
 
@@ -138,7 +138,7 @@ right-zero->>= : ∀ {Tok R₁ R₂} {xs : List R₁}
                 p >>= (λ _ → fail) ≅P fail {Tok = Tok} {R = R₂}
 right-zero->>= {xs = xs} p =
   BagMonoid.reflexive (ListProp.Monad.right-zero xs) ∷ λ t → ♯ (
-    ∂ (p >>= λ _ → fail) t                                ≅⟨ ∂->>= p (λ _ → fail) ⟩
-    ∂ p t >>= (λ _ → fail) ∣ return⋆ xs >>= (λ _ → fail)  ≅⟨ right-zero->>= (∂ p t) ∣ right-zero->>= (return⋆ xs) ⟩
+    D t (p >>= λ _ → fail)                                ≅⟨ D->>= p (λ _ → fail) ⟩
+    D t p >>= (λ _ → fail) ∣ return⋆ xs >>= (λ _ → fail)  ≅⟨ right-zero->>= (D t p) ∣ right-zero->>= (return⋆ xs) ⟩
     fail ∣ fail                                           ≅⟨ AdditiveMonoid.left-identity fail ⟩
     fail                                                  ∎)

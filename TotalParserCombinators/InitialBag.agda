@@ -52,8 +52,8 @@ mutual
     complete′ : ∀ {Tok R xs x s} {p : Parser Tok R xs} →
                 x ∈ p · s → s ≡ [] → x ∈ xs
     complete′ return                                                    refl = to return⇿          ⟨$⟩ refl
-    complete′ (∣ˡ     x∈p₁)                                             refl = to ++⇿              ⟨$⟩ inj₁ (complete x∈p₁)
-    complete′ (∣ʳ xs₁ x∈p₂)                                             refl = to (++⇿ {xs = xs₁}) ⟨$⟩ inj₂ (complete x∈p₂)
+    complete′ (∣-left      x∈p₁)                                        refl = to ++⇿              ⟨$⟩ inj₁ (complete x∈p₁)
+    complete′ (∣-right xs₁ x∈p₂)                                        refl = to (++⇿ {xs = xs₁}) ⟨$⟩ inj₂ (complete x∈p₂)
     complete′ (<$> x∈p)                                                 refl = to map-∈⇿           ⟨$⟩ (_ , complete x∈p , refl)
     complete′ (_⊛_   {s₁ = []} {xs = just _}                f∈p₁ x∈p₂)  refl = to (⊛-∈⇿ _)         ⟨$⟩ (_ , _ , complete f∈p₁
                                                                                                               , complete x∈p₂ , refl)
@@ -79,8 +79,8 @@ mutual
           x ∈ xs → x ∈ p · []
   sound (return x)              (here refl) = return
   sound (_∣_ {xs₁ = xs₁} p₁ p₂) x∈xs with from (++⇿ {xs = xs₁}) ⟨$⟩ x∈xs
-  ... | inj₁ x∈xs₁ = ∣ˡ     (sound p₁ x∈xs₁)
-  ... | inj₂ x∈xs₂ = ∣ʳ xs₁ (sound p₂ x∈xs₂)
+  ... | inj₁ x∈xs₁ = ∣-left      (sound p₁ x∈xs₁)
+  ... | inj₂ x∈xs₂ = ∣-right xs₁ (sound p₂ x∈xs₂)
   sound (_<$>_ {xs = xs} f p) x∈xs with from (map-∈⇿ {xs = xs}) ⟨$⟩ x∈xs
   ... | (y , y∈xs , refl) = <$> sound p y∈xs
   sound (_⊛_ {fs = fs} {just xs} p₁ p₂) y∈ys
@@ -121,13 +121,16 @@ mutual
     sound∘complete′ : ∀ {Tok R xs x s} {p : Parser Tok R xs}
                       (x∈p : x ∈ p · s) (s≡[] : s ≡ []) →
                       sound p (complete′ x∈p s≡[]) ≅′ x∈p
-    sound∘complete′ return                            refl = refl
-    sound∘complete′ (∣ˡ {xs₁ = xs₁} {xs₂ = xs₂} x∈p₁) refl rewrite left-inverse-of (++⇿ {xs = xs₁} {ys = xs₂}) (inj₁ (complete x∈p₁)) =
-                                                           H.cong ((_ → _ ∈ _ · _) ∶ ∣ˡ)     (sound∘complete′ x∈p₁ refl)
-    sound∘complete′ (∣ʳ xs₁ x∈p₂)                     refl rewrite left-inverse-of (++⇿ {xs = xs₁}) (inj₂ (complete x∈p₂)) =
-                                                           H.cong ((_ → _ ∈ _ · _) ∶ ∣ʳ xs₁) (sound∘complete′ x∈p₂ refl)
-    sound∘complete′ (<$>_ {f = f} x∈p)                refl rewrite left-inverse-of (map-∈⇿ {f = f}) (_ , complete x∈p , refl) =
-                                                           H.cong ((_ → _ ∈ _ · _) ∶ <$>_) (sound∘complete′ x∈p refl)
+    sound∘complete′ return                                refl = refl
+    sound∘complete′ (∣-left {xs₁ = xs₁} {xs₂ = xs₂} x∈p₁) refl
+      rewrite left-inverse-of (++⇿ {xs = xs₁} {ys = xs₂}) (inj₁ (complete x∈p₁)) =
+        H.cong ((_ → _ ∈ _ · _) ∶ ∣-left)     (sound∘complete′ x∈p₁ refl)
+    sound∘complete′ (∣-right xs₁ x∈p₂) refl
+      rewrite left-inverse-of (++⇿ {xs = xs₁}) (inj₂ (complete x∈p₂)) =
+        H.cong ((_ → _ ∈ _ · _) ∶ ∣-right xs₁) (sound∘complete′ x∈p₂ refl)
+    sound∘complete′ (<$>_ {f = f} x∈p) refl
+      rewrite left-inverse-of (map-∈⇿ {f = f}) (_ , complete x∈p , refl) =
+        H.cong ((_ → _ ∈ _ · _) ∶ <$>_) (sound∘complete′ x∈p refl)
     sound∘complete′ (_⊛_ {s₁ = []} {fs = fs} {xs = just xs} f∈p₁ x∈p₂) refl
       with complete f∈p₁ | complete x∈p₂
       | from inv ⟨$⟩ (to inv ⟨$⟩ (_ , _ , complete f∈p₁ , complete x∈p₂ , refl))
@@ -224,12 +227,12 @@ correct {p = p} = record
   }
 
 ------------------------------------------------------------------------
--- Equal parsers have equal initial sets
+-- Equal parsers have equal initial bags/sets
 
-same-set : ∀ {k Tok R xs₁ xs₂}
-             {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
-           p₁ ≈[ k ] p₂ → xs₁ List-≈[ k ] xs₂
-same-set {xs₁ = xs₁} {xs₂} {p₁} {p₂} p₁≈p₂ {x} =
+same-bag/set : ∀ {k Tok R xs₁ xs₂}
+                 {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
+               p₁ ≈[ k ] p₂ → xs₁ List-≈[ k ] xs₂
+same-bag/set {xs₁ = xs₁} {xs₂} {p₁} {p₂} p₁≈p₂ {x} =
   (x ∈ xs₁)    ⇿⟨ sym correct ⟩
   x ∈ p₁ · []  ≈⟨ p₁≈p₂ ⟩
   x ∈ p₂ · []  ⇿⟨ correct ⟩

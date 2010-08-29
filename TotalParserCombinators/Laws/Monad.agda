@@ -47,22 +47,22 @@ left-distributive : ∀ {Tok R₁ R₂ xs} {f g : R₁ → List R₂}
                     p₁ >>= (λ x → p₂ x ∣ p₃ x) ≅P p₁ >>= p₂ ∣ p₁ >>= p₃
 left-distributive {xs = xs} {f} {g} p₁ p₂ p₃ =
   BSEq.>>=-left-distributive xs ∷ λ t → ♯ (
-    ∂ (p₁ >>= (λ x → p₂ x ∣ p₃ x)) t                       ≅⟨ ∂->>= p₁ (λ x → p₂ x ∣ p₃ x) ⟩
+    D t (p₁ >>= (λ x → p₂ x ∣ p₃ x))                       ≅⟨ D->>= p₁ (λ x → p₂ x ∣ p₃ x) ⟩
 
-    ∂ p₁ t >>= (λ x → p₂ x ∣ p₃ x) ∣
-    return⋆ xs >>= (λ x → ∂ (p₂ x) t ∣ ∂ (p₃ x) t)         ≅⟨ left-distributive (∂ p₁ t) p₂ p₃ ∣′
+    D t p₁ >>= (λ x → p₂ x ∣ p₃ x) ∣
+    return⋆ xs >>= (λ x → D t (p₂ x) ∣ D t (p₃ x))         ≅⟨ left-distributive (D t p₁) p₂ p₃ ∣′
                                                               left-distributive (return⋆ xs)
-                                                                (λ x → ∂ (p₂ x) t) (λ x → ∂ (p₃ x) t) ⟩
-    (∂ p₁ t >>= p₂ ∣ ∂ p₁ t >>= p₃) ∣
-    (return⋆ xs >>= (λ x → ∂ (p₂ x) t) ∣
-     return⋆ xs >>= (λ x → ∂ (p₃ x) t))                    ≅⟨ AdditiveMonoid.swap
-                                                               (∂ p₁ t >>= p₂) (∂ p₁ t >>= p₃)
-                                                               (return⋆ xs >>= (λ x → ∂ (p₂ x) t))
-                                                               (return⋆ xs >>= (λ x → ∂ (p₃ x) t)) ⟩
-    (∂ p₁ t >>= p₂ ∣ return⋆ xs >>= (λ x → ∂ (p₂ x) t)) ∣
-    (∂ p₁ t >>= p₃ ∣ return⋆ xs >>= (λ x → ∂ (p₃ x) t))    ≅⟨ sym (∂->>= p₁ p₂ ∣′ ∂->>= p₁ p₃) ⟩
+                                                                (λ x → D t (p₂ x)) (λ x → D t (p₃ x)) ⟩
+    (D t p₁ >>= p₂ ∣ D t p₁ >>= p₃) ∣
+    (return⋆ xs >>= (λ x → D t (p₂ x)) ∣
+     return⋆ xs >>= (λ x → D t (p₃ x)))                    ≅⟨ AdditiveMonoid.swap
+                                                               (D t p₁ >>= p₂) (D t p₁ >>= p₃)
+                                                               (return⋆ xs >>= (λ x → D t (p₂ x)))
+                                                               (return⋆ xs >>= (λ x → D t (p₃ x))) ⟩
+    (D t p₁ >>= p₂ ∣ return⋆ xs >>= (λ x → D t (p₂ x))) ∣
+    (D t p₁ >>= p₃ ∣ return⋆ xs >>= (λ x → D t (p₃ x)))    ≅⟨ sym (D->>= p₁ p₂ ∣′ D->>= p₁ p₃) ⟩
 
-    ∂ (p₁ >>= p₂) t ∣ ∂ (p₁ >>= p₃) t                      ∎)
+    D t (p₁ >>= p₂) ∣ D t (p₁ >>= p₃)                      ∎)
 
 right-distributive : ∀ {Tok R₁ R₂ xs₁ xs₂} {f : R₁ → List R₂}
                      (p₁ : Parser Tok R₁ xs₁)
@@ -71,48 +71,48 @@ right-distributive : ∀ {Tok R₁ R₂ xs₁ xs₂} {f : R₁ → List R₂}
                      (p₁ ∣ p₂) >>= p₃ ≅P p₁ >>= p₃ ∣ p₂ >>= p₃
 right-distributive {xs₁ = xs₁} {xs₂} {f} p₁ p₂ p₃ =
   BagMonoid.reflexive (ListProp.Monad.right-distributive xs₁ xs₂ f) ∷ λ t → ♯ (
-    ∂ ((p₁ ∣ p₂) >>= p₃) t                                  ≅⟨ ∂->>= (p₁ ∣ p₂) p₃ ⟩
+    D t ((p₁ ∣ p₂) >>= p₃)                                  ≅⟨ D->>= (p₁ ∣ p₂) p₃ ⟩
 
-    (∂ p₁ t ∣ ∂ p₂ t) >>= p₃ ∣
-    return⋆ (xs₁ ++ xs₂) >>= (λ x → ∂ (p₃ x) t)             ≅⟨ ((∂ p₁ t ∣ ∂ p₂ t) >>= p₃ ∎) ∣′
+    (D t p₁ ∣ D t p₂) >>= p₃ ∣
+    return⋆ (xs₁ ++ xs₂) >>= (λ x → D t (p₃ x))             ≅⟨ ((D t p₁ ∣ D t p₂) >>= p₃ ∎) ∣′
                                                                [ ○ - ○ - ○ - ○ ] Return⋆.distrib-∣ xs₁ xs₂ >>=
-                                                                                 (λ x → ∂ (p₃ x) t ∎) ⟩
-    (∂ p₁ t ∣ ∂ p₂ t) >>= p₃ ∣
-    (return⋆ xs₁ ∣ return⋆ xs₂) >>= (λ x → ∂ (p₃ x) t)      ≅⟨ right-distributive (∂ p₁ t) (∂ p₂ t) p₃ ∣′
+                                                                                 (λ x → D t (p₃ x) ∎) ⟩
+    (D t p₁ ∣ D t p₂) >>= p₃ ∣
+    (return⋆ xs₁ ∣ return⋆ xs₂) >>= (λ x → D t (p₃ x))      ≅⟨ right-distributive (D t p₁) (D t p₂) p₃ ∣′
                                                                right-distributive (return⋆ xs₁) (return⋆ xs₂)
-                                                                                  (λ x → ∂ (p₃ x) t) ⟩
-    ((∂ p₁ t >>= p₃) ∣ (∂ p₂ t >>= p₃)) ∣
-    (return⋆ xs₁ >>= (λ x → ∂ (p₃ x) t) ∣
-     return⋆ xs₂ >>= (λ x → ∂ (p₃ x) t))                    ≅⟨ AdditiveMonoid.swap
-                                                                 (∂ p₁ t >>= p₃) (∂ p₂ t >>= p₃)
-                                                                 (return⋆ xs₁ >>= (λ x → ∂ (p₃ x) t))
-                                                                 (return⋆ xs₂ >>= (λ x → ∂ (p₃ x) t)) ⟩
-    (∂ p₁ t >>= p₃ ∣ return⋆ xs₁ >>= (λ x → ∂ (p₃ x) t)) ∣
-    (∂ p₂ t >>= p₃ ∣ return⋆ xs₂ >>= (λ x → ∂ (p₃ x) t))    ≅⟨ sym (∂->>= p₁ p₃ ∣′ ∂->>= p₂ p₃) ⟩
+                                                                                  (λ x → D t (p₃ x)) ⟩
+    ((D t p₁ >>= p₃) ∣ (D t p₂ >>= p₃)) ∣
+    (return⋆ xs₁ >>= (λ x → D t (p₃ x)) ∣
+     return⋆ xs₂ >>= (λ x → D t (p₃ x)))                    ≅⟨ AdditiveMonoid.swap
+                                                                 (D t p₁ >>= p₃) (D t p₂ >>= p₃)
+                                                                 (return⋆ xs₁ >>= (λ x → D t (p₃ x)))
+                                                                 (return⋆ xs₂ >>= (λ x → D t (p₃ x))) ⟩
+    (D t p₁ >>= p₃ ∣ return⋆ xs₁ >>= (λ x → D t (p₃ x))) ∣
+    (D t p₂ >>= p₃ ∣ return⋆ xs₂ >>= (λ x → D t (p₃ x)))    ≅⟨ sym (D->>= p₁ p₃ ∣′ D->>= p₂ p₃) ⟩
 
-    ∂ (p₁ >>= p₃) t ∣ ∂ (p₂ >>= p₃) t                       ∎)
+    D t (p₁ >>= p₃) ∣ D t (p₂ >>= p₃)                       ∎)
 
 left-identity : ∀ {Tok R₁ R₂} {f : R₁ → List R₂}
                 (x : R₁) (p : (x : R₁) → Parser Tok R₂ (f x)) →
                 return x >>= p ≅P p x
 left-identity {f = f} x p =
   BagMonoid.reflexive (ListProp.Monad.left-identity x f) ∷ λ t → ♯ (
-    ∂ (return x >>= p) t                              ≅⟨ ∂->>= (return x) p ⟩
-    fail >>= p ∣ return⋆ [ x ] >>= (λ x → ∂ (p x) t)  ≅⟨ left-zero p ∣′
+    D t (return x >>= p)                              ≅⟨ D->>= (return x) p ⟩
+    fail >>= p ∣ return⋆ [ x ] >>= (λ x → D t (p x))  ≅⟨ left-zero p ∣′
                                                          [ ○ - ○ - ○ - ○ ] AdditiveMonoid.right-identity (return x) >>=
-                                                                           (λ x → ∂ (p x) t ∎) ⟩
-    fail ∣ return x >>= (λ x → ∂ (p x) t)             ≅⟨ AdditiveMonoid.left-identity (return x >>= (λ x → ∂ (p x) t)) ⟩
-    return x >>= (λ x → ∂ (p x) t)                    ≅⟨ left-identity x (λ x → ∂ (p x) t) ⟩
-    ∂ (p x) t                                         ∎)
+                                                                           (λ x → D t (p x) ∎) ⟩
+    fail ∣ return x >>= (λ x → D t (p x))             ≅⟨ AdditiveMonoid.left-identity (return x >>= (λ x → D t (p x))) ⟩
+    return x >>= (λ x → D t (p x))                    ≅⟨ left-identity x (λ x → D t (p x)) ⟩
+    D t (p x)                                         ∎)
 
 right-identity : ∀ {Tok R xs}
                  (p : Parser Tok R xs) → p >>= return ≅P p
 right-identity {xs = xs} p =
   BagMonoid.reflexive (ListProp.Monad.right-identity xs) ∷ λ t → ♯ (
-    ∂ (p >>= return) t                              ≅⟨ ∂->>= p return ⟩
-    ∂ p t >>= return ∣ return⋆ xs >>= (λ _ → fail)  ≅⟨ right-identity (∂ p t) ∣′ right-zero (return⋆ xs) ⟩
-    ∂ p t            ∣ fail                         ≅⟨ AdditiveMonoid.right-identity (∂ p t) ⟩
-    ∂ p t                                           ∎)
+    D t (p >>= return)                              ≅⟨ D->>= p return ⟩
+    D t p >>= return ∣ return⋆ xs >>= (λ _ → fail)  ≅⟨ right-identity (D t p) ∣′ right-zero (return⋆ xs) ⟩
+    D t p            ∣ fail                         ≅⟨ AdditiveMonoid.right-identity (D t p) ⟩
+    D t p                                           ∎)
 
 associative : ∀ {Tok R₁ R₂ R₃ xs}
                 {f : R₁ → List R₂} {g : R₂ → List R₃}
@@ -122,42 +122,42 @@ associative : ∀ {Tok R₁ R₂ R₃ xs}
               p₁ >>= (λ x → p₂ x >>= p₃) ≅P p₁ >>= p₂ >>= p₃
 associative {xs = xs} {f} {g} p₁ p₂ p₃ =
   BagMonoid.reflexive (ListProp.Monad.associative xs f g) ∷ λ t → ♯ (
-    ∂ (p₁ >>= λ x → p₂ x >>= p₃) t                               ≅⟨ ∂->>= p₁ (λ x → p₂ x >>= p₃) ⟩
+    D t (p₁ >>= λ x → p₂ x >>= p₃)                               ≅⟨ D->>= p₁ (λ x → p₂ x >>= p₃) ⟩
 
-    ∂ p₁ t >>= (λ x → p₂ x >>= p₃) ∣
-    return⋆ xs >>= (λ x → ∂ (p₂ x >>= p₃) t)                     ≅⟨ associative (∂ p₁ t) p₂ p₃ ∣′
-                                                                    [ ○ - ○ - ○ - ○ ] return⋆ xs ∎ >>= (λ x → ∂->>= (p₂ x) p₃) ⟩
-    ∂ p₁ t >>= p₂ >>= p₃ ∣
+    D t p₁ >>= (λ x → p₂ x >>= p₃) ∣
+    return⋆ xs >>= (λ x → D t (p₂ x >>= p₃))                     ≅⟨ associative (D t p₁) p₂ p₃ ∣′
+                                                                    [ ○ - ○ - ○ - ○ ] return⋆ xs ∎ >>= (λ x → D->>= (p₂ x) p₃) ⟩
+    D t p₁ >>= p₂ >>= p₃ ∣
     return⋆ xs >>=
-      (λ x → ∂ (p₂ x) t >>= p₃ ∣
-             return⋆ (f x) >>= λ x → ∂ (p₃ x) t)                 ≅⟨ (∂ p₁ t >>= p₂ >>= p₃ ∎) ∣′
+      (λ x → D t (p₂ x) >>= p₃ ∣
+             return⋆ (f x) >>= λ x → D t (p₃ x))                 ≅⟨ (D t p₁ >>= p₂ >>= p₃ ∎) ∣′
                                                                     left-distributive (return⋆ xs)
-                                                                                      (λ x → ∂ (p₂ x) t >>= p₃)
-                                                                                      (λ x → return⋆ (f x) >>= (λ x → ∂ (p₃ x) t)) ⟩
-    ∂ p₁ t >>= p₂ >>= p₃ ∣
-    (return⋆ xs >>= (λ x → ∂ (p₂ x) t >>= p₃) ∣
-     return⋆ xs >>= (λ x → return⋆ (f x) >>= λ x → ∂ (p₃ x) t))  ≅⟨ (∂ p₁ t >>= p₂ >>= p₃ ∎) ∣′
-                                                                    (associative (return⋆ xs) (λ x → ∂ (p₂ x) t) p₃ ∣′
-                                                                     associative (return⋆ xs) (return⋆ ∘ f) (λ x → ∂ (p₃ x) t)) ⟩
-    ∂ p₁ t >>= p₂ >>= p₃ ∣
-    (return⋆ xs >>= (λ x → ∂ (p₂ x) t) >>= p₃ ∣
-     return⋆ xs >>= (return⋆ ∘ f) >>= λ x → ∂ (p₃ x) t)          ≅⟨ sym $ AdditiveMonoid.associative
-                                                                            (∂ p₁ t >>= p₂ >>= p₃)
-                                                                            (return⋆ xs >>= (λ x → ∂ (p₂ x) t) >>= p₃)
-                                                                            (return⋆ xs >>= (return⋆ ∘ f) >>= (λ x → ∂ (p₃ x) t)) ⟩
-    ∂ p₁ t >>= p₂ >>= p₃ ∣
-    return⋆ xs >>= (λ x → ∂ (p₂ x) t) >>= p₃ ∣
-    return⋆ xs >>= (return⋆ ∘ f) >>= (λ x → ∂ (p₃ x) t)          ≅⟨ sym (right-distributive
-                                                                           (∂ p₁ t >>= p₂)
-                                                                           (return⋆ xs >>= (λ x → ∂ (p₂ x) t))
+                                                                                      (λ x → D t (p₂ x) >>= p₃)
+                                                                                      (λ x → return⋆ (f x) >>= (λ x → D t (p₃ x))) ⟩
+    D t p₁ >>= p₂ >>= p₃ ∣
+    (return⋆ xs >>= (λ x → D t (p₂ x) >>= p₃) ∣
+     return⋆ xs >>= (λ x → return⋆ (f x) >>= λ x → D t (p₃ x)))  ≅⟨ (D t p₁ >>= p₂ >>= p₃ ∎) ∣′
+                                                                    (associative (return⋆ xs) (λ x → D t (p₂ x)) p₃ ∣′
+                                                                     associative (return⋆ xs) (return⋆ ∘ f) (λ x → D t (p₃ x))) ⟩
+    D t p₁ >>= p₂ >>= p₃ ∣
+    (return⋆ xs >>= (λ x → D t (p₂ x)) >>= p₃ ∣
+     return⋆ xs >>= (return⋆ ∘ f) >>= λ x → D t (p₃ x))          ≅⟨ sym $ AdditiveMonoid.associative
+                                                                            (D t p₁ >>= p₂ >>= p₃)
+                                                                            (return⋆ xs >>= (λ x → D t (p₂ x)) >>= p₃)
+                                                                            (return⋆ xs >>= (return⋆ ∘ f) >>= (λ x → D t (p₃ x))) ⟩
+    D t p₁ >>= p₂ >>= p₃ ∣
+    return⋆ xs >>= (λ x → D t (p₂ x)) >>= p₃ ∣
+    return⋆ xs >>= (return⋆ ∘ f) >>= (λ x → D t (p₃ x))          ≅⟨ sym (right-distributive
+                                                                           (D t p₁ >>= p₂)
+                                                                           (return⋆ xs >>= (λ x → D t (p₂ x)))
                                                                            p₃) ∣′
                                                                     [ ○ - ○ - ○ - ○ ] sym (Return⋆.distrib->>= xs f) >>=
-                                                                                      (λ x → ∂ (p₃ x) t ∎) ⟩
-    (∂ p₁ t >>= p₂ ∣
-     return⋆ xs >>= (λ x → ∂ (p₂ x) t)) >>= p₃ ∣
-    return⋆ (xs >>=′ f) >>= (λ x → ∂ (p₃ x) t)                   ≅⟨ [ ○ - ○ - ○ - ○ ] sym (∂->>= p₁ p₂) >>= (λ x → p₃ x ∎) ∣′
-                                                                    (return⋆ (xs >>=′ f) >>= (λ x → ∂ (p₃ x) t) ∎) ⟩
-    ∂ (p₁ >>= p₂) t >>= p₃ ∣
-    return⋆ (xs >>=′ f) >>= (λ x → ∂ (p₃ x) t)                   ≅⟨ sym $ ∂->>= (p₁ >>= p₂) p₃ ⟩
+                                                                                      (λ x → D t (p₃ x) ∎) ⟩
+    (D t p₁ >>= p₂ ∣
+     return⋆ xs >>= (λ x → D t (p₂ x))) >>= p₃ ∣
+    return⋆ (xs >>=′ f) >>= (λ x → D t (p₃ x))                   ≅⟨ [ ○ - ○ - ○ - ○ ] sym (D->>= p₁ p₂) >>= (λ x → p₃ x ∎) ∣′
+                                                                    (return⋆ (xs >>=′ f) >>= (λ x → D t (p₃ x)) ∎) ⟩
+    D t (p₁ >>= p₂) >>= p₃ ∣
+    return⋆ (xs >>=′ f) >>= (λ x → D t (p₃ x))                   ≅⟨ sym $ D->>= (p₁ >>= p₂) p₃ ⟩
 
-    ∂ (p₁ >>= p₂ >>= p₃) t                                       ∎)
+    D t (p₁ >>= p₂ >>= p₃)                                       ∎)

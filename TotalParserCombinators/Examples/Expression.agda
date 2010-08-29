@@ -25,27 +25,20 @@ open Token Char Char._≟_
 -- f ∷= f '*' a ∣ a
 -- a ∷= '(' t ')' ∣ n
 
--- Expressions.
-
-data Expr : Set where
-  num   : ℕ    → Expr
-  plus  : Expr → Expr → Expr
-  times : Expr → Expr → Expr
-
 -- Applicative implementation of the grammar.
 
 module Applicative where
 
   mutual
 
-    term   = ♯ (return (λ e₁ _ e₂ → plus e₁ e₂) ⊛ term) ⊛ tok '+' ⊛ factor
+    term   = ♯ (return (λ e₁ _ e₂ → e₁ + e₂) ⊛ term) ⊛ tok '+' ⊛ factor
            ∣ factor
 
-    factor = ♯ (return (λ e₁ _ e₂ → times e₁ e₂) ⊛ factor) ⊛ tok '*' ⊛ atom
+    factor = ♯ (return (λ e₁ _ e₂ → e₁ * e₂) ⊛ factor) ⊛ tok '*' ⊛ atom
            ∣ atom
 
     atom   = return (λ _ e _ → e) ⊛ tok '(' ⊛ ♯ term ⊛ tok ')'
-           ∣ return num ⊛ number
+           ∣ number
 
 -- Monadic implementation of the grammar.
 
@@ -54,21 +47,21 @@ module Monadic where
   mutual
 
     term   = factor
-           ∣ ♯ term               >>= λ e₁ →
-             tok '+'              >>= λ _  →
-             factor               >>= λ e₂ →
-             return (plus e₁ e₂)
+           ∣ ♯ term            >>= λ e₁ →
+             tok '+'           >>= λ _  →
+             factor            >>= λ e₂ →
+             return (e₁ + e₂)
 
     factor = atom
-           ∣ ♯ factor             >>= λ e₁ →
-             tok '*'              >>= λ _  →
-             atom                 >>= λ e₂ →
-             return (times e₁ e₂)
+           ∣ ♯ factor          >>= λ e₁ →
+             tok '*'           >>= λ _  →
+             atom              >>= λ e₂ →
+             return (e₁ * e₂)
 
-    atom   = return num ⊛ number
-           ∣ tok '('              >>= λ _  →
-             ♯ term               >>= λ e  →
-             tok ')'              >>= λ _  →
+    atom   = number
+           ∣ tok '('           >>= λ _  →
+             ♯ term            >>= λ e  →
+             tok ')'           >>= λ _  →
              return e
 
 ------------------------------------------------------------------------
@@ -77,20 +70,18 @@ module Monadic where
 module Tests where
 
   test : ∀ {R xs} → Parser Char R xs → String → List R
-  test p = parseComplete p ∘ String.toList
+  test p = parse p ∘ String.toList
 
   -- Some examples have been commented out in order to reduce
   -- type-checking times.
 
-  -- ex₁ : test Applicative.term "1*(2+3)" ≡
-  --         [ times (num 1) (plus (num 2) (num 3)) ]
+  -- ex₁ : test Applicative.term "1*(2+3)" ≡ [ 5 ]
   -- ex₁ = refl
 
   -- ex₂ : test Applicative.term "1*(2+3" ≡ []
   -- ex₂ = refl
 
-  ex₃ : test Monadic.term "1+2+3" ≡
-          [ plus (plus (num 1) (num 2)) (num 3) ]
+  ex₃ : test Monadic.term "1+2+3" ≡ [ 6 ]
   ex₃ = refl
 
   ex₄ : test Monadic.term "+32" ≡ []

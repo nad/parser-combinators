@@ -9,12 +9,12 @@ module TotalParserCombinators.BreadthFirst where
 -- Definition of the derivative and the parser backend.
 
 open import TotalParserCombinators.BreadthFirst.Derivative public
-  using (∂; ∂-initial; parseComplete)
+  using (D; D-bag; parse)
 
 -- The parser is sound and complete with respect to the semantics.
 
 open import TotalParserCombinators.BreadthFirst.SoundComplete public
-  using (sound; complete; ∂-sound; ∂-complete)
+  using (sound; complete; D-sound; D-complete)
 
 -- A proof showing that the breadth-first backend does not introduce
 -- any unneeded ambiguity.

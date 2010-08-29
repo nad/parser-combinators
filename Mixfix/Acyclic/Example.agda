@@ -119,7 +119,7 @@ data Backend : Set where
 
 parse : ∀ {Tok e R} → Backend → Parser Tok e R → List Tok → List R
 parse depthFirst   p = DepthFirst.parseComplete p
-parse breadthFirst p = BreadthFirst.parseComplete (Simplified.⟦_⟧ p)
+parse breadthFirst p = BreadthFirst.parse (Simplified.⟦_⟧ p)
 
 parseExpr : Backend → String → List String
 parseExpr backend = List.map (fromNameParts ∘ show) ∘

@@ -55,8 +55,8 @@ sound : ∀ {Tok e R} {p : Parser Tok e R} {x s} →
         x ∈ p · s → x ∈′ ⟦ p ⟧ · s
 sound return              = return
 sound token               = token
-sound (∣ˡ x∈p₁)           = cast (∣ˡ              (sound x∈p₁))
-sound (∣ʳ _ {p₁} x∈p₂)    = cast (∣ʳ (initial p₁) (sound x∈p₂))
+sound (∣ˡ x∈p₁)           = cast (∣-left               (sound x∈p₁))
+sound (∣ʳ _ {p₁} x∈p₂)    = cast (∣-right (initial p₁) (sound x∈p₂))
 sound (_?>>=_ {p₂ = p₂}
               x∈p₁ y∈p₂x) = cast ([_-_]_>>=_ ○ ○ {p₂ = λ x → ⟦ p₂ x ⟧}
                                              (sound x∈p₁) (sound y∈p₂x))
@@ -64,16 +64,13 @@ sound (x∈p₁ !>>= y∈p₂x)   = [ ○ - ◌ ] sound x∈p₁ >>= sound y∈p
 
 complete : ∀ {Tok e R} (p : Parser Tok e R) {x s} →
            x ∈′ ⟦ p ⟧ · s → x ∈ p · s
-complete (return x)       return              = return
+complete (return x)       return                   = return
 complete fail             ()
-complete token            token               = token
-complete (p₁ ∣ p₂)        (cast (∣ˡ    x∈p₁)) = ∣ˡ    (complete p₁ x∈p₁)
-complete (_∣_ {e₁} p₁ p₂) (cast (∣ʳ ._ x∈p₂)) = ∣ʳ e₁ (complete p₂ x∈p₂)
-complete (p₁ ?>>= p₂)    (cast
-                           (x∈p₁ >>= y∈p₂x))  = complete p₁ x∈p₁ ?>>=
-                                                complete (p₂ _) y∈p₂x
-complete (p₁ !>>= p₂)      (x∈p₁ >>= y∈p₂x)   = complete p₁ x∈p₁ !>>=
-                                                complete (♭ (p₂ _)) y∈p₂x
+complete token            token                    = token
+complete (p₁ ∣ p₂)        (cast (∣-left     x∈p₁)) = ∣ˡ    (complete p₁ x∈p₁)
+complete (_∣_ {e₁} p₁ p₂) (cast (∣-right ._ x∈p₂)) = ∣ʳ e₁ (complete p₂ x∈p₂)
+complete (p₁ ?>>= p₂)     (cast (x∈p₁ >>= y∈p₂x))  = complete p₁ x∈p₁ ?>>= complete    (p₂ _)  y∈p₂x
+complete (p₁ !>>= p₂)           (x∈p₁ >>= y∈p₂x)   = complete p₁ x∈p₁ !>>= complete (♭ (p₂ _)) y∈p₂x
 
 ------------------------------------------------------------------------
 -- A lemma

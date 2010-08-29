@@ -28,71 +28,61 @@ open RawMonadPlus List.monadPlus
 ------------------------------------------------------------------------
 -- Helper functions
 
--- maybeToList m f is equivalent to List.fromMaybe m >>=′ f, but
--- behaves better: maybeToList (just x) f evaluates to f x rather than
--- f x ++ []. The definitions of p and p′ below would have contained
--- unsolved meta-variables if maybeToList had been defined using
--- _>>=′_ as above.
-
-maybeToList : {A B : Set} → Maybe A → (A → List B) → List B
-maybeToList m f = maybe f [] m
-
 -- Flattening for potential lists.
 
 flatten : {A : Set} → Maybe (List A) → List A
-flatten mxs = maybeToList mxs id
+flatten nothing   = []
+flatten (just xs) = xs
 
 -- fs ⊛flatten mxs is a variant of fs ⊛′ flatten mxs, with the
 -- property that fs ⊛flatten nothing evaluates to [].
 
 _⊛flatten_ : {A B : Set} → List (A → B) → Maybe (List A) → List B
-fs ⊛flatten mxs = maybeToList mxs (λ xs → fs ⊛′ xs)
+fs ⊛flatten nothing = []
+fs ⊛flatten just xs = fs ⊛′ xs
 
 -- Applies the function to the value, returning the empty list if
 -- there is no function.
 
-app : {A B : Set} → Maybe (A → List B) → A → List B
-app mf x = maybeToList mf (λ f → f x)
+apply : {A B : Set} → Maybe (A → List B) → A → List B
+apply nothing  x = []
+apply (just f) x = f x
 
--- xs >>=app mf is a variant of xs >>=′ app mf, with the property that
--- xs >>=app nothing evaluates to [].
+-- bind mxs mf is a variant of flatten mxs >>=′ apply mf, with the
+-- property that bind mxs nothing evaluates to [].
 
-_>>=app_ : {A B : Set} → List A → Maybe (A → List B) → List B
-xs >>=app mf = maybeToList mf (λ f → xs >>=′ f)
+bind :  {A B : Set} → Maybe (List A) → Maybe (A → List B) → List B
+bind mxs nothing  = []
+bind mxs (just f) = flatten mxs >>=′ f
 
 -- Verification of some claims made above.
 
 module Claims where
 
-  claim₁ : {A B : Set} (m : Maybe A) (f : A → List B) →
-           maybeToList m f ≡ (List.fromMaybe m >>=′ f)
-  claim₁ nothing  f = refl
-  claim₁ (just x) f =
-    sym $ proj₂ (Monoid.identity $ List.monoid _) (f x)
+  ⊛flatten-⊛-flatten : ∀ {A B : Set} (fs : List (A → B)) mxs →
+                       fs ⊛flatten mxs ≡ fs ⊛′ flatten mxs
+  ⊛flatten-⊛-flatten fs nothing   = sym $ ListProp.Monad.right-zero fs
+  ⊛flatten-⊛-flatten fs (just xs) = refl
 
-  claim₂ : {A B : Set} (fs : List (A → B)) (mxs : Maybe (List A)) →
-           fs ⊛flatten mxs ≡ fs ⊛′ flatten mxs
-  claim₂ fs nothing   = sym $ ListProp.Monad.right-zero fs
-  claim₂ fs (just xs) = refl
+  ⊛flatten-nothing : {A B : Set} (fs : List (A → B)) →
+                     fs ⊛flatten nothing ≡ []
+  ⊛flatten-nothing fs = refl
 
-  claim₃ : {A B : Set} (fs : List (A → B)) →
-           fs ⊛flatten nothing ≡ []
-  claim₃ fs = refl
+  bind-flatten->>=-apply : ∀ {A B : Set} mxs (mf : Maybe (A → List B)) →
+                           bind mxs mf ≡ (flatten mxs >>=′ apply mf)
+  bind-flatten->>=-apply mxs (just f) = refl
+  bind-flatten->>=-apply mxs nothing  =
+    sym $ ListProp.Monad.right-zero (flatten mxs)
 
-  claim₄ : {A B : Set} (xs : List A) (mf : Maybe (A → List B)) →
-           xs >>=app mf ≡ (xs >>=′ app mf)
-  claim₄ xs nothing  = sym $ ListProp.Monad.right-zero xs
-  claim₄ xs (just f) = refl
-
-  claim₅ : {A B : Set} (xs : List A) →
-           xs >>=app nothing ≡ (List B ∶ [])
-  claim₅ xs = refl
+  bind-nothing : {A B : Set} (mxs : Maybe (List A)) →
+                 bind mxs nothing ≡ (List B ∶ [])
+  bind-nothing mxs = refl
 
 ------------------------------------------------------------------------
 -- Parsers
 
 infixl 50 _⊛_ _<$>_ _⊛flatten_
-infixl 10 _>>=_ _>>=app_
+infixl 10 _>>=_
 infixl  5 _∣_
 
 -- The list index is the "initial bag"; it contains the results which
@@ -121,14 +111,14 @@ mutual
                (p₂ : ∞⟨ fs ⟩Parser Tok  R₁                   (flatten xs)) →
                             Parser Tok       R₂  (flatten fs ⊛flatten xs)
     _>>=_    : ∀ {R₁ R₂ xs} {f : Maybe (R₁ → List R₂)}
-               (p₁ :            ∞⟨ f  ⟩Parser Tok R₁ (flatten xs)           )
-               (p₂ : (x : R₁) → ∞⟨ xs ⟩Parser Tok R₂               (app f x)) →
-                                       Parser Tok R₂ (flatten xs >>=app f)
+               (p₁ :            ∞⟨ f  ⟩Parser Tok R₁ (flatten xs))
+               (p₂ : (x : R₁) → ∞⟨ xs ⟩Parser Tok R₂ (apply f x)) →
+                                       Parser Tok R₂ (bind xs f)
     nonempty : ∀ {R xs} (p : Parser Tok R xs) → Parser Tok R []
     cast     : ∀ {R xs₁ xs₂} (xs₁≈xs₂ : xs₁ ≈[ bag ] xs₂)
                (p : Parser Tok R xs₁) → Parser Tok R xs₂
 
-  ∞⟨_⟩Parser : {R₂ : Set} → Maybe R₂ → Set → (R₁ : Set) → List R₁ → Set₁
+  ∞⟨_⟩Parser : {A : Set} → Maybe A → Set → (R : Set) → List R → Set₁
   ∞⟨ nothing ⟩Parser Tok R₁ xs = ∞ (Parser Tok R₁ xs)
   ∞⟨ just _  ⟩Parser Tok R₁ xs =    Parser Tok R₁ xs
 
@@ -137,9 +127,12 @@ mutual
 -- it does not have to be.
 
 -- Note also that it would be safe to make the first argument of _>>=_
--- coinductive if app f x ≡_[] for all x in xs. I suspect that this
+-- coinductive if apply f x ≡_[] for all x in xs. I suspect that this
 -- criterion would be awkward to work with, though. Instead I only
 -- allow the argument to be coinductive if f ≡ nothing.
+
+-- Finally note that some of the combinators above are not included in
+-- the paper "Total Parser Combinators".
 
 ------------------------------------------------------------------------
 -- Examples
@@ -173,16 +166,16 @@ private
 ♭? {m = nothing} = ♭
 ♭? {m = just _}  = id
 
--- Is the argument parser delayed? If the result is nothing, then it
--- is.
+-- Is the argument parser forced? If the result is just something,
+-- then it is.
 
-delayed? : ∀ {Tok R R′ xs} {m : Maybe R′} →
-           ∞⟨ m ⟩Parser Tok R xs → Maybe R′
-delayed? {m = m} _ = m
+forced? : ∀ {Tok A R xs} {m : Maybe A} →
+          ∞⟨ m ⟩Parser Tok R xs → Maybe A
+forced? {m = m} _ = m
 
-delayed?′ : ∀ {Tok R₁ R₂ R′ : Set} {m : Maybe R′} {f : R₁ → List R₂} →
-            ((x : R₁) → ∞⟨ m ⟩Parser Tok R₂ (f x)) → Maybe R′
-delayed?′ {m = m} _ = m
+forced?′ : {Tok R₁ R₂ A : Set} {m : Maybe A} {f : R₁ → List R₂} →
+           ((x : R₁) → ∞⟨ m ⟩Parser Tok R₂ (f x)) → Maybe A
+forced?′ {m = m} _ = m
 
 -- Short synonyms for just and nothing. ◌ stands for "delayed" (think
 -- "not here") and ○ for "not delayed".

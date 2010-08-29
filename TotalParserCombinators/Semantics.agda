@@ -40,10 +40,10 @@ data _∈_·_ {Tok} :
        ∀ {R xs} → R → Parser Tok R xs → List Tok → Set₁ where
   return   : ∀ {R} {x : R} → x ∈ return x · []
   token    : ∀ {x} → x ∈ token · [ x ]
-  ∣ˡ       : ∀ {R x xs₁ xs₂ s}
+  ∣-left   : ∀ {R x xs₁ xs₂ s}
                {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂}
              (x∈p₁ : x ∈ p₁ · s) → x ∈ p₁ ∣ p₂ · s
-  ∣ʳ       : ∀ {R x xs₂ s} xs₁
+  ∣-right  : ∀ {R x xs₂ s} xs₁
                {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂}
              (x∈p₂ : x ∈ p₂ · s) → x ∈ p₁ ∣ p₂ · s
   <$>_     : ∀ {R₁ R₂ x s xs} {p : Parser Tok R₁ xs} {f : R₁ → R₂}
@@ -56,7 +56,7 @@ data _∈_·_ {Tok} :
              f x ∈ p₁ ⊛ p₂ · s₁ ++ s₂
   _>>=_    : ∀ {R₁ R₂ x y s₁ s₂ xs} {f : Maybe (R₁ → List R₂)}
                {p₁ : ∞⟨ f ⟩Parser Tok R₁ (flatten xs)}
-               {p₂ : (x : R₁) → ∞⟨ xs ⟩Parser Tok R₂ (app f x)}
+               {p₂ : (x : R₁) → ∞⟨ xs ⟩Parser Tok R₂ (apply f x)}
              (x∈p₁ : x ∈ ♭? p₁ · s₁)
              (y∈p₂x : y ∈ ♭? (p₂ x) · s₂) →
              y ∈ p₁ >>= p₂ · s₁ ++ s₂
@@ -79,7 +79,7 @@ data _∈_·_ {Tok} :
 
 [_-_]_>>=_ : ∀ {Tok R₁ R₂ x y s₁ s₂} (f : Maybe (R₁ → List R₂)) xs
                {p₁ : ∞⟨ f ⟩Parser Tok R₁ (flatten xs)}
-               {p₂ : (x : R₁) → ∞⟨ xs ⟩Parser Tok R₂ (app f x)} →
+               {p₂ : (x : R₁) → ∞⟨ xs ⟩Parser Tok R₂ (apply f x)} →
              x ∈ ♭? p₁ · s₁ → y ∈ ♭? (p₂ x) · s₂ →
              y ∈ p₁ >>= p₂ · s₁ ++ s₂
 [ f - xs ] x∈p₁ >>= y∈p₂x = _>>=_ {xs = xs} {f = f} x∈p₁ y∈p₂x
@@ -143,7 +143,7 @@ p₁ ≲ p₂ = ∀ {x s} → x ∈ p₁ · s → x ∈ p₂ · s
             {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
           p₁ ≈ p₂ → p₁ ≅ p₂)
 ¬≈⇒≅ hyp with Inverse.injective p₁≅p₂
-                {∣ˡ return} {∣ʳ [ tt ] return} (lemma _ _)
+                {∣-left return} {∣-right [ tt ] return} (lemma _ _)
   where
   p₁ : Parser ⊤ ⊤ _
   p₁ = return tt ∣ return tt
@@ -152,11 +152,11 @@ p₁ ≲ p₂ = ∀ {x s} → x ∈ p₁ · s → x ∈ p₂ · s
   p₂ = return tt
 
   p₁≲p₂ : p₁ ≲ p₂
-  p₁≲p₂ (∣ˡ    return) = return
-  p₁≲p₂ (∣ʳ ._ return) = return
+  p₁≲p₂ (∣-left     return) = return
+  p₁≲p₂ (∣-right ._ return) = return
 
   p₁≅p₂ : p₁ ≅ p₂
-  p₁≅p₂ = hyp $ Eq.equivalent p₁≲p₂ ∣ˡ
+  p₁≅p₂ = hyp $ Eq.equivalent p₁≲p₂ ∣-left
 
   lemma : ∀ {x s} (x∈₁ x∈₂ : x ∈ p₂ · s) → x∈₁ ≡ x∈₂
   lemma return return = P.refl

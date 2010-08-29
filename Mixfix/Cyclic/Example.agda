@@ -133,7 +133,7 @@ toNameParts = List.map (String.fromList ∘ L[_]) ∘ String.toList
 
 parseExpr : String → List String
 parseExpr = List.map (fromNameParts ∘ show) ∘
-            BreadthFirst.parseComplete (Grammar.expression cyclic g) ∘
+            BreadthFirst.parse (Grammar.expression cyclic g) ∘
             toNameParts
 
 runTest : String → List String → IO ⊤

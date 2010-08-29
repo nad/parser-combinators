@@ -160,16 +160,16 @@ module Semantics where
 
   sound : ∀ {R x s} {p : ParserProg R} →
           x ∈⟦ p ⟧· s → x ∈ ⟦ p ⟧ · s
-  sound (∣ˡ x∈p₁)      = ∣ˡ    (sound x∈p₁)
-  sound (∣ʳ x∈p₂)      = ∣ʳ [] (sound x∈p₂)
+  sound (∣ˡ x∈p₁)      = ∣-left     (sound x∈p₁)
+  sound (∣ʳ x∈p₂)      = ∣-right [] (sound x∈p₂)
   sound (f∈p₁ ⊛  x∈p₂) = [ ○ - ○ ] sound f∈p₁ ⊛′ sound x∈p₂
   sound (f∈p₁ ⊛∞ x∈p₂) = [ ◌ - ◌ ] sound f∈p₁ ⊛′ sound x∈p₂
   sound (<$> x∈p)      = <$> sound x∈p
   sound (+-[] x∈p)     = cast∈ refl refl (proj₂ LM.identity _)
-                           ([ ○ - ◌ ] <$> sound x∈p ⊛′ ∣ʳ [] return)
-  sound (+-∷ x∈p xs∈p) = [ ○ - ◌ ] <$> sound x∈p ⊛′ ∣ˡ (<$> sound xs∈p)
-  sound (∥ˡ x∈p₁)      = ∣ˡ {x = (, _)} (<$> sound x∈p₁)
-  sound (∥ʳ x∈p₂)      = ∣ʳ [] (sound x∈p₂)
+                           ([ ○ - ◌ ] <$> sound x∈p ⊛′ ∣-right [] return)
+  sound (+-∷ x∈p xs∈p) = [ ○ - ◌ ] <$> sound x∈p ⊛′ ∣-left (<$> sound xs∈p)
+  sound (∥ˡ x∈p₁)      = ∣-left {x = (, _)} (<$> sound x∈p₁)
+  sound (∥ʳ x∈p₂)      = ∣-right [] (sound x∈p₂)
   sound between-[]     = <$> Tok.complete
   sound (between-∷ {ts = _ ∷ _} x∈p xs∈⋯) =
     [ ○ - ◌ ] [ ○ - ◌ ] <$> Tok.complete ⊛′ sound x∈p ⊛′ sound xs∈⋯
@@ -178,29 +178,29 @@ module Semantics where
              x ∈ ⟦ p ⟧ · s → x ∈⟦ p ⟧· s
   complete fail      ()
 
-  complete (p₁ ∣ p₂) (∣ˡ     x∈p₁) = ∣ˡ (complete p₁ x∈p₁)
-  complete (p₁ ∣ p₂) (∣ʳ .[] x∈p₂) = ∣ʳ (complete p₂ x∈p₂)
+  complete (p₁ ∣ p₂) (∣-left      x∈p₁) = ∣ˡ (complete p₁ x∈p₁)
+  complete (p₁ ∣ p₂) (∣-right .[] x∈p₂) = ∣ʳ (complete p₂ x∈p₂)
 
   complete (p₁ ⊛  p₂) (f∈p₁ ⊛ y∈p₂) = complete    p₁  f∈p₁ ⊛  complete    p₂  y∈p₂
   complete (p₁ ⊛∞ p₂) (f∈p₁ ⊛ y∈p₂) = complete (♭ p₁) f∈p₁ ⊛∞ complete (♭ p₂) y∈p₂
 
   complete (f <$> p) (<$> x∈p) = <$> complete p x∈p
 
-  complete (p +) (<$> x∈p ⊛ ∣ˡ (<$> xs∈p+)) =
+  complete (p +) (<$> x∈p ⊛ ∣-left (<$> xs∈p+)) =
     +-∷ (complete p x∈p) (complete (p +) xs∈p+)
-  complete (p +) (_⊛_ {s₁ = s} (<$> x∈p) (∣ʳ .[] return))
+  complete (p +) (_⊛_ {s₁ = s} (<$> x∈p) (∣-right .[] return))
     with s ++ [] | proj₂ LM.identity s
   ... | .s | refl = +-[] (complete p x∈p)
 
-  complete (p between (t ∷ [])) (<$> t∈) with Tok.sound t∈
+  complete (p between (t ∷ [])) (<$> t∈) with Tok.sound _ t∈
   ... | (refl , refl) = between-[]
   complete (p between (t ∷ t′ ∷ ts)) (<$> t∈ ⊛ x∈p ⊛ xs∈)
-    with Tok.sound t∈
+    with Tok.sound _ t∈
   ... | (refl , refl) =
     between-∷ (complete (♭ p) x∈p) (complete (p between (t′ ∷ ts)) xs∈)
 
-  complete (p₁ ∥ p₂) (∣ˡ (<$> x∈p₁)) = ∥ˡ (complete p₁ x∈p₁)
-  complete (p₁ ∥ p₂) (∣ʳ .[] x∈p₂)   = ∥ʳ (complete p₂ x∈p₂)
+  complete (p₁ ∥ p₂) (∣-left (<$> x∈p₁)) = ∥ˡ (complete p₁ x∈p₁)
+  complete (p₁ ∥ p₂) (∣-right .[] x∈p₂)  = ∥ʳ (complete p₂ x∈p₂)
 
 ------------------------------------------------------------------------
 -- A variant of the semantics
@@ -266,7 +266,7 @@ module Semantics-⊕ where
               t′ ⊕ s₁ ∈ tok t · s →
               t ≡ t′ × s ≡ t′ ∷ s₁
   tok-sound     ∈ with ContSem.sound′ ∈
-  tok-sound     ∈ | (s         , refl , ∈′) with Tok.sound ∈′
+  tok-sound     ∈ | (s         , refl , ∈′) with Tok.sound _ ∈′
   tok-sound {t} ∈ | (.(t ∷ []) , refl , ∈′) | (refl , refl) = (refl , refl)
 
   tok-complete : ∀ {t s} → t ⊕ s ∈ tok t · t ∷ s
@@ -274,15 +274,15 @@ module Semantics-⊕ where
 
   sound : ∀ {R x s s′} {p : ParserProg R} →
           x ⊕ s′ ∈⟦ p ⟧· s → x ⊕ s′ ∈ ⟦ p ⟧ · s
-  sound (∣ˡ x∈p₁)      = ∣ˡ    (sound x∈p₁)
-  sound (∣ʳ x∈p₂)      = ∣ʳ [] (sound x∈p₂)
+  sound (∣ˡ x∈p₁)      = ∣-left     (sound x∈p₁)
+  sound (∣ʳ x∈p₂)      = ∣-right [] (sound x∈p₂)
   sound (f∈p₁ ⊛  x∈p₂) = [ ○ - ○ ] sound f∈p₁ ⊛ sound x∈p₂
   sound (f∈p₁ ⊛∞ x∈p₂) = [ ◌ - ◌ ] sound f∈p₁ ⊛ sound x∈p₂
   sound (<$> x∈p)      = <$> sound x∈p
-  sound (+-[] x∈p)     = [ ○ - ◌ ] <$> sound x∈p ⊛ ∣ʳ [] return
-  sound (+-∷ x∈p xs∈p) = [ ○ - ◌ ] <$> sound x∈p ⊛ ∣ˡ (<$> sound xs∈p)
-  sound (∥ˡ x∈p₁)      = ∣ˡ {x = (, _)} (<$> sound x∈p₁)
-  sound (∥ʳ x∈p₂)      = ∣ʳ [] (sound x∈p₂)
+  sound (+-[] x∈p)     = [ ○ - ◌ ] <$> sound x∈p ⊛ ∣-right [] return
+  sound (+-∷ x∈p xs∈p) = [ ○ - ◌ ] <$> sound x∈p ⊛ ∣-left (<$> sound xs∈p)
+  sound (∥ˡ x∈p₁)      = ∣-left {x = (, _)} (<$> sound x∈p₁)
+  sound (∥ʳ x∈p₂)      = ∣-right [] (sound x∈p₂)
   sound between-[]     = <$> tok-complete
   sound (between-∷ {ts = _ ∷ _} x∈p xs∈⋯) =
     [ ○ - ◌ ] [ ○ - ◌ ] <$> tok-complete ⊛ sound x∈p ⊛ sound xs∈⋯
@@ -291,16 +291,16 @@ module Semantics-⊕ where
              x ⊕ s′ ∈ ⟦ p ⟧ · s → x ⊕ s′ ∈⟦ p ⟧· s
   complete fail      ()
 
-  complete (p₁ ∣ p₂) (∣ˡ     x∈p₁) = ∣ˡ (complete p₁ x∈p₁)
-  complete (p₁ ∣ p₂) (∣ʳ .[] x∈p₂) = ∣ʳ (complete p₂ x∈p₂)
+  complete (p₁ ∣ p₂) (∣-left      x∈p₁) = ∣ˡ (complete p₁ x∈p₁)
+  complete (p₁ ∣ p₂) (∣-right .[] x∈p₂) = ∣ʳ (complete p₂ x∈p₂)
 
   complete (p₁ ⊛  p₂) ([ .○ - .○ ] f∈p₁ ⊛ y∈p₂) = complete    p₁  f∈p₁ ⊛  complete    p₂  y∈p₂
   complete (p₁ ⊛∞ p₂) ([ .◌ - .◌ ] f∈p₁ ⊛ y∈p₂) = complete (♭ p₁) f∈p₁ ⊛∞ complete (♭ p₂) y∈p₂
 
   complete (f <$> p) (<$> x∈p) = <$> complete p x∈p
 
-  complete (p +) ([ .○ - .◌ ] <$> x∈p ⊛ ∣ˡ (<$> xs∈p+)) = +-∷  (complete p x∈p) (complete (p +) xs∈p+)
-  complete (p +) ([ .○ - .◌ ] <$> x∈p ⊛ ∣ʳ .[] return)  = +-[] (complete p x∈p)
+  complete (p +) ([ .○ - .◌ ] <$> x∈p ⊛ ∣-left (<$> xs∈p+)) = +-∷  (complete p x∈p) (complete (p +) xs∈p+)
+  complete (p +) ([ .○ - .◌ ] <$> x∈p ⊛ ∣-right .[] return) = +-[] (complete p x∈p)
 
   complete (p between (t ∷ [])) (<$> t∈) with tok-sound t∈
   ... | (refl , refl) = between-[]
@@ -309,5 +309,5 @@ module Semantics-⊕ where
   ... | (refl , refl) =
     between-∷ (complete (♭ p) x∈p) (complete (p between (t′ ∷ ts)) xs∈)
 
-  complete (p₁ ∥ p₂) (∣ˡ (<$> x∈p₁)) = ∥ˡ (complete p₁ x∈p₁)
-  complete (p₁ ∥ p₂) (∣ʳ .[] x∈p₂)   = ∥ʳ (complete p₂ x∈p₂)
+  complete (p₁ ∥ p₂) (∣-left (<$> x∈p₁)) = ∥ˡ (complete p₁ x∈p₁)
+  complete (p₁ ∥ p₂) (∣-right .[] x∈p₂)  = ∥ʳ (complete p₂ x∈p₂)
