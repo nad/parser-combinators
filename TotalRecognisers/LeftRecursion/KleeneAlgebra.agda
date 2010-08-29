@@ -69,11 +69,11 @@ module Equivalence where
           p₁ ≈ p₂ → ♭? (♯? {b₁} p₁) ≈ ♭? (♯? {b₂} p₂)
 ♭♯-cong b₁ b₂ {p₁} {p₂} rewrite ♭?♯? b₁ {p = p₁} | ♭?♯? b₂ {p = p₂} = id
 
-∅-cong : ∅ ≈ ∅
-∅-cong = Equivalence.reflexive
+fail-cong : fail ≈ fail
+fail-cong = Equivalence.reflexive
 
-ε-cong : ε ≈ ε
-ε-cong = Equivalence.reflexive
+empty-cong : empty ≈ empty
+empty-cong = Equivalence.reflexive
 
 sat-cong : {f₁ f₂ : Tok → Bool} → f₁ ≗ f₂ → sat f₁ ≈ sat f₂
 sat-cong f₁≗f₂ = equivalent (helper f₁≗f₂) (helper (P.sym ∘ f₁≗f₂))
@@ -127,9 +127,9 @@ cast-cong {eq₁ = refl} {refl} (init ∷ rest) = init ∷ rest
   where
   helper : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
            p₁ ≤ p₂ → p₁ ⋆ ≤ p₂ ⋆
-  helper p₁≤p₂ (∣ˡ ε)                     = ∣ˡ ε
-  helper p₁≤p₂ (∣ʳ (nonempty ∈p₁ · ∈p₁⋆)) =
-    ∣ʳ {p₁ = ε} (nonempty (p₁≤p₂ ∈p₁) · helper p₁≤p₂ ∈p₁⋆)
+  helper p₁≤p₂ (∣-left  empty)                 = ∣-left empty
+  helper p₁≤p₂ (∣-right (nonempty ∈p₁ · ∈p₁⋆)) =
+    ∣-right {p₁ = empty} (nonempty (p₁≤p₂ ∈p₁) · helper p₁≤p₂ ∈p₁⋆)
 
 ^-cong : ∀ {n₁ n₂ i₁ i₂} {p₁ : P n₁} {p₂ : P n₂} →
          p₁ ≈ p₂ → i₁ ≡ i₂ → p₁ ^ i₁ ≈ p₂ ^ i₂
@@ -140,9 +140,9 @@ cast-cong {eq₁ = refl} {refl} (init ∷ rest) = init ∷ rest
   where
   helper : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} i →
            p₁ ≤ p₂ → p₁ ^ i ≤ p₂ ^ i
-  helper           zero    p₁≤p₂ ε       = ε
+  helper           zero    p₁≤p₂ empty   = empty
   helper {n₁} {n₂} (suc i) p₁≤p₂ ∈p₁⊙p₁ⁱ
-    with ⊙.sound (n₁ ^ⁿ i) ∈p₁⊙p₁ⁱ
+    with ⊙.sound ⟨ n₁ ^ i ⟩-nullable ∈p₁⊙p₁ⁱ
   ... | ∈p₁ ⊙′ ∈p₁ⁱ = ⊙.complete (p₁≤p₂ ∈p₁) (helper i p₁≤p₂ ∈p₁ⁱ)
 
 ------------------------------------------------------------------------
@@ -161,12 +161,13 @@ p₁ ≲ p₂ = p₁ ∣ p₂ ≈ p₂
 ≤⇔≲ : ∀ {n₁ n₂} (p₁ : P n₁) (p₂ : P n₂) → p₁ ≤ p₂ ⇔ p₁ ≲ p₂
 ≤⇔≲ {n₁} p₁ p₂ =
   equivalent
-    (λ (p₁≤p₂ : p₁ ≤ p₂) {_} → equivalent (helper p₁≤p₂) (∣ʳ {n₁ = n₁}))
-    (λ (p₁≲p₂ : p₁ ≲ p₂) s∈p₁ → Equivalent.to p₁≲p₂ ⟨$⟩ ∣ˡ s∈p₁)
+    (λ (p₁≤p₂ : p₁ ≤ p₂) {_} →
+       equivalent (helper p₁≤p₂) (∣-right {n₁ = n₁}))
+    (λ (p₁≲p₂ : p₁ ≲ p₂) s∈p₁ → Equivalent.to p₁≲p₂ ⟨$⟩ ∣-left s∈p₁)
   where
   helper : p₁ ≤ p₂ → p₁ ∣ p₂ ≤ p₂
-  helper p₁≤p₂ (∣ˡ s∈p₁) = p₁≤p₂ s∈p₁
-  helper p₁≤p₂ (∣ʳ s∈p₂) = s∈p₂
+  helper p₁≤p₂ (∣-left  s∈p₁) = p₁≤p₂ s∈p₁
+  helper p₁≤p₂ (∣-right s∈p₂) = s∈p₂
 
 ------------------------------------------------------------------------
 -- Recognisers form a *-continuous Kleene algebra
@@ -182,44 +183,45 @@ p₁ ≲ p₂ = p₁ ∣ p₂ ≈ p₂
 
 ∣-commutative : ∀ {n₁ n₂} (p₁ : P n₁) (p₂ : P n₂) → p₁ ∣ p₂ ≈′ p₂ ∣ p₁
 ∣-commutative {n₁} {n₂} p₁ p₂ =
-  BoolCS.+-comm n₁ n₂ ∷ λ t → ♯ ∣-commutative (∂ p₁ t) (∂ p₂ t)
+  BoolCS.+-comm n₁ n₂ ∷ λ t → ♯ ∣-commutative (D t p₁) (D t p₂)
 
-∅-left-identity : ∀ {n} (p : P n) → ∅ ∣ p ≈′ p
-∅-left-identity p = refl ∷ λ t → ♯ ∅-left-identity (∂ p t)
+fail-left-identity : ∀ {n} (p : P n) → fail ∣ p ≈′ p
+fail-left-identity p = refl ∷ λ t → ♯ fail-left-identity (D t p)
 
-∅-right-identity : ∀ {n} (p : P n) → p ∣ ∅ ≈′ p
-∅-right-identity {n} p =
-  proj₂ BoolCS.+-identity n ∷ λ t → ♯ ∅-right-identity (∂ p t)
+fail-right-identity : ∀ {n} (p : P n) → p ∣ fail ≈′ p
+fail-right-identity {n} p =
+  proj₂ BoolCS.+-identity n ∷ λ t → ♯ fail-right-identity (D t p)
 
 ∣-associative : ∀ {n₁ n₂ n₃} (p₁ : P n₁) (p₂ : P n₂) (p₃ : P n₃) →
                 p₁ ∣ (p₂ ∣ p₃) ≈′ (p₁ ∣ p₂) ∣ p₃
 ∣-associative {n₁} {n₂} {n₃} p₁ p₂ p₃ =
   P.sym (BoolCS.+-assoc n₁ n₂ n₃) ∷ λ t →
-    ♯ ∣-associative (∂ p₁ t) (∂ p₂ t) (∂ p₃ t)
+    ♯ ∣-associative (D t p₁) (D t p₂) (D t p₃)
 
 ∣-idempotent : ∀ {n} (p : P n) → p ∣ p ≈′ p
 ∣-idempotent {n} p =
-  BoolBA.∨-idempotent n ∷ λ t → ♯ ∣-idempotent (∂ p t)
+  BoolBA.∨-idempotent n ∷ λ t → ♯ ∣-idempotent (D t p)
 
 -- Multiplicative monoid.
 
-ε-left-identity : ∀ {n} (p : P n) → ε ⊙ p ≈ p
-ε-left-identity {n} p = equivalent helper (λ s∈p → ⊙.complete ε s∈p)
+empty-left-identity : ∀ {n} (p : P n) → empty ⊙ p ≈ p
+empty-left-identity {n} p =
+  equivalent helper (λ s∈p → ⊙.complete empty s∈p)
   where
-  helper : ε ⊙ p ≤ p
-  helper ∈ε⊙p with ⊙.sound n ∈ε⊙p
-  ... | ε ⊙′ s∈p = s∈p
+  helper : empty ⊙ p ≤ p
+  helper ∈empty⊙p with ⊙.sound n ∈empty⊙p
+  ... | empty ⊙′ s∈p = s∈p
 
-ε-right-identity : ∀ {n} (p : P n) → p ⊙ ε ≈ p
-ε-right-identity {n} p =
+empty-right-identity : ∀ {n} (p : P n) → p ⊙ empty ≈ p
+empty-right-identity {n} p =
   equivalent
     helper
     (λ s∈p → cast∈ (proj₂ ListMonoid.identity _) refl
-                   (⊙.complete s∈p ε))
+                   (⊙.complete s∈p empty))
   where
-  helper : ∀ {s} → s ∈ p ⊙ ε → s ∈ p
-  helper ∈p⊙ε with ⊙.sound true ∈p⊙ε
-  helper ∈p⊙ε | ∈p ⊙′ ε =
+  helper : ∀ {s} → s ∈ p ⊙ empty → s ∈ p
+  helper ∈p⊙empty with ⊙.sound true ∈p⊙empty
+  helper ∈p⊙empty | ∈p ⊙′ empty =
     cast∈ (P.sym (proj₂ ListMonoid.identity _)) refl ∈p
 
 ·-associative : ∀ {n₁ n₂ n₃} (p₁ : P n₁) (p₂ : P n₂) (p₃ : P n₃) →
@@ -249,14 +251,14 @@ left-distributive {n₁} {n₂} {n₃} p₁ p₂ p₃ = equivalent helper₁ hel
   where
   helper₁ : p₁ ⊙ (p₂ ∣ p₃) ≤ p₁ ⊙ p₂ ∣ p₁ ⊙ p₃
   helper₁ ∈⊙∣ with ⊙.sound (n₂ ∨ n₃) ∈⊙∣
-  ... | ∈p₁ ⊙′ ∣ˡ ∈p₂ = ∣ˡ $ ⊙.complete ∈p₁ ∈p₂
-  ... | ∈p₁ ⊙′ ∣ʳ ∈p₃ = ∣ʳ {n₁ = n₁ ∧ n₂} $ ⊙.complete ∈p₁ ∈p₃
+  ... | ∈p₁ ⊙′ ∣-left  ∈p₂ = ∣-left $ ⊙.complete ∈p₁ ∈p₂
+  ... | ∈p₁ ⊙′ ∣-right ∈p₃ = ∣-right {n₁ = n₁ ∧ n₂} $ ⊙.complete ∈p₁ ∈p₃
 
   helper₂ : p₁ ⊙ p₂ ∣ p₁ ⊙ p₃ ≤ p₁ ⊙ (p₂ ∣ p₃)
-  helper₂ (∣ˡ ∈⊙) with ⊙.sound n₂ ∈⊙
-  ... | ∈p₁ ⊙′ ∈p₂ = ⊙.complete ∈p₁ (∣ˡ ∈p₂)
-  helper₂ (∣ʳ ∈⊙) with ⊙.sound n₃ ∈⊙
-  ... | ∈p₁ ⊙′ ∈p₃ = ⊙.complete ∈p₁ (∣ʳ {n₁ = n₂} ∈p₃)
+  helper₂ (∣-left ∈⊙) with ⊙.sound n₂ ∈⊙
+  ... | ∈p₁ ⊙′ ∈p₂ = ⊙.complete ∈p₁ (∣-left ∈p₂)
+  helper₂ (∣-right ∈⊙) with ⊙.sound n₃ ∈⊙
+  ... | ∈p₁ ⊙′ ∈p₃ = ⊙.complete ∈p₁ (∣-right {n₁ = n₂} ∈p₃)
 
 right-distributive :
   ∀ {n₁ n₂ n₃} (p₁ : P n₁) (p₂ : P n₂) (p₃ : P n₃) →
@@ -265,29 +267,29 @@ right-distributive {n₁} {n₂} {n₃} p₁ p₂ p₃ = equivalent helper₁ he
   where
   helper₁ : (p₁ ∣ p₂) ⊙ p₃ ≤ p₁ ⊙ p₃ ∣ p₂ ⊙ p₃
   helper₁ ∈∣⊙ with ⊙.sound n₃ ∈∣⊙
-  ... | ∣ˡ ∈p₁ ⊙′ ∈p₃ = ∣ˡ $ ⊙.complete ∈p₁ ∈p₃
-  ... | ∣ʳ ∈p₂ ⊙′ ∈p₃ = ∣ʳ {n₁ = n₁ ∧ n₃} $ ⊙.complete ∈p₂ ∈p₃
+  ... | ∣-left  ∈p₁ ⊙′ ∈p₃ = ∣-left $ ⊙.complete ∈p₁ ∈p₃
+  ... | ∣-right ∈p₂ ⊙′ ∈p₃ = ∣-right {n₁ = n₁ ∧ n₃} $ ⊙.complete ∈p₂ ∈p₃
 
   helper₂ : p₁ ⊙ p₃ ∣ p₂ ⊙ p₃ ≤ (p₁ ∣ p₂) ⊙ p₃
-  helper₂ (∣ˡ ∈⊙) with ⊙.sound n₃ ∈⊙
-  ... | ∈p₁ ⊙′ ∈p₃ = ⊙.complete (∣ˡ ∈p₁) ∈p₃
-  helper₂ (∣ʳ ∈⊙) with ⊙.sound n₃ ∈⊙
-  ... | ∈p₂ ⊙′ ∈p₃ = ⊙.complete (∣ʳ {n₁ = n₁} ∈p₂) ∈p₃
+  helper₂ (∣-left ∈⊙) with ⊙.sound n₃ ∈⊙
+  ... | ∈p₁ ⊙′ ∈p₃ = ⊙.complete (∣-left ∈p₁) ∈p₃
+  helper₂ (∣-right ∈⊙) with ⊙.sound n₃ ∈⊙
+  ... | ∈p₂ ⊙′ ∈p₃ = ⊙.complete (∣-right {n₁ = n₁} ∈p₂) ∈p₃
 
 -- Zero.
 
-left-zero : ∀ {n} (p : P n) → ∅ ⊙ p ≈ ∅
+left-zero : ∀ {n} (p : P n) → fail ⊙ p ≈ fail
 left-zero {n} p = equivalent helper (λ ())
   where
-  helper : ∅ ⊙ p ≤ ∅
-  helper ∈∅⊙ with ⊙.sound n ∈∅⊙
+  helper : fail ⊙ p ≤ fail
+  helper ∈fail⊙ with ⊙.sound n ∈fail⊙
   ... | () ⊙′ _
 
-right-zero : ∀ {n} (p : P n) → p ⊙ ∅ ≈ ∅
+right-zero : ∀ {n} (p : P n) → p ⊙ fail ≈ fail
 right-zero {n} p = equivalent helper (λ ())
   where
-  helper : p ⊙ ∅ ≤ ∅
-  helper ∈⊙∅ with ⊙.sound false ∈⊙∅
+  helper : p ⊙ fail ≤ fail
+  helper ∈⊙fail with ⊙.sound false ∈⊙fail
   ... | _ ⊙′ ()
 
 -- *-continuity.
@@ -297,7 +299,7 @@ right-zero {n} p = equivalent helper (λ ())
   ∀ i → p₁ ⊙ p₂ ^ i ⊙ p₃ ≤ p₁ ⊙ p₂ ⋆ ⊙ p₃
 *-continuity-upper-bound {n₁} {n₂} {n₃} _ _ _ i ∈⊙ⁱ⊙
   with ⊙.sound n₃ ∈⊙ⁱ⊙
-... | ∈⊙ⁱ ⊙′ ∈p₃ with ⊙.sound (n₂ ^ⁿ i) ∈⊙ⁱ
+... | ∈⊙ⁱ ⊙′ ∈p₃ with ⊙.sound ⟨ n₂ ^ i ⟩-nullable ∈⊙ⁱ
 ...   | ∈p₁ ⊙′ ∈p₂ⁱ = ⊙.complete (⊙.complete ∈p₁ (^≤⋆ i ∈p₂ⁱ)) ∈p₃
 
 *-continuity-least-upper-bound :

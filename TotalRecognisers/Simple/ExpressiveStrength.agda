@@ -40,8 +40,8 @@ pred⇒grammar f =
   (grammar f , λ s → equivalent (sound f) (complete f s))
   where
   accept-if-true : ∀ b → P b
-  accept-if-true true  = ε
-  accept-if-true false = ∅
+  accept-if-true true  = empty
+  accept-if-true false = fail
 
   grammar : (f : List Bool → Bool) → P (f [])
   grammar f = tok true  · ♯ grammar (f ∘ _∷_ true )
@@ -50,25 +50,25 @@ pred⇒grammar f =
 
   accept-if-true-sound :
     ∀ b {s} → s ∈ accept-if-true b → s ≡ [] × T b
-  accept-if-true-sound true  ε  = (refl , _)
+  accept-if-true-sound true  empty = (refl , _)
   accept-if-true-sound false ()
 
   accept-if-true-complete : ∀ {b} → T b → [] ∈ accept-if-true b
   accept-if-true-complete ok with Equivalent.to T-≡ ⟨$⟩ ok
-  ... | refl = ε
+  ... | refl = empty
 
   sound : ∀ f {s} → s ∈ grammar f → T (f s)
-  sound f (∣ʳ s∈) with accept-if-true-sound (f []) s∈
+  sound f (∣-right s∈) with accept-if-true-sound (f []) s∈
   ... | (refl , ok) = ok
-  sound f (∣ˡ (∣ˡ (tok · s∈))) = sound (f ∘ _∷_ true ) s∈
-  sound f (∣ˡ (∣ʳ (tok · s∈))) = sound (f ∘ _∷_ false) s∈
+  sound f (∣-left (∣-left  (tok · s∈))) = sound (f ∘ _∷_ true ) s∈
+  sound f (∣-left (∣-right (tok · s∈))) = sound (f ∘ _∷_ false) s∈
 
   complete : ∀ f s → T (f s) → s ∈ grammar f
   complete f [] ok =
-    ∣ʳ {n₁ = false} $ accept-if-true-complete ok
+    ∣-right {n₁ = false} $ accept-if-true-complete ok
   complete f (true ∷ bs) ok =
-    ∣ˡ {n₁ = false} $ ∣ˡ {n₁ = false} $
+    ∣-left {n₁ = false} $ ∣-left {n₁ = false} $
       tok · complete (f ∘ _∷_ true ) bs ok
   complete f (false ∷ bs) ok =
-    ∣ˡ {n₁ = false} $ ∣ʳ {n₁ = false} $
+    ∣-left {n₁ = false} $ ∣-right {n₁ = false} $
       tok · complete (f ∘ _∷_ false) bs ok

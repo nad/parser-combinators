@@ -84,25 +84,25 @@ pred⇒grammar f =
       )
 
   p-sound : ∀ f {s} → s ∈ p f → T (f s)
-  p-sound f (cast (∣ʳ s∈)) with AcceptIfTrue.sound (f []) s∈
+  p-sound f (cast (∣-right s∈)) with AcceptIfTrue.sound (f []) s∈
   ... | (refl , ok) = ok
-  p-sound f (cast (∣ˡ (∣ˡ (t∈ · s∈)))) with drop-♭♯ (f [ true  ]) t∈
+  p-sound f (cast (∣-left (∣-left (t∈ · s∈)))) with drop-♭♯ (f [ true  ]) t∈
   ... | sat {t = true}  _  = p-sound (f ∘ _∷_ true ) s∈
   ... | sat {t = false} ()
-  p-sound f (cast (∣ˡ (∣ʳ (t∈ · s∈)))) with drop-♭♯ (f [ false ]) t∈
+  p-sound f (cast (∣-left (∣-right (t∈ · s∈)))) with drop-♭♯ (f [ false ]) t∈
   ... | sat {t = false} _  = p-sound (f ∘ _∷_ false) s∈
   ... | sat {t = true}  ()
 
   p-complete : ∀ f s → T (f s) → s ∈ p f
   p-complete f [] ok =
-    cast (∣ʳ {n₁ = false ∧ f [ true ] ∨ false ∧ f [ false ]} $
+    cast (∣-right {n₁ = false ∧ f [ true ] ∨ false ∧ f [ false ]} $
       AcceptIfTrue.complete ok)
   p-complete f (true  ∷ bs) ok =
-    cast (∣ˡ $ ∣ˡ $
+    cast (∣-left $ ∣-left $
       add-♭♯ (f [ true  ]) (sat _) ·
       p-complete (f ∘ _∷_ true ) bs ok)
   p-complete f (false ∷ bs) ok =
-    cast (∣ˡ $ ∣ʳ {n₁ = false ∧ f [ true ]} $
+    cast (∣-left $ ∣-right {n₁ = false ∧ f [ true ]} $
       add-♭♯ (f [ false ]) (sat _) ·
       p-complete (f ∘ _∷_ false) bs ok)
 
@@ -123,24 +123,24 @@ pred⇒grammar′ f =
       ∣ accept-if-true (f [])
 
   p-sound : ∀ f {s} → s ∈ p f → T (f s)
-  p-sound f (∣ʳ s∈) with AcceptIfTrue.sound (f []) s∈
+  p-sound f (∣-right s∈) with AcceptIfTrue.sound (f []) s∈
   ... | (refl , ok) = ok
-  p-sound f (∣ˡ (∣ˡ (s∈ · t∈))) with drop-♭♯ (f [ true  ]) t∈
+  p-sound f (∣-left (∣-left (s∈ · t∈))) with drop-♭♯ (f [ true  ]) t∈
   ... | sat {t = true}  _  = p-sound (extend f true ) s∈
   ... | sat {t = false} ()
-  p-sound f (∣ˡ (∣ʳ (s∈ · t∈))) with drop-♭♯ (f [ false ]) t∈
+  p-sound f (∣-left (∣-right (s∈ · t∈))) with drop-♭♯ (f [ false ]) t∈
   ... | sat {t = false} _  = p-sound (extend f false) s∈
   ... | sat {t = true}  ()
 
   p-complete′ : ∀ f {s} → Reverse s → T (f s) → s ∈ p f
   p-complete′ f [] ok =
-    ∣ʳ {n₁ = false} $ AcceptIfTrue.complete ok
+    ∣-right {n₁ = false} $ AcceptIfTrue.complete ok
   p-complete′ f (bs ∶ rs ∶ʳ true ) ok =
-    ∣ˡ {n₁ = false} $ ∣ˡ {n₁ = false} $
+    ∣-left {n₁ = false} $ ∣-left {n₁ = false} $
       p-complete′ (extend f true ) rs ok ·
       add-♭♯ (f [ true  ]) (sat _)
   p-complete′ f (bs ∶ rs ∶ʳ false) ok =
-    ∣ˡ {n₁ = false} $ ∣ʳ {n₁ = false} $
+    ∣-left {n₁ = false} $ ∣-right {n₁ = false} $
       p-complete′ (extend f false) rs ok ·
       add-♭♯ (f [ false ]) (sat _)
 
@@ -180,10 +180,10 @@ module NotExpressible where
   -- If a recogniser does not accept any non-empty string, then it
   -- either accepts the empty string or no string at all.
 
-  nullable-or-∅ : ∀ {Tok n} {p : P Tok n} →
-                  ¬ AcceptsNonEmptyString p →
-                  [] ∈ p ⊎ (∀ s → ¬ s ∈ p)
-  nullable-or-∅ {p = p} ¬a with [] ∈? p
+  nullable-or-fail : ∀ {Tok n} {p : P Tok n} →
+                     ¬ AcceptsNonEmptyString p →
+                     [] ∈ p ⊎ (∀ s → ¬ s ∈ p)
+  nullable-or-fail {p = p} ¬a with [] ∈? p
   ... | yes []∈p = inj₁ []∈p
   ... | no  []∉p = inj₂ helper
     where
@@ -228,13 +228,13 @@ module NotExpressible where
   -- OnlyPairs and ManyPairs are mutually exclusive.
 
   ¬pairs : ∀ {n} (p : P ℕ n) → OnlyPairs p → ManyPairs p → ⊥
-  ¬pairs ∅ op mp = witness mp (helper ∘ proj₂)
+  ¬pairs fail op mp = witness mp (helper ∘ proj₂)
     where
-    helper : ∀ {t} → ¬ pair t ∈ ∅
+    helper : ∀ {t} → ¬ pair t ∈ fail
     helper ()
-  ¬pairs ε op mp = witness mp (helper ∘ proj₂)
+  ¬pairs empty op mp = witness mp (helper ∘ proj₂)
     where
-    helper : ∀ {t} → ¬ pair t ∈ ε
+    helper : ∀ {t} → ¬ pair t ∈ empty
     helper ()
   ¬pairs (sat f) op mp = witness mp (helper ∘ proj₂)
     where
@@ -259,12 +259,12 @@ module NotExpressible where
   ¬pairs (p₁ ∣ p₂) op mp = commutes-with-∪ (Inf.map split mp) helper
     where
     helper : ¬ (ManyPairs p₁ ⊎ ManyPairs p₂)
-    helper (inj₁ mp₁) = ¬pairs p₁ (op ∘ ∣ˡ)           mp₁
-    helper (inj₂ mp₂) = ¬pairs p₂ (op ∘ ∣ʳ {p₁ = p₁}) mp₂
+    helper (inj₁ mp₁) = ¬pairs p₁ (op ∘ ∣-left)            mp₁
+    helper (inj₂ mp₂) = ¬pairs p₂ (op ∘ ∣-right {p₁ = p₁}) mp₂
 
     split : ∀ {s} → s ∈ p₁ ∣ p₂ → s ∈ p₁ ⊎ s ∈ p₂
-    split (∣ˡ s∈p₁) = inj₁ s∈p₁
-    split (∣ʳ s∈p₂) = inj₂ s∈p₂
+    split (∣-left  s∈p₁) = inj₁ s∈p₁
+    split (∣-right s∈p₂) = inj₂ s∈p₂
 
   -- For the sequencing combinator we make use of the fact that the
   -- argument recognisers cannot both accept non-empty strings.
@@ -284,19 +284,19 @@ module NotExpressible where
              Dec (AcceptsNonEmptyString (♭? p₂)) → ⊥
     helper (yes a₁) (yes a₂) = at-most-one op mp a₁ a₂
 
-    helper (no ¬a₁) _ with nullable-or-∅ ¬a₁
+    helper (no ¬a₁) _ with nullable-or-fail ¬a₁
     ... | inj₁ []∈p₁ =
       continue p₂ (⇒ []∈p₁) (op ∘ _·_ []∈p₁) (Inf.map right mp)
       where
       right : ∀ {s} → s ∈ p₁ · p₂ → s ∈ ♭? p₂
       right (_·_ {s₁ = []}    _ ∈p₂) = ∈p₂
       right (_·_ {s₁ = _ ∷ _} ∈p₁ _) = ⊥-elim (¬a₁ (, , ∈p₁))
-    ... | inj₂ is-∅ = witness mp (∉ ∘ proj₂)
+    ... | inj₂ is-fail = witness mp (∉ ∘ proj₂)
       where
       ∉ : ∀ {s} → ¬ s ∈ p₁ · p₂
-      ∉ (∈p₁ · _) = is-∅ _ ∈p₁
+      ∉ (∈p₁ · _) = is-fail _ ∈p₁
 
-    helper _ (no ¬a₂) with nullable-or-∅ ¬a₂
+    helper _ (no ¬a₂) with nullable-or-fail ¬a₂
     ... | inj₁ []∈p₂ =
       continue p₁ (⇒ []∈p₂)
                (op ∘ (λ ∈p₁ → cast∈ (proj₂ ListMonoid.identity _) refl
@@ -307,10 +307,10 @@ module NotExpressible where
       left (_·_ {s₂ = _ ∷ _}        _ ∈p₂) = ⊥-elim (¬a₂ (, , ∈p₂))
       left (_·_ {s₁ = s₁} {s₂ = []} ∈p₁ _) =
         cast∈ (sym $ proj₂ ListMonoid.identity s₁) refl ∈p₁
-    ... | inj₂ is-∅ = witness mp (∉ ∘ proj₂)
+    ... | inj₂ is-fail = witness mp (∉ ∘ proj₂)
       where
       ∉ : ∀ {s} → ¬ s ∈ p₁ · p₂
-      ∉ (_ · ∈p₂) = is-∅ _ ∈p₂
+      ∉ (_ · ∈p₂) = is-fail _ ∈p₂
 
   -- Note that it is easy to decide whether a string is a pair or not.
 

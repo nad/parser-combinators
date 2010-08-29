@@ -34,25 +34,30 @@ data _∈[_]⋆ {n} : List Tok → P n → Set where
 
 module KleeneStar₁ where
 
-  infix 15 _⋆
+  infix 15 _⋆ _+
 
   -- This definition requires that the argument recognisers are not
   -- nullable.
 
-  _⋆ : P false → P true
-  p ⋆ = ε ∣ p · ♯ (p ⋆)
+  mutual
+
+    _⋆ : P false → P true
+    p ⋆ = empty ∣ p +
+
+    _+ : P false → P false
+    p + = p · ♯ (p ⋆)
 
   -- The definition of _⋆ above is correct.
 
   ⋆-sound : ∀ {s p} → s ∈ p ⋆ → s ∈[ p ]⋆
-  ⋆-sound (∣ˡ ε)           = []
-  ⋆-sound (∣ʳ (pr₁ · pr₂)) = pr₁ ∷ ⋆-sound pr₂
+  ⋆-sound (∣-left  empty)       = []
+  ⋆-sound (∣-right (pr₁ · pr₂)) = pr₁ ∷ ⋆-sound pr₂
 
   ⋆-complete : ∀ {s p} → s ∈[ p ]⋆ → s ∈ p ⋆
-  ⋆-complete []                    = ∣ˡ ε
+  ⋆-complete []                    = ∣-left empty
   ⋆-complete (_∷_ {[]}    pr₁ pr₂) = ⋆-complete pr₂
   ⋆-complete (_∷_ {_ ∷ _} pr₁ pr₂) =
-    ∣ʳ {n₁ = true} (pr₁ · ⋆-complete pr₂)
+    ∣-right {n₁ = true} (pr₁ · ⋆-complete pr₂)
 
 module KleeneStar₂ where
 
@@ -66,14 +71,14 @@ module KleeneStar₂ where
   -- The definition of _⋆ above is correct.
 
   ⋆-sound : ∀ {s n} {p : P n} → s ∈ p ⋆ → s ∈[ p ]⋆
-  ⋆-sound (∣ˡ ε)                    = []
-  ⋆-sound (∣ʳ (nonempty pr₁ · pr₂)) = pr₁ ∷ ⋆-sound pr₂
+  ⋆-sound (∣-left  empty)                = []
+  ⋆-sound (∣-right (nonempty pr₁ · pr₂)) = pr₁ ∷ ⋆-sound pr₂
 
   ⋆-complete : ∀ {s n} {p : P n} → s ∈[ p ]⋆ → s ∈ p ⋆
-  ⋆-complete []                    = ∣ˡ ε
+  ⋆-complete []                    = ∣-left empty
   ⋆-complete (_∷_ {[]}    pr₁ pr₂) = ⋆-complete pr₂
   ⋆-complete (_∷_ {_ ∷ _} pr₁ pr₂) =
-    ∣ʳ {n₁ = true} (nonempty pr₁ · ⋆-complete pr₂)
+    ∣-right {n₁ = true} (nonempty pr₁ · ⋆-complete pr₂)
 
   -- Note, however, that for actual parsing the corresponding
   -- definition would not be correct. The reason is that p would give
@@ -88,7 +93,7 @@ module KleeneStar₂ where
 infixl 10 _⊙_
 
 _⊙_ : ∀ {n₁ n₂} → P n₁ → P n₂ → P (n₁ ∧ n₂)
-p₁ ⊙ p₂ = ♯? p₁ · ♯? {b = index p₁} p₂
+_⊙_ {n₁ = n₁} p₁ p₂ = ♯? p₁ · ♯? {b = n₁} p₂
 
 module ⊙ where
 
@@ -110,14 +115,14 @@ module ⊙ where
 ------------------------------------------------------------------------
 -- A combinator which repeats a recogniser a fixed number of times
 
-infixl 15 _^_ _^ⁿ_
+infixl 15 _^_
 
-_^ⁿ_ : Bool → ℕ → Bool
-_ ^ⁿ zero   = _
-_ ^ⁿ suc _  = _
+⟨_^_⟩-nullable : Bool → ℕ → Bool
+⟨ _ ^ zero  ⟩-nullable = _
+⟨ _ ^ suc _ ⟩-nullable = _
 
-_^_ : ∀ {n} → P n → (i : ℕ) → P (n ^ⁿ i)
-p ^ 0     = ε
+_^_ : ∀ {n} → P n → (i : ℕ) → P ⟨ n ^ i ⟩-nullable
+p ^ 0     = empty
 p ^ suc i = p ⊙ p ^ i
 
 -- Some lemmas relating _^_ to _⋆.
@@ -128,18 +133,18 @@ open KleeneStar₂
 ^≤⋆ {n} {p} i s∈ = ⋆-complete $ helper i s∈
   where
   helper : ∀ i {s} → s ∈ p ^ i → s ∈[ p ]⋆
-  helper zero    ε              = []
+  helper zero    empty          = []
   helper (suc i) (s₁∈p · s₂∈pⁱ) =
-    drop-♭♯ (n ^ⁿ i) s₁∈p ∷ helper i (drop-♭♯ n s₂∈pⁱ)
+    drop-♭♯ ⟨ n ^ i ⟩-nullable s₁∈p ∷ helper i (drop-♭♯ n s₂∈pⁱ)
 
 ⋆≤^ : ∀ {n} {p : P n} {s} → s ∈ p ⋆ → ∃ λ i → s ∈ p ^ i
 ⋆≤^ {n} {p} s∈p⋆ = helper (⋆-sound s∈p⋆)
   where
   helper : ∀ {s} → s ∈[ p ]⋆ → ∃ λ i → s ∈ p ^ i
-  helper []             = (0 , ε)
+  helper []             = (0 , empty)
   helper (s₁∈p ∷ s₂∈p⋆) =
-    Prod.map suc (λ {i} s₂∈pⁱ → add-♭♯ (n ^ⁿ i) s₁∈p ·
-                                add-♭♯ n        s₂∈pⁱ)
+    Prod.map suc (λ {i} s₂∈pⁱ → add-♭♯ ⟨ n ^ i ⟩-nullable s₁∈p ·
+                                add-♭♯ n                  s₂∈pⁱ)
              (helper s₂∈p⋆)
 
 ------------------------------------------------------------------------
@@ -161,15 +166,15 @@ module Tok (dec : Decidable (_≡_ {A = Tok})) where
 -- true (and never accepts non-empty strings)
 
 accept-if-true : ∀ b → P b
-accept-if-true true  = ε
-accept-if-true false = ∅
+accept-if-true true  = empty
+accept-if-true false = fail
 
 module AcceptIfTrue where
 
   sound : ∀ b {s} → s ∈ accept-if-true b → s ≡ [] × T b
-  sound true  ε  = (refl , _)
+  sound true  empty = (refl , _)
   sound false ()
 
   complete : ∀ {b} → T b → [] ∈ accept-if-true b
   complete ok with Equivalent.to T-≡ ⟨$⟩ ok
-  ... | refl = ε
+  ... | refl = empty

@@ -36,11 +36,11 @@ mutual
   -- empty string (is nullable).
 
   data P : Bool → Set where
-    ∅   : P false
-    ε   : P true
-    tok : Tok → P false
-    _∣_ : ∀ {n₁ n₂} → P n₁ →            P n₂ → P (n₁ ∨ n₂)
-    _·_ : ∀ {n₁ n₂} → P n₁ → ∞⟨ not n₁ ⟩P n₂ → P (n₁ ∧ n₂)
+    fail  : P false
+    empty : P true
+    tok   : Tok → P false
+    _∣_   : ∀ {n₁ n₂} → P n₁ →            P n₂ → P (n₁ ∨ n₂)
+    _·_   : ∀ {n₁ n₂} → P n₁ → ∞⟨ not n₁ ⟩P n₂ → P (n₁ ∧ n₂)
 
   -- Coinductive if the index is true.
 
@@ -77,14 +77,14 @@ delayed? {b = b} _ = b
 infix 4 _∈_
 
 data _∈_ : ∀ {n} → List Tok → P n → Set where
-  ε   : [] ∈ ε
-  tok : ∀ {t} → [ t ] ∈ tok t
-  ∣ˡ  : ∀ {s n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
-        s ∈ p₁ → s ∈ p₁ ∣ p₂
-  ∣ʳ  : ∀ {s n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
-        s ∈ p₂ → s ∈ p₁ ∣ p₂
-  _·_ : ∀ {s₁ s₂ n₁ n₂} {p₁ : P n₁} {p₂ : ∞⟨ not n₁ ⟩P n₂} →
-        s₁ ∈ p₁ → s₂ ∈ ♭? p₂ → s₁ ++ s₂ ∈ p₁ · p₂
+  empty   : [] ∈ empty
+  tok     : ∀ {t} → [ t ] ∈ tok t
+  ∣-left  : ∀ {s n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
+            s ∈ p₁ → s ∈ p₁ ∣ p₂
+  ∣-right : ∀ {s n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
+            s ∈ p₂ → s ∈ p₁ ∣ p₂
+  _·_     : ∀ {s₁ s₂ n₁ n₂} {p₁ : P n₁} {p₂ : ∞⟨ not n₁ ⟩P n₂} →
+            s₁ ∈ p₁ → s₂ ∈ ♭? p₂ → s₁ ++ s₂ ∈ p₁ · p₂
 
 -- A lemma.
 
@@ -100,21 +100,21 @@ cast refl s∈ = s∈
 ⇒ pr = ⇒′ pr refl
   where
   ⇒′ : ∀ {n s} {p : P n} → s ∈ p → s ≡ [] → n ≡ true
-  ⇒′ ε                     refl = refl
-  ⇒′ tok                   ()
-  ⇒′ (∣ˡ pr₁)              refl with ⇒ pr₁
-  ⇒′ (∣ˡ pr₁)              refl | refl = refl
-  ⇒′ (∣ʳ pr₂)              refl with ⇒ pr₂
-  ⇒′ (∣ʳ {n₁ = n₁} pr₂)    refl | refl = proj₂ BoolCS.zero n₁
-  ⇒′ (_·_ {[]}    pr₁ pr₂) refl = cong₂ _∧_ (⇒ pr₁) (⇒ pr₂)
-  ⇒′ (_·_ {_ ∷ _} pr₁ pr₂) ()
+  ⇒′ empty                   refl = refl
+  ⇒′ tok                     ()
+  ⇒′ (∣-left            pr₁) refl with ⇒ pr₁
+  ⇒′ (∣-left            pr₁) refl | refl = refl
+  ⇒′ (∣-right           pr₂) refl with ⇒ pr₂
+  ⇒′ (∣-right {n₁ = n₁} pr₂) refl | refl = proj₂ BoolCS.zero n₁
+  ⇒′ (_·_ {[]}    pr₁ pr₂)   refl = cong₂ _∧_ (⇒ pr₁) (⇒ pr₂)
+  ⇒′ (_·_ {_ ∷ _} pr₁ pr₂)   ()
 
 ⇐ : ∀ {n} (p : P n) → n ≡ true → [] ∈ p
-⇐ ∅                            ()
-⇐ ε                            refl = ε
+⇐ fail                         ()
+⇐ empty                        refl = empty
 ⇐ (tok t)                      ()
-⇐ (_∣_ {true}           p₁ p₂) refl = ∣ˡ (⇐ p₁ refl)
-⇐ (_∣_ {false} {true}   p₁ p₂) refl = ∣ʳ {p₁ = p₁} (⇐ p₂ refl)
+⇐ (_∣_ {true}           p₁ p₂) refl = ∣-left            (⇐ p₁ refl)
+⇐ (_∣_ {false} {true}   p₁ p₂) refl = ∣-right {p₁ = p₁} (⇐ p₂ refl)
 ⇐ (_∣_ {false} {false}  p₁ p₂) ()
 ⇐ (_·_ {true}  p₁ p₂)          refl = ⇐ p₁ refl · ⇐ p₂ refl
 ⇐ (_·_ {false} p₁ p₂)          ()
@@ -136,66 +136,66 @@ nullable? {false} p = no helper
 -- and delayed? p₂) are inferable, but included here so that they can
 -- easily be inspected.
 
-∂n : ∀ {n} → P n → Tok → Bool
-∂n ∅         t = false
-∂n ε         t = false
-∂n (tok t′)  t with t′ ≟ t
-∂n (tok t′)  t | yes t′≡t = true
-∂n (tok t′)  t | no  t′≢t = false
-∂n (p₁ ∣ p₂) t = ∂n p₁ t ∨ ∂n p₂ t
-∂n (p₁ · p₂) t with delayed? p₂
-∂n (p₁ · p₂) t | true  = ∂n p₁ t ∧ _
-∂n (p₁ · p₂) t | false = ∂n p₁ t ∧ _ ∨ ∂n p₂ t
+D-nullable : ∀ {n} → Tok → P n → Bool
+D-nullable t fail      = false
+D-nullable t empty     = false
+D-nullable t (tok t′)  with t′ ≟ t
+D-nullable t (tok t′)  | yes t′≡t = true
+D-nullable t (tok t′)  | no  t′≢t = false
+D-nullable t (p₁ ∣ p₂) = D-nullable t p₁ ∨ D-nullable t p₂
+D-nullable t (p₁ · p₂) with delayed? p₂
+D-nullable t (p₁ · p₂) | true  = D-nullable t p₁ ∧ _
+D-nullable t (p₁ · p₂) | false = D-nullable t p₁ ∧ _ ∨ D-nullable t p₂
 
--- ∂ p t is the "derivative" of p with respect to t. It is specified
--- by the equivalence s ∈ ∂ p t ⇔ t ∷ s ∈ p (proved below).
+-- D t p is the "derivative" of p with respect to t. It is specified
+-- by the equivalence s ∈ D t p ⇔ t ∷ s ∈ p (proved below).
 
-∂ : ∀ {n} (p : P n) (t : Tok) → P (∂n p t)
-∂ ∅         t = ∅
-∂ ε         t = ∅
-∂ (tok t′)  t with t′ ≟ t
-∂ (tok t′)  t | yes t′≡t = ε
-∂ (tok t′)  t | no  t′≢t = ∅
-∂ (p₁ ∣ p₂) t = ∂ p₁ t ∣ ∂ p₂ t
-∂ (p₁ · p₂) t with delayed? p₂
-∂ (p₁ · p₂) t | true  = ∂ p₁ t · ♯? (♭ p₂)
-∂ (p₁ · p₂) t | false = ∂ p₁ t · ♯?    p₂ ∣ ∂ p₂ t
+D : ∀ {n} (t : Tok) (p : P n) → P (D-nullable t p)
+D t fail      = fail
+D t empty     = fail
+D t (tok t′)  with t′ ≟ t
+D t (tok t′)  | yes t′≡t = empty
+D t (tok t′)  | no  t′≢t = fail
+D t (p₁ ∣ p₂) = D t p₁ ∣ D t p₂
+D t (p₁ · p₂) with delayed? p₂
+D t (p₁ · p₂) | true  = D t p₁ · ♯? (♭ p₂)
+D t (p₁ · p₂) | false = D t p₁ · ♯?    p₂ ∣ D t p₂
 
--- ∂ is correct.
+-- D is correct.
 
-∂-sound : ∀ {s n} {p : P n} {t} → s ∈ ∂ p t → t ∷ s ∈ p
-∂-sound s∈ = ∂-sound′ _ _ s∈
+D-sound : ∀ {s n} {t} {p : P n} → s ∈ D t p → t ∷ s ∈ p
+D-sound s∈ = D-sound′ _ _ s∈
   where
-  ∂-sound′ : ∀ {s n} (p : P n) t → s ∈ ∂ p t → t ∷ s ∈ p
-  ∂-sound′ ∅                   t ()
-  ∂-sound′ ε                   t ()
-  ∂-sound′ (tok t′)            t _              with t′ ≟ t
-  ∂-sound′ (tok .t)            t ε              | yes refl = tok
-  ∂-sound′ (tok t′)            t ()             | no  t′≢t
-  ∂-sound′ (p₁ ∣ p₂)           t (∣ˡ ∈₁)        = ∣ˡ (∂-sound′ p₁ t ∈₁)
-  ∂-sound′ (p₁ ∣ p₂)           t (∣ʳ ∈₂)        = ∣ʳ {p₁ = p₁} (∂-sound′ p₂ t ∈₂)
-  ∂-sound′ (_·_ {true} p₁ p₂)  t (∣ˡ (∈₁ · ∈₂)) = ∂-sound′ p₁ t ∈₁ · cast (♭?♯? (not (∂n p₁ t))) ∈₂
-  ∂-sound′ (_·_ {true} p₁ p₂)  t (∣ʳ ∈₂)        = ⇐ p₁ refl · ∂-sound′ p₂ t ∈₂
-  ∂-sound′ (_·_ {false} p₁ p₂) t (∈₁ · ∈₂)      = ∂-sound′ p₁ t ∈₁ · cast (♭?♯? (not (∂n p₁ t))) ∈₂
+  D-sound′ : ∀ {s n} t (p : P n) → s ∈ D t p → t ∷ s ∈ p
+  D-sound′ t fail                ()
+  D-sound′ t empty               ()
+  D-sound′ t (tok t′)            _                   with t′ ≟ t
+  D-sound′ t (tok .t)            empty               | yes refl = tok
+  D-sound′ t (tok t′)            ()                  | no  t′≢t
+  D-sound′ t (p₁ ∣ p₂)           (∣-left  ∈₁)        = ∣-left            (D-sound′ t p₁ ∈₁)
+  D-sound′ t (p₁ ∣ p₂)           (∣-right ∈₂)        = ∣-right {p₁ = p₁} (D-sound′ t p₂ ∈₂)
+  D-sound′ t (_·_ {true}  p₁ p₂) (∣-left  (∈₁ · ∈₂)) = D-sound′ t p₁ ∈₁ · cast (♭?♯? (not (D-nullable t p₁))) ∈₂
+  D-sound′ t (_·_ {true}  p₁ p₂) (∣-right ∈₂)        = ⇐ p₁ refl · D-sound′ t p₂ ∈₂
+  D-sound′ t (_·_ {false} p₁ p₂) (∈₁ · ∈₂)           = D-sound′ t p₁ ∈₁ · cast (♭?♯? (not (D-nullable t p₁))) ∈₂
 
-∂-complete : ∀ {s n} {p : P n} {t} → t ∷ s ∈ p → s ∈ ∂ p t
-∂-complete {t = t} t∷s∈ = ∂-complete′ _ t∷s∈ refl
+D-complete : ∀ {s n} {t} {p : P n} → t ∷ s ∈ p → s ∈ D t p
+D-complete {t = t} t∷s∈ = D-complete′ _ t∷s∈ refl
   where
-  ∂-complete′ : ∀ {s s′ n} (p : P n) → s′ ∈ p → s′ ≡ t ∷ s → s ∈ ∂ p t
-  ∂-complete′         ∅        ()  refl
-  ∂-complete′         ε        ()  refl
-  ∂-complete′         (tok t′) _   refl with t′ ≟ t
-  ∂-complete′         (tok .t) tok refl | yes refl = ε
-  ∂-complete′ {[]}    (tok .t) tok refl | no  t′≢t with t′≢t refl
-  ∂-complete′ {[]}    (tok .t) tok refl | no  t′≢t | ()
-  ∂-complete′ {_ ∷ _} (tok t′) ()  refl | no  t′≢t
-  ∂-complete′ (p₁ ∣ p₂)           (∣ˡ ∈₁)              refl = ∣ˡ (∂-complete ∈₁)
-  ∂-complete′ (p₁ ∣ p₂)           (∣ʳ ∈₂)              refl = ∣ʳ {p₁ = ∂ p₁ t} (∂-complete ∈₂)
-  ∂-complete′ (_·_ {true} p₁ p₂)  (_·_ {[]}     ∈₁ ∈₂) refl = ∣ʳ {p₁ = ∂ p₁ t · _} (∂-complete ∈₂)
-  ∂-complete′ (_·_ {true} p₁ p₂)  (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∣ˡ (∂-complete ∈₁ · cast (sym (♭?♯? (not (∂n p₁ t)))) ∈₂)
-  ∂-complete′ (_·_ {false} p₁ p₂) (_·_ {[]}     ∈₁ ∈₂) refl with ⇒ ∈₁
-  ∂-complete′ (_·_ {false} p₁ p₂) (_·_ {[]}     ∈₁ ∈₂) refl | ()
-  ∂-complete′ (_·_ {false} p₁ p₂) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∂-complete ∈₁ · cast (sym (♭?♯? (not (∂n p₁ t)))) ∈₂
+  D-complete′ : ∀ {s s′ n} (p : P n) → s′ ∈ p → s′ ≡ t ∷ s → s ∈ D t p
+  D-complete′         fail     ()  refl
+  D-complete′         empty    ()  refl
+  D-complete′         (tok t′) _   refl with t′ ≟ t
+  D-complete′         (tok .t) tok refl | yes refl = empty
+  D-complete′ {[]}    (tok .t) tok refl | no  t′≢t with t′≢t refl
+  D-complete′ {[]}    (tok .t) tok refl | no  t′≢t | ()
+  D-complete′ {_ ∷ _} (tok t′) ()  refl | no  t′≢t
+  D-complete′ (p₁ ∣ p₂)           (∣-left  ∈₁)         refl = ∣-left                    (D-complete ∈₁)
+  D-complete′ (p₁ ∣ p₂)           (∣-right ∈₂)         refl = ∣-right {p₁ = D t p₁}     (D-complete ∈₂)
+  D-complete′ (_·_ {true}  p₁ p₂) (_·_ {[]}     ∈₁ ∈₂) refl = ∣-right {p₁ = D t p₁ · _} (D-complete ∈₂)
+  D-complete′ (_·_ {true}  p₁ p₂) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∣-left (D-complete ∈₁ · cast (sym (♭?♯? (not (D-nullable t p₁)))) ∈₂)
+  D-complete′ (_·_ {false} p₁ p₂) (_·_ {[]}     ∈₁ ∈₂) refl with ⇒ ∈₁
+  D-complete′ (_·_ {false} p₁ p₂) (_·_ {[]}     ∈₁ ∈₂) refl | ()
+  D-complete′ (_·_ {false} p₁ p₂) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = D-complete ∈₁ · cast (sym (♭?♯? (not (D-nullable t p₁)))) ∈₂
 
 ------------------------------------------------------------------------
 -- _∈_ is decidable
@@ -207,6 +207,6 @@ infix 4 _∈?_
 
 _∈?_ : ∀ {n} (s : List Tok) (p : P n) → Dec (s ∈ p)
 []    ∈? p = nullable? p
-t ∷ s ∈? p with s ∈? ∂ p t
-t ∷ s ∈? p | yes s∈∂pt = yes (∂-sound s∈∂pt)
-t ∷ s ∈? p | no  s∉∂pt = no  (s∉∂pt ∘ ∂-complete)
+t ∷ s ∈? p with s ∈? D t p
+t ∷ s ∈? p | yes s∈Dtp = yes (D-sound s∈Dtp)
+t ∷ s ∈? p | no  s∉Dtp = no  (s∉Dtp ∘ D-complete)

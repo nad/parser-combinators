@@ -71,14 +71,14 @@ private
 -- Some lemmas relating _^^_, _^_ and tok
 
 tok-^-complete : ∀ t i → t ^^ i ∈ tok t ^ i
-tok-^-complete t zero    = ε
+tok-^-complete t zero    = empty
 tok-^-complete t (suc i) =
-  add-♭♯ (false ^ⁿ i) TokTok.complete · tok-^-complete t i
+  add-♭♯ ⟨ false ^ i ⟩-nullable TokTok.complete · tok-^-complete t i
 
 tok-^-sound : ∀ t i {s} → s ∈ tok t ^ i → s ≡ t ^^ i
-tok-^-sound t zero    ε         = refl
+tok-^-sound t zero    empty     = refl
 tok-^-sound t (suc i) (t∈ · s∈)
-  with TokTok.sound (drop-♭♯ (false ^ⁿ i) t∈)
+  with TokTok.sound (drop-♭♯ ⟨ false ^ i ⟩-nullable t∈)
 ... | refl = cong (_∷_ t) (tok-^-sound t i s∈)
 
 ------------------------------------------------------------------------
@@ -115,13 +115,13 @@ aⁿbⁿcⁿ-complete n = aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-complete n 0
   where
   aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-complete : ∀ n i → aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-string n i ∈ aⁿbⁱ⁺ⁿcⁱ⁺ⁿ i
   aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-complete zero i with i + 0 | proj₂ NatCS.+-identity i
-  ... | .i | refl = ∣ʳ {n₁ = false} (helper b · helper c)
+  ... | .i | refl = ∣-right {n₁ = false} (helper b · helper c)
     where
     helper = λ (t : Tok) →
-      add-♭♯ (false ^ⁿ i) (tok-^-complete t i)
+      add-♭♯ ⟨ false ^ i ⟩-nullable (tok-^-complete t i)
   aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-complete (suc n) i with i + suc n | shallow-comm i n
   ... | .(suc i + n) | refl =
-    ∣ˡ $ cast {eq = lem} (
+    ∣-left $ cast {eq = lem} (
       add-♭♯ (aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-index (suc i)) TokTok.complete ·
       aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-complete n (suc i))
     where lem = left-zero (aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-index (suc i))
@@ -131,7 +131,7 @@ aⁿbⁿcⁿ-sound = aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound 0
   where
   aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound : ∀ {s} i → s ∈ aⁿbⁱ⁺ⁿcⁱ⁺ⁿ i →
                      ∃ λ n → s ≡ aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-string n i
-  aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound i (∣ˡ (cast (t∈ · s∈)))
+  aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound i (∣-left (cast (t∈ · s∈)))
     with TokTok.sound (drop-♭♯ (aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-index (suc i)) t∈)
   ... | refl with aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound (suc i) s∈
   ... | (n , refl) = suc n , (begin
@@ -140,12 +140,12 @@ aⁿbⁿcⁿ-sound = aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound 0
               (sym (shallow-comm i n)) ⟩
     a ^^ suc n ++ b ^^ (i + suc n) ++ c ^^ (i + suc n)
       ∎)
-  aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound i (∣ʳ (_·_ {s₁} {s₂} s₁∈ s₂∈)) = 0 , (begin
+  aⁿbⁱ⁺ⁿcⁱ⁺ⁿ-sound i (∣-right (_·_ {s₁} {s₂} s₁∈ s₂∈)) = 0 , (begin
     s₁ ++ s₂
       ≡⟨ cong₂ _++_ (tok-^-sound b i
-                      (drop-♭♯ (false ^ⁿ i) s₁∈))
+                      (drop-♭♯ ⟨ false ^ i ⟩-nullable s₁∈))
                     (tok-^-sound c i
-                      (drop-♭♯ (false ^ⁿ i) s₂∈)) ⟩
+                      (drop-♭♯ ⟨ false ^ i ⟩-nullable s₂∈)) ⟩
     b ^^ i ++ c ^^ i
       ≡⟨ cong (λ i → b ^^ i ++ c ^^ i)
               (sym (proj₂ NatCS.+-identity i)) ⟩
