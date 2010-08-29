@@ -25,7 +25,7 @@ private
 
 open import TotalParserCombinators.BreadthFirst hiding (correct)
 open import TotalParserCombinators.Congruence
-  hiding (return; fail)
+  hiding (return; fail; token)
 open import TotalParserCombinators.Lib hiding (module Return⋆)
 open import TotalParserCombinators.Parser
 
@@ -113,6 +113,22 @@ module Nonempty where
 
   zero : ∀ {Tok R} → nonempty {Tok = Tok} {R = R} fail ≅P fail
   zero = BagMonoid.refl ∷ λ t → ♯ (fail ∎)
+
+  -- nonempty can be defined in terms of token, _>>=_ and D.
+
+  private
+
+    nonempty′ : ∀ {Tok R xs} (p : Parser Tok R xs) → Parser Tok R []
+    nonempty′ p = token >>= λ t → D t p
+
+  nonempty-definable : ∀ {Tok R xs} (p : Parser Tok R xs) →
+                       nonempty p ≅P nonempty′ p
+  nonempty-definable p = BagMonoid.refl ∷ λ t → ♯ (
+    D t p              ≅⟨ sym $ Monad.left-identity t (λ t′ → D t′ p) ⟩
+    ret-D t            ≅⟨ sym $ AdditiveMonoid.right-identity (ret-D t) ⟩
+    ret-D t ∣ fail     ≅⟨ (ret-D t ∎) ∣ sym (Monad.left-zero _) ⟩
+    D t (nonempty′ p)  ∎)
+    where ret-D = λ (t : _) → return t >>= (λ t′ → D t′ p)
 
 ------------------------------------------------------------------------
 -- A law for cast
