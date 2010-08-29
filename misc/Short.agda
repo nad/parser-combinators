@@ -29,18 +29,17 @@ infixl 5 _∣_
 ------------------------------------------------------------------------
 -- Helper functions
 
-maybeToList : {A B : Set} → Maybe A → (A → List B) → List B
-maybeToList nothing  f = []
-maybeToList (just x) f = f x
-
 flatten : {A : Set} → Maybe (List A) → List A
-flatten mxs = maybeToList mxs id
+flatten nothing   = []
+flatten (just xs) = xs
 
 app : {A B : Set} → Maybe (A → List B) → A → List B
-app mf x = maybeToList mf (λ f → f x)
+app nothing  x = []
+app (just f) x = f x
 
 _>>=app_ : {A B : Set} → List A → Maybe (A → List B) → List B
-xs >>=app mf = maybeToList mf (λ f → xs >>=′ f)
+xs >>=app nothing = []
+xs >>=app just f  = xs >>=′ f
 
 ------------------------------------------------------------------------
 -- Parsers
@@ -141,9 +140,9 @@ delayed?′ {m = m} _ = m
 ... | nothing | just xs = ♯ ∂ (♭ p₁) t >>= (λ x →    p₂ x)
                         ∣ return⋆ xs >>= λ x → ∂ (p₂ x) t
 
-parseComplete : ∀ {R xs} → Parser R xs → List Char → List R
-parseComplete {xs = xs} p []      = xs
-parseComplete           p (t ∷ s) = parseComplete (∂ p t) s
+parse : ∀ {R xs} → Parser R xs → List Char → List R
+parse {xs = xs} p []      = xs
+parse           p (t ∷ s) = parse (∂ p t) s
 
 ------------------------------------------------------------------------
 -- Example
@@ -187,5 +186,5 @@ toList = BoundedVec.toList ∘ Colist.take 100000
 main = run $
   ♯ getContents >>=IO λ s → ♯
   let s′ = takeWhile (not ∘ _==_ '\n') $ toList s
-      es = parseComplete term s′ in
+      es = parse term s′ in
   mapM′ (putStrLn ∘ show ∘ ⟦_⟧) (Colist.fromList es)
