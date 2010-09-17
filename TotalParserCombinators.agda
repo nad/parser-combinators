@@ -68,6 +68,12 @@ import TotalParserCombinators.Unambiguity
 
 import TotalParserCombinators.Examples.Expression
 
+-- Recognisers defined on top of the parsers, and a variant of the
+-- left recursive expression grammar mentioned above.
+
+import TotalParserCombinators.Recogniser
+import TotalParserCombinators.Recogniser.Expression
+
 -- Another example: parsing PBM image files.
 
 import TotalParserCombinators.Examples.PBM
