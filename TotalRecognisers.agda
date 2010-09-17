@@ -38,6 +38,10 @@ import TotalRecognisers.LeftRecursion.ExpressiveStrength
 
 import TotalRecognisers.LeftRecursion.Lib
 
+-- An example: a left recursive expression grammar.
+
+import TotalRecognisers.LeftRecursion.Expression
+
 -- The recognisers form a *-continuous Kleene algebra.
 
 import TotalRecognisers.LeftRecursion.KleeneAlgebra
