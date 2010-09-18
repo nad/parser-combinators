@@ -42,6 +42,11 @@ import TotalParserCombinators.PartialOrder
 import TotalParserCombinators.Congruence
 import TotalParserCombinators.Congruence.Sound
 
+-- However, it is possible to construct combinators which do not
+-- preserve equality.
+
+import TotalParserCombinators.NotACongruence
+
 -- Proofs of various laws, for instance the monad laws.
 
 import TotalParserCombinators.Laws
