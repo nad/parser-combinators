@@ -14,7 +14,7 @@ private
   module BagMonoid {A : Set} =
     CommutativeMonoid (Eq.commutativeMonoid _ A)
 
-open import TotalParserCombinators.BreadthFirst
+open import TotalParserCombinators.BreadthFirst.Derivative
 open import TotalParserCombinators.Congruence
 open import TotalParserCombinators.Parser
 

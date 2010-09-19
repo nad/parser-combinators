@@ -21,7 +21,7 @@ open import Relation.Binary.PropositionalEquality using (_≡_; _≗_)
 
 open Any.Membership-≡ using (bag) renaming (_≈[_]_ to _List-≈[_]_)
 
-open import TotalParserCombinators.BreadthFirst hiding (complete)
+open import TotalParserCombinators.BreadthFirst.Derivative
 open import TotalParserCombinators.CoinductiveEquality as CE
   using (_≈[_]c_; _∷_)
 open import TotalParserCombinators.Lib

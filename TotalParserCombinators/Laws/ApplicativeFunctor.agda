@@ -17,7 +17,7 @@ private
   module BagMonoid {A : Set} =
     CommutativeMonoid (BSEq.commutativeMonoid _ A)
 
-open import TotalParserCombinators.BreadthFirst
+open import TotalParserCombinators.BreadthFirst.Derivative
 open import TotalParserCombinators.Congruence
   hiding (return; fail) renaming (_∣_ to _∣′_)
 import TotalParserCombinators.Laws.AdditiveMonoid as AdditiveMonoid

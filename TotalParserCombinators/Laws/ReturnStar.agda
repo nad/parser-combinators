@@ -19,7 +19,7 @@ private
   open module ListMonad = RawMonad List.monad
     using () renaming (_⊛_ to _⊛′_; _>>=_ to _>>=′_)
 
-open import TotalParserCombinators.BreadthFirst
+open import TotalParserCombinators.BreadthFirst.Derivative
 open import TotalParserCombinators.Congruence
   hiding (fail)
 import TotalParserCombinators.Laws.AdditiveMonoid as AdditiveMonoid

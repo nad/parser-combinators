@@ -16,8 +16,9 @@ open Inv.EquationalReasoning
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
 import TotalParserCombinators.InitialBag as I
-open import TotalParserCombinators.BreadthFirst
-  using (D; D-correct; D-cong)
+open import TotalParserCombinators.BreadthFirst.Derivative using (D)
+open import TotalParserCombinators.BreadthFirst.Lemmas
+  using (D-correct; D-cong)
 
 infix 5 _∷_
 infix 4 _≈[_]c_

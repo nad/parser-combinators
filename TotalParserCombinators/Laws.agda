@@ -23,7 +23,7 @@ private
   open module ListMonad = RawMonad List.monad
     using () renaming (_⊛_ to _⊛′_)
 
-open import TotalParserCombinators.BreadthFirst hiding (correct)
+open import TotalParserCombinators.BreadthFirst.Derivative
 open import TotalParserCombinators.Congruence
   hiding (return; fail; token)
 open import TotalParserCombinators.Lib hiding (module Return⋆)
