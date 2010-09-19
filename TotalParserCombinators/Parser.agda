@@ -157,7 +157,12 @@ private
   p′ = ♯ p′ >>= λ _ → token
 
 ------------------------------------------------------------------------
--- Helper functions related to ∞⟨_⟩Parser
+-- Helper functions
+
+-- Returns the initial bag.
+
+initial-bag : ∀ {Tok R xs} → Parser Tok R xs → List R
+initial-bag {xs = xs} _ = xs
 
 -- Forces if necessary.
 
