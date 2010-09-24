@@ -73,11 +73,12 @@ mutual
   ∞⟨ true  ⟩P n =    P n
 
 -- Note that fail, nonempty and cast could be defined as derived
--- combinators. (For cast this is obvious, for fail and nonempty see
--- below, and note that the proof in
--- TotalRecognisers.LeftRecursion.ExpressiveStrength does not rely on
--- these constructors.) However, Agda uses /guarded/ corecursion, so
--- the fact that nonempty and cast are constructors can be very
+-- combinators. (For cast this is obvious, fail could be defined
+-- either using sat or the combinator leftRight below, and nonempty is
+-- defined in the module AlternativeNonempty. Note also that the proof
+-- in TotalRecognisers.LeftRecursion.ExpressiveStrength does not rely
+-- on these constructors.) However, Agda uses /guarded/ corecursion,
+-- so the fact that nonempty and cast are constructors can be very
 -- convenient when constructing other recognisers.
 
 -- For an example of the use of nonempty, see the Kleene star example
