@@ -12,12 +12,14 @@ module Mixfix.Cyclic.Uniqueness
 open import Coinduction using (♭)
 open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.List using (List; []; _∷_)
+open import Data.List.Any using (here)
 open import Data.Vec using (Vec; []; _∷_)
-open import Data.Product using (_,_; ,_)
+open import Data.Product using (_,_; ,_; proj₂)
+open import Relation.Binary.HeterogeneousEquality using (_≅_; refl)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 
 open PrecedenceCorrect i g
-open import TotalParserCombinators.Semantics
+open import TotalParserCombinators.Semantics hiding (_≅_)
 open import Mixfix.Fixity
 open import Mixfix.Operator
 open import Mixfix.Cyclic.Lib as Lib
@@ -38,16 +40,38 @@ module Unique where
           (∈₂ : e₂ ∈⟦ Grammar.precs ps ⟧· s₂) →
           e₁ ≡ e₂ → ∈₁ ≋ ∈₂
   precs [] () () _
-  precs (p ∷ ps) (∣ˡ (<$>_ {x = ( _ ,  _)}  ∈₁))
-                 (∣ˡ (<$>_ {x = (._ , ._)}  ∈₂)) refl with prec ∈₁ ∈₂
-  precs (p ∷ ps) (∣ˡ (<$>_ {x = ( _ ,  _)}  ∈₁))
-                 (∣ˡ (<$>_ {x = (._ , ._)} .∈₁)) refl | refl = refl
   precs (p ∷ ps) (∣ʳ (<$>_ {x = ( _ ∙  _)}  ∈₁))
                  (∣ʳ (<$>_ {x = (._ ∙ ._)}  ∈₂)) refl with precs ps ∈₁ ∈₂ refl
   precs (p ∷ ps) (∣ʳ (<$>_ {x = ( _ ∙  _)}  ∈₁))
                  (∣ʳ (<$>_ {x = (._ ∙ ._)} .∈₁)) refl | refl = refl
   precs (p ∷ ps) (∣ˡ (<$> ∈₁)) (∣ʳ (<$>_ {x = _ ∙ _} ∈₂)) ()
   precs (p ∷ ps) (∣ʳ (<$>_ {x = _ ∙ _} ∈₁)) (∣ˡ (<$> ∈₂)) ()
+  precs (p ∷ ps) (∣ˡ (<$>_ {x = e₁} ∈₁)) (∣ˡ (<$>_ {x = e₂} ∈₂)) eq =
+    helper (lemma₁ eq) (lemma₂ eq) ∈₁ ∈₂
+    where
+    lemma₁ : ∀ {assoc₁ assoc₂}
+               {e₁ : ExprIn p assoc₁} {e₂ : ExprIn p assoc₂} →
+             (Expr._∙_ (here {xs = ps} refl) e₁) ≡ (here refl ∙ e₂) →
+             assoc₁ ≡ assoc₂
+    lemma₁ refl = refl
+
+    lemma₂ : ∀ {assoc₁ assoc₂}
+               {e₁ : ExprIn p assoc₁} {e₂ : ExprIn p assoc₂} →
+             (Expr._∙_ (here {xs = ps} refl) e₁) ≡ (here refl ∙ e₂) →
+             e₁ ≅ e₂
+    lemma₂ refl = refl
+
+    helper : ∀ {assoc₁ assoc₂ s₁ s₂}
+             {e₁ : ExprIn p assoc₁} {e₂ : ExprIn p assoc₂} →
+             assoc₁ ≡ assoc₂ → e₁ ≅ e₂ →
+             (∈₁ : (, e₁) ∈⟦ Grammar.prec p ⟧· s₁) →
+             (∈₂ : (, e₂) ∈⟦ Grammar.prec p ⟧· s₂) →
+             ∣ˡ {p₁ = (λ e → here refl ∙ proj₂ e) <$> Grammar.prec p}
+                {p₂ = weakenE <$> Grammar.precs ps} (<$> ∈₁) ≋
+             ∣ˡ {p₁ = (λ e → here refl ∙ proj₂ e) <$> Grammar.prec p}
+                {p₂ = weakenE <$> Grammar.precs ps} (<$> ∈₂)
+    helper refl refl ∈₁ ∈₂ with prec ∈₁ ∈₂
+    helper refl refl ∈ .∈  | refl = refl
 
   prec : ∀ {p assoc s₁ s₂} {e : ExprIn p assoc}
          (∈₁ : (, e) ∈⟦ Grammar.prec p ⟧· s₁)

@@ -75,7 +75,7 @@ module Claims where
     sym $ ListProp.Monad.right-zero (flatten mxs)
 
   bind-nothing : {A B : Set} (mxs : Maybe (List A)) →
-                 bind mxs nothing ≡ (List B ∶ [])
+                 bind mxs nothing ≡ ([] ∶ List B)
   bind-nothing mxs = refl
 
 ------------------------------------------------------------------------

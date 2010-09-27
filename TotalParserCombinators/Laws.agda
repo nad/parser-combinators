@@ -74,11 +74,11 @@ module <$> where
 
   -- _<$>_ could have been defined using return and _⊛_.
 
-  return-⊛ : ∀ {Tok R₁ R₂ xs} {f : R₁ → R₂} {p : Parser Tok R₁ xs} →
+  return-⊛ : ∀ {Tok R₁ R₂ xs} {f : R₁ → R₂} (p : Parser Tok R₁ xs) →
              f <$> p ≅P return f ⊛ p
-  return-⊛ {xs = xs} {f} {p} =
+  return-⊛ {xs = xs} {f} p =
     BagMonoid.reflexive (lemma xs) ∷ λ t → ♯ (
-      f <$> D t p         ≅⟨ return-⊛ ⟩
+      f <$> D t p         ≅⟨ return-⊛ (D t p) ⟩
       return f ⊛ D t p    ≅⟨ sym $ D-return-⊛ f p ⟩
       D t (return f ⊛ p)  ∎)
     where
@@ -91,7 +91,7 @@ module <$> where
   zero : ∀ {Tok R₁ R₂} {f : R₁ → R₂} →
          f <$> fail {Tok = Tok} ≅P fail
   zero {f = f} =
-    f <$> fail       ≅⟨ return-⊛ ⟩
+    f <$> fail       ≅⟨ return-⊛ fail ⟩
     return f ⊛ fail  ≅⟨ ApplicativeFunctor.right-zero (return f) ⟩
     fail             ∎
 
@@ -100,7 +100,7 @@ module <$> where
   homomorphism : ∀ {Tok R₁ R₂} (f : R₁ → R₂) {x} →
                  f <$> return {Tok = Tok} x ≅P return (f x)
   homomorphism f {x} =
-    f <$> return x       ≅⟨ return-⊛ {f = f} ⟩
+    f <$> return x       ≅⟨ return-⊛ {f = f} (return x) ⟩
     return f ⊛ return x  ≅⟨ ApplicativeFunctor.homomorphism f x ⟩
     return (f x)         ∎
 
