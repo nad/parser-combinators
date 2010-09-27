@@ -57,11 +57,14 @@ import TotalParserCombinators.Laws
 
 import TotalParserCombinators.ExpressiveStrength
 
--- A definition of asymmetric choice. Note that no extension of the
--- library is required to define this combinator, which is defined
--- using the derivative operator and pattern matching on an index.
+-- Definitions of asymmetric choice, and and not. Note that no
+-- extension of the library is required to define these combinators,
+-- which are defined using the derivative operator and functions
+-- applied to indices.
 
 import TotalParserCombinators.AsymmetricChoice
+import TotalParserCombinators.And
+import TotalParserCombinators.Not
 
 -- An alternative semantics.
 

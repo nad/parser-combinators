@@ -2,6 +2,8 @@
 -- Asymmetric choice
 ------------------------------------------------------------------------
 
+-- TODO: Unify with And and Not.
+
 module TotalParserCombinators.AsymmetricChoice where
 
 open import Coinduction
