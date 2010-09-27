@@ -41,6 +41,9 @@ first-nonempty xs ys = xs
 -- indices, so it is not obvious that it preserves equality. Instead
 -- this fact is established explicitly below.
 
+-- Note also that this definition is closely related to Theorem 4.4 in
+-- Brzozowski's paper "Derivatives of Regular Expressions".
+
 infixl 5 _◃_
 
 _◃_ : ∀ {Tok R xs₁ xs₂} →
