@@ -50,3 +50,8 @@ import TotalRecognisers.LeftRecursion.KleeneAlgebra
 -- { aⁿbⁿcⁿ | n ∈ ℕ } can be decided.
 
 import TotalRecognisers.LeftRecursion.NotOnlyContextFree
+
+-- An alternative backend for the simple recognisers (without
+-- correctness proof).
+
+import TotalRecognisers.Simple.AlternativeBackend
