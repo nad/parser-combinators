@@ -28,7 +28,7 @@ tail-++ : ∀ {A} (xs ys : List⁺ A) →
 tail-++ [ x ]    ys = refl
 tail-++ (x ∷ xs) ys = toList-⁺++⁺ xs ys
 
-head->>= : ∀ {A B} (f : A → List⁺ B) (xs : List⁺ A) →
+head->>= : ∀ {A B : Set} (f : A → List⁺ B) (xs : List⁺ A) →
            head (f (head xs)) ≡ head (xs >>=⁺ f)
 head->>= f [ x ]    = refl
 head->>= f (x ∷ xs) with f x
