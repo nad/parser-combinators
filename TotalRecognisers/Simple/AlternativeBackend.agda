@@ -5,7 +5,7 @@
 -- Acknowledgements:
 --
 -- • The use of parsing "processes" is based on implementation C from
---   Koen Claessen's paper Parallel Parsing Processes.
+--   Koen Claessen's paper Parallel parsing processes.
 --
 -- • The idea to use toProc is due to Jean-Philippe Bernardy.
 
