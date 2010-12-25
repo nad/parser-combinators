@@ -59,9 +59,11 @@ import TotalParserCombinators.ExpressiveStrength
 
 -- Definitions of asymmetric choice, and and not. Note that no
 -- extension of the library is required to define these combinators,
--- which are defined using the derivative operator and functions
--- applied to indices.
+-- which make use of a general operator which lifts initial bag
+-- operations to parsers. This operator is defined using the
+-- breadth-first backend's derivative operator.
 
+import TotalParserCombinators.Pointwise
 import TotalParserCombinators.AsymmetricChoice
 import TotalParserCombinators.And
 import TotalParserCombinators.Not
