@@ -17,7 +17,7 @@ import TotalRecognisers
 import TotalParserCombinators.Parser
 import TotalParserCombinators.Semantics
 
--- Some lemmas about the initial bag.
+-- Some lemmas about initial bags.
 
 import TotalParserCombinators.InitialBag
 
@@ -25,7 +25,7 @@ import TotalParserCombinators.InitialBag
 
 import TotalParserCombinators.Lib
 
--- A breadth-first backend.
+-- A breadth-first backend, based on Brzozowski derivatives.
 
 import TotalParserCombinators.BreadthFirst
 
