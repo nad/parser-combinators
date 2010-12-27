@@ -4,20 +4,31 @@
 
 module TotalParserCombinators.Simplification where
 
+open import Algebra
 open import Coinduction
 open import Data.List using (List)
+import Data.List.Any.BagAndSetEquality as BSEq
 open import Data.Maybe using (Maybe); open Data.Maybe.Maybe
+open import Data.Nat
 open import Data.Product
+open import Data.Product.N-ary
 open import Function
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 open import Relation.Binary.HeterogeneousEquality
   using (refl) renaming (_≅_ to _≅H_)
 
+private
+  module BSMonoid {k} {A : Set} =
+    CommutativeMonoid (BSEq.commutativeMonoid k A)
+
 open import TotalParserCombinators.Congruence
   hiding (return; fail; token) renaming (_∣_ to _∣′_)
+import TotalParserCombinators.Congruence.Sound as C
+open import TotalParserCombinators.BreadthFirst hiding (correct)
+import TotalParserCombinators.InitialBag as I
 open import TotalParserCombinators.Laws
-open import TotalParserCombinators.Lib
 open import TotalParserCombinators.Parser
+open import TotalParserCombinators.Semantics using (parser)
 
 ------------------------------------------------------------------------
 -- A helper function
@@ -208,9 +219,7 @@ private
 
   -- Note that if an argument parser is delayed, then simplification
   -- is not applied recursively (because this could lead to
-  -- non-termination). Partial simplification, for instance up to a
-  -- predetermined depth, would be possible, but for simplicity
-  -- delayed parsers are simply forced and returned.
+  -- non-termination).
 
   simplify₁′ : ∀ {Tok R R′ xs} {m : Maybe R′}
                (p : ∞⟨ m ⟩Parser Tok R xs) →
@@ -218,16 +227,83 @@ private
   simplify₁′ {m = nothing} p = (_ , ♭ p , (♭ p ∎))
   simplify₁′ {m = just _}  p = simplify₁ p
 
--- A simplifier.
+-- Deep simplification.
+--
+-- The function simplify simplifies the first layer, then it traverses
+-- the result and simplifies the following layers, and so on. The
+-- extra traversals have been implemented to satisfy Agda's
+-- termination checker; they could perhaps be avoided.
+--
+-- One cast constructor is added for every delay constructor, plus one
+-- at the top.
+--
+-- Note that simplifications in an upper layer do not get to take
+-- advantage of simplifications performed in lower layers. Consider
+-- ♯ p ⊛ token, for instance. If p can be simplified to fail, then one
+-- might believe that ♯ p ⊛ token is simplified to fail as well.
+-- However, this is only the case if p actually /computes/ to fail.
+--
+-- If simplification of the upper layer were dependent on complete
+-- simplification of lower layers, then simplification could fail to
+-- terminate. This does not mean that one cannot propagate /any/
+-- information from lower layers to upper layers, though: one could
+-- for instance perform partial simplification of lower layers, up to
+-- a certain depth, before an upper layer is simplified.
 
-simplify-initial : ∀ {Tok R xs} → Parser Tok R xs → List R
-simplify-initial = proj₁ ∘ simplify₁
+mutual
 
-simplify : ∀ {Tok R xs} (p : Parser Tok R xs) →
-           Parser Tok R (simplify-initial p)
-simplify p = proj₁ $ proj₂ $ simplify₁ p
+  simplify : ∀ {Tok R xs} → Parser Tok R xs → Parser Tok R xs
+  simplify p = cast (I.same-bag/set $ C.sound $ sym $ proj₂ simp)
+                    (simplify↓ (proj₁ simp))
+    where simp = proj₂ $ simplify₁ p
+
+  simplify↓ : ∀ {Tok R xs} → Parser Tok R xs → Parser Tok R xs
+  simplify↓ (return x)       = return x
+  simplify↓ fail             = fail
+  simplify↓ token            = token
+  simplify↓ (p₁ ∣ p₂)        = simplify↓ p₁ ∣ simplify↓ p₂
+  simplify↓ (f <$> p)        = f <$> simplify↓ p
+  simplify↓ (p₁ ⊛ p₂)        = simplify↓′ p₁ ⊛ simplify↓′ p₂
+  simplify↓ (p₁ >>= p₂)      = simplify↓′ p₁ >>= λ x → simplify↓′ (p₂ x)
+  simplify↓ (nonempty p)     = nonempty (simplify↓ p)
+  simplify↓ (cast xs₁≈xs₂ p) = cast xs₁≈xs₂ (simplify↓ p)
+
+  simplify↓′ : ∀ {Tok R R′ xs} {m : Maybe R′} →
+               ∞⟨ m ⟩Parser Tok R xs → ∞⟨ m ⟩Parser Tok R xs
+  simplify↓′ {m = nothing} p = ♯ simplify (♭ p)
+  simplify↓′ {m = just _}  p =   simplify↓   p
 
 -- The simplifier is correct.
 
-correct : ∀ {Tok R xs} {p : Parser Tok R xs} → simplify p ≅P p
-correct {p = p} = sym $ proj₂ $ proj₂ $ simplify₁ p
+private
+
+  dup : {A : Set} → A → Maybe A ^ 2
+  dup x = (just x , just x)
+
+mutual
+
+  correct : ∀ {Tok R xs} (p : Parser Tok R xs) → simplify p ≅P p
+  correct p =
+    cast _ (simplify↓ (proj₁ simp))  ≅⟨ Cast.correct ⟩
+    simplify↓ (proj₁ simp)           ≅⟨ correct↓ (proj₁ simp) ⟩
+    proj₁ simp                       ≅⟨ sym $ proj₂ simp ⟩
+    p                                ∎
+    where simp = proj₂ $ simplify₁ p
+
+  correct↓ : ∀ {Tok R xs} (p : Parser Tok R xs) → simplify↓ p ≅P p
+  correct↓ (return x)       = return x ∎
+  correct↓ fail             = fail ∎
+  correct↓ token            = token ∎
+  correct↓ (p₁ ∣ p₂)        = correct↓ p₁ ∣′ correct↓ p₂
+  correct↓ (f <$> p)        = (λ _ → refl) <$> correct↓ p
+  correct↓ (nonempty p)     = nonempty (correct↓ p)
+  correct↓ (cast xs₁≈xs₂ p) = cast (correct↓ p)
+
+  correct↓ (_⊛_   {fs = nothing} {xs = nothing} p₁ p₂) = [ nothing       - nothing       ] ♯ correct (♭ p₁) ⊛ ♯ correct (♭ p₂)
+  correct↓ (_⊛_   {fs = nothing} {xs = just xs} p₁ p₂) = [ just (dup xs) - nothing       ]   correct↓   p₁  ⊛ ♯ correct (♭ p₂)
+  correct↓ (_⊛_   {fs = just fs} {xs = nothing} p₁ p₂) = [ nothing       - just (dup fs) ] ♯ correct (♭ p₁) ⊛   correct↓   p₂
+  correct↓ (_⊛_   {fs = just fs} {xs = just xs} p₁ p₂) = [ just (dup xs) - just (dup fs) ]   correct↓   p₁  ⊛   correct↓   p₂
+  correct↓ (_>>=_ {xs = nothing} {f  = nothing} p₁ p₂) = [ nothing       - nothing       ] ♯ correct (♭ p₁) >>= λ x → ♯ correct (♭ (p₂ x))
+  correct↓ (_>>=_ {xs = nothing} {f  = just f } p₁ p₂) = [ just (dup f)  - nothing       ]   correct↓   p₁  >>= λ x → ♯ correct (♭ (p₂ x))
+  correct↓ (_>>=_ {xs = just xs} {f  = nothing} p₁ p₂) = [ nothing       - just (dup xs) ] ♯ correct (♭ p₁) >>= λ x →   correct↓   (p₂ x)
+  correct↓ (_>>=_ {xs = just xs} {f  = just f } p₁ p₂) = [ just (dup f)  - just (dup xs) ]   correct↓   p₁  >>= λ x →   correct↓   (p₂ x)
