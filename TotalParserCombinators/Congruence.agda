@@ -32,11 +32,12 @@ infixl 50 [_-_-_-_]_⊛_ _<$>_
 infix  10 [_-_-_-_]_>>=_
 infixl  5 _∣_
 infix   5 _∷_
-infix   4 _≈[_]P_ _≅P_ _≈P_
+infix   4 _≈[_]P_ ∞⟨_-_⟩_≈[_]P_ _≅P_ _≈P_
 infix   2 _∎
 infixr  2 _≈⟨_⟩_ _≅⟨_⟩_
 
--- Equivalence proof programs.
+------------------------------------------------------------------------
+-- Equivalence proof programs
 
 mutual
 
@@ -50,7 +51,8 @@ mutual
          ∀ {R xs₁ xs₂} →
          Parser Tok R xs₁ → Kind → Parser Tok R xs₂ → Set₁ where
 
-    -- The only coinductive constructor.
+    -- This constructor, which corresponds to CE._∷_, ensures that the
+    -- relation is complete.
 
     _∷_ : ∀ {k R xs₁ xs₂}
             {p₁ : Parser Tok R xs₁}
@@ -111,7 +113,8 @@ mutual
         {p₂ : ∞⟨ fs₁ ⟩Parser Tok  R₁       (flatten xs₁)}
         {p₃ : ∞⟨ xs₂ ⟩Parser Tok (R₁ → R₂) (flatten fs₂)}
         {p₄ : ∞⟨ fs₂ ⟩Parser Tok  R₁       (flatten xs₂)}
-      (p₁≈p₃ : ♭? p₁ ≈[ k ]P ♭? p₃) (p₂≈p₄ : ♭? p₂ ≈[ k ]P ♭? p₄) →
+      (p₁≈p₃ : ∞⟨ xs₁ - xs₂ ⟩ p₁ ≈[ k ]P p₃)
+      (p₂≈p₄ : ∞⟨ fs₁ - fs₂ ⟩ p₂ ≈[ k ]P p₄) →
       p₁ ⊛ p₂ ≈[ k ]P p₃ ⊛ p₄
 
     [_-_-_-_]_>>=_ :
@@ -120,8 +123,8 @@ mutual
         {p₂ : (x : R₁) → ∞⟨ xs₁ ⟩Parser Tok R₂ (apply f₁ x)}
         {p₃ : ∞⟨ f₂ ⟩Parser Tok R₁ (flatten xs₂)}
         {p₄ : (x : R₁) → ∞⟨ xs₂ ⟩Parser Tok R₂ (apply f₂ x)}
-      (p₁≈p₃ : ♭? p₁ ≈[ k ]P ♭? p₃)
-      (p₂≈p₄ : ∀ x → ♭? (p₂ x) ≈[ k ]P ♭? (p₄ x)) →
+      (p₁≈p₃ : ∞⟨ f₁ - f₂ ⟩ p₁ ≈[ k ]P p₃)
+      (p₂≈p₄ : ∀ x → ∞⟨ xs₁ - xs₂ ⟩ p₂ x ≈[ k ]P p₄ x) →
       p₁ >>= p₂ ≈[ k ]P p₃ >>= p₄
 
     nonempty : ∀ {k R xs₁ xs₂}
@@ -135,7 +138,16 @@ mutual
            (p₁≈p₂ : p₁ ≈[ k ]P p₂) →
            cast xs₁≈xs₁′ p₁ ≈[ k ]P cast xs₂≈xs₂′ p₂
 
--- Completeness.
+  -- Certain proofs are coinductive if both sides are delayed.
+
+  ∞⟨_-_⟩_≈[_]P_ :
+    ∀ {Tok R xs₁ xs₂} {A : Set} (m₁ m₂ : Maybe A) →
+    ∞⟨ m₁ ⟩Parser Tok R xs₁ → Kind → ∞⟨ m₂ ⟩Parser Tok R xs₂ → Set₁
+  ∞⟨ nothing - nothing ⟩ p₁ ≈[ k ]P p₂ = ∞ (♭  p₁ ≈[ k ]P ♭  p₂)
+  ∞⟨ _       - _       ⟩ p₁ ≈[ k ]P p₂ =    ♭? p₁ ≈[ k ]P ♭? p₂
+
+------------------------------------------------------------------------
+-- Completeness
 
 complete : ∀ {k Tok R xs₁ xs₂}
              {p₁ : Parser Tok R xs₁}

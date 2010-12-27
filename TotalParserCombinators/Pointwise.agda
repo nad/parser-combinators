@@ -84,7 +84,7 @@ lift-cong : ∀ {k Tok xs₁ xs₁′ xs₂ xs₂′}
 lift-cong {k} {xs₁ = xs₁} {xs₁′} {xs₂} {xs₂′} {p₁} {p₁′} {p₂} {p₂′}
   p₁≈p₁′ p₂≈p₂′ = lemma ∷ λ t → ♯ (
   D t (lift p₁ p₂)          ≅⟨ D-lift p₁ p₂ ⟩
-  lift (D t p₁) (D t p₂)    ≈⟨ lift-cong (D-congP p₁≈p₁′) (D-congP p₂≈p₂′) ⟩
+  lift (D t p₁) (D t p₂)    ≈⟨ lift-cong (CS.D-cong p₁≈p₁′) (CS.D-cong p₂≈p₂′) ⟩
   lift (D t p₁′) (D t p₂′)  ≅⟨ sym (D-lift p₁′ p₂′) ⟩
   D t (lift p₁′ p₂′)        ∎)
   where
