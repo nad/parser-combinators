@@ -16,6 +16,9 @@ open import Coinduction
 open import Data.List
 import Data.List.Any as Any
 open import Data.Maybe
+open import Data.Nat
+open import Data.Product
+open import Data.Product.N-ary
 open import Function
 open import Relation.Binary.PropositionalEquality using (_≡_; _≗_)
 
@@ -24,17 +27,28 @@ open Any.Membership-≡ using (bag) renaming (_≈[_]_ to _List-≈[_]_)
 open import TotalParserCombinators.BreadthFirst.Derivative
 open import TotalParserCombinators.CoinductiveEquality as CE
   using (_≈[_]c_; _∷_)
-open import TotalParserCombinators.Lib
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
+  hiding ([_-_]_⊛_; [_-_]_>>=_)
 
-infixl 50 [_-_-_-_]_⊛_ _<$>_
-infix  10 [_-_-_-_]_>>=_
+infixl 50 [_-_]_⊛_ [_-_-_-_]_⊛_ _<$>_
+infix  10 [_-_]_>>=_ [_-_-_-_]_>>=_
 infixl  5 _∣_
 infix   5 _∷_
-infix   4 _≈[_]P_ ∞⟨_-_⟩_≈[_]P_ _≅P_ _≈P_
+infix   4 _≈[_]P_ ∞⟨_⟩_≈[_]P_ _≅P_ _≈P_
 infix   2 _∎
 infixr  2 _≈⟨_⟩_ _≅⟨_⟩_
+
+------------------------------------------------------------------------
+-- Helper functions
+
+flatten₁ : {A : Set} → Maybe (Maybe A ^ 2) → Maybe A
+flatten₁ nothing        = nothing
+flatten₁ (just (m , _)) = m
+
+flatten₂ : {A : Set} → Maybe (Maybe A ^ 2) → Maybe A
+flatten₂ nothing        = nothing
+flatten₂ (just (_ , m)) = m
 
 ------------------------------------------------------------------------
 -- Equivalence proof programs
@@ -107,24 +121,28 @@ mutual
             (f₁≗f₂ : f₁ ≗ f₂) (p₁≈p₂ : p₁ ≈[ k ]P p₂) →
             f₁ <$> p₁ ≈[ k ]P f₂ <$> p₂
 
-    [_-_-_-_]_⊛_ :
-      ∀ {k R₁ R₂} xs₁ xs₂ fs₁ fs₂
+    [_-_]_⊛_ :
+      ∀ {k R₁ R₂} xs₁xs₂ fs₁fs₂ →
+      let xs₁ = flatten₁ xs₁xs₂; xs₂ = flatten₂ xs₁xs₂
+          fs₁ = flatten₁ fs₁fs₂; fs₂ = flatten₂ fs₁fs₂ in
         {p₁ : ∞⟨ xs₁ ⟩Parser Tok (R₁ → R₂) (flatten fs₁)}
         {p₂ : ∞⟨ fs₁ ⟩Parser Tok  R₁       (flatten xs₁)}
         {p₃ : ∞⟨ xs₂ ⟩Parser Tok (R₁ → R₂) (flatten fs₂)}
         {p₄ : ∞⟨ fs₂ ⟩Parser Tok  R₁       (flatten xs₂)}
-      (p₁≈p₃ : ∞⟨ xs₁ - xs₂ ⟩ p₁ ≈[ k ]P p₃)
-      (p₂≈p₄ : ∞⟨ fs₁ - fs₂ ⟩ p₂ ≈[ k ]P p₄) →
+      (p₁≈p₃ : ∞⟨ xs₁xs₂ ⟩ p₁ ≈[ k ]P p₃)
+      (p₂≈p₄ : ∞⟨ fs₁fs₂ ⟩ p₂ ≈[ k ]P p₄) →
       p₁ ⊛ p₂ ≈[ k ]P p₃ ⊛ p₄
 
-    [_-_-_-_]_>>=_ :
-      ∀ {k R₁ R₂} (f₁ f₂ : Maybe (R₁ → List R₂)) xs₁ xs₂
+    [_-_]_>>=_ :
+      ∀ {k R₁ R₂} (f₁f₂ : Maybe (Maybe (R₁ → List R₂) ^ 2)) xs₁xs₂ →
+      let f₁  = flatten₁ f₁f₂;   f₂  = flatten₂ f₁f₂
+          xs₁ = flatten₁ xs₁xs₂; xs₂ = flatten₂ xs₁xs₂ in
         {p₁ : ∞⟨ f₁ ⟩Parser Tok R₁ (flatten xs₁)}
         {p₂ : (x : R₁) → ∞⟨ xs₁ ⟩Parser Tok R₂ (apply f₁ x)}
         {p₃ : ∞⟨ f₂ ⟩Parser Tok R₁ (flatten xs₂)}
         {p₄ : (x : R₁) → ∞⟨ xs₂ ⟩Parser Tok R₂ (apply f₂ x)}
-      (p₁≈p₃ : ∞⟨ f₁ - f₂ ⟩ p₁ ≈[ k ]P p₃)
-      (p₂≈p₄ : ∀ x → ∞⟨ xs₁ - xs₂ ⟩ p₂ x ≈[ k ]P p₄ x) →
+      (p₁≈p₃ : ∞⟨ f₁f₂ ⟩ p₁ ≈[ k ]P p₃)
+      (p₂≈p₄ : ∀ x → ∞⟨ xs₁xs₂ ⟩ p₂ x ≈[ k ]P p₄ x) →
       p₁ >>= p₂ ≈[ k ]P p₃ >>= p₄
 
     nonempty : ∀ {k R xs₁ xs₂}
@@ -138,13 +156,38 @@ mutual
            (p₁≈p₂ : p₁ ≈[ k ]P p₂) →
            cast xs₁≈xs₁′ p₁ ≈[ k ]P cast xs₂≈xs₂′ p₂
 
-  -- Certain proofs are coinductive if both sides are delayed.
+  -- Certain proofs can be coinductive if both sides are delayed.
 
-  ∞⟨_-_⟩_≈[_]P_ :
-    ∀ {Tok R xs₁ xs₂} {A : Set} (m₁ m₂ : Maybe A) →
-    ∞⟨ m₁ ⟩Parser Tok R xs₁ → Kind → ∞⟨ m₂ ⟩Parser Tok R xs₂ → Set₁
-  ∞⟨ nothing - nothing ⟩ p₁ ≈[ k ]P p₂ = ∞ (♭  p₁ ≈[ k ]P ♭  p₂)
-  ∞⟨ _       - _       ⟩ p₁ ≈[ k ]P p₂ =    ♭? p₁ ≈[ k ]P ♭? p₂
+  ∞⟨_⟩_≈[_]P_ :
+    ∀ {Tok R xs₁ xs₂} {A : Set} (m₁m₂ : Maybe (Maybe A ^ 2)) →
+    ∞⟨ flatten₁ m₁m₂ ⟩Parser Tok R xs₁ → Kind →
+    ∞⟨ flatten₂ m₁m₂ ⟩Parser Tok R xs₂ → Set₁
+  ∞⟨ nothing ⟩ p₁ ≈[ k ]P p₂ = ∞ (♭  p₁ ≈[ k ]P ♭  p₂)
+  ∞⟨ just _  ⟩ p₁ ≈[ k ]P p₂ =    ♭? p₁ ≈[ k ]P ♭? p₂
+
+------------------------------------------------------------------------
+-- Some derived combinators
+
+[_-_-_-_]_⊛_ :
+  ∀ {k Tok R₁ R₂} xs₁ xs₂ fs₁ fs₂
+    {p₁ : ∞⟨ xs₁ ⟩Parser Tok (R₁ → R₂) (flatten fs₁)}
+    {p₂ : ∞⟨ fs₁ ⟩Parser Tok  R₁       (flatten xs₁)}
+    {p₃ : ∞⟨ xs₂ ⟩Parser Tok (R₁ → R₂) (flatten fs₂)}
+    {p₄ : ∞⟨ fs₂ ⟩Parser Tok  R₁       (flatten xs₂)} →
+  ♭? p₁ ≈[ k ]P ♭? p₃ → ♭? p₂ ≈[ k ]P ♭? p₄ → p₁ ⊛ p₂ ≈[ k ]P p₃ ⊛ p₄
+[ xs₁ - xs₂ - fs₁ - fs₂ ] p₁≈p₃ ⊛ p₂≈p₄ =
+  [ just (xs₁ , xs₂) - just (fs₁ , fs₂) ] p₁≈p₃ ⊛ p₂≈p₄
+
+[_-_-_-_]_>>=_ :
+  ∀ {k Tok R₁ R₂} (f₁ f₂ : Maybe (R₁ → List R₂)) xs₁ xs₂
+    {p₁ : ∞⟨ f₁ ⟩Parser Tok R₁ (flatten xs₁)}
+    {p₂ : (x : R₁) → ∞⟨ xs₁ ⟩Parser Tok R₂ (apply f₁ x)}
+    {p₃ : ∞⟨ f₂ ⟩Parser Tok R₁ (flatten xs₂)}
+    {p₄ : (x : R₁) → ∞⟨ xs₂ ⟩Parser Tok R₂ (apply f₂ x)} →
+  ♭? p₁ ≈[ k ]P ♭? p₃ → (∀ x → ♭? (p₂ x) ≈[ k ]P ♭? (p₄ x)) →
+  p₁ >>= p₂ ≈[ k ]P p₃ >>= p₄
+[ f₁ - f₂ - xs₁ - xs₂ ] p₁≈p₃ >>= p₂≈p₄ =
+  [ just (f₁ , f₂) - just (xs₁ , xs₂) ] p₁≈p₃ >>= p₂≈p₄
 
 ------------------------------------------------------------------------
 -- Completeness
