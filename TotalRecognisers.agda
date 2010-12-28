@@ -6,10 +6,13 @@
 ------------------------------------------------------------------------
 
 -- Recognisers are less complicated than parsers, and the following
--- code should be easier to follow than the code under
+-- code should (generally) be easier to follow than the code under
 -- TotalParserCombinators.
 
 module TotalRecognisers where
+
+------------------------------------------------------------------------
+-- Recognisers which do not support left recursion
 
 -- Very simple recognisers, including a formal semantics and a proof
 -- of decidability.
@@ -25,6 +28,13 @@ import TotalRecognisers.Simple.ExpressiveStrength
 -- An example: a right recursive expression grammar.
 
 import TotalRecognisers.Simple.Expression
+
+-- An alternative backend (without correctness proof).
+
+import TotalRecognisers.Simple.AlternativeBackend
+
+------------------------------------------------------------------------
+-- Recognisers which do support left recursion
 
 -- More complicated recognisers, which can handle left recursion. (The
 -- set of basic combinators is also different: tok has been replaced
@@ -54,8 +64,3 @@ import TotalRecognisers.LeftRecursion.KleeneAlgebra
 -- { aⁿbⁿcⁿ | n ∈ ℕ } can be decided.
 
 import TotalRecognisers.LeftRecursion.NotOnlyContextFree
-
--- An alternative backend for the simple recognisers (without
--- correctness proof).
-
-import TotalRecognisers.Simple.AlternativeBackend
