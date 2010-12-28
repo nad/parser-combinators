@@ -20,8 +20,8 @@ import Relation.Binary.Sigma.Pointwise as Σ
 
 open Any.Membership-≡ using (_∈_) renaming (_≈[_]_ to _List-≈[_]_)
 
-open import TotalParserCombinators.BreadthFirst
 open import TotalParserCombinators.Congruence using (_≈[_]P_; _≅P_)
+open import TotalParserCombinators.Derivative using (D)
 open import TotalParserCombinators.Parser
 import TotalParserCombinators.Pointwise as Pointwise
 open import TotalParserCombinators.Semantics using (_∈_·_)

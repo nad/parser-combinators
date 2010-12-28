@@ -29,7 +29,11 @@ import TotalParserCombinators.InitialBag
 
 import TotalParserCombinators.Lib
 
--- A breadth-first backend, based on Brzozowski derivatives.
+-- A Brzozowski derivative operator for parsers.
+
+import TotalParserCombinators.Derivative
+
+-- A breadth-first backend, based on the derivative operator.
 
 import TotalParserCombinators.BreadthFirst
 

@@ -13,7 +13,7 @@ open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 open import Relation.Nullary
 
 open import TotalParserCombinators.Congruence using (_≅P_; _∷_)
-open import TotalParserCombinators.BreadthFirst
+open import TotalParserCombinators.Derivative
 open import TotalParserCombinators.Laws
 open import TotalParserCombinators.Lib
 open import TotalParserCombinators.Parser

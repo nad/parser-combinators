@@ -2,12 +2,12 @@
 -- Brzozowski-style derivatives of parsers
 ------------------------------------------------------------------------
 
-module TotalParserCombinators.BreadthFirst.Derivative where
+module TotalParserCombinators.Derivative.Definition where
 
 open import Category.Monad
 open import Coinduction
-open import Data.List as List using (List; map); open List.List
-open import Data.Maybe using (Maybe); open Data.Maybe.Maybe
+open import Data.List as List using (List; map)
+import Data.Maybe; open Data.Maybe.Maybe
 
 open RawMonadPlus List.monadPlus
   using ()
@@ -42,7 +42,7 @@ D-bag t (p₁ >>= p₂)  with forced? p₁ | forced?′ p₂
 ... | nothing | nothing = fail′
 ... | nothing | just xs =                         xs >>=′ λ x → D-bag t (p₂ x)
 
--- "Derivative": x ∈ D t p · s  iff  x ∈ p · t ∷ s.
+-- "Derivative": x ∈ D t p · s  iff  x ∈ p · t ∷ s.
 
 D : ∀ {Tok R xs}
     (t : Tok) (p : Parser Tok R xs) → Parser Tok R (D-bag t p)
@@ -65,9 +65,3 @@ D t (p₁ >>= p₂)  with forced? p₁ | forced?′ p₂
 ... | nothing | nothing = ♯ D t (♭ p₁) >>= (λ x → ♭ (p₂ x))
 ... | nothing | just xs = ♯ D t (♭ p₁) >>= (λ x →    p₂ x)
                         ∣ return⋆ xs >>= λ x → D t (p₂ x)
-
--- Parsing: x ∈ parse p s  iff  x ∈ p · s.
-
-parse : ∀ {Tok R xs} → Parser Tok R xs → List Tok → List R
-parse {xs = xs} p []      = xs
-parse           p (t ∷ s) = parse (D t p) s

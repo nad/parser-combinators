@@ -25,7 +25,6 @@ private
 open import TotalParserCombinators.Congruence
   hiding (return; fail; token) renaming (_∣_ to _∣′_)
 import TotalParserCombinators.Congruence.Sound as C
-open import TotalParserCombinators.BreadthFirst hiding (correct)
 import TotalParserCombinators.InitialBag as I
 open import TotalParserCombinators.Laws
 open import TotalParserCombinators.Parser

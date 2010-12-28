@@ -26,9 +26,9 @@ open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence using (_⇔_; module Equivalent)
 open import Function.Inverse as Inv using (_⇿_; module Inverse)
 
-open import TotalParserCombinators.BreadthFirst
 open import TotalParserCombinators.Congruence as C using (_≈[_]P_; _≅P_)
 import TotalParserCombinators.Congruence.Sound as CS
+open import TotalParserCombinators.Derivative as D
 import TotalParserCombinators.InitialBag as I
 open import TotalParserCombinators.Laws
 open import TotalParserCombinators.Lib
@@ -127,7 +127,7 @@ lift-property P P-cong P-∙ {s = []} p₁ p₂ =
 lift-property P P-cong P-∙ {s = t ∷ s} p₁ p₂ =
    Equivalent.from
     (P (λ x → x ∈ p₁ · t ∷ s) (λ x → x ∈ p₂ · t ∷ s)
-       (λ x → x ∈ lift p₁ p₂ · t ∷ s)                 ≈⟨ sym $ P-cong (λ _ → D-correct) (λ _ → D-correct) (λ _ → D-correct) ⟩
+       (λ x → x ∈ lift p₁ p₂ · t ∷ s)                 ≈⟨ sym $ P-cong (λ _ → D.correct) (λ _ → D.correct) (λ _ → D.correct) ⟩
 
      P (λ x → x ∈ D t p₁ · s) (λ x → x ∈ D t p₂ · s)
        (λ x → x ∈ D t (lift p₁ p₂) · s)               ≈⟨ P-cong (λ _ → _ ∎) (λ _ → _ ∎) (λ _ → CS.sound (D-lift p₁ p₂)) ⟩

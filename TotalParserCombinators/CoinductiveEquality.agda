@@ -16,9 +16,7 @@ open Inv.EquationalReasoning
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
 import TotalParserCombinators.InitialBag as I
-open import TotalParserCombinators.BreadthFirst.Derivative using (D)
-open import TotalParserCombinators.BreadthFirst.Lemmas
-  using (D-correct; D-cong)
+open import TotalParserCombinators.Derivative as D using (D)
 
 infix 5 _∷_
 infix 4 _≈[_]c_
@@ -46,16 +44,16 @@ sound {xs₁ = xs₁} {xs₂} {p₁} {p₂} (xs₁≈xs₂ ∷ rest) {x} {[]} =
   (x ∈ xs₂)    ⇿⟨ sym I.correct ⟩
   x ∈ p₂ · []  ∎
 sound {xs₁ = xs₁} {xs₂} {p₁} {p₂} (xs₁≈xs₂ ∷ rest) {x} {t ∷ s} =
-  x ∈   p₁   · t ∷ s  ⇿⟨ sym D-correct ⟩
+  x ∈   p₁   · t ∷ s  ⇿⟨ sym D.correct ⟩
   x ∈ D t p₁ ·     s  ≈⟨ sound (♭ (rest t)) ⟩
-  x ∈ D t p₂ ·     s  ⇿⟨ D-correct ⟩
+  x ∈ D t p₂ ·     s  ⇿⟨ D.correct ⟩
   x ∈   p₂   · t ∷ s  ∎
 
 complete : ∀ {k Tok R xs₁ xs₂}
              {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
            p₁ ≈[ k ] p₂ → p₁ ≈[ k ]c p₂
 complete p₁≈p₂ =
-  (λ {_} → I.cong p₁≈p₂) ∷ λ t → ♯ complete (D-cong p₁≈p₂)
+  (λ {_} → I.cong p₁≈p₂) ∷ λ t → ♯ complete (D.cong p₁≈p₂)
 
 correct : ∀ {k Tok R xs₁ xs₂}
             {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →

@@ -26,7 +26,7 @@ private
   module BSMonoid {k} {A : Set} =
     CommutativeMonoid (BSEq.commutativeMonoid k A)
 
-open import TotalParserCombinators.BreadthFirst using (D)
+open import TotalParserCombinators.Derivative using (D)
 open import TotalParserCombinators.CoinductiveEquality as CE
   using (_≈[_]c_; _∷_)
 open import TotalParserCombinators.Congruence

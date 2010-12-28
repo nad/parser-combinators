@@ -1,35 +1,103 @@
 ------------------------------------------------------------------------
--- A breadth-first backend
+-- A breadth-first backend which uses the derivative operator
 ------------------------------------------------------------------------
-
--- Similar to Brzozowski's "Derivatives of Regular Expressions".
 
 module TotalParserCombinators.BreadthFirst where
 
+open import Data.List
+import Data.List.Any as Any
+open import Data.Product
+open import Function
+open import Function.Inverse using (_⇿_)
+open import Relation.Binary.HeterogeneousEquality as H
+  using () renaming (_≅_ to _≅H_)
+open import Relation.Binary.PropositionalEquality as P using (_≡_)
+
+open Any.Membership-≡
+
+open import TotalParserCombinators.Derivative as D using (D)
+import TotalParserCombinators.InitialBag as I
 open import TotalParserCombinators.Parser
+open import TotalParserCombinators.Semantics
 
--- Definition of the derivative and the parser backend.
+------------------------------------------------------------------------
+-- The backend
 
-open import TotalParserCombinators.BreadthFirst.Derivative public
-  using (D; D-bag; parse)
+-- Parsing: x ∈ parse p s  iff  x ∈ p · s.
 
--- The parser is sound and complete with respect to the semantics.
+parse : ∀ {Tok R xs} → Parser Tok R xs → List Tok → List R
+parse {xs = xs} p []      = xs
+parse           p (t ∷ s) = parse (D t p) s
 
-open import TotalParserCombinators.BreadthFirst.SoundComplete public
-  using (sound; complete; D-sound; D-complete)
+------------------------------------------------------------------------
+-- Correctness
 
--- A proof showing that the breadth-first backend does not introduce
--- any unneeded ambiguity.
+-- The backend is sound with respect to the semantics.
 
-open import TotalParserCombinators.BreadthFirst.LeftInverse public
-  using (complete∘sound)
+sound : ∀ {Tok R xs x} {p : Parser Tok R xs} (s : List Tok) →
+        x ∈ parse p s → x ∈ p · s
+sound []      x∈p = I.sound _ x∈p
+sound (t ∷ s) x∈p = D.sound _ (sound s x∈p)
 
--- A proof showing that the breadth-first backend does not remove any
--- ambiguity.
+-- The backend is complete with respect to the semantics.
 
-open import TotalParserCombinators.BreadthFirst.RightInverse public
-  using (sound∘complete)
+complete : ∀ {Tok R xs x} {p : Parser Tok R xs} (s : List Tok) →
+           x ∈ p · s → x ∈ parse p s
+complete []      x∈p = I.complete x∈p
+complete (t ∷ s) x∈p = complete s (D.complete x∈p)
 
--- Some additional lemmas.
+-- The backend does not introduce any unneeded ambiguity.
+--
+-- The proof complete is a left inverse of sound, so the (finite) type
+-- x ∈ parse p s contains at most as many proofs as x ∈ p · s. In
+-- other words, the output of parse p s can only contain n copies of x
+-- if there are at least n distinct parse trees in x ∈ p · s.
 
-open import TotalParserCombinators.BreadthFirst.Lemmas public
+complete∘sound : ∀ {Tok R xs x} s
+                 (p : Parser Tok R xs) (x∈p : x ∈ parse p s) →
+                 complete s (sound s x∈p) ≡ x∈p
+complete∘sound []      p x∈p = I.complete∘sound p x∈p
+complete∘sound (t ∷ s) p x∈p rewrite D.complete∘sound p (sound s x∈p) =
+  complete∘sound s (D t p) x∈p
+
+-- The backend does not remove any ambiguity.
+--
+-- The proof complete is a right inverse of sound, which implies that
+-- the (finite) type x ∈ parse p s contains at least as many proofs as
+-- x ∈ p · s. In other words, if the output of parse p s contains n
+-- copies of x, then there are at most n distinct parse trees in
+-- x ∈ p · s.
+
+sound∘complete : ∀ {Tok R xs x} {p : Parser Tok R xs}
+                 (s : List Tok) (x∈p : x ∈ p · s) →
+                 sound s (complete s x∈p) ≡ x∈p
+sound∘complete []      x∈p = I.sound∘complete x∈p
+sound∘complete (t ∷ s) x∈p
+  rewrite sound∘complete s (D.complete x∈p) = D.sound∘complete x∈p
+
+-- The backend is correct.
+
+correct : ∀ {Tok R xs x s} {p : Parser Tok R xs} →
+          x ∈ p · s ⇿ x ∈ parse p s
+correct {s = s} {p} = record
+  { to         = P.→-to-⟶ $ complete s
+  ; from       = P.→-to-⟶ $ sound s
+  ; inverse-of = record
+    { left-inverse-of  = sound∘complete s
+    ; right-inverse-of = complete∘sound s p
+    }
+  }
+
+------------------------------------------------------------------------
+-- An observation
+
+-- The worst-case complexity of the backend is /at least/ exponential
+-- in the size of the input string. There is a (finite) parser p whose
+-- derivative is p ∣ p (for any token). The n-th derivative thus
+-- contains (at least) 2^n outermost occurrences of _∣_, and these
+-- occurrences have to be traversed to compute the initial bag of the
+-- n-th derivative.
+
+inefficient : ∀ {Tok R} →
+              ∃ λ (p : Parser Tok R []) → ∀ t → D t p ≅H p ∣ p
+inefficient {R = R} = (fail {R = R} >>= (λ _ → fail) , λ t → H.refl)

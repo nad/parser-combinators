@@ -15,8 +15,8 @@ open import Relation.Binary.Product.Pointwise
 
 open RawMonadPlus List.monadPlus using (_⊗_)
 
-open import TotalParserCombinators.BreadthFirst hiding (correct)
 open import TotalParserCombinators.Congruence using (_≈[_]P_; _≅P_)
+open import TotalParserCombinators.Derivative using (D)
 open import TotalParserCombinators.Parser
 import TotalParserCombinators.Pointwise as Pointwise
 open import TotalParserCombinators.Semantics using (_∈_·_)
