@@ -196,13 +196,13 @@ private
       helper′ nothing nothing p₁ p₂ _ _ refl refl = _ , _ , (
         p₁ ⊛ p₂  ∎)
       helper′ (just fs) nothing p₁ p₂ _ (_   , p₂′ , p₂≅p₂′) refl refl
-        with BSEq.empty-unique $ I.same-bag/set $ C.sound $ sym p₂≅p₂′
+        with BSEq.empty-unique $ I.cong $ C.sound $ sym p₂≅p₂′
       helper′ (just fs) nothing p₁ p₂ _ (.[] , p₂′ , p₂≅p₂′) refl refl
         | refl = _ , _ , (
                  p₁ ⊛ p₂   ≅⟨ [ ◌ - ◌ - ○ - ○ ] ♭ p₁ ∎ ⊛ p₂≅p₂′ ⟩
                  p₁ ⊛ p₂′  ∎)
       helper′ nothing (just xs) p₁ p₂ (_   , p₁′ , p₁≅p₁′) _ refl refl
-        with BSEq.empty-unique $ I.same-bag/set $ C.sound $ sym p₁≅p₁′
+        with BSEq.empty-unique $ I.cong $ C.sound $ sym p₁≅p₁′
       helper′ nothing (just xs) p₁ p₂ (.[] , p₁′ , p₁≅p₁′) _ refl refl
         | refl = _ , _ , (
                  p₁  ⊛ p₂  ≅⟨ [ ○ - ○ - ◌ - ◌ ] p₁≅p₁′ ⊛ (♭ p₂ ∎) ⟩
@@ -288,7 +288,7 @@ private
 mutual
 
   simplify : ∀ {Tok R xs} → Parser Tok R xs → Parser Tok R xs
-  simplify p = cast (I.same-bag/set $ C.sound $ sym $ proj₂ simp)
+  simplify p = cast (I.cong $ C.sound $ sym $ proj₂ simp)
                     (simplify↓ (proj₁ simp))
     where simp = proj₂ $ simplify₁ p
 

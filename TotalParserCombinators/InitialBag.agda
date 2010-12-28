@@ -229,10 +229,10 @@ correct {p = p} = record
 ------------------------------------------------------------------------
 -- Equal parsers have equal initial bags/sets
 
-same-bag/set : ∀ {k Tok R xs₁ xs₂}
-                 {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
-               p₁ ≈[ k ] p₂ → xs₁ List-≈[ k ] xs₂
-same-bag/set {xs₁ = xs₁} {xs₂} {p₁} {p₂} p₁≈p₂ {x} =
+cong : ∀ {k Tok R xs₁ xs₂}
+         {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
+       p₁ ≈[ k ] p₂ → initial-bag p₁ List-≈[ k ] initial-bag p₂
+cong {xs₁ = xs₁} {xs₂} {p₁} {p₂} p₁≈p₂ {x} =
   (x ∈ xs₁)    ⇿⟨ sym correct ⟩
   x ∈ p₁ · []  ≈⟨ p₁≈p₂ ⟩
   x ∈ p₂ · []  ⇿⟨ correct ⟩

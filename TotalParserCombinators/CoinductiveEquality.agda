@@ -55,7 +55,7 @@ complete : ∀ {k Tok R xs₁ xs₂}
              {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
            p₁ ≈[ k ] p₂ → p₁ ≈[ k ]c p₂
 complete p₁≈p₂ =
-  (λ {_} → I.same-bag/set p₁≈p₂) ∷ λ t → ♯ complete (D-cong p₁≈p₂)
+  (λ {_} → I.cong p₁≈p₂) ∷ λ t → ♯ complete (D-cong p₁≈p₂)
 
 correct : ∀ {k Tok R xs₁ xs₂}
             {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →

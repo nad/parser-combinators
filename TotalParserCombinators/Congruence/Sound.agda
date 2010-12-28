@@ -106,39 +106,42 @@ private
 ------------------------------------------------------------------------
 -- Equality is closed under initial-bag
 
-same-bag/set : ∀ {k Tok R xs₁ xs₂}
-                 {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
-               p₁ ≈[ k ]P p₂ → initial-bag p₁ List-≈[ k ] initial-bag p₂
-same-bag/set (xs₁≈xs₂ ∷ Dp₁≈Dp₂)   = xs₁≈xs₂
-same-bag/set (p ∎)                 = BSMonoid.refl
-same-bag/set (p₁ ≈⟨ p₁≈p₂ ⟩ p₂≈p₃) = _ ≈⟨ same-bag/set p₁≈p₂ ⟩′ same-bag/set p₂≈p₃
-same-bag/set (p₁ ≅⟨ p₁≅p₂ ⟩ p₂≈p₃) = _ ⇿⟨ same-bag/set p₁≅p₂ ⟩  same-bag/set p₂≈p₃
-same-bag/set (sym p₁≈p₂)           = sym′ (same-bag/set p₁≈p₂)
-same-bag/set (return x₁≡x₂)        = BSMonoid.reflexive $ P.cong [_] x₁≡x₂
-same-bag/set fail                  = BSMonoid.refl
-same-bag/set token                 = BSMonoid.refl
-same-bag/set (p₁≈p₃ ∣ p₂≈p₄)       = BSMonoid.∙-cong (same-bag/set p₁≈p₃) (same-bag/set p₂≈p₄)
-same-bag/set (f₁≗f₂ <$> p₁≈p₂)     = BSEq.map-cong f₁≗f₂ $ same-bag/set p₁≈p₂
-same-bag/set (nonempty p₁≈p₂)      = BSMonoid.refl
+initial-bag-cong :
+  ∀ {k Tok R xs₁ xs₂} {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
+  p₁ ≈[ k ]P p₂ → initial-bag p₁ List-≈[ k ] initial-bag p₂
+initial-bag-cong (xs₁≈xs₂ ∷ Dp₁≈Dp₂)   = xs₁≈xs₂
+initial-bag-cong (p ∎)                 = BSMonoid.refl
+initial-bag-cong (p₁ ≈⟨ p₁≈p₂ ⟩ p₂≈p₃) = _ ≈⟨ initial-bag-cong p₁≈p₂ ⟩′ initial-bag-cong p₂≈p₃
+initial-bag-cong (p₁ ≅⟨ p₁≅p₂ ⟩ p₂≈p₃) = _ ⇿⟨ initial-bag-cong p₁≅p₂ ⟩  initial-bag-cong p₂≈p₃
+initial-bag-cong (sym p₁≈p₂)           = sym′ (initial-bag-cong p₁≈p₂)
+initial-bag-cong (return x₁≡x₂)        = BSMonoid.reflexive $ P.cong [_] x₁≡x₂
+initial-bag-cong fail                  = BSMonoid.refl
+initial-bag-cong token                 = BSMonoid.refl
+initial-bag-cong (p₁≈p₃ ∣ p₂≈p₄)       = BSMonoid.∙-cong (initial-bag-cong p₁≈p₃) (initial-bag-cong p₂≈p₄)
+initial-bag-cong (f₁≗f₂ <$> p₁≈p₂)     = BSEq.map-cong f₁≗f₂ $ initial-bag-cong p₁≈p₂
+initial-bag-cong (nonempty p₁≈p₂)      = BSMonoid.refl
 
-same-bag/set (cast {xs₁ = xs₁} {xs₂ = xs₂}
-                   {xs₁′ = xs₁′} {xs₂′ = xs₂′}
-                   {xs₁≈xs₁′ = xs₁≈xs₁′} {xs₂≈xs₂′} p₁≈p₂) {x} =
+initial-bag-cong (cast {xs₁  = xs₁}  {xs₂  = xs₂}
+                       {xs₁′ = xs₁′} {xs₂′ = xs₂′}
+                       {xs₁≈xs₁′ = xs₁≈xs₁′} {xs₂≈xs₂′ = xs₂≈xs₂′}
+                       p₁≈p₂) {x} =
   x ∈ xs₁′  ⇿⟨ sym′ xs₁≈xs₁′ ⟩
-  x ∈ xs₁   ≈⟨ same-bag/set p₁≈p₂ ⟩′
+  x ∈ xs₁   ≈⟨ initial-bag-cong p₁≈p₂ ⟩′
   x ∈ xs₂   ⇿⟨ xs₂≈xs₂′ ⟩
   x ∈ xs₂′  ∎′
 
-same-bag/set ([ nothing          - _       ] p₁≈p₃ ⊛ p₂≈p₄)     = BSMonoid.refl
-same-bag/set ([ just (xs₁ , xs₂) - just _  ] p₁≈p₃ ⊛ p₂≈p₄)     = ⊛flatten-lemma xs₁ xs₂ (same-bag/set p₁≈p₃) (same-bag/set p₂≈p₄)
-same-bag/set ([ just (xs₁ , xs₂) - nothing ] p₁≈p₃ ⊛ p₂≈p₄) {x} =
+initial-bag-cong ([ nothing          - _       ] p₁≈p₃ ⊛ p₂≈p₄)     = BSMonoid.refl
+initial-bag-cong ([ just (xs₁ , xs₂) - just _  ] p₁≈p₃ ⊛ p₂≈p₄)     = ⊛flatten-lemma xs₁ xs₂
+                                                                        (initial-bag-cong p₁≈p₃) (initial-bag-cong p₂≈p₄)
+initial-bag-cong ([ just (xs₁ , xs₂) - nothing ] p₁≈p₃ ⊛ p₂≈p₄) {x} =
   x ∈ [] ⊛flatten xs₁  ⇿⟨ []-⊛flatten xs₁ ⟩
   x ∈ []               ⇿⟨ sym′ $ []-⊛flatten xs₂ ⟩
   x ∈ [] ⊛flatten xs₂  ∎′
 
-same-bag/set ([ nothing        - _       ] p₁≈p₃ >>= p₂≈p₄)     = BSMonoid.refl
-same-bag/set ([ just (f₁ , f₂) - just _  ] p₁≈p₃ >>= p₂≈p₄)     = bind-lemma f₁ f₂ (same-bag/set p₁≈p₃) (λ x → same-bag/set (p₂≈p₄ x))
-same-bag/set ([ just (f₁ , f₂) - nothing ] p₁≈p₃ >>= p₂≈p₄) {x} =
+initial-bag-cong ([ nothing        - _       ] p₁≈p₃ >>= p₂≈p₄)     = BSMonoid.refl
+initial-bag-cong ([ just (f₁ , f₂) - just _  ] p₁≈p₃ >>= p₂≈p₄)     = bind-lemma f₁ f₂
+                                                                        (initial-bag-cong p₁≈p₃) (λ x → initial-bag-cong (p₂≈p₄ x))
+initial-bag-cong ([ just (f₁ , f₂) - nothing ] p₁≈p₃ >>= p₂≈p₄) {x} =
   x ∈ bind nothing f₁  ⇿⟨ bind-nothing f₁ ⟩
   x ∈ []               ⇿⟨ sym′ $ bind-nothing f₂ ⟩
   x ∈ bind nothing f₂  ∎′
@@ -169,8 +172,8 @@ D-cong ([_-_]_⊛_ nothing (just (fs₁ , fs₂)) {p₁} {p₂} {p₃} {p₄} p�
   D t (p₁ ⊛ p₂)                                               ≅⟨ D.D-⊛ p₁ p₂ ⟩
     D t (♭ p₁) ⊛ ♭? p₂ ∣ return⋆ (flatten fs₁) ⊛ D t (♭? p₂)  ≅⟨ [ ○ - ◌ - ○ - ○ ] D t (♭ p₁) ∎ ⊛ (♭? p₂ ∎) ∣ (_ ∎) ⟩
   ♯ D t (♭ p₁) ⊛ ♭? p₂ ∣ return⋆ (flatten fs₁) ⊛ D t (♭? p₂)  ≈⟨ [ nothing - just (○ , ○) ] ♯ D-cong (♭ p₁≈p₃) ⊛ p₂≈p₄ ∣
-                                                                 [ just (○ , ○) - just (○ , ○) ] Return⋆.cong (same-bag/set (♭ p₁≈p₃)) ⊛
-                                                                                                 D-cong p₂≈p₄ ⟩
+                                                                 [ just (○ , ○) - just (○ , ○) ]
+                                                                   Return⋆.cong (initial-bag-cong (♭ p₁≈p₃)) ⊛ D-cong p₂≈p₄ ⟩
   ♯ D t (♭ p₃) ⊛ ♭? p₄ ∣ return⋆ (flatten fs₂) ⊛ D t (♭? p₄)  ≅⟨ [ ◌ - ○ - ○ - ○ ] D t (♭ p₃) ∎ ⊛ (♭? p₄ ∎) ∣ (_ ∎) ⟩
     D t (♭ p₃) ⊛ ♭? p₄ ∣ return⋆ (flatten fs₂) ⊛ D t (♭? p₄)  ≅⟨ sym $ D.D-⊛ p₃ p₄ ⟩
   D t (p₃ ⊛ p₄)                                               ∎
@@ -187,7 +190,7 @@ D-cong ([_-_]_⊛_ (just _) nothing {p₁} {p₂} {p₃} {p₄} p₁≈p₃ p₂
 D-cong ([_-_]_⊛_ (just _) (just (fs₁ , fs₂)) {p₁} {p₂} {p₃} {p₄} p₁≈p₃ p₂≈p₄) {t} =
   D t (p₁ ⊛ p₂)                                              ≅⟨ D.D-⊛ p₁ p₂ ⟩
   D t (♭? p₁) ⊛ ♭? p₂ ∣ return⋆ (flatten fs₁) ⊛ D t (♭? p₂)  ≈⟨ [ just (○ , ○) - just (○ , ○) ] D-cong p₁≈p₃ ⊛ p₂≈p₄ ∣
-                                                                [ just (○ , ○) - just (○ , ○) ] Return⋆.cong (same-bag/set p₁≈p₃) ⊛
+                                                                [ just (○ , ○) - just (○ , ○) ] Return⋆.cong (initial-bag-cong p₁≈p₃) ⊛
                                                                                                 D-cong p₂≈p₄ ⟩
   D t (♭? p₃) ⊛ ♭? p₄ ∣ return⋆ (flatten fs₂) ⊛ D t (♭? p₄)  ≅⟨ sym $ D.D-⊛ p₃ p₄ ⟩
   D t (p₃ ⊛ p₄)                                              ∎
@@ -201,7 +204,7 @@ D-cong ([_-_]_>>=_ nothing (just (xs₁ , xs₂)) {p₁} {p₂} {p₃} {p₄} p�
                                                                              (_ ∎) ⟩
   ♯ D t (♭ p₁) >>= (♭? ∘ p₂) ∣ return⋆ (flatten xs₁) >>= (D t ∘ ♭? ∘ p₂)  ≈⟨ [ nothing - just (○ , ○) ] ♯ D-cong (♭ p₁≈p₃) >>= p₂≈p₄ ∣
                                                                              [ just (○ , ○) - just (○ , ○) ]
-                                                                               Return⋆.cong (same-bag/set (♭ p₁≈p₃)) >>=
+                                                                               Return⋆.cong (initial-bag-cong (♭ p₁≈p₃)) >>=
                                                                                (λ x → D-cong (p₂≈p₄ x)) ⟩
   ♯ D t (♭ p₃) >>= (♭? ∘ p₄) ∣ return⋆ (flatten xs₂) >>= (D t ∘ ♭? ∘ p₄)  ≅⟨ [ ◌ - ○ - ○ - ○ ] D t (♭ p₃) ∎ >>= (λ x → ♭? (p₄ x) ∎) ∣
                                                                              (_ ∎) ⟩
@@ -222,7 +225,7 @@ D-cong ([_-_]_>>=_ (just _) (just (xs₁ , xs₂)) {p₁} {p₂} {p₃} {p₄} p
   D t (p₁ >>= p₂)                                                        ≅⟨ D.D->>= p₁ p₂ ⟩
   D t (♭? p₁) >>= (♭? ∘ p₂) ∣ return⋆ (flatten xs₁) >>= (D t ∘ ♭? ∘ p₂)  ≈⟨ [ just (○ , ○) - just (○ , ○) ] D-cong p₁≈p₃ >>= p₂≈p₄ ∣
                                                                             [ just (○ , ○) - just (○ , ○) ]
-                                                                              Return⋆.cong (same-bag/set p₁≈p₃) >>=
+                                                                              Return⋆.cong (initial-bag-cong p₁≈p₃) >>=
                                                                               (λ x → D-cong (p₂≈p₄ x)) ⟩
   D t (♭? p₃) >>= (♭? ∘ p₄) ∣ return⋆ (flatten xs₂) >>= (D t ∘ ♭? ∘ p₄)  ≅⟨ sym $ D.D->>= p₃ p₄ ⟩
   D t (p₃ >>= p₄)                                                        ∎
@@ -240,5 +243,4 @@ sound = CE.sound ∘ sound′
              {p₁ : Parser Tok R xs₁}
              {p₂ : Parser Tok R xs₂} →
            p₁ ≈[ k ]P p₂ → p₁ ≈[ k ]c p₂
-  sound′ p₁≈p₂ =
-    same-bag/set p₁≈p₂ ∷ λ t → ♯ sound′ (D-cong p₁≈p₂)
+  sound′ p₁≈p₂ = initial-bag-cong p₁≈p₂ ∷ λ t → ♯ sound′ (D-cong p₁≈p₂)

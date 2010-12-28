@@ -91,8 +91,7 @@ lift-cong {k} {xs₁ = xs₁} {xs₁′} {xs₂} {xs₂′} {p₁} {p₁′} {p�
   open C using (_≅⟨_⟩_; _≈⟨_⟩_; _∎; sym; _∷_)
 
   lemma : (xs₁ ∙ xs₂) List-≈[ k ] (xs₁′ ∙ xs₂′)
-  lemma = I.same-bag/set (CS.sound p₁≈p₁′) ∙-cong
-          I.same-bag/set (CS.sound p₂≈p₂′)
+  lemma = I.cong (CS.sound p₁≈p₁′) ∙-cong I.cong (CS.sound p₂≈p₂′)
 
 -- Lifts a property from _∙_ to lift. For examples of its use, see
 -- TotalParserCombinators.{And,AsymmetricChoice,Not}.
