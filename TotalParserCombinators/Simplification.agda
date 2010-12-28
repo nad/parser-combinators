@@ -268,8 +268,6 @@ private
 -- extra traversals have been implemented to satisfy Agda's
 -- termination checker; they could perhaps be avoided.
 --
--- One cast constructor is added for every delay constructor.
---
 -- Note that simplifications in an upper layer do not get to take
 -- advantage of simplifications performed in lower layers. Consider
 -- ♯ p ⊛ token, for instance. If p can be simplified to fail, then one
@@ -291,33 +289,36 @@ mutual
 
   private
 
-    simplify≡ : ∀ {Tok R xs} → Parser Tok R xs → Parser Tok R xs
-    simplify≡ p =
-      cast (I.cong $ C.sound $ sym $ proj₂ $ proj₂ $ simplify₁ p)
-           (simplify p)
-
     simplify↓ : ∀ {Tok R xs} → Parser Tok R xs → Parser Tok R xs
     simplify↓ (return x)       = return x
     simplify↓ fail             = fail
     simplify↓ token            = token
     simplify↓ (p₁ ∣ p₂)        = simplify↓ p₁ ∣ simplify↓ p₂
     simplify↓ (f <$> p)        = f <$> simplify↓ p
-    simplify↓ (p₁ ⊛ p₂)        = simplify↓∞ p₁ ⊛ simplify↓∞ p₂
-    simplify↓ (p₁ >>= p₂)      = simplify↓∞ p₁ >>= λ x → simplify↓∞ (p₂ x)
     simplify↓ (nonempty p)     = nonempty (simplify↓ p)
     simplify↓ (cast xs₁≈xs₂ p) = cast xs₁≈xs₂ (simplify↓ p)
+    simplify↓ (p₁ ⊛ p₂)        with forced? p₁ | forced? p₂
+    ... | just xs | just fs =   simplify↓      p₁  ⊛   simplify↓      p₂
+    ... | just xs | nothing =   simplify↓      p₁  ⊛ ♯ simplify    (♭ p₂)
+    ... | nothing | just fs = ♯ simplify    (♭ p₁) ⊛   simplify↓      p₂
+    ... | nothing | nothing = ♯ simplify-[] (♭ p₁) ⊛ ♯ simplify-[] (♭ p₂)
+    simplify↓ (p₁ >>= p₂)      with forced? p₁ | forced?′ p₂
+    ... | just f  | just xs =   simplify↓      p₁  >>= λ x →   simplify↓      (p₂ x)
+    ... | just f  | nothing =   simplify↓      p₁  >>= λ x → ♯ simplify    (♭ (p₂ x))
+    ... | nothing | just xs = ♯ simplify    (♭ p₁) >>= λ x →   simplify↓      (p₂ x)
+    ... | nothing | nothing = ♯ simplify-[] (♭ p₁) >>= λ x → ♯ simplify-[] (♭ (p₂ x))
 
-    simplify↓∞ : ∀ {Tok R R′ xs} {m : Maybe R′} →
-                 ∞⟨ m ⟩Parser Tok R xs → ∞⟨ m ⟩Parser Tok R xs
-    simplify↓∞ {m = nothing} p = ♯ simplify≡ (♭ p)
-    simplify↓∞ {m = just _}  p =   simplify↓    p
+    simplify-[] : ∀ {Tok R} → Parser Tok R [] → Parser Tok R []
+    simplify-[] p =
+      simplify↓ (P.subst (Parser _ _) ([]-lemma p) $
+                   proj₁ $ proj₂ $ simplify₁ p)
+
+    []-lemma : ∀ {Tok R} (p : Parser Tok R []) →
+               proj₁ (simplify₁ p) ≡ []
+    []-lemma = BSEq.empty-unique ∘ I.cong ∘ C.sound ∘
+                 sym ∘ proj₂ ∘ proj₂ ∘ simplify₁
 
 -- The simplifier is correct.
-
-private
-
-  dup : {A : Set} → A → Maybe A ^ 2
-  dup x = (just x , just x)
 
 mutual
 
@@ -330,12 +331,6 @@ mutual
 
   private
 
-    correct≡ : ∀ {Tok R xs} (p : Parser Tok R xs) → simplify≡ p ≅P p
-    correct≡ p =
-      cast _ (simplify p)  ≅⟨ Cast.correct ⟩
-      simplify p           ≅⟨ correct p ⟩
-      p                    ∎
-
     correct↓ : ∀ {Tok R xs} (p : Parser Tok R xs) → simplify↓ p ≅P p
     correct↓ (return x)       = return x ∎
     correct↓ fail             = fail ∎
@@ -344,13 +339,23 @@ mutual
     correct↓ (f <$> p)        = (λ _ → refl) <$> correct↓ p
     correct↓ (nonempty p)     = nonempty (correct↓ p)
     correct↓ (cast xs₁≈xs₂ p) = cast (correct↓ p)
+    correct↓ (p₁ ⊛ p₂)        with forced? p₁ | forced? p₂
+    ... | just xs | just fs = [ just (○ , ○) - just (○ , ○) ]   correct↓      p₁  ⊛   correct↓      p₂
+    ... | just xs | nothing = [ just (○ , ○) - nothing      ]   correct↓      p₁  ⊛ ♯ correct    (♭ p₂)
+    ... | nothing | just fs = [ nothing      - just (○ , ○) ] ♯ correct    (♭ p₁) ⊛   correct↓      p₂
+    ... | nothing | nothing = [ nothing      - nothing      ] ♯ correct-[] (♭ p₁) ⊛ ♯ correct-[] (♭ p₂)
+    correct↓ (p₁ >>= p₂)      with forced? p₁ | forced?′ p₂
+    ... | just f  | just xs = [ just (○ , ○) - just (○ , ○) ]   correct↓      p₁  >>= λ x →   correct↓      (p₂ x)
+    ... | just f  | nothing = [ just (○ , ○) - nothing      ]   correct↓      p₁  >>= λ x → ♯ correct    (♭ (p₂ x))
+    ... | nothing | just xs = [ nothing      - just (○ , ○) ] ♯ correct    (♭ p₁) >>= λ x →   correct↓      (p₂ x)
+    ... | nothing | nothing = [ nothing      - nothing      ] ♯ correct-[] (♭ p₁) >>= λ x → ♯ correct-[] (♭ (p₂ x))
 
-    correct↓ (_⊛_ {fs = nothing} {xs = nothing} p₁ p₂) = [ nothing       - nothing       ] ♯ correct≡ (♭ p₁) ⊛ ♯ correct≡ (♭ p₂)
-    correct↓ (_⊛_ {fs = nothing} {xs = just xs} p₁ p₂) = [ just (dup xs) - nothing       ]   correct↓    p₁  ⊛ ♯ correct≡ (♭ p₂)
-    correct↓ (_⊛_ {fs = just fs} {xs = nothing} p₁ p₂) = [ nothing       - just (dup fs) ] ♯ correct≡ (♭ p₁) ⊛   correct↓    p₂
-    correct↓ (_⊛_ {fs = just fs} {xs = just xs} p₁ p₂) = [ just (dup xs) - just (dup fs) ]   correct↓    p₁  ⊛   correct↓    p₂
-
-    correct↓ (_>>=_ {xs = nothing} {f = nothing} p₁ p₂) = [ nothing      - nothing ] ♯ correct≡ (♭ p₁) >>= λ x → ♯ correct≡ (♭ (p₂ x))
-    correct↓ (_>>=_ {xs = nothing} {f = just f } p₁ p₂) = [ just (dup f) - nothing ]   correct↓    p₁  >>= λ x → ♯ correct≡ (♭ (p₂ x))
-    correct↓ (_>>=_ {xs = just xs} {f = nothing} p₁ p₂) = [ nothing      - just (dup xs) ] ♯ correct≡ (♭ p₁) >>= λ x → correct↓ (p₂ x)
-    correct↓ (_>>=_ {xs = just xs} {f = just f } p₁ p₂) = [ just (dup f) - just (dup xs) ]   correct↓    p₁  >>= λ x → correct↓ (p₂ x)
+    correct-[] : ∀ {Tok R} (p : Parser Tok R []) → simplify-[] p ≅P p
+    correct-[] p =
+      simplify-[] p         ≅⟨ correct↓ (cast-[] $ proj₁ simp) ⟩
+      cast-[] (proj₁ simp)  ≅⟨ Subst.correct ([]-lemma p) ⟩
+      proj₁ simp            ≅⟨ sym $ proj₂ simp ⟩
+      p                     ∎
+      where
+      simp    = proj₂ $ simplify₁ p
+      cast-[] = P.subst (Parser _ _) ([]-lemma p)
