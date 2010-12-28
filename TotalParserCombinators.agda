@@ -17,6 +17,10 @@ import TotalRecognisers
 import TotalParserCombinators.Parser
 import TotalParserCombinators.Semantics
 
+-- Forcing of parsers (can be used for inspection/debugging purposes).
+
+import TotalParserCombinators.Force
+
 -- Some lemmas about initial bags.
 
 import TotalParserCombinators.InitialBag
