@@ -35,28 +35,27 @@ open import TotalParserCombinators.Semantics using (parser)
 -- Simplification
 
 -- The function simplify₁ simplifies the first "layer" of a parser,
--- down to the first occurrences of ♯_ (which are removed). The
--- following simplifications are applied in a bottom-up manner:
+-- down to the first occurrences of ♯_. Right-hand sides of bind are
+-- not simplified, except if the return x >>= p → p x rule is
+-- triggered. The following simplifications are applied in a bottom-up
+-- manner (some of them also if one argument is delayed):
 --
--- f <$> fail          → fail
--- f <$> return x      → return (f x)
--- fail         ∣ p    → p
--- p            ∣ fail → p
--- token >>= p₁ ∣
---   token >>= p₂      → token >>= (λ t → ♭? (p₁ t) ∣ ♭? (p₂ t))  (*)
--- fail     ⊛ p        → fail
--- p        ⊛ fail     → fail
--- return f ⊛ return x → return (f x)
--- fail     >>= p      → fail
--- return x >>= p      → p x
--- nonempty fail       → fail
--- cast eq p           → p
+-- f <$> fail                  → fail
+-- f <$> return x              → return (f x)
+-- fail         ∣ p            → p
+-- p            ∣ fail         → p
+-- token >>= p₁ ∣ token >>= p₂ → token >>= λ t → ♭? (p₁ t) ∣ ♭? (p₂ t)
+-- fail     ⊛ p                → fail
+-- p        ⊛ fail             → fail
+-- return f ⊛ return x         → return (f x)
+-- fail     >>= p              → fail
+-- return x >>= p              → p x
+-- nonempty fail               → fail
+-- cast eq p                   → p
 --
--- (*) Also if either of the two token combinators are delayed.
---
--- An example of a possible future addition:
---
--- (p₁ >>= p₂) >>= p₃ → ♭? p₁ >>= λ x → ♭? (p₂ x) >>= (♭? ∘ p₃)
+-- Some ♯_'s may be removed, but care is taken to ensure that
+-- non-simplified parsers in the result are either delayed or on the
+-- right-hand side of a bind constructor.
 
 private
  mutual
@@ -139,11 +138,9 @@ private
                                                           ♭?-cong (P.sym eq₂) (H.≡-subst-removable (∞⟨ f₂ ⟩Parser Tok Tok) eq₂ p₂₁)
                                                           >>= (λ t → ♭? (p₂₂ t) ∎) ⟩
       ♭? p₁₁ >>= (♭? ∘ p₁₂) ∣ ♭? p₂₁ >>= (♭? ∘ p₂₂)  ≅⟨ [ ○ - ○ - ○ - ○ ]
-                                                          P.subst (λ p → p ≅P token) (P.sym eq₁′) (token ∎) >>=
-                                                          (λ t → ♭? (p₁₂ t) ∎) ∣′
+                                                          P.subst (λ p → p ≅P token) (P.sym eq₁′) (token ∎) >>= (λ t → ♭? (p₁₂ t) ∎) ∣′
                                                         [ ○ - ○ - ○ - ○ ]
-                                                          P.subst (λ p → p ≅P token) (P.sym eq₂′) (token ∎) >>=
-                                                          (λ t → ♭? (p₂₂ t) ∎) ⟩
+                                                          P.subst (λ p → p ≅P token) (P.sym eq₂′) (token ∎) >>= (λ t → ♭? (p₂₂ t) ∎) ⟩
       token >>= (♭? ∘ p₁₂) ∣ token >>= (♭? ∘ p₂₂)    ≅⟨ sym $ Monad.left-distributive token (♭? ∘ p₁₂) (♭? ∘ p₂₂) ⟩
       token >>= (λ t → ♭? (p₁₂ t) ∣ ♭? (p₂₂ t))      ∎)
       where
@@ -204,9 +201,24 @@ private
         (R≡  : R₁ ≡ R₁′) →
         (xs≅ : xs ≅H xs′) →
         ∃₂ λ xs (p′ : Parser _ _ xs) → p₁ ⊛ cast₁ R≡ xs≅ p₂ ≅P p′
-      helper′ fs xs p₁ p₂ (_ , p₁′ , p₁≅p₁′) (_ , p₂′ , p₂≅p₂′)
-              refl refl = _ , _ , (
-        p₁  ⊛ p₂   ≅⟨ [ xs - ○ - fs - ○ ] p₁≅p₁′ ⊛ p₂≅p₂′ ⟩
+      helper′ nothing nothing p₁ p₂ _ _ refl refl = _ , _ , (
+        p₁ ⊛ p₂  ∎)
+      helper′ (just fs) nothing p₁ p₂ _ (_   , p₂′ , p₂≅p₂′) refl refl
+        with BSEq.empty-unique $ I.same-bag/set $ C.sound $ sym p₂≅p₂′
+      helper′ (just fs) nothing p₁ p₂ _ (.[] , p₂′ , p₂≅p₂′) refl refl
+        | refl = _ , _ , (
+                 p₁ ⊛ p₂   ≅⟨ [ ◌ - ◌ - ○ - ○ ] ♭ p₁ ∎ ⊛ p₂≅p₂′ ⟩
+                 p₁ ⊛ p₂′  ∎)
+      helper′ nothing (just xs) p₁ p₂ (_   , p₁′ , p₁≅p₁′) _ refl refl
+        with BSEq.empty-unique $ I.same-bag/set $ C.sound $ sym p₁≅p₁′
+      helper′ nothing (just xs) p₁ p₂ (.[] , p₁′ , p₁≅p₁′) _ refl refl
+        | refl = _ , _ , (
+                 p₁  ⊛ p₂  ≅⟨ [ ○ - ○ - ◌ - ◌ ] p₁≅p₁′ ⊛ (♭ p₂ ∎) ⟩
+                 p₁′ ⊛ p₂  ∎)
+      helper′ (just fs) (just xs)
+              p₁ p₂ (_ , p₁′ , p₁≅p₁′) (_ , p₂′ , p₂≅p₂′) refl refl =
+        _ , _ , (
+        p₁  ⊛ p₂   ≅⟨ [ ○ - ○ - ○ - ○ ] p₁≅p₁′ ⊛ p₂≅p₂′ ⟩
         p₁′ ⊛ p₂′  ∎)
 
   -- • _>>=_:
@@ -222,10 +234,12 @@ private
                                   return x >>= (♭? ∘ p₂)  ≅⟨ Monad.left-identity x (♭? ∘ p₂) ⟩
                                   ♭? (p₂ x)               ≅⟨ p₂x≅p₂x′ ⟩
                                   p₂x′                    ∎)
-  simplify₁ (_>>=_ {xs = xs} {f = f} p₁ p₂)
-      | (_ , p₁′ , p₁≅p₁′)      = _ , _ , (
-                                  p₁  >>= p₂         ≅⟨ [ f - ○ - xs - ○ ] p₁≅p₁′ >>= (λ x → ♭? (p₂ x) ∎) ⟩
-                                  p₁′ >>= (♭? ∘ p₂)  ∎)
+  simplify₁ (p₁ >>= p₂) | (_ , p₁′ , p₁≅p₁′) with forced? p₁
+  ... | just xs = _ , _ , (
+                  p₁  >>= p₂         ≅⟨ [ ○ - ○ - forced?′ p₂ - ○ ] p₁≅p₁′ >>= (λ x → ♭? (p₂ x) ∎) ⟩
+                  p₁′ >>= (♭? ∘ p₂)  ∎)
+  ... | nothing = _ , _ , (
+                  p₁ >>= p₂ ∎)
 
   -- • nonempty:
 
@@ -259,11 +273,9 @@ private
 -- Deep simplification.
 --
 -- The function simplify simplifies the first layer, then it traverses
--- the result and simplifies the following layers, and so on. (TODO:
--- simplify₁ removes the first occurrences of ♯_, so this means that
--- every second layer is not simplified.) The extra traversals have
--- been implemented to satisfy Agda's termination checker; they could
--- perhaps be avoided.
+-- the result and simplifies the following layers, and so on. The
+-- extra traversals have been implemented to satisfy Agda's
+-- termination checker; they could perhaps be avoided.
 --
 -- One cast constructor is added for every delay constructor, plus one
 -- at the top.
