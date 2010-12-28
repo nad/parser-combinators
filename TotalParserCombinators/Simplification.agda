@@ -268,8 +268,7 @@ private
 -- extra traversals have been implemented to satisfy Agda's
 -- termination checker; they could perhaps be avoided.
 --
--- One cast constructor is added for every delay constructor, plus one
--- at the top.
+-- One cast constructor is added for every delay constructor.
 --
 -- Note that simplifications in an upper layer do not get to take
 -- advantage of simplifications performed in lower layers. Consider
@@ -286,26 +285,32 @@ private
 
 mutual
 
-  simplify : ∀ {Tok R xs} → Parser Tok R xs → Parser Tok R xs
-  simplify p = cast (I.cong $ C.sound $ sym $ proj₂ simp)
-                    (simplify↓ (proj₁ simp))
-    where simp = proj₂ $ simplify₁ p
+  simplify : ∀ {Tok R xs} (p : Parser Tok R xs) →
+             Parser Tok R (proj₁ $ simplify₁ p)
+  simplify p = simplify↓ (proj₁ $ proj₂ $ simplify₁ p)
 
-  simplify↓ : ∀ {Tok R xs} → Parser Tok R xs → Parser Tok R xs
-  simplify↓ (return x)       = return x
-  simplify↓ fail             = fail
-  simplify↓ token            = token
-  simplify↓ (p₁ ∣ p₂)        = simplify↓ p₁ ∣ simplify↓ p₂
-  simplify↓ (f <$> p)        = f <$> simplify↓ p
-  simplify↓ (p₁ ⊛ p₂)        = simplify↓′ p₁ ⊛ simplify↓′ p₂
-  simplify↓ (p₁ >>= p₂)      = simplify↓′ p₁ >>= λ x → simplify↓′ (p₂ x)
-  simplify↓ (nonempty p)     = nonempty (simplify↓ p)
-  simplify↓ (cast xs₁≈xs₂ p) = cast xs₁≈xs₂ (simplify↓ p)
+  private
 
-  simplify↓′ : ∀ {Tok R R′ xs} {m : Maybe R′} →
-               ∞⟨ m ⟩Parser Tok R xs → ∞⟨ m ⟩Parser Tok R xs
-  simplify↓′ {m = nothing} p = ♯ simplify (♭ p)
-  simplify↓′ {m = just _}  p =   simplify↓   p
+    simplify≡ : ∀ {Tok R xs} → Parser Tok R xs → Parser Tok R xs
+    simplify≡ p =
+      cast (I.cong $ C.sound $ sym $ proj₂ $ proj₂ $ simplify₁ p)
+           (simplify p)
+
+    simplify↓ : ∀ {Tok R xs} → Parser Tok R xs → Parser Tok R xs
+    simplify↓ (return x)       = return x
+    simplify↓ fail             = fail
+    simplify↓ token            = token
+    simplify↓ (p₁ ∣ p₂)        = simplify↓ p₁ ∣ simplify↓ p₂
+    simplify↓ (f <$> p)        = f <$> simplify↓ p
+    simplify↓ (p₁ ⊛ p₂)        = simplify↓∞ p₁ ⊛ simplify↓∞ p₂
+    simplify↓ (p₁ >>= p₂)      = simplify↓∞ p₁ >>= λ x → simplify↓∞ (p₂ x)
+    simplify↓ (nonempty p)     = nonempty (simplify↓ p)
+    simplify↓ (cast xs₁≈xs₂ p) = cast xs₁≈xs₂ (simplify↓ p)
+
+    simplify↓∞ : ∀ {Tok R R′ xs} {m : Maybe R′} →
+                 ∞⟨ m ⟩Parser Tok R xs → ∞⟨ m ⟩Parser Tok R xs
+    simplify↓∞ {m = nothing} p = ♯ simplify≡ (♭ p)
+    simplify↓∞ {m = just _}  p =   simplify↓    p
 
 -- The simplifier is correct.
 
@@ -318,26 +323,34 @@ mutual
 
   correct : ∀ {Tok R xs} (p : Parser Tok R xs) → simplify p ≅P p
   correct p =
-    cast _ (simplify↓ (proj₁ simp))  ≅⟨ Cast.correct ⟩
-    simplify↓ (proj₁ simp)           ≅⟨ correct↓ (proj₁ simp) ⟩
-    proj₁ simp                       ≅⟨ sym $ proj₂ simp ⟩
-    p                                ∎
+    simplify↓ (proj₁ simp)  ≅⟨ correct↓ (proj₁ simp) ⟩
+    proj₁ simp              ≅⟨ sym $ proj₂ simp ⟩
+    p                       ∎
     where simp = proj₂ $ simplify₁ p
 
-  correct↓ : ∀ {Tok R xs} (p : Parser Tok R xs) → simplify↓ p ≅P p
-  correct↓ (return x)       = return x ∎
-  correct↓ fail             = fail ∎
-  correct↓ token            = token ∎
-  correct↓ (p₁ ∣ p₂)        = correct↓ p₁ ∣′ correct↓ p₂
-  correct↓ (f <$> p)        = (λ _ → refl) <$> correct↓ p
-  correct↓ (nonempty p)     = nonempty (correct↓ p)
-  correct↓ (cast xs₁≈xs₂ p) = cast (correct↓ p)
+  private
 
-  correct↓ (_⊛_   {fs = nothing} {xs = nothing} p₁ p₂) = [ nothing       - nothing       ] ♯ correct (♭ p₁) ⊛ ♯ correct (♭ p₂)
-  correct↓ (_⊛_   {fs = nothing} {xs = just xs} p₁ p₂) = [ just (dup xs) - nothing       ]   correct↓   p₁  ⊛ ♯ correct (♭ p₂)
-  correct↓ (_⊛_   {fs = just fs} {xs = nothing} p₁ p₂) = [ nothing       - just (dup fs) ] ♯ correct (♭ p₁) ⊛   correct↓   p₂
-  correct↓ (_⊛_   {fs = just fs} {xs = just xs} p₁ p₂) = [ just (dup xs) - just (dup fs) ]   correct↓   p₁  ⊛   correct↓   p₂
-  correct↓ (_>>=_ {xs = nothing} {f  = nothing} p₁ p₂) = [ nothing       - nothing       ] ♯ correct (♭ p₁) >>= λ x → ♯ correct (♭ (p₂ x))
-  correct↓ (_>>=_ {xs = nothing} {f  = just f } p₁ p₂) = [ just (dup f)  - nothing       ]   correct↓   p₁  >>= λ x → ♯ correct (♭ (p₂ x))
-  correct↓ (_>>=_ {xs = just xs} {f  = nothing} p₁ p₂) = [ nothing       - just (dup xs) ] ♯ correct (♭ p₁) >>= λ x →   correct↓   (p₂ x)
-  correct↓ (_>>=_ {xs = just xs} {f  = just f } p₁ p₂) = [ just (dup f)  - just (dup xs) ]   correct↓   p₁  >>= λ x →   correct↓   (p₂ x)
+    correct≡ : ∀ {Tok R xs} (p : Parser Tok R xs) → simplify≡ p ≅P p
+    correct≡ p =
+      cast _ (simplify p)  ≅⟨ Cast.correct ⟩
+      simplify p           ≅⟨ correct p ⟩
+      p                    ∎
+
+    correct↓ : ∀ {Tok R xs} (p : Parser Tok R xs) → simplify↓ p ≅P p
+    correct↓ (return x)       = return x ∎
+    correct↓ fail             = fail ∎
+    correct↓ token            = token ∎
+    correct↓ (p₁ ∣ p₂)        = correct↓ p₁ ∣′ correct↓ p₂
+    correct↓ (f <$> p)        = (λ _ → refl) <$> correct↓ p
+    correct↓ (nonempty p)     = nonempty (correct↓ p)
+    correct↓ (cast xs₁≈xs₂ p) = cast (correct↓ p)
+
+    correct↓ (_⊛_ {fs = nothing} {xs = nothing} p₁ p₂) = [ nothing       - nothing       ] ♯ correct≡ (♭ p₁) ⊛ ♯ correct≡ (♭ p₂)
+    correct↓ (_⊛_ {fs = nothing} {xs = just xs} p₁ p₂) = [ just (dup xs) - nothing       ]   correct↓    p₁  ⊛ ♯ correct≡ (♭ p₂)
+    correct↓ (_⊛_ {fs = just fs} {xs = nothing} p₁ p₂) = [ nothing       - just (dup fs) ] ♯ correct≡ (♭ p₁) ⊛   correct↓    p₂
+    correct↓ (_⊛_ {fs = just fs} {xs = just xs} p₁ p₂) = [ just (dup xs) - just (dup fs) ]   correct↓    p₁  ⊛   correct↓    p₂
+
+    correct↓ (_>>=_ {xs = nothing} {f = nothing} p₁ p₂) = [ nothing      - nothing ] ♯ correct≡ (♭ p₁) >>= λ x → ♯ correct≡ (♭ (p₂ x))
+    correct↓ (_>>=_ {xs = nothing} {f = just f } p₁ p₂) = [ just (dup f) - nothing ]   correct↓    p₁  >>= λ x → ♯ correct≡ (♭ (p₂ x))
+    correct↓ (_>>=_ {xs = just xs} {f = nothing} p₁ p₂) = [ nothing      - just (dup xs) ] ♯ correct≡ (♭ p₁) >>= λ x → correct↓ (p₂ x)
+    correct↓ (_>>=_ {xs = just xs} {f = just f } p₁ p₂) = [ just (dup f) - just (dup xs) ]   correct↓    p₁  >>= λ x → correct↓ (p₂ x)
