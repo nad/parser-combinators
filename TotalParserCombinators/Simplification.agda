@@ -28,10 +28,18 @@ import TotalParserCombinators.Congruence.Sound as C
 import TotalParserCombinators.InitialBag as I
 open import TotalParserCombinators.Laws
 open import TotalParserCombinators.Parser
-open import TotalParserCombinators.Semantics using (parser)
 
 ------------------------------------------------------------------------
--- Simplification
+-- Simplification of a single "layer"
+
+-- The result type used for single-layer simplification.
+
+record Simplify₁ {Tok R xs} (p : Parser Tok R xs) : Set₁ where
+  constructor result
+  field
+    {bag}   : List R
+    parser  : Parser Tok R bag
+    correct : p ≅P parser
 
 -- The function simplify₁ simplifies the first "layer" of a parser,
 -- down to the first occurrences of ♯_. Right-hand sides of bind are
@@ -56,58 +64,56 @@ open import TotalParserCombinators.Semantics using (parser)
 -- non-simplified parsers in the result are either delayed or on the
 -- right-hand side of a bind constructor.
 
-private
- mutual
+mutual
 
-  simplify₁ : ∀ {Tok R xs} (p : Parser Tok R xs) →
-              ∃₂ λ xs (p′ : Parser Tok R xs) → p ≅P p′
+  simplify₁ : ∀ {Tok R xs} (p : Parser Tok R xs) → Simplify₁ p
 
   -- • return:
 
-  simplify₁ (return x) = (_ , return x , (return x ∎))
+  simplify₁ (return x) = result _ (return x ∎)
 
   -- • fail:
 
-  simplify₁ fail       = (_ , fail     , (fail ∎))
+  simplify₁ fail       = result _ (fail ∎)
 
   -- • token:
 
-  simplify₁ token      = (_ , token    , (token ∎))
+  simplify₁ token      = result _ (token ∎)
 
   -- • _<$>_:
 
   simplify₁ (f <$> p) with simplify₁ p
-  ... | (._ , fail     , p≅∅)  = _ , _ , (
+  ... | result fail       p≅∅  = result _ (
                                  f <$> p     ≅⟨ (λ _ → refl) <$> p≅∅ ⟩
                                  f <$> fail  ≅⟨ <$>.zero ⟩
                                  fail        ∎)
-  ... | (._ , return x , p≅ε)  = _ , _ , (
+  ... | result (return x) p≅ε  = result _ (
                                  f <$> p         ≅⟨ (λ x → refl {x = f x}) <$> p≅ε ⟩
                                  f <$> return x  ≅⟨ <$>.homomorphism f ⟩
                                  return (f x)    ∎)
-  ... | (_  , p′       , p≅p′) = _ , _ , (
+  ... | result p′         p≅p′ = result _ (
                                  f <$> p   ≅⟨ (λ _ → refl) <$> p≅p′ ⟩
                                  f <$> p′  ∎)
 
   -- • _∣_:
 
   simplify₁ (p₁ ∣ p₂) with simplify₁ p₁ | simplify₁ p₂
-  ... | (._ , fail        , p₁≅∅)
-      | (_  , p₂′         , p₂≅p₂′) = _ , _ , (
+  ... | result fail          p₁≅∅
+      | result p₂′           p₂≅p₂′ = result _ (
                                       p₁   ∣ p₂   ≅⟨ p₁≅∅ ∣′ p₂≅p₂′ ⟩
                                       fail ∣ p₂′  ≅⟨ AdditiveMonoid.left-identity p₂′ ⟩
                                       p₂′         ∎)
-  ... | (_  , p₁′         , p₁≅p₁′)
-      | (._ , fail        , p₂≅∅)   = _ , _ , (
+  ... | result p₁′           p₁≅p₁′
+      | result fail          p₂≅∅   = result _ (
                                       p₁  ∣ p₂    ≅⟨ p₁≅p₁′ ∣′ p₂≅∅ ⟩
                                       p₁′ ∣ fail  ≅⟨ AdditiveMonoid.right-identity p₁′ ⟩
                                       p₁′         ∎)
-  ... | (._ , p₁₁ >>= p₁₂ , p₁≅…)
-      | (._ , p₂₁ >>= p₂₂ , p₂≅…) = let h = helper p₁₁ refl p₁₂ p₂₁ refl p₂₂ in
-                                    _ , _ , (
-                                    p₁          ∣ p₂           ≅⟨ p₁≅… ∣′ p₂≅… ⟩
-                                    p₁₁ >>= p₁₂ ∣ p₂₁ >>= p₂₂  ≅⟨ proj₂ (proj₂ h) ⟩
-                                    proj₁ (proj₂ h)            ∎)
+  ... | result (p₁₁ >>= p₁₂) p₁≅…
+      | result (p₂₁ >>= p₂₂) p₂≅…   = let h = helper p₁₁ refl p₁₂ p₂₁ refl p₂₂ in
+                                      result _ (
+                                      p₁          ∣ p₂           ≅⟨ p₁≅… ∣′ p₂≅… ⟩
+                                      p₁₁ >>= p₁₂ ∣ p₂₁ >>= p₂₂  ≅⟨ Simplify₁.correct h ⟩
+                                      Simplify₁.parser h         ∎)
     where
     helper : ∀ {Tok R₁ R₂ R xs₁ xs₁′ xs₂ xs₂′ f₁ f₂}
              (p₁₁ : ∞⟨ f₁ ⟩Parser Tok R₁ xs₁′)
@@ -116,14 +122,12 @@ private
              (p₂₁ : ∞⟨ f₂ ⟩Parser Tok R₂ xs₂′)
              (eq₂ : xs₂′ ≡ flatten xs₂)
              (p₂₂ : (x : R₂) → ∞⟨ xs₂ ⟩Parser Tok R (apply f₂ x)) →
-             ∃₂ λ xs (p : Parser Tok R xs) →
-                P.subst (∞⟨ f₁ ⟩Parser Tok R₁) eq₁ p₁₁ >>= p₁₂ ∣
-                P.subst (∞⟨ f₂ ⟩Parser Tok R₂) eq₂ p₂₁ >>= p₂₂
-                ≅P p
+             Simplify₁ (P.subst (∞⟨ f₁ ⟩Parser Tok R₁) eq₁ p₁₁ >>= p₁₂ ∣
+                        P.subst (∞⟨ f₂ ⟩Parser Tok R₂) eq₂ p₂₁ >>= p₂₂)
     helper p₁₁ eq₁ p₁₂ p₂₁ eq₂ p₂₂
       with P.inspect (♭? p₁₁) | P.inspect (♭? p₂₁)
     helper {Tok} {f₁ = f₁} {f₂} p₁₁ eq₁ p₁₂ p₂₁ eq₂ p₂₂
-      | token with-≡ eq₁′ | token with-≡ eq₂′ = _ , _ , (
+      | token with-≡ eq₁′ | token with-≡ eq₂′ = result _ (
       cast₁ p₁₁ >>= p₁₂ ∣ cast₂ p₂₁ >>= p₂₂          ≅⟨ [ forced? p₁₁ - ○ - forced?′ p₁₂ - ○ ] Subst.correct∞ eq₁ p₁₁ >>=
                                                                                                (λ t → ♭? (p₁₂ t) ∎) ∣′
                                                         [ forced? p₂₁ - ○ - forced?′ p₂₂ - ○ ] Subst.correct∞ eq₂ p₂₁ >>=
@@ -137,12 +141,12 @@ private
       where
       cast₁ = P.subst (∞⟨ f₁ ⟩Parser Tok Tok) eq₁
       cast₂ = P.subst (∞⟨ f₂ ⟩Parser Tok Tok) eq₂
-    helper _ _ _ _ _ _ | _ | _ = _ , _ , (_ ∎)
+    helper _ _ _ _ _ _ | _ | _ = result _ (_ ∎)
 
-  simplify₁ (p₁ ∣ p₂) | (_  , p₁′ , p₁≅p₁′) | (_  , p₂′ , p₂≅p₂′) =
-     _ , _ , (
-     p₁  ∣ p₂   ≅⟨ p₁≅p₁′ ∣′ p₂≅p₂′ ⟩
-     p₁′ ∣ p₂′  ∎)
+  simplify₁ (p₁ ∣ p₂) | result p₁′ p₁≅p₁′ | result p₂′ p₂≅p₂′ =
+    result _ (
+    p₁  ∣ p₂   ≅⟨ p₁≅p₁′ ∣′ p₂≅p₂′ ⟩
+    p₁′ ∣ p₂′  ∎)
 
   -- • _⊛_:
 
@@ -162,21 +166,19 @@ private
     helper : ∀ {Tok R₁ R₁′ R₂} fs xs {xs′}
                (p₁ : ∞⟨ xs ⟩Parser Tok (R₁ → R₂) (flatten fs))
                (p₂ : ∞⟨ fs ⟩Parser Tok  R₁′      (flatten xs′)) →
-             (∃₂ λ xs (p₁′ : Parser _ _ xs) → ♭? p₁ ≅P p₁′) →
-             (∃₂ λ xs (p₂′ : Parser _ _ xs) → ♭? p₂ ≅P p₂′) →
-             (R≡  : R₁ ≡ R₁′) →
-             (xs≅ : xs ≅H xs′) →
-             ∃₂ λ xs (p′ : Parser _ _ xs) → p₁ ⊛ cast₁ R≡ xs≅ p₂ ≅P p′
-    helper fs xs p₁ p₂ (._ , fail , p₁≅∅) _ refl refl = _ , _ , (
+             Simplify₁ (♭? p₁) → Simplify₁ (♭? p₂) →
+             (R≡ : R₁ ≡ R₁′) (xs≅ : xs ≅H xs′) →
+             Simplify₁ (p₁ ⊛ cast₁ R≡ xs≅ p₂)
+    helper fs xs p₁ p₂ (result fail p₁≅∅) _ refl refl = result _ (
       p₁   ⊛ p₂     ≅⟨ [ xs - ○ - fs - ○ ] p₁≅∅ ⊛ (♭? p₂ ∎) ⟩
       fail ⊛ ♭? p₂  ≅⟨ ApplicativeFunctor.left-zero (♭? p₂) ⟩
       fail          ∎)
-    helper fs xs p₁ p₂ _ (._ , fail , p₂≅∅) refl refl = _ , _ , (
+    helper fs xs p₁ p₂ _ (result fail p₂≅∅) refl refl = result _ (
       p₁    ⊛ p₂    ≅⟨ [ xs - ○ - fs - ○ ] ♭? p₁ ∎ ⊛ p₂≅∅ ⟩
       ♭? p₁ ⊛ fail  ≅⟨ ApplicativeFunctor.right-zero (♭? p₁) ⟩
       fail          ∎)
-    helper fs xs p₁ p₂ (._ , return f , p₁≅ε) (._ , return x , p₂≅ε)
-           refl refl = _ , _ , (
+    helper fs xs p₁ p₂ (result (return f) p₁≅ε) (result (return x) p₂≅ε)
+           refl refl = result _ (
       p₁       ⊛ p₂        ≅⟨ [ xs - ○ - fs - ○ ] p₁≅ε ⊛ p₂≅ε ⟩
       return f ⊛ return x  ≅⟨ ApplicativeFunctor.homomorphism f x ⟩
       return (f x)         ∎)
@@ -187,82 +189,82 @@ private
         ∀ {Tok R₁ R₁′ R₂} fs xs {xs′}
           (p₁ : ∞⟨ xs ⟩Parser Tok (R₁ → R₂) (flatten fs))
           (p₂ : ∞⟨ fs ⟩Parser Tok  R₁′      (flatten xs′)) →
-        (∃₂ λ xs (p₁′ : Parser _ _ xs) → ♭? p₁ ≅P p₁′) →
-        (∃₂ λ xs (p₂′ : Parser _ _ xs) → ♭? p₂ ≅P p₂′) →
-        (R≡  : R₁ ≡ R₁′) →
-        (xs≅ : xs ≅H xs′) →
-        ∃₂ λ xs (p′ : Parser _ _ xs) → p₁ ⊛ cast₁ R≡ xs≅ p₂ ≅P p′
-      helper′ nothing nothing p₁ p₂ _ _ refl refl = _ , _ , (
+        Simplify₁ (♭? p₁) → Simplify₁ (♭? p₂) →
+        (R≡ : R₁ ≡ R₁′) (xs≅ : xs ≅H xs′) →
+        Simplify₁ (p₁ ⊛ cast₁ R≡ xs≅ p₂)
+      helper′ nothing nothing p₁ p₂ _ _ refl refl = result _ (
         p₁ ⊛ p₂  ∎)
-      helper′ (just fs) nothing p₁ p₂ _ (_   , p₂′ , p₂≅p₂′) refl refl
+      helper′ (just fs) nothing p₁ p₂ _ (result p₂′ p₂≅p₂′) refl refl
         with BSEq.empty-unique $ I.cong $ C.sound $ sym p₂≅p₂′
-      helper′ (just fs) nothing p₁ p₂ _ (.[] , p₂′ , p₂≅p₂′) refl refl
-        | refl = _ , _ , (
+      helper′ (just fs) nothing p₁ p₂ _ (result p₂′ p₂≅p₂′) refl refl
+        | refl = result _ (
                  p₁ ⊛ p₂   ≅⟨ [ ◌ - ◌ - ○ - ○ ] ♭ p₁ ∎ ⊛ p₂≅p₂′ ⟩
                  p₁ ⊛ p₂′  ∎)
-      helper′ nothing (just xs) p₁ p₂ (_   , p₁′ , p₁≅p₁′) _ refl refl
+      helper′ nothing (just xs) p₁ p₂ (result p₁′ p₁≅p₁′) _ refl refl
         with BSEq.empty-unique $ I.cong $ C.sound $ sym p₁≅p₁′
-      helper′ nothing (just xs) p₁ p₂ (.[] , p₁′ , p₁≅p₁′) _ refl refl
-        | refl = _ , _ , (
+      helper′ nothing (just xs) p₁ p₂ (result p₁′ p₁≅p₁′) _ refl refl
+        | refl = result _ (
                  p₁  ⊛ p₂  ≅⟨ [ ○ - ○ - ◌ - ◌ ] p₁≅p₁′ ⊛ (♭ p₂ ∎) ⟩
                  p₁′ ⊛ p₂  ∎)
       helper′ (just fs) (just xs)
-              p₁ p₂ (_ , p₁′ , p₁≅p₁′) (_ , p₂′ , p₂≅p₂′) refl refl =
-        _ , _ , (
+              p₁ p₂ (result p₁′ p₁≅p₁′) (result p₂′ p₂≅p₂′) refl refl =
+        result _ (
         p₁  ⊛ p₂   ≅⟨ [ ○ - ○ - ○ - ○ ] p₁≅p₁′ ⊛ p₂≅p₂′ ⟩
         p₁′ ⊛ p₂′  ∎)
 
   -- • _>>=_:
 
   simplify₁ (_>>=_ {xs = xs} {f = f} p₁ p₂) with simplify₁′ p₁
-  ... | (._ , fail     , p₁≅∅)  = _ , _ , (
-                                  p₁   >>= p₂         ≅⟨ [ f - ○ - xs - ○ ] p₁≅∅ >>= (λ x → ♭? (p₂ x) ∎) ⟩
-                                  fail >>= (♭? ∘ p₂)  ≅⟨ Monad.left-zero (♭? ∘ p₂) ⟩
-                                  fail                ∎)
-  ... | (._ , return x , p₁≅ε) with simplify₁′ (p₂ x)
-  ...   | (_ , p₂x′ , p₂x≅p₂x′) = _ , _ , (
-                                  p₁       >>= p₂         ≅⟨ [ f - ○ - xs - ○ ] p₁≅ε >>= (λ x → ♭? (p₂ x) ∎) ⟩
-                                  return x >>= (♭? ∘ p₂)  ≅⟨ Monad.left-identity x (♭? ∘ p₂) ⟩
-                                  ♭? (p₂ x)               ≅⟨ p₂x≅p₂x′ ⟩
-                                  p₂x′                    ∎)
-  simplify₁ (p₁ >>= p₂) | (_ , p₁′ , p₁≅p₁′) with forced? p₁
-  ... | just xs = _ , _ , (
+  ... | result fail       p₁≅∅ = result _ (
+                                 p₁   >>= p₂         ≅⟨ [ f - ○ - xs - ○ ] p₁≅∅ >>= (λ x → ♭? (p₂ x) ∎) ⟩
+                                 fail >>= (♭? ∘ p₂)  ≅⟨ Monad.left-zero (♭? ∘ p₂) ⟩
+                                 fail                ∎)
+  ... | result (return x) p₁≅ε with simplify₁′ (p₂ x)
+  ...   | result p₂x′ p₂x≅p₂x′ = result _ (
+                                 p₁       >>= p₂         ≅⟨ [ f - ○ - xs - ○ ] p₁≅ε >>= (λ x → ♭? (p₂ x) ∎) ⟩
+                                 return x >>= (♭? ∘ p₂)  ≅⟨ Monad.left-identity x (♭? ∘ p₂) ⟩
+                                 ♭? (p₂ x)               ≅⟨ p₂x≅p₂x′ ⟩
+                                 p₂x′                    ∎)
+  simplify₁ (p₁ >>= p₂) | result p₁′ p₁≅p₁′ with forced? p₁
+  ... | just xs = result _ (
                   p₁  >>= p₂         ≅⟨ [ ○ - ○ - forced?′ p₂ - ○ ] p₁≅p₁′ >>= (λ x → ♭? (p₂ x) ∎) ⟩
                   p₁′ >>= (♭? ∘ p₂)  ∎)
-  ... | nothing = _ , _ , (
+  ... | nothing = result _ (
                   p₁ >>= p₂ ∎)
 
   -- • nonempty:
 
   simplify₁ (nonempty p) with simplify₁ p
-  ... | (._ , fail , p≅∅)  = _ , _ , (
-                             nonempty p     ≅⟨ nonempty p≅∅ ⟩
-                             nonempty fail  ≅⟨ Nonempty.zero ⟩
-                             fail           ∎)
-  ... | (_  , p′   , p≅p′) = _ , _ , (
-                             nonempty p   ≅⟨ nonempty p≅p′ ⟩
-                             nonempty p′  ∎)
+  ... | result fail p≅∅  = result _ (
+                           nonempty p     ≅⟨ nonempty p≅∅ ⟩
+                           nonempty fail  ≅⟨ Nonempty.zero ⟩
+                           fail           ∎)
+  ... | result p′   p≅p′ = result _ (
+                           nonempty p   ≅⟨ nonempty p≅p′ ⟩
+                           nonempty p′  ∎)
 
   -- • cast:
 
   simplify₁ (cast xs₁≈xs₂ p) with simplify₁ p
-  ... | (_ , p′ , p≅p′) = _ , _ , (
-                          cast xs₁≈xs₂ p  ≅⟨ Cast.correct ⟩
-                          p               ≅⟨ p≅p′ ⟩
-                          p′              ∎)
+  ... | result p′ p≅p′ = result _ (
+                         cast xs₁≈xs₂ p  ≅⟨ Cast.correct ⟩
+                         p               ≅⟨ p≅p′ ⟩
+                         p′              ∎)
 
-  -- Note that if an argument parser is delayed, then simplification
-  -- is not applied recursively (because this could lead to
-  -- non-termination).
+  private
 
-  simplify₁′ : ∀ {Tok R R′ xs} {m : Maybe R′}
-               (p : ∞⟨ m ⟩Parser Tok R xs) →
-               ∃₂ λ xs (p′ : Parser Tok R xs) → ♭? p ≅P p′
-  simplify₁′ {m = nothing} p = (_ , ♭ p , (♭ p ∎))
-  simplify₁′ {m = just _}  p = simplify₁ p
+    -- Note that if an argument parser is delayed, then simplification
+    -- is not applied recursively (because this could lead to
+    -- non-termination).
 
--- Deep simplification.
---
+    simplify₁′ : ∀ {Tok R R′ xs} {m : Maybe R′}
+                 (p : ∞⟨ m ⟩Parser Tok R xs) → Simplify₁ (♭? p)
+    simplify₁′ {m = nothing} p = result _ (♭ p ∎)
+    simplify₁′ {m = just _}  p = simplify₁ p
+
+------------------------------------------------------------------------
+-- Deep simplification
+
 -- The function simplify simplifies the first layer, then it traverses
 -- the result and simplifies the following layers, and so on. The
 -- extra traversals have been implemented to satisfy Agda's
@@ -284,8 +286,8 @@ private
 mutual
 
   simplify : ∀ {Tok R xs} (p : Parser Tok R xs) →
-             Parser Tok R (proj₁ $ simplify₁ p)
-  simplify p = simplify↓ (proj₁ $ proj₂ $ simplify₁ p)
+             Parser Tok R (Simplify₁.bag $ simplify₁ p)
+  simplify p = simplify↓ (Simplify₁.parser (simplify₁ p))
 
   private
 
@@ -311,12 +313,12 @@ mutual
     simplify-[] : ∀ {Tok R} → Parser Tok R [] → Parser Tok R []
     simplify-[] p =
       simplify↓ (P.subst (Parser _ _) ([]-lemma p) $
-                   proj₁ $ proj₂ $ simplify₁ p)
+                   Simplify₁.parser $ simplify₁ p)
 
     []-lemma : ∀ {Tok R} (p : Parser Tok R []) →
-               proj₁ (simplify₁ p) ≡ []
+               Simplify₁.bag (simplify₁ p) ≡ []
     []-lemma = BSEq.empty-unique ∘ I.cong ∘ C.sound ∘
-                 sym ∘ proj₂ ∘ proj₂ ∘ simplify₁
+                 sym ∘ Simplify₁.correct ∘ simplify₁
 
 -- The simplifier is correct.
 
@@ -324,10 +326,9 @@ mutual
 
   correct : ∀ {Tok R xs} (p : Parser Tok R xs) → simplify p ≅P p
   correct p =
-    simplify↓ (proj₁ simp)  ≅⟨ correct↓ (proj₁ simp) ⟩
-    proj₁ simp              ≅⟨ sym $ proj₂ simp ⟩
-    p                       ∎
-    where simp = proj₂ $ simplify₁ p
+    simplify↓ (Simplify₁.parser $ simplify₁ p)  ≅⟨ correct↓ (Simplify₁.parser $ simplify₁ p) ⟩
+    Simplify₁.parser (simplify₁ p)              ≅⟨ sym $ Simplify₁.correct $ simplify₁ p ⟩
+    p                                           ∎
 
   private
 
@@ -352,10 +353,8 @@ mutual
 
     correct-[] : ∀ {Tok R} (p : Parser Tok R []) → simplify-[] p ≅P p
     correct-[] p =
-      simplify-[] p         ≅⟨ correct↓ (cast-[] $ proj₁ simp) ⟩
-      cast-[] (proj₁ simp)  ≅⟨ Subst.correct ([]-lemma p) ⟩
-      proj₁ simp            ≅⟨ sym $ proj₂ simp ⟩
-      p                     ∎
-      where
-      simp    = proj₂ $ simplify₁ p
-      cast-[] = P.subst (Parser _ _) ([]-lemma p)
+      simplify-[] p                             ≅⟨ correct↓ (cast-[] $ Simplify₁.parser $ simplify₁ p) ⟩
+      cast-[] (Simplify₁.parser $ simplify₁ p)  ≅⟨ Subst.correct ([]-lemma p) ⟩
+      Simplify₁.parser (simplify₁ p)            ≅⟨ sym $ Simplify₁.correct $ simplify₁ p ⟩
+      p                                         ∎
+      where cast-[] = P.subst (Parser _ _) ([]-lemma p)
