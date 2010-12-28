@@ -13,6 +13,7 @@ open import Coinduction
 open import Data.List as List
 import Data.List.Any as Any
 import Data.List.Any.BagAndSetEquality as Eq
+open import Data.Maybe
 open import Function
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 
@@ -143,3 +144,22 @@ module Cast where
             cast xs₁≈xs₂ p ≅P p
   correct {xs₁≈xs₂ = xs₁≈xs₂} {p} =
     BagMonoid.sym xs₁≈xs₂ ∷ λ t → ♯ (D t p ∎)
+
+------------------------------------------------------------------------
+-- A law for subst
+
+module Subst where
+
+  -- Uses of subst can be erased.
+
+  correct : ∀ {Tok R xs₁ xs₂}
+              (xs₁≡xs₂ : xs₁ ≡ xs₂)
+              {p : Parser Tok R xs₁} →
+            P.subst (Parser Tok R) xs₁≡xs₂ p ≅P p
+  correct P.refl {p} = p ∎
+
+  correct∞ : ∀ {Tok R xs₁ xs₂ A} {m : Maybe A}
+              (xs₁≡xs₂ : xs₁ ≡ xs₂)
+              (p : ∞⟨ m ⟩Parser Tok R xs₁) →
+             ♭? (P.subst (∞⟨ m ⟩Parser Tok R) xs₁≡xs₂ p) ≅P ♭? p
+  correct∞ P.refl p = ♭? p ∎

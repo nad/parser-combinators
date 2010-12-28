@@ -15,7 +15,7 @@ open import Data.Product.N-ary
 open import Function
 open import Relation.Binary.PropositionalEquality as P
   using (_≡_; refl; _with-≡_)
-open import Relation.Binary.HeterogeneousEquality as H
+open import Relation.Binary.HeterogeneousEquality
   using (refl) renaming (_≅_ to _≅H_)
 
 private
@@ -110,12 +110,6 @@ private
                                     p₁₁ >>= p₁₂ ∣ p₂₁ >>= p₂₂  ≅⟨ proj₂ (proj₂ h) ⟩
                                     proj₁ (proj₂ h)            ∎)
     where
-    ♭?-cong : ∀ {Tok R xs₁ xs₂ A} {m : Maybe A}
-                {p₁ : ∞⟨ m ⟩Parser Tok R xs₁}
-                {p₂ : ∞⟨ m ⟩Parser Tok R xs₂} →
-              xs₁ ≡ xs₂ → p₁ ≅H p₂ → ♭? p₁ ≅P ♭? p₂
-    ♭?-cong refl refl = _ ∎
-
     helper : ∀ {Tok R₁ R₂ R xs₁ xs₁′ xs₂ xs₂′ f₁ f₂}
              (p₁₁ : ∞⟨ f₁ ⟩Parser Tok R₁ xs₁′)
              (eq₁ : xs₁′ ≡ flatten xs₁)
@@ -131,12 +125,10 @@ private
       with P.inspect (♭? p₁₁) | P.inspect (♭? p₂₁)
     helper {Tok} {f₁ = f₁} {f₂} p₁₁ eq₁ p₁₂ p₂₁ eq₂ p₂₂
       | token with-≡ eq₁′ | token with-≡ eq₂′ = _ , _ , (
-      cast₁ p₁₁ >>= p₁₂ ∣ cast₂ p₂₁ >>= p₂₂          ≅⟨ [ forced? p₁₁ - ○ - forced?′ p₁₂ - ○ ]
-                                                          ♭?-cong (P.sym eq₁) (H.≡-subst-removable (∞⟨ f₁ ⟩Parser Tok Tok) eq₁ p₁₁)
-                                                          >>= (λ t → ♭? (p₁₂ t) ∎) ∣′
-                                                        [ forced? p₂₁ - ○ - forced?′ p₂₂ - ○ ]
-                                                          ♭?-cong (P.sym eq₂) (H.≡-subst-removable (∞⟨ f₂ ⟩Parser Tok Tok) eq₂ p₂₁)
-                                                          >>= (λ t → ♭? (p₂₂ t) ∎) ⟩
+      cast₁ p₁₁ >>= p₁₂ ∣ cast₂ p₂₁ >>= p₂₂          ≅⟨ [ forced? p₁₁ - ○ - forced?′ p₁₂ - ○ ] Subst.correct∞ eq₁ p₁₁ >>=
+                                                                                               (λ t → ♭? (p₁₂ t) ∎) ∣′
+                                                        [ forced? p₂₁ - ○ - forced?′ p₂₂ - ○ ] Subst.correct∞ eq₂ p₂₁ >>=
+                                                                                               (λ t → ♭? (p₂₂ t) ∎) ⟩
       ♭? p₁₁ >>= (♭? ∘ p₁₂) ∣ ♭? p₂₁ >>= (♭? ∘ p₂₂)  ≅⟨ [ ○ - ○ - ○ - ○ ]
                                                           P.subst (λ p → p ≅P token) (P.sym eq₁′) (token ∎) >>= (λ t → ♭? (p₁₂ t) ∎) ∣′
                                                         [ ○ - ○ - ○ - ○ ]
