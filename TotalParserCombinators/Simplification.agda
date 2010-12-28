@@ -35,8 +35,8 @@ open import TotalParserCombinators.Semantics using (parser)
 -- Simplification
 
 -- The function simplify₁ simplifies the first "layer" of a parser,
--- down to the first occurrences of ♯_. The following simplifications
--- are applied in a bottom-up manner:
+-- down to the first occurrences of ♯_ (which are removed). The
+-- following simplifications are applied in a bottom-up manner:
 --
 -- f <$> fail          → fail
 -- f <$> return x      → return (f x)
@@ -259,9 +259,11 @@ private
 -- Deep simplification.
 --
 -- The function simplify simplifies the first layer, then it traverses
--- the result and simplifies the following layers, and so on. The
--- extra traversals have been implemented to satisfy Agda's
--- termination checker; they could perhaps be avoided.
+-- the result and simplifies the following layers, and so on. (TODO:
+-- simplify₁ removes the first occurrences of ♯_, so this means that
+-- every second layer is not simplified.) The extra traversals have
+-- been implemented to satisfy Agda's termination checker; they could
+-- perhaps be avoided.
 --
 -- One cast constructor is added for every delay constructor, plus one
 -- at the top.
