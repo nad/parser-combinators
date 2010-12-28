@@ -22,6 +22,10 @@ import TotalRecognisers.Simple
 
 import TotalRecognisers.Simple.ExpressiveStrength
 
+-- An example: a right recursive expression grammar.
+
+import TotalRecognisers.Simple.Expression
+
 -- More complicated recognisers, which can handle left recursion. (The
 -- set of basic combinators is also different: tok has been replaced
 -- by sat, and nonempty and cast have been added.)
