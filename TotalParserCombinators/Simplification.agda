@@ -42,16 +42,16 @@ record Simplify₁ {Tok R xs} (p : Parser Tok R xs) : Set₁ where
     correct : p ≅P parser
 
 -- The function simplify₁ simplifies the first "layer" of a parser,
--- down to the first occurrences of ♯_. Right-hand sides of bind are
--- not simplified, except if the return x >>= p → p x rule is
--- triggered. The following simplifications are applied in a bottom-up
--- manner (some of them also if one argument is delayed):
+-- down to the first occurrences of ♯_. The following simplifications
+-- are applied in a bottom-up manner (in relevant cases also for
+-- delayed arguments):
 --
 -- f <$> fail                  → fail
 -- f <$> return x              → return (f x)
 -- fail         ∣ p            → p
 -- p            ∣ fail         → p
--- token >>= p₁ ∣ token >>= p₂ → token >>= λ t → ♭? (p₁ t) ∣ ♭? (p₂ t)
+-- token >>= p₁ ∣ token >>= p₂ → token >>= λ t →
+--                                 ♯ (♭? (p₁ t) ∣ ♭? (p₂ t))
 -- fail     ⊛ p                → fail
 -- p        ⊛ fail             → fail
 -- return f ⊛ return x         → return (f x)
@@ -61,8 +61,7 @@ record Simplify₁ {Tok R xs} (p : Parser Tok R xs) : Set₁ where
 -- cast eq p                   → p
 --
 -- Some ♯_'s may be removed, but care is taken to ensure that
--- non-simplified parsers in the result are either delayed or on the
--- right-hand side of a bind constructor.
+-- non-simplified parsers in the result are delayed.
 
 mutual
 
@@ -137,7 +136,8 @@ mutual
                                                         [ ○ - ○ - ○ - ○ ]
                                                           P.subst (λ p → p ≅P token) (P.sym eq₂′) (token ∎) >>= (λ t → ♭? (p₂₂ t) ∎) ⟩
       token >>= (♭? ∘ p₁₂) ∣ token >>= (♭? ∘ p₂₂)    ≅⟨ sym $ Monad.left-distributive token (♭? ∘ p₁₂) (♭? ∘ p₂₂) ⟩
-      token >>= (λ t → ♭? (p₁₂ t) ∣ ♭? (p₂₂ t))      ∎)
+      token >>= (λ t → ♭? (p₁₂ t) ∣ ♭? (p₂₂ t))      ≅⟨ [ ○ - ○ - ○ - ◌ ] token ∎ >>= (λ t → ♭? (p₁₂ t) ∣ ♭? (p₂₂ t) ∎) ⟩
+      token >>= (λ t → ♯ (♭? (p₁₂ t) ∣ ♭? (p₂₂ t)))  ∎)
       where
       cast₁ = P.subst (∞⟨ f₁ ⟩Parser Tok Tok) eq₁
       cast₂ = P.subst (∞⟨ f₂ ⟩Parser Tok Tok) eq₂
@@ -151,7 +151,7 @@ mutual
   -- • _⊛_:
 
   simplify₁ (p₁ ⊛ p₂) =
-    helper _ _ p₁ p₂ (simplify₁′ p₁) (simplify₁′ p₂) refl refl
+    helper _ _ p₁ p₂ (simplify₁∞ p₁) (simplify₁∞ p₂) refl refl
     where
     -- token ⊛ token is never type correct, but Agda's case-splitting
     -- machinery cannot see this, so instead of a with clause the
@@ -214,23 +214,36 @@ mutual
 
   -- • _>>=_:
 
-  simplify₁ (_>>=_ {xs = xs} {f = f} p₁ p₂) with simplify₁′ p₁
+  simplify₁ (_>>=_ {xs = xs} {f = f} p₁ p₂) with simplify₁∞ p₁
   ... | result fail       p₁≅∅ = result _ (
                                  p₁   >>= p₂         ≅⟨ [ f - ○ - xs - ○ ] p₁≅∅ >>= (λ x → ♭? (p₂ x) ∎) ⟩
                                  fail >>= (♭? ∘ p₂)  ≅⟨ Monad.left-zero (♭? ∘ p₂) ⟩
                                  fail                ∎)
-  ... | result (return x) p₁≅ε with simplify₁′ (p₂ x)
+  ... | result (return x) p₁≅ε with simplify₁∞ (p₂ x)
   ...   | result p₂x′ p₂x≅p₂x′ = result _ (
                                  p₁       >>= p₂         ≅⟨ [ f - ○ - xs - ○ ] p₁≅ε >>= (λ x → ♭? (p₂ x) ∎) ⟩
                                  return x >>= (♭? ∘ p₂)  ≅⟨ Monad.left-identity x (♭? ∘ p₂) ⟩
                                  ♭? (p₂ x)               ≅⟨ p₂x≅p₂x′ ⟩
                                  p₂x′                    ∎)
-  simplify₁ (p₁ >>= p₂) | result p₁′ p₁≅p₁′ with forced? p₁
-  ... | just xs = result _ (
-                  p₁  >>= p₂         ≅⟨ [ ○ - ○ - forced?′ p₂ - ○ ] p₁≅p₁′ >>= (λ x → ♭? (p₂ x) ∎) ⟩
-                  p₁′ >>= (♭? ∘ p₂)  ∎)
-  ... | nothing = result _ (
-                  p₁ >>= p₂ ∎)
+  simplify₁ (p₁ >>= p₂) | result p₁′ p₁≅p₁′
+    with forced? p₁ | forced?′ p₂
+  ... | nothing | just xs = result _ (
+                            p₁ >>= p₂                           ≅⟨ [ ◌ - ◌ - ○ - ○ ] ♭ p₁ ∎ >>= (λ x → simplify₁-[]-correct (p₂ x)) ⟩
+                            p₁ >>= (λ x → simplify₁-[] (p₂ x))  ∎)
+  ... | just f  | just xs = result _ (
+                            p₁  >>= p₂                          ≅⟨ [ ○ - ○ - ○ - ○ ] p₁≅p₁′ >>=
+                                                                                     (λ x → Simplify₁.correct (simplify₁ (p₂ x))) ⟩
+                            p₁′ >>= (λ x → Simplify₁.parser $
+                                             simplify₁ (p₂ x))  ∎)
+  ... | nothing | nothing = result _ (
+                            p₁ >>= p₂ ∎)
+  ... | just f  | nothing = result _ (
+                            p₁          >>= p₂        ≅⟨ [ ○ - ○ - ◌ - ○ ] p₁≅p₁′ >>= (λ x → ♭ (p₂ x) ∎) ⟩
+                            p₁′         >>= (♭ ∘ p₂)  ≅⟨ [ ○ - ○ - ○ - ◌ ] sym (Subst.correct lemma) >>= (λ x → ♭ (p₂ x) ∎) ⟩
+                            cast-[] p₁′ >>= p₂        ∎)
+    where
+    lemma   = BSEq.empty-unique $ I.cong $ C.sound $ sym p₁≅p₁′
+    cast-[] = P.subst (Parser _ _) lemma
 
   -- • nonempty:
 
@@ -257,10 +270,26 @@ mutual
     -- is not applied recursively (because this could lead to
     -- non-termination).
 
-    simplify₁′ : ∀ {Tok R R′ xs} {m : Maybe R′}
+    simplify₁∞ : ∀ {Tok R R′ xs} {m : Maybe R′}
                  (p : ∞⟨ m ⟩Parser Tok R xs) → Simplify₁ (♭? p)
-    simplify₁′ {m = nothing} p = result _ (♭ p ∎)
-    simplify₁′ {m = just _}  p = simplify₁ p
+    simplify₁∞ {m = nothing} p = result _ (♭ p ∎)
+    simplify₁∞ {m = just _}  p = simplify₁ p
+
+    simplify₁-[] : ∀ {Tok R} → Parser Tok R [] → Parser Tok R []
+    simplify₁-[] p = P.subst (Parser _ _) ([]-lemma p) $
+                       Simplify₁.parser $ simplify₁ p
+
+    simplify₁-[]-correct : ∀ {Tok R} (p : Parser Tok R []) →
+                           p ≅P simplify₁-[] p
+    simplify₁-[]-correct p =
+      p                               ≅⟨ Simplify₁.correct (simplify₁ p) ⟩
+      Simplify₁.parser (simplify₁ p)  ≅⟨ sym $ Subst.correct ([]-lemma p) ⟩
+      simplify₁-[] p                  ∎
+
+    []-lemma : ∀ {Tok R} (p : Parser Tok R []) →
+               Simplify₁.bag (simplify₁ p) ≡ []
+    []-lemma p = BSEq.empty-unique $ I.cong $ C.sound $
+                   sym $ Simplify₁.correct $ simplify₁ p
 
 ------------------------------------------------------------------------
 -- Deep simplification
@@ -311,14 +340,7 @@ mutual
     ... | nothing | nothing = ♯ simplify-[] (♭ p₁) >>= λ x → ♯ simplify-[] (♭ (p₂ x))
 
     simplify-[] : ∀ {Tok R} → Parser Tok R [] → Parser Tok R []
-    simplify-[] p =
-      simplify↓ (P.subst (Parser _ _) ([]-lemma p) $
-                   Simplify₁.parser $ simplify₁ p)
-
-    []-lemma : ∀ {Tok R} (p : Parser Tok R []) →
-               Simplify₁.bag (simplify₁ p) ≡ []
-    []-lemma = BSEq.empty-unique ∘ I.cong ∘ C.sound ∘
-                 sym ∘ Simplify₁.correct ∘ simplify₁
+    simplify-[] p = simplify↓ (simplify₁-[] p)
 
 -- The simplifier is correct.
 
@@ -353,8 +375,6 @@ mutual
 
     correct-[] : ∀ {Tok R} (p : Parser Tok R []) → simplify-[] p ≅P p
     correct-[] p =
-      simplify-[] p                             ≅⟨ correct↓ (cast-[] $ Simplify₁.parser $ simplify₁ p) ⟩
-      cast-[] (Simplify₁.parser $ simplify₁ p)  ≅⟨ Subst.correct ([]-lemma p) ⟩
-      Simplify₁.parser (simplify₁ p)            ≅⟨ sym $ Simplify₁.correct $ simplify₁ p ⟩
-      p                                         ∎
-      where cast-[] = P.subst (Parser _ _) ([]-lemma p)
+      simplify-[] p   ≅⟨ correct↓ (simplify₁-[] p) ⟩
+      simplify₁-[] p  ≅⟨ sym $ simplify₁-[]-correct p ⟩
+      p               ∎
