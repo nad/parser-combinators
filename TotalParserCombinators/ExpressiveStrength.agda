@@ -39,7 +39,7 @@ open import TotalParserCombinators.BreadthFirst as Backend
 
 parser⇒fun : ∀ {R xs} (p : Parser Bool R xs) {x s} →
              x ∈ p · s ⇿ x ∈ parse p s
-parser⇒fun p = Backend.correct
+parser⇒fun p = Backend.parse-correct
 
 -- For every function there is a corresponding parser.
 
@@ -101,7 +101,7 @@ module Monadic where
     ∀ {Tok R} (f : List Tok → List R) {s} →
     parse (grammar f) s ≈[ bag ] f s
   maximally-expressive f {s} {x} =
-    (x ∈ parse (grammar f) s)  ⇿⟨ sym Backend.correct ⟩
+    (x ∈ parse (grammar f) s)  ⇿⟨ sym Backend.parse-correct ⟩
     x ∈ grammar f · s          ⇿⟨ grammar-correct f ⟩
     x ∈ f s                    ∎
     where open Inv.EquationalReasoning
@@ -212,7 +212,7 @@ module Applicative where
     ∀ {R} (f : List Bool → List R) {s} →
     parse (grammar f) s ≈[ bag ] f s
   maximally-expressive f {s} {x} =
-    (x ∈ parse (grammar f) s)  ⇿⟨ sym Backend.correct ⟩
+    (x ∈ parse (grammar f) s)  ⇿⟨ sym Backend.parse-correct ⟩
     x ∈ grammar f · s          ⇿⟨ grammar-correct f ⟩
     x ∈ f s                    ∎
     where open Inv.EquationalReasoning
