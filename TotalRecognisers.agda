@@ -56,6 +56,11 @@ import TotalRecognisers.LeftRecursion.Lib
 
 import TotalRecognisers.LeftRecursion.Expression
 
+-- Another example: parsing of matching parentheses, along with a
+-- correctness proof.
+
+import TotalRecognisers.LeftRecursion.MatchingParentheses
+
 -- The recognisers form a *-continuous Kleene algebra.
 
 import TotalRecognisers.LeftRecursion.KleeneAlgebra
