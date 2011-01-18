@@ -56,8 +56,8 @@ import TotalRecognisers.LeftRecursion.Lib
 
 import TotalRecognisers.LeftRecursion.Expression
 
--- Another example: parsing of matching parentheses, along with a
--- correctness proof.
+-- An example of how nonempty can be used: parsing of matching
+-- parentheses, along with a correctness proof.
 
 import TotalRecognisers.LeftRecursion.MatchingParentheses
 

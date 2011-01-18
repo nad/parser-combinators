@@ -11,7 +11,7 @@ open import Coinduction
 open import Data.Bool
 open import Data.List as List
 open import Data.Product
-open import Function.Equivalence as Eq
+open import Function.Equivalence
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 open import Relation.Nullary
@@ -28,6 +28,19 @@ import TotalRecognisers.LeftRecursion.Lib as Lib
 data Paren : Set where
   ⟦ ⟧ : Paren
 
+-- Strings of matching parentheses.
+
+data Matching : List Paren → Set where
+  nil : Matching []
+  app : ∀ {xs ys}
+        (p₁ : Matching xs) (p₂ : Matching ys) → Matching (xs ++ ys)
+  par : ∀ {xs} (p : Matching xs) → Matching ([ ⟦ ] ++ xs ++ [ ⟧ ])
+
+-- Our goal: decide Matching.
+
+Goal : Set
+Goal = ∀ xs → Dec (Matching xs)
+
 -- Equality of parentheses is decidable.
 
 _≟-Paren_ : Decidable (_≡_ {A = Paren})
@@ -40,102 +53,54 @@ open LR Paren
 private
   open module Tok = Lib.Tok Paren _≟-Paren_ using (tok)
 
--- Adds surrounding parentheses.
+-- A (left and right recursive) grammar for matching parentheses. Note
+-- the use of nonempty; without the two occurrences of nonempty the
+-- grammar would not be well-formed.
 
-bracket : List Paren → List Paren
-bracket xs = [ ⟦ ] ++ xs ++ [ ⟧ ]
-
--- Strings of matching parentheses.
-
-data Parenthesised : List Paren → Set where
-  nil : Parenthesised []
-  app : ∀ {xs ys} (p₁ : Parenthesised xs) (p₂ : Parenthesised ys) →
-        Parenthesised (xs ++ ys)
-  par : ∀ {xs} (p : Parenthesised xs) →
-        Parenthesised (bracket xs)
-
--- Our goal: decide Parenthesised.
-
-Goal : Set
-Goal = ∀ xs → Dec (Parenthesised xs)
-
--- The obvious grammar for parenthesised is cyclic, and my framework
--- cannot handle cyclic grammars, so let us define an alternative
--- axiomatisation instead. (Just as Helmut did in his solution.)
-
-data Parenthesised′ : List Paren → Set where
-  nil     : Parenthesised′ []
-  app-par : ∀ {xs ys} (p₁ : Parenthesised′ xs) (p₂ : Parenthesised′ ys) →
-            Parenthesised′ (xs ++ bracket ys)
-
--- This axiomatisation is equivalent to the one above.
-
-P⇔P′ : ∀ {xs} → Parenthesised xs ⇔ Parenthesised′ xs
-P⇔P′ = equivalent to from
-  where
-  app′ : ∀ {xs ys} → Parenthesised′ xs → Parenthesised′ ys →
-         Parenthesised′ (xs ++ ys)
-  app′ {xs = xs} p nil
-    rewrite proj₂ ListMonoid.identity xs =
-    p
-  app′ {xs = xs} p (app-par {xs = ys} {ys = zs} p₁ p₂)
-    rewrite P.sym (ListMonoid.assoc xs ys (bracket zs)) =
-    app-par (app′ p p₁) p₂
-
-  to : ∀ {xs} → Parenthesised xs → Parenthesised′ xs
-  to nil         = nil
-  to (app p₁ p₂) = app′ (to p₁) (to p₂)
-  to (par p)     = app-par nil (to p)
-
-  from : ∀ {xs} → Parenthesised′ xs → Parenthesised xs
-  from nil             = nil
-  from (app-par p₁ p₂) = app (from p₁) (par (from p₂))
-
--- A (left recursive) grammar for matching parentheses.
-
-parenthesised : P _
-parenthesised =
+matching : P _
+matching =
     empty
-  ∣ ♯ parenthesised · (♯ (tok ⟦ · ♯ parenthesised) · ♯ tok ⟧)
+  ∣ ♯ nonempty matching · ♯ nonempty matching
+  ∣ ♯ (tok ⟦ · ♯ matching) · ♯ tok ⟧
 
--- We can decide membership of parenthesised.
+-- We can decide membership of matching.
 
-decide-parenthesised : ∀ xs → Dec (xs ∈ parenthesised)
-decide-parenthesised xs = xs ∈? parenthesised
+decide-matching : ∀ xs → Dec (xs ∈ matching)
+decide-matching xs = xs ∈? matching
 
--- Membership of parenthesised is equivalent to satisfaction of
--- Parenthesised′.
+-- Membership of matching is equivalent to satisfaction of Matching.
 
-∈p⇔P′ : ∀ {xs} → (xs ∈ parenthesised) ⇔ Parenthesised′ xs
-∈p⇔P′ = equivalent to from
+∈m⇔M : ∀ {xs} → (xs ∈ matching) ⇔ Matching xs
+∈m⇔M = equivalent to from
   where
-  to : ∀ {xs} → xs ∈ parenthesised → Parenthesised′ xs
-  to (∣-left empty)                  = nil
-  to (∣-right (p₁ · (⟦∈ · p₂ · ⟧∈)))
-    rewrite Tok.sound ⟦∈ | Tok.sound ⟧∈ =
-    app-par (to p₁) (to p₂)
+  to : ∀ {xs} → xs ∈ matching → Matching xs
+  to (∣-left (∣-left empty))                        = nil
+  to (∣-left (∣-right (nonempty p₁ · nonempty p₂))) = app (to p₁) (to p₂)
+  to (∣-right (⟦∈ · p · ⟧∈))
+    rewrite Tok.sound ⟦∈ | Tok.sound ⟧∈             = par (to p)
 
-  from : ∀ {xs} → Parenthesised′ xs → xs ∈ parenthesised
-  from nil             = ∣-left empty
-  from (app-par p₁ p₂) =
-    ∣-right {n₁ = true}
-      (from p₁ · (Tok.complete · from p₂ · Tok.complete))
+  from : ∀ {xs} → Matching xs → xs ∈ matching
+  from nil                                    = ∣-left (∣-left empty)
+  from (app {xs = []}                  p₁ p₂) = from p₂
+  from (app {xs = x ∷ xs} {ys = []}    p₁ p₂) rewrite proj₂ ListMonoid.identity xs = from p₁
+  from (app {xs = _ ∷ _}  {ys = _ ∷ _} p₁ p₂) = ∣-left (∣-right {n₁ = true} (nonempty (from p₁) · nonempty (from p₂)))
+  from (par p)                                = ∣-right {n₁ = true} (Tok.complete · from p · Tok.complete)
 
 -- And thus we reach our goal.
 
 goal : Goal
-goal xs = Dec.map (Eq.sym P⇔P′ ∘ ∈p⇔P′) (decide-parenthesised xs)
+goal xs = Dec.map ∈m⇔M (decide-matching xs)
 
 -- Some examples.
 
-ex₁ : Dec (Parenthesised [])
+ex₁ : Dec (Matching [])
 ex₁ = goal _ -- = yes nil
 
-ex₂ : Dec (Parenthesised (⟦ ∷ ⟧ ∷ []))
-ex₂ = goal _ -- = yes (app nil (par nil))
+ex₂ : Dec (Matching (⟦ ∷ ⟧ ∷ []))
+ex₂ = goal _ -- = yes (par nil)
 
-ex₃ : Dec (Parenthesised (⟦ ∷ ⟧ ∷ ⟦ ∷ ⟧ ∷ []))
-ex₃ = goal _ -- = yes (app (app nil (par nil)) (par nil))
+ex₃ : Dec (Matching (⟦ ∷ ⟧ ∷ ⟦ ∷ ⟧ ∷ []))
+ex₃ = goal _ -- = yes (app (par nil) (par nil))
 
-ex₄ : Dec (Parenthesised (⟦ ∷ ⟧ ∷ ⟦ ∷ []))
+ex₄ : Dec (Matching (⟦ ∷ ⟧ ∷ ⟦ ∷ []))
 ex₄ = goal _ -- = no (λ x → …)
