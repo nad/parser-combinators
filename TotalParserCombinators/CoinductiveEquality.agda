@@ -24,7 +24,7 @@ infix 4 _≈[_]c_
 -- Two recognisers/languages are equal if their nullability indices
 -- are equal (according to _List-≈[_]_) and all their derivatives are
 -- equal (coinductively). Note that the inhabitants of this type are
--- bisimulations.
+-- bisimulations (if the Kind stands for a symmetric relation).
 
 data _≈[_]c_ {Tok R xs₁ xs₂}
              (p₁ : Parser Tok R xs₁) (k : Kind)

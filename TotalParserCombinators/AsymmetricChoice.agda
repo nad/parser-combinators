@@ -40,8 +40,8 @@ first-nonempty xs ys = xs
 
 first-nonempty-cong :
   ∀ {k R} {xs₁ xs₁′ xs₂ xs₂′ : List R} →
-  xs₁ List-≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ] xs₁′ → xs₂ List-≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ] xs₂′ →
-  first-nonempty xs₁ xs₂ List-≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ] first-nonempty xs₁′ xs₂′
+  xs₁ List-≈[ ⌊ k ⌋⇔ ] xs₁′ → xs₂ List-≈[ ⌊ k ⌋⇔ ] xs₂′ →
+  first-nonempty xs₁ xs₂ List-≈[ ⌊ k ⌋⇔ ] first-nonempty xs₁′ xs₂′
 first-nonempty-cong {xs₁ = []}    {[]}    eq₁ eq₂ = eq₂
 first-nonempty-cong {xs₁ = _ ∷ _} {_ ∷ _} eq₁ eq₂ = eq₁
 first-nonempty-cong {xs₁ = []} {_ ∷ _} eq₁ eq₂
@@ -70,10 +70,12 @@ first-nonempty-right {xs₁ = []}    _   = _ ∎
 ------------------------------------------------------------------------
 -- Asymmetric choice
 
--- _◃_ is defined as a pointwise lifting of first-nonempty.
+-- _◃_ is defined as a pointwise lifting of first-nonempty. Note that
+-- _◃_ preserves parser and language equality, but not the
+-- sub-/superparser and sub-/superlanguage relations.
 
 private
-  module AC {R} = Pointwise R R first-nonempty first-nonempty-cong
+  module AC {R} = Pointwise R R ⌊_⌋⇔ first-nonempty first-nonempty-cong
 
 -- p₁ ◃ p₂ returns a result if either p₁ or p₂ does. For a given
 -- string results are returned either from p₁ or from p₂, not both.
@@ -97,8 +99,8 @@ D-◃ = AC.D-lift
 _◃-cong_ : ∀ {k Tok R xs₁ xs₁′ xs₂ xs₂′}
              {p₁  : Parser Tok R xs₁} {p₁′ : Parser Tok R xs₁′}
              {p₂  : Parser Tok R xs₂} {p₂′ : Parser Tok R xs₂′} →
-           p₁ ≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ]P p₁′ → p₂ ≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ]P p₂′ →
-           p₁ ◃ p₂ ≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ]P p₁′ ◃ p₂′
+           p₁ ≈[ ⌊ k ⌋⇔ ]P p₁′ → p₂ ≈[ ⌊ k ⌋⇔ ]P p₂′ →
+           p₁ ◃ p₂ ≈[ ⌊ k ⌋⇔ ]P p₁′ ◃ p₂′
 _◃-cong_ = AC.lift-cong
 
 -- If p₁ accepts s, then p₁ ◃ p₂ behaves as p₁ when applied to s.

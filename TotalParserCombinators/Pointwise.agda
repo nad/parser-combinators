@@ -6,20 +6,22 @@
 
 open import Data.List
 import Data.List.Any as Any
-open import Function.Related as Related using (⌊_⌋⇔; ⇔⌊_⌋)
+open import Function.Related as Related using (Kind)
 open Any.Membership-≡ using (_∈_) renaming (_≈[_]_ to _List-≈[_]_)
 
 module TotalParserCombinators.Pointwise
   (R₁ R₂ : Set) {R₃ : Set}
 
+  -- Some kinds of equality.
+  {K : Set} (⌊_⌋ : K → Kind)
+
   -- An initial bag operator.
   (_∙_ : List R₁ → List R₂ → List R₃)
 
-  -- The operator must preserve bag and set equality.
+  -- The operator must preserve the given notions of equality.
   (_∙-cong_ : ∀ {k xs₁ xs₁′ xs₂ xs₂′} →
-              xs₁ List-≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ] xs₁′ →
-              xs₂ List-≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ] xs₂′ →
-              (xs₁ ∙ xs₂) List-≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ] (xs₁′ ∙ xs₂′))
+              xs₁ List-≈[ ⌊ k ⌋ ] xs₁′ → xs₂ List-≈[ ⌊ k ⌋ ] xs₂′ →
+              (xs₁ ∙ xs₂) List-≈[ ⌊ k ⌋ ] (xs₁′ ∙ xs₂′))
   where
 
 open import Coinduction
@@ -81,8 +83,8 @@ D-lift {xs₁ = xs₁} {xs₂} {t} p₁ p₂ =
 lift-cong : ∀ {k Tok xs₁ xs₁′ xs₂ xs₂′}
               {p₁ : Parser Tok R₁ xs₁} {p₁′ : Parser Tok R₁ xs₁′}
               {p₂ : Parser Tok R₂ xs₂} {p₂′ : Parser Tok R₂ xs₂′} →
-            p₁ ≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ]P p₁′ → p₂ ≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ]P p₂′ →
-            lift p₁ p₂ ≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ]P lift p₁′ p₂′
+            p₁ ≈[ ⌊ k ⌋ ]P p₁′ → p₂ ≈[ ⌊ k ⌋ ]P p₂′ →
+            lift p₁ p₂ ≈[ ⌊ k ⌋ ]P lift p₁′ p₂′
 lift-cong {k} {xs₁ = xs₁} {xs₁′} {xs₂} {xs₂′} {p₁} {p₁′} {p₂} {p₂′}
   p₁≈p₁′ p₂≈p₂′ = lemma ∷ λ t → ♯ (
   D t (lift p₁ p₂)          ≅⟨ D-lift p₁ p₂ ⟩
@@ -92,7 +94,7 @@ lift-cong {k} {xs₁ = xs₁} {xs₁′} {xs₂} {xs₂′} {p₁} {p₁′} {p�
   where
   open C using (_≅⟨_⟩_; _≈⟨_⟩_; _∎; sym; _∷_)
 
-  lemma : (xs₁ ∙ xs₂) List-≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ] (xs₁′ ∙ xs₂′)
+  lemma : (xs₁ ∙ xs₂) List-≈[ ⌊ k ⌋ ] (xs₁′ ∙ xs₂′)
   lemma = I.cong (CS.sound p₁≈p₁′) ∙-cong I.cong (CS.sound p₂≈p₂′)
 
 -- Lifts a property from _∙_ to lift. For examples of its use, see

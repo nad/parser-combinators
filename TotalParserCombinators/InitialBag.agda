@@ -231,6 +231,9 @@ correct {p = p} = record
 ------------------------------------------------------------------------
 -- Equal parsers have equal initial bags/sets
 
+-- Note that this property holds also for the subbag and subset
+-- relations.
+
 cong : ∀ {k Tok R xs₁ xs₂}
          {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
        p₁ ≈[ k ] p₂ → initial-bag p₁ List-≈[ k ] initial-bag p₂

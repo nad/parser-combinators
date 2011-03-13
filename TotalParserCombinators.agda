@@ -37,15 +37,13 @@ import TotalParserCombinators.Derivative
 
 import TotalParserCombinators.BreadthFirst
 
--- An alternative, coinductive definition of equality between parsers.
+-- An alternative, coinductive definition of equality (and related
+-- orderings) between parsers.
 
 import TotalParserCombinators.CoinductiveEquality
 
--- The relation _≲_ is a partial order with respect to _≈_.
-
-import TotalParserCombinators.PartialOrder
-
 -- Language equivalence and parser equivalence are both congruences.
+-- The various orderings are compatible preorders.
 
 import TotalParserCombinators.Congruence
 import TotalParserCombinators.Congruence.Sound

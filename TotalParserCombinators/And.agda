@@ -9,8 +9,9 @@ import Data.List as List
 open import Data.List.Any.BagAndSetEquality
 open import Data.List.Any.Membership
 open import Data.Product
+open import Function
 open import Function.Inverse using (_↔_)
-open import Function.Related as Related using (⌊_⌋⇔; ⇔⌊_⌋)
+import Function.Related as Related
 open import Function.Related.TypeIsomorphisms
 open import Relation.Binary.Product.Pointwise
 
@@ -25,7 +26,7 @@ open import TotalParserCombinators.Semantics using (_∈_·_)
 -- _&_ is defined as a pointwise lifting of _⊗_.
 
 private
-  module And {R₁ R₂ : Set} = Pointwise R₁ R₂ _⊗_ ⊗-cong
+  module And {R₁ R₂ : Set} = Pointwise R₁ R₂ id _⊗_ ⊗-cong
 
 -- p₁ & p₂ returns a result if both p₁ and p₂ do.
 
@@ -48,8 +49,7 @@ D-& = And.D-lift
 _&-cong_ : ∀ {k Tok R xs₁ xs₁′ xs₂ xs₂′}
              {p₁  : Parser Tok R xs₁} {p₁′ : Parser Tok R xs₁′}
              {p₂  : Parser Tok R xs₂} {p₂′ : Parser Tok R xs₂′} →
-           p₁ ≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ]P p₁′ → p₂ ≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ]P p₂′ →
-           p₁ & p₂ ≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ]P p₁′ & p₂′
+           p₁ ≈[ k ]P p₁′ → p₂ ≈[ k ]P p₂′ → p₁ & p₂ ≈[ k ]P p₁′ & p₂′
 _&-cong_ = And.lift-cong
 
 -- _&_ is correct.

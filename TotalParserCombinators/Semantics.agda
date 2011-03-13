@@ -94,9 +94,17 @@ infix 4 _≈[_]_ _≈_ _≅_ _≲_
 -- weaker, and correspond to set equality.
 
 open Any.Membership-≡ public
-  using (Kind) renaming (bag to parser; set to language)
+  using (Kind)
+  renaming ( bag      to parser
+           ; set      to language
+           ; subbag   to subparser
+           ; subset   to sublanguage
+           ; superbag to superparser
+           ; superset to superlanguage
+           )
 
--- General definition of equivalence between parsers.
+-- General definition of equivalence between parsers. (Note that this
+-- definition also gives access to some ordering relations.)
 
 _≈[_]_ : ∀ {Tok R xs₁ xs₂} →
          Parser Tok R xs₁ → Kind → Parser Tok R xs₂ → Set₁
@@ -116,7 +124,7 @@ p₁ ≅ p₂ = p₁ ≈[ parser ] p₂
 -- string/result pairs contained in the language defined by p₁.
 
 _≲_ : ∀ {Tok R xs₁ xs₂} → Parser Tok R xs₁ → Parser Tok R xs₂ → Set₁
-p₁ ≲ p₂ = ∀ {x s} → x ∈ p₁ · s → x ∈ p₂ · s
+p₁ ≲ p₂ = p₁ ≈[ sublanguage ] p₂
 
 -- p₁ ≈ p₂ iff both p₁ ≲ p₂ and p₂ ≲ p₁.
 

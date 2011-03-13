@@ -28,7 +28,7 @@ open import TotalParserCombinators.Congruence as C using (_≈[_]P_; _≅P_)
 open import TotalParserCombinators.Derivative using (D)
 open import TotalParserCombinators.Parser
 import TotalParserCombinators.Pointwise as Pointwise
-open import TotalParserCombinators.Semantics using (_∈_·_)
+open import TotalParserCombinators.Semantics using (_∈_·_; parser)
 
 ------------------------------------------------------------------------
 -- An initial bag operator
@@ -41,8 +41,8 @@ not-index xs = if null xs then [ tt ] else []
 -- not-index preserves equality.
 
 not-index-cong : ∀ {k R} {xs xs′ : List R} →
-                 xs List-≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ] xs′ →
-                 not-index xs List-≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ] not-index xs′
+                 xs List-≈[ ⌊ k ⌋⇔ ] xs′ →
+                 not-index xs List-≈[ ⌊ k ⌋⇔ ] not-index xs′
 not-index-cong {xs = []   } {xs′ = []   } eq = ↔⇒ Inv.id
 not-index-cong {xs = _ ∷ _} {xs′ = _ ∷ _} eq = ↔⇒ Inv.id
 not-index-cong {xs = []   } {xs′ = _ ∷ _} eq
@@ -108,11 +108,13 @@ not-index-correct ext (x ∷ xs) = record
 ------------------------------------------------------------------------
 -- Not
 
--- ¬_ is defined as a pointwise lifting of not-index.
+-- ¬_ is defined as a pointwise lifting of not-index. Note that ¬_
+-- preserves parser and language equality, but not the
+-- sub-/superparser and sub-/superlanguage relations.
 
 private
   module Not {R : Set} =
-    Pointwise ⊥ R (const not-index) (const not-index-cong)
+    Pointwise ⊥ R ⌊_⌋⇔ (const not-index) (const not-index-cong)
 
 infix 60 ¬_ ¬-cong_
 
@@ -130,7 +132,7 @@ D-¬ = Not.D-lift fail
 
 ¬-cong_ : ∀ {k Tok R xs xs′}
             {p : Parser Tok R xs} {p′ : Parser Tok R xs′} →
-          p ≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ]P p′ → ¬ p ≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ]P ¬ p′
+          p ≈[ ⌊ k ⌋⇔ ]P p′ → ¬ p ≈[ ⌊ k ⌋⇔ ]P ¬ p′
 ¬-cong_ = Not.lift-cong C.fail
 
 -- ¬_ is correct (assuming that propositional equality is

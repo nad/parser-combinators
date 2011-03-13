@@ -2,13 +2,14 @@
 -- A language of parser equivalence proofs
 ------------------------------------------------------------------------
 
--- This module defines yet another equivalence relation for parsers.
--- This relation is an equality (a congruential equivalence relation)
--- by construction, and it is sound and complete with respect to the
--- previously defined equivalences (see
--- TotalParserCombinators.Congruence.Sound for the soundness proof).
--- This means that parser and language equivalence are also
--- equalities.
+-- This module defines yet another set of equivalence relations and
+-- preorders for parsers. For symmetric kinds these relations are
+-- equalities (compatible equivalence relations) by construction, and
+-- they are sound and complete with respect to the previously defined
+-- equivalences (see TotalParserCombinators.Congruence.Sound for the
+-- soundness proof). This means that parser and language equivalence
+-- are also equalities. The related orderings are compatible
+-- preorders.
 
 module TotalParserCombinators.Congruence where
 
@@ -20,6 +21,7 @@ open import Data.Nat
 open import Data.Product
 open import Data.Product.N-ary
 open import Function
+open import Function.Related using (Symmetric-kind; ⌊_⌋)
 open import Relation.Binary.PropositionalEquality using (_≡_; _≗_)
 
 open Any.Membership-≡ using (bag) renaming (_≈[_]_ to _List-≈[_]_)
@@ -93,10 +95,10 @@ mutual
              (p₁≅p₂ : p₁ ≅P p₂) (p₂≈p₃ : p₂ ≈[ k ]P p₃) →
              p₁ ≈[ k ]P p₃
 
-    sym : ∀ {k R xs₁ xs₂}
+    sym : ∀ {k : Symmetric-kind} {R xs₁ xs₂}
             {p₁ : Parser Tok R xs₁}
             {p₂ : Parser Tok R xs₂}
-          (p₁≈p₂ : p₁ ≈[ k ]P p₂) → p₂ ≈[ k ]P p₁
+          (p₁≈p₂ : p₁ ≈[ ⌊ k ⌋ ]P p₂) → p₂ ≈[ ⌊ k ⌋ ]P p₁
 
     -- Congruences.
 
