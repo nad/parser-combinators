@@ -8,10 +8,10 @@ open import Coinduction
 open import Data.List
 import Data.List.Any as Any
 open import Function.Equivalence as Eq using (_⇔_)
-import Function.Inverse as Inv
+import Function.Related as Related
 
 open Any.Membership-≡ using (_∈_) renaming (_≈[_]_ to _List-≈[_]_)
-open Inv.EquationalReasoning
+open Related.EquationalReasoning
 
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
@@ -39,14 +39,14 @@ sound : ∀ {k Tok R xs₁ xs₂}
           {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
         p₁ ≈[ k ]c p₂ → p₁ ≈[ k ] p₂
 sound {xs₁ = xs₁} {xs₂} {p₁} {p₂} (xs₁≈xs₂ ∷ rest) {x} {[]} =
-  x ∈ p₁ · []  ⇿⟨ I.correct ⟩
+  x ∈ p₁ · []  ↔⟨ I.correct ⟩
   (x ∈ xs₁)    ≈⟨ xs₁≈xs₂ ⟩
-  (x ∈ xs₂)    ⇿⟨ sym I.correct ⟩
+  (x ∈ xs₂)    ↔⟨ sym I.correct ⟩
   x ∈ p₂ · []  ∎
 sound {xs₁ = xs₁} {xs₂} {p₁} {p₂} (xs₁≈xs₂ ∷ rest) {x} {t ∷ s} =
-  x ∈   p₁   · t ∷ s  ⇿⟨ sym D.correct ⟩
+  x ∈   p₁   · t ∷ s  ↔⟨ sym D.correct ⟩
   x ∈ D t p₁ ·     s  ≈⟨ sound (♭ (rest t)) ⟩
-  x ∈ D t p₂ ·     s  ⇿⟨ D.correct ⟩
+  x ∈ D t p₂ ·     s  ↔⟨ D.correct ⟩
   x ∈   p₂   · t ∷ s  ∎
 
 complete : ∀ {k Tok R xs₁ xs₂}
@@ -58,4 +58,4 @@ complete p₁≈p₂ =
 correct : ∀ {k Tok R xs₁ xs₂}
             {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
           p₁ ≈[ k ]c p₂ ⇔ p₁ ≈[ k ] p₂
-correct = Eq.equivalent sound complete
+correct = Eq.equivalence sound complete

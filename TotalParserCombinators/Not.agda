@@ -14,9 +14,10 @@ open import Data.Product
 open import Data.Unit
 open import Function
 open import Function.Equality using (_⟨$⟩_)
-open import Function.Equivalence using (module Equivalent)
-open import Function.Inverse as Inv using (_⇿_)
-import Function.Inverse.TypeIsomorphisms as Iso
+open import Function.Equivalence using (module Equivalence)
+open import Function.Inverse as Inv using (_↔_)
+open import Function.Related
+import Function.Related.TypeIsomorphisms as Iso
 open import Level
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 import Relation.Binary.Sigma.Pointwise as Σ
@@ -40,15 +41,15 @@ not-index xs = if null xs then [ tt ] else []
 -- not-index preserves equality.
 
 not-index-cong : ∀ {k R} {xs xs′ : List R} →
-                 xs List-≈[ k ] xs′ →
-                 not-index xs List-≈[ k ] not-index xs′
-not-index-cong {xs = []   } {xs′ = []   } eq = Inv.⇿⇒ Inv.id
-not-index-cong {xs = _ ∷ _} {xs′ = _ ∷ _} eq = Inv.⇿⇒ Inv.id
+                 xs List-≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ] xs′ →
+                 not-index xs List-≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ] not-index xs′
+not-index-cong {xs = []   } {xs′ = []   } eq = ↔⇒ Inv.id
+not-index-cong {xs = _ ∷ _} {xs′ = _ ∷ _} eq = ↔⇒ Inv.id
 not-index-cong {xs = []   } {xs′ = _ ∷ _} eq
-  with Equivalent.from (Inv.⇒⇔ eq) ⟨$⟩ here P.refl
+  with Equivalence.from (⇒⇔ eq) ⟨$⟩ here P.refl
 ... | ()
 not-index-cong {xs = _ ∷ _} {xs′ = []   } eq
-  with Equivalent.to   (Inv.⇒⇔ eq) ⟨$⟩ here P.refl
+  with Equivalence.to   (⇒⇔ eq) ⟨$⟩ here P.refl
 ... | ()
 
 -- not-index is correct, assuming that propositional equality is
@@ -56,7 +57,7 @@ not-index-cong {xs = _ ∷ _} {xs′ = []   } eq
 
 not-index-correct :
   P.Extensionality zero zero →
-  ∀ {R} (xs : List R) → tt ∈ not-index xs ⇿ ∄ λ x → x ∈ xs
+  ∀ {R} (xs : List R) → tt ∈ not-index xs ↔ ∄ λ x → x ∈ xs
 not-index-correct ext [] = record
   { to         = P.→-to-⟶ to
   ; from       = P.→-to-⟶ from
@@ -129,7 +130,7 @@ D-¬ = Not.D-lift fail
 
 ¬-cong_ : ∀ {k Tok R xs xs′}
             {p : Parser Tok R xs} {p′ : Parser Tok R xs′} →
-          p ≈[ k ]P p′ → ¬ p ≈[ k ]P ¬ p′
+          p ≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ]P p′ → ¬ p ≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ]P ¬ p′
 ¬-cong_ = Not.lift-cong C.fail
 
 -- ¬_ is correct (assuming that propositional equality is
@@ -137,13 +138,13 @@ D-¬ = Not.D-lift fail
 
 correct : (∀ {ℓ} → P.Extensionality ℓ zero) →
           ∀ {Tok R xs s} (p : Parser Tok R xs) →
-          tt ∈ ¬ p · s ⇿ ∄ λ x → x ∈ p · s
+          tt ∈ ¬ p · s ↔ ∄ λ x → x ∈ p · s
 correct ext =
   Not.lift-property
-    (λ _ G H → H tt ⇿ ∄ G)
-    (λ _ G⇿G′ H⇿H′ →
-       Iso.Isomorphism-cong
-         (H⇿H′ tt)
-         (Iso.¬-cong ext ext $ Σ.cong λ {x} → G⇿G′ x))
+    (λ _ G H → H tt ↔ ∄ G)
+    (λ _ G↔G′ H↔H′ →
+       Iso.Related-cong
+         (H↔H′ tt)
+         (Iso.¬-cong ext ext $ Σ.cong Inv.id λ {x} → G↔G′ x))
     (not-index-correct ext _)
     fail

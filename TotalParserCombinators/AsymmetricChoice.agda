@@ -12,9 +12,10 @@ open import Data.List.Any as Any using (here)
 open import Data.Product
 open import Function
 open import Function.Equality using (_⟨$⟩_)
-open import Function.Equivalence using (module Equivalent)
-open import Function.Inverse as Inv using (_⇿_)
-open import Function.Inverse.TypeIsomorphisms
+open import Function.Equivalence using (module Equivalence)
+open import Function.Inverse as Inv using (_↔_)
+open import Function.Related as Related
+open import Function.Related.TypeIsomorphisms
 import Relation.Binary.PropositionalEquality as P
 import Relation.Binary.Sigma.Pointwise as Σ
 
@@ -39,15 +40,15 @@ first-nonempty xs ys = xs
 
 first-nonempty-cong :
   ∀ {k R} {xs₁ xs₁′ xs₂ xs₂′ : List R} →
-  xs₁ List-≈[ k ] xs₁′ → xs₂ List-≈[ k ] xs₂′ →
-  first-nonempty xs₁ xs₂ List-≈[ k ] first-nonempty xs₁′ xs₂′
+  xs₁ List-≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ] xs₁′ → xs₂ List-≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ] xs₂′ →
+  first-nonempty xs₁ xs₂ List-≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ] first-nonempty xs₁′ xs₂′
 first-nonempty-cong {xs₁ = []}    {[]}    eq₁ eq₂ = eq₂
 first-nonempty-cong {xs₁ = _ ∷ _} {_ ∷ _} eq₁ eq₂ = eq₁
 first-nonempty-cong {xs₁ = []} {_ ∷ _} eq₁ eq₂
-  with Equivalent.from (Inv.⇒⇔ eq₁) ⟨$⟩ here P.refl
+  with Equivalence.from (⇒⇔ eq₁) ⟨$⟩ here P.refl
 ... | ()
 first-nonempty-cong {xs₁ = _ ∷ _} {[]} eq₁ eq₂
-  with Equivalent.to (Inv.⇒⇔ eq₁) ⟨$⟩ here P.refl
+  with Equivalence.to (⇒⇔ eq₁) ⟨$⟩ here P.refl
 ... | ()
 
 -- first-nonempty is correct.
@@ -57,14 +58,14 @@ first-nonempty-left :
   (∃ λ y → y ∈ xs₁) → first-nonempty xs₁ xs₂ List-≈[ k ] xs₁
 first-nonempty-left {xs₁ = []}    (_ , ())
 first-nonempty-left {xs₁ = _ ∷ _} _        = _ ∎
-  where open Inv.EquationalReasoning
+  where open Related.EquationalReasoning
 
 first-nonempty-right :
   ∀ {k R} {xs₁ xs₂ : List R} →
   (∄ λ y → y ∈ xs₁) → first-nonempty xs₁ xs₂ List-≈[ k ] xs₂
 first-nonempty-right {xs₁ = x ∷ _} ∉x∷ = ⊥-elim $ ∉x∷ (x , here P.refl)
 first-nonempty-right {xs₁ = []}    _   = _ ∎
-  where open Inv.EquationalReasoning
+  where open Related.EquationalReasoning
 
 ------------------------------------------------------------------------
 -- Asymmetric choice
@@ -96,21 +97,22 @@ D-◃ = AC.D-lift
 _◃-cong_ : ∀ {k Tok R xs₁ xs₁′ xs₂ xs₂′}
              {p₁  : Parser Tok R xs₁} {p₁′ : Parser Tok R xs₁′}
              {p₂  : Parser Tok R xs₂} {p₂′ : Parser Tok R xs₂′} →
-           p₁ ≈[ k ]P p₁′ → p₂ ≈[ k ]P p₂′ → p₁ ◃ p₂ ≈[ k ]P p₁′ ◃ p₂′
+           p₁ ≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ]P p₁′ → p₂ ≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ]P p₂′ →
+           p₁ ◃ p₂ ≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ]P p₁′ ◃ p₂′
 _◃-cong_ = AC.lift-cong
 
 -- If p₁ accepts s, then p₁ ◃ p₂ behaves as p₁ when applied to s.
 
 left : ∀ {Tok R xs₁ xs₂ x s}
        (p₁ : Parser Tok R xs₁) (p₂ : Parser Tok R xs₂) →
-       (∃ λ y → y ∈ p₁ · s) → x ∈ p₁ ◃ p₂ · s ⇿ x ∈ p₁ · s
+       (∃ λ y → y ∈ p₁ · s) → x ∈ p₁ ◃ p₂ · s ↔ x ∈ p₁ · s
 left {x = x} =
   AC.lift-property
-    (λ F _ H → ∃ F → H x ⇿ F x)
-    (λ F⇿F′ _ H⇿H′ →
-       Σ.cong (λ {x} → Inv.⇿⇒ (F⇿F′ x))
+    (λ F _ H → ∃ F → H x ↔ F x)
+    (λ F↔F′ _ H↔H′ →
+       Σ.cong Inv.id (λ {x} → ↔⇒ (F↔F′ x))
          →-cong-⇔
-       Isomorphism-cong (H⇿H′ x) (F⇿F′ x))
+       Related-cong (H↔H′ x) (F↔F′ x))
     (λ ∈xs₁ → first-nonempty-left ∈xs₁)
 
 -- If p₁ does not accept s, then p₁ ◃ p₂ behaves as p₂ when applied to
@@ -118,12 +120,12 @@ left {x = x} =
 
 right : ∀ {Tok R xs₁ xs₂ x s}
         (p₁ : Parser Tok R xs₁) (p₂ : Parser Tok R xs₂) →
-        (∄ λ y → y ∈ p₁ · s) → x ∈ p₁ ◃ p₂ · s ⇿ x ∈ p₂ · s
+        (∄ λ y → y ∈ p₁ · s) → x ∈ p₁ ◃ p₂ · s ↔ x ∈ p₂ · s
 right {x = x} =
   AC.lift-property
-    (λ F G H → ∄ F → H x ⇿ G x)
-    (λ F⇿F′ G⇿G′ H⇿H′ →
-       ¬-cong-⇔ (Σ.cong λ {x} → Inv.⇿⇒ (F⇿F′ x))
+    (λ F G H → ∄ F → H x ↔ G x)
+    (λ F↔F′ G↔G′ H↔H′ →
+       ¬-cong-⇔ (Σ.cong Inv.id λ {x} → ↔⇒ (F↔F′ x))
          →-cong-⇔
-       Isomorphism-cong (H⇿H′ x) (G⇿G′ x))
+       Related-cong (H↔H′ x) (G↔G′ x))
     (λ ∉xs₁ → first-nonempty-right ∉xs₁)

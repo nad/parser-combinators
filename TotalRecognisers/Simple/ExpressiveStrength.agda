@@ -14,7 +14,7 @@ open import Data.Bool.Properties
 open import Function
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence
-  using (_⇔_; equivalent; module Equivalent)
+  using (_⇔_; equivalence; module Equivalence)
 open import Data.List
 open import Data.Product
 open import Relation.Binary.PropositionalEquality
@@ -29,7 +29,7 @@ open TotalRecognisers.Simple Bool _≟_
 grammar⇒pred : ∀ {n} (p : P n) →
                ∃ λ (f : List Bool → Bool) → ∀ s → s ∈ p ⇔ T (f s)
 grammar⇒pred p =
-  ((λ s → ⌊ s ∈? p ⌋) , λ _ → equivalent fromWitness toWitness)
+  ((λ s → ⌊ s ∈? p ⌋) , λ _ → equivalence fromWitness toWitness)
 
 -- For every decidable predicate there is a corresponding grammar.
 -- Note that these grammars are all "infinite LL(1)".
@@ -37,7 +37,7 @@ grammar⇒pred p =
 pred⇒grammar : (f : List Bool → Bool) →
                ∃ λ (p : P (f [])) → ∀ s → s ∈ p ⇔ T (f s)
 pred⇒grammar f =
-  (grammar f , λ s → equivalent (sound f) (complete f s))
+  (grammar f , λ s → equivalence (sound f) (complete f s))
   where
   accept-if-true : ∀ b → P b
   accept-if-true true  = empty
@@ -54,7 +54,7 @@ pred⇒grammar f =
   accept-if-true-sound false ()
 
   accept-if-true-complete : ∀ {b} → T b → [] ∈ accept-if-true b
-  accept-if-true-complete ok with Equivalent.to T-≡ ⟨$⟩ ok
+  accept-if-true-complete ok with Equivalence.to T-≡ ⟨$⟩ ok
   ... | refl = empty
 
   sound : ∀ f {s} → s ∈ grammar f → T (f s)

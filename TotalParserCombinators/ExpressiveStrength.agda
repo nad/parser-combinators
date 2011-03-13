@@ -8,14 +8,15 @@ module TotalParserCombinators.ExpressiveStrength where
 
 open import Coinduction
 open import Data.Bool
-open import Function
-open import Function.Inverse as Inv using (_⇿_)
 open import Data.List as List
 open import Data.List.Any
 open Membership-≡
 import Data.List.Properties as ListProp
 open import Data.List.Reverse
 open import Data.Product
+open import Function
+open import Function.Inverse using (_↔_)
+import Function.Related as Related
 open import Relation.Binary.PropositionalEquality as P
   using (_≡_; refl)
 open import Relation.Binary.HeterogeneousEquality
@@ -38,7 +39,7 @@ open import TotalParserCombinators.BreadthFirst as Backend
 -- For every parser there is an equivalent function.
 
 parser⇒fun : ∀ {R xs} (p : Parser Bool R xs) {x s} →
-             x ∈ p · s ⇿ x ∈ parse p s
+             x ∈ p · s ↔ x ∈ parse p s
 parser⇒fun p = Backend.parse-correct
 
 -- For every function there is a corresponding parser.
@@ -54,7 +55,7 @@ module Monadic where
   -- Correctness proof.
 
   grammar-correct : ∀ {Tok R} (f : List Tok → List R) {x s} →
-                    x ∈ grammar f · s ⇿ x ∈ f s
+                    x ∈ grammar f · s ↔ x ∈ f s
   grammar-correct f {s = s} = record
     { to         = P.→-to-⟶ (sound f)
     ; from       = P.→-to-⟶ (complete f s)
@@ -101,10 +102,10 @@ module Monadic where
     ∀ {Tok R} (f : List Tok → List R) {s} →
     parse (grammar f) s ≈[ bag ] f s
   maximally-expressive f {s} {x} =
-    (x ∈ parse (grammar f) s)  ⇿⟨ sym Backend.parse-correct ⟩
-    x ∈ grammar f · s          ⇿⟨ grammar-correct f ⟩
+    (x ∈ parse (grammar f) s)  ↔⟨ sym Backend.parse-correct ⟩
+    x ∈ grammar f · s          ↔⟨ grammar-correct f ⟩
     x ∈ f s                    ∎
-    where open Inv.EquationalReasoning
+    where open Related.EquationalReasoning
 
 -- If the token type is finite (in this case Bool), then the result
 -- above can be established without the use of bind (_>>=_). (The
@@ -130,7 +131,7 @@ module Applicative where
   -- Correctness proof.
 
   grammar-correct : ∀ {R} (f : List Bool → List R) {x s} →
-                    x ∈ grammar f · s ⇿ x ∈ f s
+                    x ∈ grammar f · s ↔ x ∈ f s
   grammar-correct {R} f {s = s} = record
     { to         = P.→-to-⟶ (sound f)
     ; from       = P.→-to-⟶ (complete f (reverseView s))
@@ -212,7 +213,7 @@ module Applicative where
     ∀ {R} (f : List Bool → List R) {s} →
     parse (grammar f) s ≈[ bag ] f s
   maximally-expressive f {s} {x} =
-    (x ∈ parse (grammar f) s)  ⇿⟨ sym Backend.parse-correct ⟩
-    x ∈ grammar f · s          ⇿⟨ grammar-correct f ⟩
+    (x ∈ parse (grammar f) s)  ↔⟨ sym Backend.parse-correct ⟩
+    x ∈ grammar f · s          ↔⟨ grammar-correct f ⟩
     x ∈ f s                    ∎
-    where open Inv.EquationalReasoning
+    where open Related.EquationalReasoning

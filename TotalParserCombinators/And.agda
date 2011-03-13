@@ -9,8 +9,9 @@ import Data.List as List
 open import Data.List.Any.BagAndSetEquality
 open import Data.List.Any.Membership
 open import Data.Product
-open import Function.Inverse as Inv using (_⇿_)
-open import Function.Inverse.TypeIsomorphisms
+open import Function.Inverse using (_↔_)
+open import Function.Related as Related using (⌊_⌋⇔; ⇔⌊_⌋)
+open import Function.Related.TypeIsomorphisms
 open import Relation.Binary.Product.Pointwise
 
 open RawMonadPlus List.monadPlus using (_⊗_)
@@ -47,18 +48,19 @@ D-& = And.D-lift
 _&-cong_ : ∀ {k Tok R xs₁ xs₁′ xs₂ xs₂′}
              {p₁  : Parser Tok R xs₁} {p₁′ : Parser Tok R xs₁′}
              {p₂  : Parser Tok R xs₂} {p₂′ : Parser Tok R xs₂′} →
-           p₁ ≈[ k ]P p₁′ → p₂ ≈[ k ]P p₂′ → p₁ & p₂ ≈[ k ]P p₁′ & p₂′
+           p₁ ≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ]P p₁′ → p₂ ≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ]P p₂′ →
+           p₁ & p₂ ≈[ ⌊ ⇔⌊ k ⌋ ⌋⇔ ]P p₁′ & p₂′
 _&-cong_ = And.lift-cong
 
 -- _&_ is correct.
 
 correct : ∀ {Tok R₁ R₂ xs₁ xs₂ x₁ x₂ s}
           (p₁ : Parser Tok R₁ xs₁) (p₂ : Parser Tok R₂ xs₂) →
-          (x₁ , x₂) ∈ p₁ & p₂ · s ⇿ (x₁ ∈ p₁ · s × x₂ ∈ p₂ · s)
+          (x₁ , x₂) ∈ p₁ & p₂ · s ↔ (x₁ ∈ p₁ · s × x₂ ∈ p₂ · s)
 correct {x₁ = x₁} {x₂} =
   And.lift-property
-    (λ F G H → H (x₁ , x₂) ⇿ (F x₁ × G x₂))
-    (λ F⇿F′ G⇿G′ H⇿H′ →
-       Isomorphism-cong (H⇿H′ (x₁ , x₂)) (F⇿F′ x₁ ×-⇿ G⇿G′ x₂))
-    (sym ⊗-∈⇿)
-  where open Inv.EquationalReasoning
+    (λ F G H → H (x₁ , x₂) ↔ (F x₁ × G x₂))
+    (λ F↔F′ G↔G′ H↔H′ →
+       Related-cong (H↔H′ (x₁ , x₂)) (F↔F′ x₁ ×-↔ G↔G′ x₂))
+    (sym ⊗-∈↔)
+  where open Related.EquationalReasoning

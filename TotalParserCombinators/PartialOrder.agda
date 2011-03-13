@@ -5,7 +5,7 @@
 module TotalParserCombinators.PartialOrder where
 
 open import Function
-open import Function.Equivalence using (equivalent)
+open import Function.Equivalence using (equivalence)
 
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
@@ -24,4 +24,4 @@ antisym : ∀ {Tok R xs₁ xs₂}
             {p₁ : Parser Tok R xs₁}
             {p₂ : Parser Tok R xs₂} →
           p₁ ≲ p₂ → p₂ ≲ p₁ → p₁ ≈ p₂
-antisym p₁≲p₂ p₂≲p₁ = equivalent p₁≲p₂ p₂≲p₁
+antisym p₁≲p₂ p₂≲p₁ = equivalence p₁≲p₂ p₂≲p₁

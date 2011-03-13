@@ -12,9 +12,9 @@ open import Data.Product
 open import Data.Unit using (⊤; tt)
 open import Function
 open import Function.Equality using (_⟨$⟩_)
-open import Function.Equivalence as Eq using (_⇔_; module Equivalent)
-open import Function.Inverse as Inv
-  using (_⇿_; module Inverse; Isomorphism)
+open import Function.Equivalence as Eq using (_⇔_; module Equivalence)
+open import Function.Inverse using (_↔_; module Inverse)
+open import Function.Related as Related using (Related)
 open import Level
 import Relation.Binary.HeterogeneousEquality as H
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
@@ -100,7 +100,7 @@ open Any.Membership-≡ public
 
 _≈[_]_ : ∀ {Tok R xs₁ xs₂} →
          Parser Tok R xs₁ → Kind → Parser Tok R xs₂ → Set₁
-p₁ ≈[ k ] p₂ = ∀ {x s} → Isomorphism k (x ∈ p₁ · s) (x ∈ p₂ · s)
+p₁ ≈[ k ] p₂ = ∀ {x s} → Related k (x ∈ p₁ · s) (x ∈ p₂ · s)
 
 -- Language equivalence. (Corresponds to set equality.)
 
@@ -123,18 +123,18 @@ p₁ ≲ p₂ = ∀ {x s} → x ∈ p₁ · s → x ∈ p₂ · s
 ≈⇔≲≳ : ∀ {Tok R xs₁ xs₂}
          {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
        p₁ ≈ p₂ ⇔ (p₁ ≲ p₂ × p₂ ≲ p₁)
-≈⇔≲≳ = Eq.equivalent {t = suc zero}
-         (λ p₁≈p₂  → ((λ {_} → _⟨$⟩_ (Equivalent.to   p₁≈p₂))
-                     , λ {_} → _⟨$⟩_ (Equivalent.from p₁≈p₂)))
-         (λ p₁≲≳p₂ {s} → Eq.equivalent (proj₁ p₁≲≳p₂ {s})
-                                       (proj₂ p₁≲≳p₂ {s}))
+≈⇔≲≳ = Eq.equivalence {t = suc zero}
+         (λ p₁≈p₂  → ((λ {_} → _⟨$⟩_ (Equivalence.to   p₁≈p₂))
+                     , λ {_} → _⟨$⟩_ (Equivalence.from p₁≈p₂)))
+         (λ p₁≲≳p₂ {s} → Eq.equivalence (proj₁ p₁≲≳p₂ {s})
+                                        (proj₂ p₁≲≳p₂ {s}))
 
 -- Parser equivalence implies language equivalence.
 
 ≅⇒≈ : ∀ {Tok R xs₁ xs₂}
         {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
       p₁ ≅ p₂ → p₁ ≈ p₂
-≅⇒≈ p₁≅p₂ = Inv.⇿⇒ p₁≅p₂
+≅⇒≈ p₁≅p₂ = Related.↔⇒ p₁≅p₂
 
 -- Language equivalence does not (in general) imply parser
 -- equivalence.
@@ -156,7 +156,7 @@ p₁ ≲ p₂ = ∀ {x s} → x ∈ p₁ · s → x ∈ p₂ · s
   p₁≲p₂ (∣-right ._ return) = return
 
   p₁≅p₂ : p₁ ≅ p₂
-  p₁≅p₂ = hyp $ Eq.equivalent p₁≲p₂ ∣-left
+  p₁≅p₂ = hyp $ Eq.equivalence p₁≲p₂ ∣-left
 
   lemma : ∀ {x s} (x∈₁ x∈₂ : x ∈ p₂ · s) → x∈₁ ≡ x∈₂
   lemma return return = P.refl

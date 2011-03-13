@@ -14,11 +14,11 @@ import Data.List.Any.BagAndSetEquality as BSEq
 open import Data.Maybe
 open import Data.Product
 open import Function
-import Function.Inverse as Inv
+open import Function.Related as Related using (⌊_⌋)
 import Relation.Binary.PropositionalEquality as P
 
 open Any.Membership-≡ using (bag; _∈_) renaming (_≈[_]_ to _List-≈[_]_)
-open Inv.EquationalReasoning
+open Related.EquationalReasoning
   renaming (_≈⟨_⟩_ to _≈⟨_⟩′_; _∎ to _∎′; sym to sym′)
 open RawMonad List.monad
   using () renaming (_⊛_ to _⊛′_; _>>=_ to _>>=′_)
@@ -41,8 +41,8 @@ open import TotalParserCombinators.Semantics using (_≈[_]_)
 private
 
   ⊛-[] : ∀ {A B : Set} (fs : List (A → B)) xs {k} →
-         [] List-≈[ k ] xs →
-         [] List-≈[ k ] (fs ⊛′ xs)
+         [] List-≈[ ⌊ k ⌋ ] xs →
+         [] List-≈[ ⌊ k ⌋ ] (fs ⊛′ xs)
   ⊛-[] fs xs []≈xs {x} =
     x ∈ []          ≈⟨ BSMonoid.reflexive $ P.sym $
                          ListProp.Applicative.right-zero fs ⟩′
@@ -51,14 +51,14 @@ private
 
   ⊛flatten-lemma : ∀ {k} {R₁ R₂ : Set} {fs₁ fs₂ : List (R₁ → R₂)}
                    (xs₁ xs₂ : Maybe (List R₁)) →
-                   fs₁ List-≈[ k ] fs₂ →
-                   flatten xs₁ List-≈[ k ] flatten xs₂ →
-                   fs₁ ⊛flatten xs₁ List-≈[ k ] fs₂ ⊛flatten xs₂
+                   fs₁ List-≈[ ⌊ k ⌋ ] fs₂ →
+                   flatten xs₁ List-≈[ ⌊ k ⌋ ] flatten xs₂ →
+                   fs₁ ⊛flatten xs₁ List-≈[ ⌊ k ⌋ ] fs₂ ⊛flatten xs₂
   ⊛flatten-lemma {k} {fs₁ = fs₁} {fs₂} xs₁ xs₂ fs₁≈fs₂ = helper xs₁ xs₂
     where
     helper : ∀ xs₁ xs₂ →
-             flatten xs₁ List-≈[ k ] flatten xs₂ →
-             fs₁ ⊛flatten xs₁ List-≈[ k ] fs₂ ⊛flatten xs₂
+             flatten xs₁ List-≈[ ⌊ k ⌋ ] flatten xs₂ →
+             fs₁ ⊛flatten xs₁ List-≈[ ⌊ k ⌋ ] fs₂ ⊛flatten xs₂
     helper nothing    nothing     []≈[]  = BSMonoid.refl
     helper nothing    (just xs₂)  []≈xs₂ = ⊛-[] fs₂ xs₂ []≈xs₂
     helper (just xs₁) nothing    xs₁≈[]  = BSMonoid.sym $
@@ -72,8 +72,8 @@ private
   []-⊛flatten (just xs) = BSMonoid.refl
 
   >>=-[] : ∀ {A B : Set} xs (f : A → List B) {k} →
-           (∀ x → [] List-≈[ k ] f x) →
-           [] List-≈[ k ] (xs >>=′ f)
+           (∀ x → [] List-≈[ ⌊ k ⌋ ] f x) →
+           [] List-≈[ ⌊ k ⌋ ] (xs >>=′ f)
   >>=-[] xs f []≈f {x} =
     x ∈ []                  ≈⟨ BSMonoid.reflexive $ P.sym $
                                  ListProp.Monad.right-zero xs ⟩′
@@ -83,14 +83,14 @@ private
 
   bind-lemma : ∀ {k} {R₁ R₂ : Set} {xs₁ xs₂ : Maybe (List R₁)}
                (f₁ f₂ : Maybe (R₁ → List R₂)) →
-               flatten xs₁ List-≈[ k ] flatten xs₂ →
-               (∀ x → apply f₁ x List-≈[ k ] apply f₂ x) →
-               bind xs₁ f₁ List-≈[ k ] bind xs₂ f₂
+               flatten xs₁ List-≈[ ⌊ k ⌋ ] flatten xs₂ →
+               (∀ x → apply f₁ x List-≈[ ⌊ k ⌋ ] apply f₂ x) →
+               bind xs₁ f₁ List-≈[ ⌊ k ⌋ ] bind xs₂ f₂
   bind-lemma {k} {xs₁ = xs₁} {xs₂} f₁ f₂ xs₁≈xs₂ = helper f₁ f₂
     where
     helper : ∀ f₁ f₂ →
-             (∀ x → apply f₁ x List-≈[ k ] apply f₂ x) →
-             bind xs₁ f₁ List-≈[ k ] bind xs₂ f₂
+             (∀ x → apply f₁ x List-≈[ ⌊ k ⌋ ] apply f₂ x) →
+             bind xs₁ f₁ List-≈[ ⌊ k ⌋ ] bind xs₂ f₂
     helper nothing   nothing   f₁≈f₂ = BSMonoid.refl
     helper nothing   (just f₂) f₁≈f₂ = >>=-[] (flatten xs₂) f₂ f₁≈f₂
     helper (just f₁) nothing   f₁≈f₂ = BSMonoid.sym $
@@ -108,11 +108,11 @@ private
 
 initial-bag-cong :
   ∀ {k Tok R xs₁ xs₂} {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
-  p₁ ≈[ k ]P p₂ → initial-bag p₁ List-≈[ k ] initial-bag p₂
+  p₁ ≈[ ⌊ k ⌋ ]P p₂ → initial-bag p₁ List-≈[ ⌊ k ⌋ ] initial-bag p₂
 initial-bag-cong (xs₁≈xs₂ ∷ Dp₁≈Dp₂)   = xs₁≈xs₂
 initial-bag-cong (p ∎)                 = BSMonoid.refl
 initial-bag-cong (p₁ ≈⟨ p₁≈p₂ ⟩ p₂≈p₃) = _ ≈⟨ initial-bag-cong p₁≈p₂ ⟩′ initial-bag-cong p₂≈p₃
-initial-bag-cong (p₁ ≅⟨ p₁≅p₂ ⟩ p₂≈p₃) = _ ⇿⟨ initial-bag-cong p₁≅p₂ ⟩  initial-bag-cong p₂≈p₃
+initial-bag-cong (p₁ ≅⟨ p₁≅p₂ ⟩ p₂≈p₃) = _ ↔⟨ initial-bag-cong p₁≅p₂ ⟩  initial-bag-cong p₂≈p₃
 initial-bag-cong (sym p₁≈p₂)           = sym′ (initial-bag-cong p₁≈p₂)
 initial-bag-cong (return x₁≡x₂)        = BSMonoid.reflexive $ P.cong [_] x₁≡x₂
 initial-bag-cong fail                  = BSMonoid.refl
@@ -125,25 +125,25 @@ initial-bag-cong (cast {xs₁  = xs₁}  {xs₂  = xs₂}
                        {xs₁′ = xs₁′} {xs₂′ = xs₂′}
                        {xs₁≈xs₁′ = xs₁≈xs₁′} {xs₂≈xs₂′ = xs₂≈xs₂′}
                        p₁≈p₂) {x} =
-  x ∈ xs₁′  ⇿⟨ sym′ xs₁≈xs₁′ ⟩
+  x ∈ xs₁′  ↔⟨ sym′ xs₁≈xs₁′ ⟩
   x ∈ xs₁   ≈⟨ initial-bag-cong p₁≈p₂ ⟩′
-  x ∈ xs₂   ⇿⟨ xs₂≈xs₂′ ⟩
+  x ∈ xs₂   ↔⟨ xs₂≈xs₂′ ⟩
   x ∈ xs₂′  ∎′
 
 initial-bag-cong ([ nothing          - _       ] p₁≈p₃ ⊛ p₂≈p₄)     = BSMonoid.refl
 initial-bag-cong ([ just (xs₁ , xs₂) - just _  ] p₁≈p₃ ⊛ p₂≈p₄)     = ⊛flatten-lemma xs₁ xs₂
                                                                         (initial-bag-cong p₁≈p₃) (initial-bag-cong p₂≈p₄)
 initial-bag-cong ([ just (xs₁ , xs₂) - nothing ] p₁≈p₃ ⊛ p₂≈p₄) {x} =
-  x ∈ [] ⊛flatten xs₁  ⇿⟨ []-⊛flatten xs₁ ⟩
-  x ∈ []               ⇿⟨ sym′ $ []-⊛flatten xs₂ ⟩
+  x ∈ [] ⊛flatten xs₁  ↔⟨ []-⊛flatten xs₁ ⟩
+  x ∈ []               ↔⟨ sym′ $ []-⊛flatten xs₂ ⟩
   x ∈ [] ⊛flatten xs₂  ∎′
 
 initial-bag-cong ([ nothing        - _       ] p₁≈p₃ >>= p₂≈p₄)     = BSMonoid.refl
 initial-bag-cong ([ just (f₁ , f₂) - just _  ] p₁≈p₃ >>= p₂≈p₄)     = bind-lemma f₁ f₂
                                                                         (initial-bag-cong p₁≈p₃) (λ x → initial-bag-cong (p₂≈p₄ x))
 initial-bag-cong ([ just (f₁ , f₂) - nothing ] p₁≈p₃ >>= p₂≈p₄) {x} =
-  x ∈ bind nothing f₁  ⇿⟨ bind-nothing f₁ ⟩
-  x ∈ []               ⇿⟨ sym′ $ bind-nothing f₂ ⟩
+  x ∈ bind nothing f₁  ↔⟨ bind-nothing f₁ ⟩
+  x ∈ []               ↔⟨ sym′ $ bind-nothing f₂ ⟩
   x ∈ bind nothing f₂  ∎′
 
 ------------------------------------------------------------------------
@@ -151,7 +151,7 @@ initial-bag-cong ([ just (f₁ , f₂) - nothing ] p₁≈p₃ >>= p₂≈p₄) 
 
 D-cong : ∀ {k Tok R xs₁ xs₂}
            {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
-         p₁ ≈[ k ]P p₂ → ∀ {t} → D t p₁ ≈[ k ]P D t p₂
+         p₁ ≈[ ⌊ k ⌋ ]P p₂ → ∀ {t} → D t p₁ ≈[ ⌊ k ⌋ ]P D t p₂
 D-cong (xs₁≈xs₂ ∷ Dp₁≈Dp₂)   {t} = ♭ (Dp₁≈Dp₂ t)
 D-cong (p ∎)                 {t} = D t p ∎
 D-cong (p₁ ≈⟨ p₁≈p₂ ⟩ p₂≈p₃) {t} = D t p₁ ≈⟨ D-cong p₁≈p₂ ⟩ D-cong p₂≈p₃
@@ -236,11 +236,11 @@ D-cong ([_-_]_>>=_ (just _) (just (xs₁ , xs₂)) {p₁} {p₂} {p₃} {p₄} p
 sound : ∀ {k Tok R xs₁ xs₂}
           {p₁ : Parser Tok R xs₁}
           {p₂ : Parser Tok R xs₂} →
-        p₁ ≈[ k ]P p₂ → p₁ ≈[ k ] p₂
+        p₁ ≈[ ⌊ k ⌋ ]P p₂ → p₁ ≈[ ⌊ k ⌋ ] p₂
 sound = CE.sound ∘ sound′
   where
   sound′ : ∀ {k Tok R xs₁ xs₂}
              {p₁ : Parser Tok R xs₁}
              {p₂ : Parser Tok R xs₂} →
-           p₁ ≈[ k ]P p₂ → p₁ ≈[ k ]c p₂
+           p₁ ≈[ ⌊ k ⌋ ]P p₂ → p₁ ≈[ ⌊ k ⌋ ]c p₂
   sound′ p₁≈p₂ = initial-bag-cong p₁≈p₂ ∷ λ t → ♯ sound′ (D-cong p₁≈p₂)

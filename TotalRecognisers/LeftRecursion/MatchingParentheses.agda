@@ -71,7 +71,7 @@ decide-matching xs = xs ∈? matching
 -- Membership of matching is equivalent to satisfaction of Matching.
 
 ∈m⇔M : ∀ {xs} → (xs ∈ matching) ⇔ Matching xs
-∈m⇔M = equivalent to from
+∈m⇔M = equivalence to from
   where
   to : ∀ {xs} → xs ∈ matching → Matching xs
   to (∣-left (∣-left empty))                        = nil

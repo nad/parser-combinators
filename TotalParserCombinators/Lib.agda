@@ -9,7 +9,7 @@ open import Coinduction
 open import Function
 open import Function.Equality using (_⟶_; _⟨$⟩_)
 open import Function.Injection using (Injection; Injective)
-open import Function.Inverse using (_⇿_; module Inverse)
+open import Function.Inverse using (_↔_; module Inverse)
 open import Data.Bool
 open import Data.Char as Char using (Char; _==_)
 open import Data.List as List
@@ -142,7 +142,7 @@ module KleeneStar where
     P.cong (_∷_ x∈p) $ sound∘complete xs∈p⋆
 
   correct : ∀ {Tok R xs s} {p : Parser Tok R []} →
-            xs ∈ p ⋆ · s ⇿ xs ∈[ p ]⋆· s
+            xs ∈ p ⋆ · s ↔ xs ∈[ p ]⋆· s
   correct = record
     { to         = P.→-to-⟶ sound
     ; from       = P.→-to-⟶ complete
@@ -277,7 +277,7 @@ module Return⋆ where
   sound∘complete (there x∈xs) | .(refl , x∈xs) | refl = refl
 
   correct : ∀ {Tok R} {xs : List R} {x s} →
-            (s ≡ [] × x ∈ xs) ⇿ x ∈ return⋆ {Tok} xs · s
+            (s ≡ [] × x ∈ xs) ↔ x ∈ return⋆ {Tok} xs · s
   correct {xs = xs} {x} = record
     { to         = P.→-to-⟶ complete′
     ; from       = P.→-to-⟶ $ sound xs
@@ -317,7 +317,7 @@ module Sat where
   ok (just x) = return x
 
   ok-correct : ∀ {Tok R x s} (m : Maybe R) →
-               (s ≡ [] × m ≡ just x) ⇿ x ∈ ok {Tok} m · s
+               (s ≡ [] × m ≡ just x) ↔ x ∈ ok {Tok} m · s
   ok-correct {Tok} {x = x} m = record
     { to         = P.→-to-⟶ (to m)
     ; from       = P.→-to-⟶ (from m)
@@ -352,7 +352,7 @@ module Sat where
   sat p = token >>= (ok ∘ p)
 
   correct : ∀ {Tok R x s} (p : Tok → Maybe R) →
-            (∃ λ t → s ≡ [ t ] × p t ≡ just x) ⇿ x ∈ sat p · s
+            (∃ λ t → s ≡ [ t ] × p t ≡ just x) ↔ x ∈ sat p · s
   correct {x = x} p = record
     { to         = P.→-to-⟶ to
     ; from       = P.→-to-⟶ from

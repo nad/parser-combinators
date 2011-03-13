@@ -9,7 +9,7 @@ import Data.List.Any as Any
 open import Data.Product
 open import Function
 open import Function.Equality using (_⟨$⟩_)
-open import Function.Inverse using (_⇿_; module Inverse)
+open import Function.Inverse using (_↔_; module Inverse)
 open import Relation.Binary.HeterogeneousEquality as H
   using () renaming (_≅_ to _≅H_)
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
@@ -100,7 +100,7 @@ module Parse
   -- The backend is correct.
 
   correct : ∀ {R xs x s} {p : Parser Tok R xs} →
-            x ∈ p · s ⇿ x ∈ parse p s
+            x ∈ p · s ↔ x ∈ parse p s
   correct {s = s} {p} = record
     { to         = P.→-to-⟶ $ complete s
     ; from       = P.→-to-⟶ $ sound s
@@ -119,7 +119,7 @@ parse : ∀ {Tok R xs} → Parser Tok R xs → List Tok → List R
 parse = Parse.parse ,_ _∎
 
 parse-correct : ∀ {Tok R xs x s} {p : Parser Tok R xs} →
-                x ∈ p · s ⇿ x ∈ parse p s
+                x ∈ p · s ↔ x ∈ parse p s
 parse-correct = Parse.correct _ _
 
 -- Parsing with simplification.
@@ -130,7 +130,7 @@ parse-with-simplification = Parse.parse (λ p → , simplify p) S.correct
 
 parse-with-simplification-correct :
   ∀ {Tok R xs x s} {p : Parser Tok R xs} →
-  x ∈ p · s ⇿ x ∈ parse-with-simplification p s
+  x ∈ p · s ↔ x ∈ parse-with-simplification p s
 parse-with-simplification-correct = Parse.correct _ _
 
 ------------------------------------------------------------------------

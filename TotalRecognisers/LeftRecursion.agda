@@ -15,7 +15,7 @@ private
 open import Function
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence as Eq
-  using (_⇔_; equivalent; module Equivalent)
+  using (_⇔_; equivalence; module Equivalence)
   renaming (_∘_ to _⟨∘⟩_)
 open import Data.List as List using (List; []; _∷_; _++_; [_])
 private
@@ -146,11 +146,11 @@ p₁ ≈ p₂ = ∀ {s} → s ∈ p₁ ⇔ s ∈ p₂
 
 ≈⇔≤≥ : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
        p₁ ≈ p₂ ⇔ (p₁ ≤ p₂ × p₂ ≤ p₁)
-≈⇔≤≥ = equivalent
-         (λ p₁≈p₂  → ((λ {_} → _⟨$⟩_ (Equivalent.to   p₁≈p₂))
-                     , λ {_} → _⟨$⟩_ (Equivalent.from p₁≈p₂)))
-         (λ p₁≤≥p₂ {s} → equivalent (proj₁ p₁≤≥p₂ {s})
-                                    (proj₂ p₁≤≥p₂ {s}))
+≈⇔≤≥ = equivalence
+         (λ p₁≈p₂  → ((λ {_} → _⟨$⟩_ (Equivalence.to   p₁≈p₂))
+                     , λ {_} → _⟨$⟩_ (Equivalence.from p₁≈p₂)))
+         (λ p₁≤≥p₂ {s} → equivalence (proj₁ p₁≤≥p₂ {s})
+                                     (proj₂ p₁≤≥p₂ {s}))
 
 -- Some lemmas.
 
@@ -173,7 +173,7 @@ leftRight = ♯ leftRight · ♯ leftRight
 -- be a primitive combinator.
 
 leftRight≈fail : leftRight ≈ fail
-leftRight≈fail = equivalent ≤fail (λ ())
+leftRight≈fail = equivalence ≤fail (λ ())
   where
   ≤fail : ∀ {s A} → s ∈ leftRight → A
   ≤fail (∈₁ · ∈₂) = ≤fail ∈₁
@@ -213,7 +213,7 @@ leftRight≈fail = equivalent ≤fail (λ ())
 ⇐ (_·_ {_}     {false} p₁ p₂) ()
 
 index-correct : ∀ {n} {p : P n} → [] ∈ p ⇔ n ≡ true
-index-correct = equivalent ⇒ (⇐ _)
+index-correct = equivalence ⇒ (⇐ _)
 
 -- We can decide if the empty string belongs to a given language.
 
@@ -309,7 +309,7 @@ D-complete {t = t} t∷s∈ = D-complete′ _ t∷s∈ refl
   D-complete′ (p₁ · p₂)    (_·_ {._ ∷ _} ∈₁ ∈₂) refl | false | false = D-complete ∈₁ · add-♭♯ (D-nullable t (♭ p₁)) ∈₂
 
 D-correct : ∀ {n s t} {p : P n} → s ∈ D t p ⇔ t ∷ s ∈ p
-D-correct = equivalent D-sound D-complete
+D-correct = equivalence D-sound D-complete
 
 ------------------------------------------------------------------------
 -- _∈_ is decidable
@@ -363,7 +363,7 @@ D-cong p₁≈p₂ = Eq.sym D-correct ⟨∘⟩ p₁≈p₂ ⟨∘⟩ D-correct
   same-nullability p₁≈p₂ ∷ λ _ → ♯ ≈′-complete (D-cong p₁≈p₂)
 
 ≈′-correct : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} → p₁ ≈′ p₂ ⇔ p₁ ≈ p₂
-≈′-correct = equivalent ≈′-sound ≈′-complete
+≈′-correct = equivalence ≈′-sound ≈′-complete
 
 ------------------------------------------------------------------------
 -- The combinator nonempty does not need to be primitive
@@ -433,4 +433,4 @@ module AlternativeNonempty where
                                                                                    complete′ p₂ pr₂ refl)
 
   correct : ∀ {n} {p : P n} → nonempty′ p ≈ nonempty p
-  correct = equivalent sound complete
+  correct = equivalence sound complete

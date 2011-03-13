@@ -28,8 +28,8 @@ Unambiguous p =
         {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
       Unambiguous p₁ → Unambiguous p₂ → p₁ ≈ p₂ → p₁ ≅ p₂
 ≈⇒≅ u₁ u₂ p₁≈p₂ = record
-  { to         = Equivalent.to   p₁≈p₂
-  ; from       = Equivalent.from p₁≈p₂
+  { to         = Equivalence.to   p₁≈p₂
+  ; from       = Equivalence.from p₁≈p₂
   ; inverse-of = record
     { left-inverse-of  = λ x∈p₁ → H.≅-to-≡ $ proj₂ $ u₁ _ x∈p₁
     ; right-inverse-of = λ x∈p₂ → H.≅-to-≡ $ proj₂ $ u₂ _ x∈p₂

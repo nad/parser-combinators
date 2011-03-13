@@ -11,7 +11,7 @@ open import Data.Product using (_,_; proj₂)
 open import Function using (_$_)
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence
-  using (_⇔_; equivalent; module Equivalent)
+  using (_⇔_; equivalence; module Equivalence)
 import Relation.Binary.PropositionalEquality as P
 open import Relation.Nullary
 
@@ -38,9 +38,9 @@ p₁ ≲′ p₂ = p₁ ∣ p₂ ≈ p₂
        (p₁ : Parser Tok R xs₁) (p₂ : Parser Tok R xs₂) →
        p₁ ≲ p₂ ⇔ p₁ ≲′ p₂
 ≲⇔≲′ {xs₁ = xs₁} p₁ p₂ =
-  equivalent
-    (λ (p₁≲p₂ : p₁ ≲ p₂) {_} → equivalent (helper p₁≲p₂) (∣-right xs₁))
-    (λ (p₁≲′p₂ : p₁ ≲′ p₂) s∈p₁ → Equivalent.to p₁≲′p₂ ⟨$⟩ ∣-left s∈p₁)
+  equivalence
+    (λ (p₁≲p₂ : p₁ ≲ p₂) {_} → equivalence (helper p₁≲p₂) (∣-right xs₁))
+    (λ (p₁≲′p₂ : p₁ ≲′ p₂) s∈p₁ → Equivalence.to p₁≲′p₂ ⟨$⟩ ∣-left s∈p₁)
   where
   helper : p₁ ≲ p₂ → p₁ ∣ p₂ ≲ p₂
   helper p₁≲p₂ (∣-left       s∈p₁) = p₁≲p₂ s∈p₁

@@ -14,8 +14,7 @@ private
   module BoolBA = Algebra.Props.BooleanAlgebra Bool.booleanAlgebra
 open import Function
 open import Function.Equality using (_⟨$⟩_)
-open import Function.Equivalence as Eq
-  using (_⇔_; equivalent; module Equivalent)
+open import Function.Equivalence as Eq using (_⇔_; equivalence)
 open import Data.List as List
 private
   module ListMonoid {A : Set} = Monoid (List.monoid A)
@@ -47,7 +46,7 @@ module PartialOrder where
 
   antisym : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
             p₁ ≤ p₂ → p₂ ≤ p₁ → p₁ ≈ p₂
-  antisym p₁≤p₂ p₂≤p₁ = equivalent p₁≤p₂ p₂≤p₁
+  antisym p₁≤p₂ p₂≤p₁ = equivalence p₁≤p₂ p₂≤p₁
 
 ------------------------------------------------------------------------
 -- The relation _≈_ is an equality, i.e. a congruential equivalence
@@ -76,7 +75,7 @@ empty-cong : empty ≈ empty
 empty-cong = Equivalence.reflexive
 
 sat-cong : {f₁ f₂ : Tok → Bool} → f₁ ≗ f₂ → sat f₁ ≈ sat f₂
-sat-cong f₁≗f₂ = equivalent (helper f₁≗f₂) (helper (P.sym ∘ f₁≗f₂))
+sat-cong f₁≗f₂ = equivalence (helper f₁≗f₂) (helper (P.sym ∘ f₁≗f₂))
   where
   helper : {f₁ f₂ : Tok → Bool} → f₁ ≗ f₂ → sat f₁ ≤ sat f₂
   helper f₁≗f₂ (sat ok) = sat (P.subst T (f₁≗f₂ _) ok)
@@ -92,10 +91,10 @@ sat-cong f₁≗f₂ = equivalent (helper f₁≗f₂) (helper (P.sym ∘ f₁�
            {p₃ : ∞⟨ n₄ ⟩P n₃} {p₄ : ∞⟨ n₃ ⟩P n₄} →
          ♭? p₁ ≈ ♭? p₃ → ♭? p₂ ≈ ♭? p₄ → p₁ · p₂ ≈ p₃ · p₄
 ·-cong p₁≈p₃ p₂≈p₄ =
-  Equivalent.from ≈⇔≤≥ ⟨$⟩
+  Eq.Equivalence.from ≈⇔≤≥ ⟨$⟩
     Prod.zip helper helper
-             (Equivalent.to ≈⇔≤≥ ⟨$⟩ p₁≈p₃)
-             (Equivalent.to ≈⇔≤≥ ⟨$⟩ p₂≈p₄)
+             (Eq.Equivalence.to ≈⇔≤≥ ⟨$⟩ p₁≈p₃)
+             (Eq.Equivalence.to ≈⇔≤≥ ⟨$⟩ p₂≈p₄)
   where
   helper : ∀ {n₁ n₂ n₃ n₄}
              {p₁ : ∞⟨ n₂ ⟩P n₁} {p₂ : ∞⟨ n₁ ⟩P n₂}
@@ -121,9 +120,9 @@ cast-cong {eq₁ = refl} {refl} (init ∷ rest) = init ∷ rest
 
 ⋆-cong : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
          p₁ ≈ p₂ → p₁ ⋆ ≈ p₂ ⋆
-⋆-cong p₁≈p₂ = Equivalent.from ≈⇔≤≥ ⟨$⟩
+⋆-cong p₁≈p₂ = Eq.Equivalence.from ≈⇔≤≥ ⟨$⟩
                  Prod.map helper helper
-                   (Equivalent.to ≈⇔≤≥ ⟨$⟩ p₁≈p₂)
+                   (Eq.Equivalence.to ≈⇔≤≥ ⟨$⟩ p₁≈p₂)
   where
   helper : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
            p₁ ≤ p₂ → p₁ ⋆ ≤ p₂ ⋆
@@ -134,9 +133,9 @@ cast-cong {eq₁ = refl} {refl} (init ∷ rest) = init ∷ rest
 ^-cong : ∀ {n₁ n₂ i₁ i₂} {p₁ : P n₁} {p₂ : P n₂} →
          p₁ ≈ p₂ → i₁ ≡ i₂ → p₁ ^ i₁ ≈ p₂ ^ i₂
 ^-cong {i₁ = i} p₁≈p₂ refl =
-  Equivalent.from ≈⇔≤≥ ⟨$⟩
+  Eq.Equivalence.from ≈⇔≤≥ ⟨$⟩
     Prod.map (helper i) (helper i)
-             (Equivalent.to ≈⇔≤≥ ⟨$⟩ p₁≈p₂)
+             (Eq.Equivalence.to ≈⇔≤≥ ⟨$⟩ p₁≈p₂)
   where
   helper : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} i →
            p₁ ≤ p₂ → p₁ ^ i ≤ p₂ ^ i
@@ -160,10 +159,10 @@ p₁ ≲ p₂ = p₁ ∣ p₂ ≈ p₂
 
 ≤⇔≲ : ∀ {n₁ n₂} (p₁ : P n₁) (p₂ : P n₂) → p₁ ≤ p₂ ⇔ p₁ ≲ p₂
 ≤⇔≲ {n₁} p₁ p₂ =
-  equivalent
+  equivalence
     (λ (p₁≤p₂ : p₁ ≤ p₂) {_} →
-       equivalent (helper p₁≤p₂) (∣-right {n₁ = n₁}))
-    (λ (p₁≲p₂ : p₁ ≲ p₂) s∈p₁ → Equivalent.to p₁≲p₂ ⟨$⟩ ∣-left s∈p₁)
+       equivalence (helper p₁≤p₂) (∣-right {n₁ = n₁}))
+    (λ (p₁≲p₂ : p₁ ≲ p₂) s∈p₁ → Eq.Equivalence.to p₁≲p₂ ⟨$⟩ ∣-left s∈p₁)
   where
   helper : p₁ ≤ p₂ → p₁ ∣ p₂ ≤ p₂
   helper p₁≤p₂ (∣-left  s∈p₁) = p₁≤p₂ s∈p₁
@@ -206,7 +205,7 @@ fail-right-identity {n} p =
 
 empty-left-identity : ∀ {n} (p : P n) → empty ⊙ p ≈ p
 empty-left-identity {n} p =
-  equivalent helper (λ s∈p → ⊙.complete empty s∈p)
+  equivalence helper (λ s∈p → ⊙.complete empty s∈p)
   where
   helper : empty ⊙ p ≤ p
   helper ∈empty⊙p with ⊙.sound n ∈empty⊙p
@@ -214,7 +213,7 @@ empty-left-identity {n} p =
 
 empty-right-identity : ∀ {n} (p : P n) → p ⊙ empty ≈ p
 empty-right-identity {n} p =
-  equivalent
+  equivalence
     helper
     (λ s∈p → cast∈ (proj₂ ListMonoid.identity _) refl
                    (⊙.complete s∈p empty))
@@ -226,7 +225,7 @@ empty-right-identity {n} p =
 
 ·-associative : ∀ {n₁ n₂ n₃} (p₁ : P n₁) (p₂ : P n₂) (p₃ : P n₃) →
                 p₁ ⊙ (p₂ ⊙ p₃) ≈ (p₁ ⊙ p₂) ⊙ p₃
-·-associative {n₁} {n₂} {n₃} p₁ p₂ p₃ = equivalent helper₁ helper₂
+·-associative {n₁} {n₂} {n₃} p₁ p₂ p₃ = equivalence helper₁ helper₂
   where
   helper₁ : p₁ ⊙ (p₂ ⊙ p₃) ≤ (p₁ ⊙ p₂) ⊙ p₃
   helper₁ ∈⊙⊙ with ⊙.sound (n₂ ∧ n₃) ∈⊙⊙
@@ -247,7 +246,7 @@ empty-right-identity {n} p =
 left-distributive :
   ∀ {n₁ n₂ n₃} (p₁ : P n₁) (p₂ : P n₂) (p₃ : P n₃) →
   p₁ ⊙ (p₂ ∣ p₃) ≈ p₁ ⊙ p₂ ∣ p₁ ⊙ p₃
-left-distributive {n₁} {n₂} {n₃} p₁ p₂ p₃ = equivalent helper₁ helper₂
+left-distributive {n₁} {n₂} {n₃} p₁ p₂ p₃ = equivalence helper₁ helper₂
   where
   helper₁ : p₁ ⊙ (p₂ ∣ p₃) ≤ p₁ ⊙ p₂ ∣ p₁ ⊙ p₃
   helper₁ ∈⊙∣ with ⊙.sound (n₂ ∨ n₃) ∈⊙∣
@@ -263,7 +262,7 @@ left-distributive {n₁} {n₂} {n₃} p₁ p₂ p₃ = equivalent helper₁ hel
 right-distributive :
   ∀ {n₁ n₂ n₃} (p₁ : P n₁) (p₂ : P n₂) (p₃ : P n₃) →
   (p₁ ∣ p₂) ⊙ p₃ ≈ p₁ ⊙ p₃ ∣ p₂ ⊙ p₃
-right-distributive {n₁} {n₂} {n₃} p₁ p₂ p₃ = equivalent helper₁ helper₂
+right-distributive {n₁} {n₂} {n₃} p₁ p₂ p₃ = equivalence helper₁ helper₂
   where
   helper₁ : (p₁ ∣ p₂) ⊙ p₃ ≤ p₁ ⊙ p₃ ∣ p₂ ⊙ p₃
   helper₁ ∈∣⊙ with ⊙.sound n₃ ∈∣⊙
@@ -279,14 +278,14 @@ right-distributive {n₁} {n₂} {n₃} p₁ p₂ p₃ = equivalent helper₁ he
 -- Zero.
 
 left-zero : ∀ {n} (p : P n) → fail ⊙ p ≈ fail
-left-zero {n} p = equivalent helper (λ ())
+left-zero {n} p = equivalence helper (λ ())
   where
   helper : fail ⊙ p ≤ fail
   helper ∈fail⊙ with ⊙.sound n ∈fail⊙
   ... | () ⊙′ _
 
 right-zero : ∀ {n} (p : P n) → p ⊙ fail ≈ fail
-right-zero {n} p = equivalent helper (λ ())
+right-zero {n} p = equivalence helper (λ ())
   where
   helper : p ⊙ fail ≤ fail
   helper ∈⊙fail with ⊙.sound false ∈⊙fail
@@ -306,7 +305,7 @@ right-zero {n} p = equivalent helper (λ ())
   ∀ {n₁ n₂ n₃ n} (p₁ : P n₁) (p₂ : P n₂) (p₃ : P n₃) (p : P n) →
   (∀ i → p₁ ⊙ p₂ ^ i ⊙ p₃ ≤ p) → p₁ ⊙ p₂ ⋆ ⊙ p₃ ≤ p
 *-continuity-least-upper-bound {n₁} {n₂} {n₃} {n} p₁ p₂ p₃ p ub =
-  helper ∘ _⟨$⟩_ (Equivalent.from $ ·-associative p₁ (p₂ ⋆) p₃)
+  helper ∘ _⟨$⟩_ (Eq.Equivalence.from $ ·-associative p₁ (p₂ ⋆) p₃)
   where
   helper : p₁ ⊙ (p₂ ⋆ ⊙ p₃) ≤ p
   helper ∈⊙⋆⊙ with ⊙.sound (true ∧ n₃) ∈⊙⋆⊙

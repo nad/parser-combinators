@@ -9,7 +9,7 @@ open import Data.Bool hiding (_∧_)
 open import Data.Bool.Properties
 open import Function
 open import Function.Equality using (_⟨$⟩_)
-open import Function.Equivalence using (module Equivalent)
+open import Function.Equivalence using (module Equivalence)
 open import Data.List
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Product as Prod
@@ -176,5 +176,5 @@ module AcceptIfTrue where
   sound false ()
 
   complete : ∀ {b} → T b → [] ∈ accept-if-true b
-  complete ok with Equivalent.to T-≡ ⟨$⟩ ok
+  complete ok with Equivalence.to T-≡ ⟨$⟩ ok
   ... | refl = empty

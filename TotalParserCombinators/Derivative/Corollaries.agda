@@ -6,7 +6,8 @@ module TotalParserCombinators.Derivative.Corollaries where
 
 open import Data.List
 open import Function
-open import Function.Inverse as Inv using (_⇿_)
+open import Function.Inverse using (_↔_)
+import Function.Related as Related
 import Relation.Binary.PropositionalEquality as P
 
 open import TotalParserCombinators.Derivative.Definition
@@ -19,7 +20,7 @@ open import TotalParserCombinators.Semantics
 -- D is correct.
 
 correct : ∀ {Tok R xs x s} {t} {p : Parser Tok R xs} →
-          x ∈ D t p · s ⇿ x ∈ p · t ∷ s
+          x ∈ D t p · s ↔ x ∈ p · t ∷ s
 correct {p = p} = record
   { to         = P.→-to-⟶ $ sound p
   ; from       = P.→-to-⟶ complete
@@ -42,8 +43,8 @@ cong : ∀ {k Tok R xs₁ xs₂}
          {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
        p₁ ≈[ k ] p₂ → ∀ {t} → D t p₁ ≈[ k ] D t p₂
 cong {p₁ = p₁} {p₂} p₁≈p₂ {t} {x} {s} =
-  x ∈ D t p₁ · s  ⇿⟨ correct ⟩
+  x ∈ D t p₁ · s  ↔⟨ correct ⟩
   x ∈ p₁ · t ∷ s  ≈⟨ p₁≈p₂ ⟩
-  x ∈ p₂ · t ∷ s  ⇿⟨ sym correct ⟩
+  x ∈ p₂ · t ∷ s  ↔⟨ sym correct ⟩
   x ∈ D t p₂ · s  ∎
-  where open Inv.EquationalReasoning
+  where open Related.EquationalReasoning
