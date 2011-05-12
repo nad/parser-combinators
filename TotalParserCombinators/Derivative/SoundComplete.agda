@@ -9,9 +9,10 @@ open import Coinduction
 open import Data.List as List
 open import Data.Maybe
 open import Data.Product
+open import Level
 open import Relation.Binary.PropositionalEquality
 
-open RawMonad List.monad
+open RawMonad {f = zero} List.monad
   using () renaming (_>>=_ to _>>=′_; _⊛_ to _⊛′_)
 
 open import TotalParserCombinators.Derivative.Definition

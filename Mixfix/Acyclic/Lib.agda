@@ -98,7 +98,7 @@ tok tok = token !>>= λ tok′ → ♯ ok tok′
 private
   infix 10 ♯′_
 
-  ♯′_ : ∀ {A} → A → ∞ A
+  ♯′_ : {A : Set₁} → A → ∞ A
   ♯′ x = ♯ x
 
 ⟦_⟧ : ∀ {R} → ParserProg R → Parser NamePart false R

@@ -163,32 +163,36 @@ _sepBy_ : ∀ {NT Tok i c R R′} →
           Parser NT Tok _ (List R)
 p sepBy sep = _∷_ <$> p ⊛ (sep ⊛> p) ⋆
 
--- Note that the index of atLeast is only partly inferred; the
--- recursive structure of atLeast-index is given manually.
+mutual
 
-atLeast-index : Corners → ℕ → Index
-atLeast-index c zero    = _
-atLeast-index c (suc n) = _
+  -- Note that the index of atLeast is only partly inferred; the
+  -- recursive structure of atLeast-index is given manually.
 
--- At least n occurrences of p.
+  atLeast-index : Corners → ℕ → Index
+  atLeast-index c zero    = _
+  atLeast-index c (suc n) = _
 
-atLeast : ∀ {NT Tok c R} (n : ℕ) →
-          Parser NT Tok (false ◇ c) R →
-          Parser NT Tok (atLeast-index c n) (List R)
-atLeast zero    p = p ⋆
-atLeast (suc n) p = _∷_ <$> p ⊛ atLeast n p
+  -- At least n occurrences of p.
 
--- exactly n p parses n occurrences of p.
+  atLeast : ∀ {NT Tok c R} (n : ℕ) →
+            Parser NT Tok (false ◇ c) R →
+            Parser NT Tok (atLeast-index c n) (List R)
+  atLeast zero    p = p ⋆
+  atLeast (suc n) p = _∷_ <$> p ⊛ atLeast n p
 
-exactly-index : Index → ℕ → Index
-exactly-index i zero    = _
-exactly-index i (suc n) = _
+mutual
 
-exactly : ∀ {NT Tok i R} n →
-          Parser NT Tok i R →
-          Parser NT Tok (exactly-index i n) (Vec R n)
-exactly zero    p = return []
-exactly (suc n) p = _∷_ <$> p ⊛ exactly n p
+  -- exactly n p parses n occurrences of p.
+
+  exactly-index : Index → ℕ → Index
+  exactly-index i zero    = _
+  exactly-index i (suc n) = _
+
+  exactly : ∀ {NT Tok i R} n →
+            Parser NT Tok i R →
+            Parser NT Tok (exactly-index i n) (Vec R n)
+  exactly zero    p = return []
+  exactly (suc n) p = _∷_ <$> p ⊛ exactly n p
 
 -- A function with a similar type:
 
@@ -198,19 +202,21 @@ sequence : ∀ {NT Tok i R n} →
 sequence []       = return []
 sequence (p ∷ ps) = _∷_ <$> p ⊛ sequence ps
 
--- p between ps parses p repeatedly, between the elements of ps:
---   ∙ between (x ∷ y ∷ z ∷ []) ≈ x ∙ y ∙ z.
+mutual
 
-between-corners : Corners → ℕ → Corners
-between-corners c′ zero    = _
-between-corners c′ (suc n) = _
+  -- p between ps parses p repeatedly, between the elements of ps:
+  --   ∙ between (x ∷ y ∷ z ∷ []) ≈ x ∙ y ∙ z.
 
-_between_ : ∀ {NT Tok i R c′ R′ n} →
-            Parser NT Tok i R →
-            Vec (Parser NT Tok (false ◇ c′) R′) (suc n) →
-            Parser NT Tok (false ◇ between-corners c′ n) (Vec R n)
-p between (x ∷ [])     = [] <$ x
-p between (x ∷ y ∷ xs) = _∷_ <$> (x ⊛> p) ⊛ (p between (y ∷ xs))
+  between-corners : Corners → ℕ → Corners
+  between-corners c′ zero    = _
+  between-corners c′ (suc n) = _
+
+  _between_ : ∀ {NT Tok i R c′ R′ n} →
+              Parser NT Tok i R →
+              Vec (Parser NT Tok (false ◇ c′) R′) (suc n) →
+              Parser NT Tok (false ◇ between-corners c′ n) (Vec R n)
+  p between (x ∷ [])     = [] <$ x
+  p between (x ∷ y ∷ xs) = _∷_ <$> (x ⊛> p) ⊛ (p between (y ∷ xs))
 
 ------------------------------------------------------------------------
 -- Chaining
@@ -227,12 +233,12 @@ data Assoc : Set where
 appʳ : {R : Set} → R × (R → R → R) → R → R
 appʳ (x , _•_) y = x • y
 
-appˡ : ∀ {R} → R → (R → R → R) × R → R
+appˡ : {R : Set} → R → (R → R → R) × R → R
 appˡ x (_•_ , y) = x • y
 
 -- Shifting. See Examples below for an illuminating example.
 
-shiftʳ : ∀ {A B} → A → List (B × A) → List (A × B) × A
+shiftʳ : {A B : Set} → A → List (B × A) → List (A × B) × A
 shiftʳ x  []                = ([] , x)
 shiftʳ x₁ ((x₂ , x₃) ∷ xs₄) = ((x₁ , x₂) ∷ proj₁ xs₃x₄ , proj₂ xs₃x₄)
   where xs₃x₄ = shiftʳ x₃ xs₄
@@ -273,31 +279,35 @@ private
 ------------------------------------------------------------------------
 -- N-ary variants of _∣_
 
--- choice ps parses one of the elements in ps.
+mutual
 
-choice-corners : Corners → ℕ → Corners
-choice-corners c zero    = _
-choice-corners c (suc n) = _
+  -- choice ps parses one of the elements in ps.
 
-choice : ∀ {NT Tok c R n} →
-         Vec (Parser NT Tok (false ◇ c) R) n →
-         Parser NT Tok (false ◇ choice-corners c n) R
-choice []       = fail
-choice (p ∷ ps) = p ∣ choice ps
+  choice-corners : Corners → ℕ → Corners
+  choice-corners c zero    = _
+  choice-corners c (suc n) = _
 
--- choiceMap f xs ≈ choice (map f xs), but avoids use of Vec and
--- fromList.
+  choice : ∀ {NT Tok c R n} →
+           Vec (Parser NT Tok (false ◇ c) R) n →
+           Parser NT Tok (false ◇ choice-corners c n) R
+  choice []       = fail
+  choice (p ∷ ps) = p ∣ choice ps
 
-choiceMap-corners : {A : Set} → (A → Corners) → List A → Corners
-choiceMap-corners c []       = _
-choiceMap-corners c (x ∷ xs) = _
+mutual
 
-choiceMap : ∀ {NT Tok R} {A : Set} {c : A → Corners} →
-            ((x : A) → Parser NT Tok (false ◇ c x) R) →
-            (xs : List A) →
-            Parser NT Tok (false ◇ choiceMap-corners c xs) R
-choiceMap f []       = fail
-choiceMap f (x ∷ xs) = f x ∣ choiceMap f xs
+  -- choiceMap f xs ≈ choice (map f xs), but avoids use of Vec and
+  -- fromList.
+
+  choiceMap-corners : {A : Set} → (A → Corners) → List A → Corners
+  choiceMap-corners c []       = _
+  choiceMap-corners c (x ∷ xs) = _
+
+  choiceMap : ∀ {NT Tok R} {A : Set} {c : A → Corners} →
+              ((x : A) → Parser NT Tok (false ◇ c x) R) →
+              (xs : List A) →
+              Parser NT Tok (false ◇ choiceMap-corners c xs) R
+  choiceMap f []       = fail
+  choiceMap f (x ∷ xs) = f x ∣ choiceMap f xs
 
 ------------------------------------------------------------------------
 -- sat and friends
@@ -305,13 +315,14 @@ choiceMap f (x ∷ xs) = f x ∣ choiceMap f xs
 sat : ∀ {NT Tok R} → (Tok → Maybe R) → Parser NT Tok (0I · 1I) R
 sat {NT} {Tok} {R} p = token !>>= λ c → ♯ ok (p c)
   where
-  okIndex : Maybe R → Index
-  okIndex nothing  = _
-  okIndex (just _) = _
+  mutual
+    okIndex : Maybe R → Index
+    okIndex nothing  = _
+    okIndex (just _) = _
 
-  ok : (x : Maybe R) → Parser NT Tok (okIndex x) R
-  ok nothing  = fail
-  ok (just x) = return x
+    ok : (x : Maybe R) → Parser NT Tok (okIndex x) R
+    ok nothing  = fail
+    ok (just x) = return x
 
 sat' : ∀ {NT Tok} → (Tok → Bool) → Parser NT Tok _ ⊤
 sat' p = sat (boolToMaybe ∘ p)

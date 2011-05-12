@@ -13,10 +13,11 @@ import Data.List.Any as Any
 import Data.List.Properties as ListProp
 open import Data.Product using (proj₂)
 open import Function
+open import Level
 open import Relation.Binary.PropositionalEquality
 
 open Any.Membership-≡
-open RawMonadPlus List.monadPlus
+open RawMonadPlus {f = zero} List.monadPlus
   using ()
   renaming ( return to return′
            ; ∅      to fail′

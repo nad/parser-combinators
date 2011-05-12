@@ -10,12 +10,13 @@ open import Coinduction
 open import Data.List as List
 import Data.List.Any.BagAndSetEquality as BSEq
 open import Function
+open import Level
 
-open RawMonad List.monad
+open RawMonad {f = zero} List.monad
   using () renaming (_⊛_ to _⊛′_; _>>=_ to _>>=′_)
 private
-  module BagMonoid {A : Set} =
-    CommutativeMonoid (BSEq.commutativeMonoid _ A)
+  module BagMonoid {k} {A : Set} =
+    CommutativeMonoid (BSEq.commutativeMonoid k A)
 
 open import TotalParserCombinators.Derivative
 open import TotalParserCombinators.Congruence

@@ -15,8 +15,10 @@ open import Data.Bool
 open import Data.List as List
 open import Data.Maybe
 open import Data.Unit
+open import Level
 
-open RawMonadPlus List.monadPlus using () renaming (_⊛_ to _⊛′_)
+open RawMonadPlus {f = zero} List.monadPlus
+  using () renaming (_⊛_ to _⊛′_)
 
 open import TotalParserCombinators.Parser as Parser
   using (Parser; flatten); open Parser.Parser

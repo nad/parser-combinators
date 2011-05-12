@@ -29,7 +29,7 @@ private
   P : Set → IFun ℕ zero
   P Tok = IStateT (BoundedVec Tok) List
 
-  open module M₁ {Tok} =
+  open module M₁ {Tok : Set} =
     RawIMonadPlus (StateTIMonadPlus (BoundedVec Tok) L.monadPlus)
     using ()
     renaming ( return to return′
@@ -39,7 +39,7 @@ private
              ; _∣_    to _∣′_
              )
 
-  open module M₂ {Tok} =
+  open module M₂ {Tok : Set} =
     RawIMonadState (StateTIMonadState (BoundedVec Tok) L.monad)
     using ()
     renaming ( get    to get′

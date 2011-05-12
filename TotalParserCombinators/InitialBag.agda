@@ -16,6 +16,7 @@ open import Function
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Inverse as Inv using (_↔_)
 import Function.Related as Related
+open import Level
 open import Relation.Binary.PropositionalEquality as P
   using (_≡_; refl)
 open import Relation.Binary.HeterogeneousEquality as H
@@ -23,7 +24,8 @@ open import Relation.Binary.HeterogeneousEquality as H
 
 open Any.Membership-≡ using (_∈_) renaming (_≈[_]_ to _List-≈[_]_)
 open Inv.Inverse
-open RawMonadPlus List.monadPlus using () renaming (_⊛_ to _⊛′_)
+open RawMonadPlus {f = zero} List.monadPlus
+  using () renaming (_⊛_ to _⊛′_)
 
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics

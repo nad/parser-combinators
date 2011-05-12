@@ -11,8 +11,8 @@ open import Data.Product using (proj₁; proj₂)
 open import Function
 
 private
-  module BagMonoid {A : Set} =
-    CommutativeMonoid (Eq.commutativeMonoid _ A)
+  module BagMonoid {k} {A : Set} =
+    CommutativeMonoid (Eq.commutativeMonoid k A)
 
 open import TotalParserCombinators.Derivative
 open import TotalParserCombinators.Congruence

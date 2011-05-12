@@ -132,34 +132,41 @@ nullable? {false} p = no helper
 ------------------------------------------------------------------------
 -- Derivative
 
--- The index of the derivative. The right-hand sides (excluding t′ ≟ t
--- and delayed? p₂) are inferable, but included here so that they can
--- easily be inspected.
+-- D-nullable and D are placed in a mutual block to ensure that the
+-- underscores in the definition of D-nullable can be solved by
+-- constraints introduced in the body of D. The functions are not
+-- actually mutually recursive.
 
-D-nullable : ∀ {n} → Tok → P n → Bool
-D-nullable t fail      = false
-D-nullable t empty     = false
-D-nullable t (tok t′)  with t′ ≟ t
-D-nullable t (tok t′)  | yes t′≡t = true
-D-nullable t (tok t′)  | no  t′≢t = false
-D-nullable t (p₁ ∣ p₂) = D-nullable t p₁ ∨ D-nullable t p₂
-D-nullable t (p₁ · p₂) with delayed? p₂
-D-nullable t (p₁ · p₂) | true  = D-nullable t p₁ ∧ _
-D-nullable t (p₁ · p₂) | false = D-nullable t p₁ ∧ _ ∨ D-nullable t p₂
+mutual
 
--- D t p is the "derivative" of p with respect to t. It is specified
--- by the equivalence s ∈ D t p ⇔ t ∷ s ∈ p (proved below).
+  -- The index of the derivative. The right-hand sides (excluding
+  -- t′ ≟ t and delayed? p₂) are inferable, but included here so that
+  -- they can easily be inspected.
 
-D : ∀ {n} (t : Tok) (p : P n) → P (D-nullable t p)
-D t fail      = fail
-D t empty     = fail
-D t (tok t′)  with t′ ≟ t
-D t (tok t′)  | yes t′≡t = empty
-D t (tok t′)  | no  t′≢t = fail
-D t (p₁ ∣ p₂) = D t p₁ ∣ D t p₂
-D t (p₁ · p₂) with delayed? p₂
-D t (p₁ · p₂) | true  = D t p₁ · ♯? (♭ p₂)
-D t (p₁ · p₂) | false = D t p₁ · ♯?    p₂ ∣ D t p₂
+  D-nullable : ∀ {n} → Tok → P n → Bool
+  D-nullable t fail      = false
+  D-nullable t empty     = false
+  D-nullable t (tok t′)  with t′ ≟ t
+  D-nullable t (tok t′)  | yes t′≡t = true
+  D-nullable t (tok t′)  | no  t′≢t = false
+  D-nullable t (p₁ ∣ p₂) = D-nullable t p₁ ∨ D-nullable t p₂
+  D-nullable t (p₁ · p₂) with delayed? p₂
+  D-nullable t (p₁ · p₂) | true  = D-nullable t p₁ ∧ _
+  D-nullable t (p₁ · p₂) | false = D-nullable t p₁ ∧ _ ∨ D-nullable t p₂
+
+  -- D t p is the "derivative" of p with respect to t. It is specified
+  -- by the equivalence s ∈ D t p ⇔ t ∷ s ∈ p (proved below).
+
+  D : ∀ {n} (t : Tok) (p : P n) → P (D-nullable t p)
+  D t fail      = fail
+  D t empty     = fail
+  D t (tok t′)  with t′ ≟ t
+  D t (tok t′)  | yes t′≡t = empty
+  D t (tok t′)  | no  t′≢t = fail
+  D t (p₁ ∣ p₂) = D t p₁ ∣ D t p₂
+  D t (p₁ · p₂) with delayed? p₂
+  D t (p₁ · p₂) | true  = D t p₁ · ♯? (♭ p₂)
+  D t (p₁ · p₂) | false = D t p₁ · ♯?    p₂ ∣ D t p₂
 
 -- D is correct.
 

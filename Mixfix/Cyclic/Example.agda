@@ -58,43 +58,45 @@ wellTyped = record { nameParts = "⊢" ∷ "∶" ∷ [] }
 ------------------------------------------------------------------------
 -- Precedence graph
 
-private
+mutual
 
-  a  = # 0
-  pl = # 1
-  ii = # 2
-  c  = # 3
-  wt = # 4
+  private
 
-g : PrecedenceGraph
-g = record
-  { levels = levels
-  ; ops    = λ p fix → List.gfilter (hasFixity fix) (ops p)
-  ; ↑      = ↑
-  }
-  where
-  levels : ℕ
-  levels = 5
+    levels : ℕ
+    levels = 5
 
-  Precedence : Set
-  Precedence = Fin levels
+    a  = # 0
+    pl = # 1
+    ii = # 2
+    c  = # 3
+    wt = #_ 4 {n = levels}
 
-  ops : Precedence → List (∃₂ Operator)
-  ops zero                             = (, , atom)       ∷ []
-  ops (suc zero)                       = (, , plus)       ∷ []
-  ops (suc (suc zero))                 = (, , ifThen)     ∷
-                                         (, , ifThenElse) ∷ []
-  ops (suc (suc (suc zero)))           = (, , comma)      ∷ []
-  ops (suc (suc (suc (suc zero))))     = (, , wellTyped)  ∷ []
-  ops (suc (suc (suc (suc (suc ())))))
+  g : PrecedenceGraph
+  g = record
+    { levels = levels
+    ; ops    = λ p fix → List.gfilter (hasFixity fix) (ops p)
+    ; ↑      = ↑
+    }
+    where
+    Precedence : Set
+    Precedence = Fin levels
 
-  ↑ : Precedence → List (Precedence)
-  ↑ zero                             = []
-  ↑ (suc zero)                       = a ∷ []
-  ↑ (suc (suc zero))                 = pl ∷ a ∷ []
-  ↑ (suc (suc (suc zero)))           = ii ∷ pl ∷ a ∷ []
-  ↑ (suc (suc (suc (suc zero))))     = c ∷ a ∷ []
-  ↑ (suc (suc (suc (suc (suc ())))))
+    ops : Precedence → List (∃₂ Operator)
+    ops zero                             = (, , atom)       ∷ []
+    ops (suc zero)                       = (, , plus)       ∷ []
+    ops (suc (suc zero))                 = (, , ifThen)     ∷
+                                           (, , ifThenElse) ∷ []
+    ops (suc (suc (suc zero)))           = (, , comma)      ∷ []
+    ops (suc (suc (suc (suc zero))))     = (, , wellTyped)  ∷ []
+    ops (suc (suc (suc (suc (suc ())))))
+
+    ↑ : Precedence → List (Precedence)
+    ↑ zero                             = []
+    ↑ (suc zero)                       = a ∷ []
+    ↑ (suc (suc zero))                 = pl ∷ a ∷ []
+    ↑ (suc (suc (suc zero)))           = ii ∷ pl ∷ a ∷ []
+    ↑ (suc (suc (suc (suc zero))))     = c ∷ a ∷ []
+    ↑ (suc (suc (suc (suc (suc ())))))
 
 ------------------------------------------------------------------------
 -- Expressions

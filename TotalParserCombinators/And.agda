@@ -13,9 +13,10 @@ open import Function
 open import Function.Inverse using (_↔_)
 import Function.Related as Related
 open import Function.Related.TypeIsomorphisms
+open import Level
 open import Relation.Binary.Product.Pointwise
 
-open RawMonadPlus List.monadPlus using (_⊗_)
+open RawMonadPlus {f = zero} List.monadPlus using (_⊗_)
 
 open import TotalParserCombinators.Congruence using (_≈[_]P_; _≅P_)
 open import TotalParserCombinators.Derivative using (D)

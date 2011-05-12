@@ -13,13 +13,14 @@ import Data.List.Properties as ListProp
 open import Data.List.NonEmpty as List⁺
   using (List⁺; _∷_; [_]; _⁺++_; head; tail)
 open import Data.List.NonEmpty.Properties
+open import Level
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
 
 open ≡-Reasoning
 open Any.Membership-≡
-open RawMonad List.monad using () renaming (_>>=_ to _>>=′_)
-open RawMonad List⁺.monad using () renaming (_>>=_ to _>>=⁺_)
+open RawMonad {f = zero} List.monad using () renaming (_>>=_ to _>>=′_)
+open RawMonad {f = zero} List⁺.monad using () renaming (_>>=_ to _>>=⁺_)
 private
   open module BagS {A : Set} = Setoid ([ bag ]-Equality A)
     using () renaming (_≈_ to _Bag-≈_)

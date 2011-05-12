@@ -31,24 +31,27 @@ open Token Char.decSetoid
 open import TotalParserCombinators.Examples.PBM using (module PBM)
 open PBM
 
-comment = tt <$ tok '#'
-             <⊛ sat' (not ∘ _==_ '\n') ⋆
-             <⊛ tok '\n'
+mutual
 
-colour = white <$ tok '0'
-       ∣ black <$ tok '1'
+  comment : Parser EmptyNT _ _ _
+  comment = tt <$ tok '#'
+               <⊛ sat' (not ∘ _==_ '\n') ⋆
+               <⊛ tok '\n'
 
-pbm =
-   w∣c ⋆ ⊛>
-   theString (String.toVec "P1") ⊛>
-   w∣c ⋆ ⊛>
-   number !>>= λ cols → ♯ -- _>>=_ works just as well.
-  (w∣c + ⊛>
-   number >>=  λ rows →   -- _!>>=_ works just as well.
-   w∣c ⊛>
-   (toPBM <$> exactly rows (exactly cols (w∣c ⋆ ⊛> colour))) <⊛
-   any ⋆)
-  where w∣c = whitespace ∣ comment
+  colour = white <$ tok '0'
+         ∣ black <$ tok '1'
+
+  pbm =
+     w∣c ⋆ ⊛>
+     theString (String.toVec "P1") ⊛>
+     w∣c ⋆ ⊛>
+     number !>>= λ cols → ♯ -- _>>=_ works just as well.
+    (w∣c + ⊛>
+     number >>=  λ rows →   -- _!>>=_ works just as well.
+     w∣c ⊛>
+     (toPBM <$> exactly rows (exactly cols (w∣c ⋆ ⊛> colour))) <⊛
+     any ⋆)
+    where w∣c = whitespace ∣ comment
 
 module Example where
 

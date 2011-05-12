@@ -8,8 +8,9 @@ open import Category.Monad
 open import Coinduction
 open import Data.List as List using (List; map)
 import Data.Maybe; open Data.Maybe.Maybe
+open import Level
 
-open RawMonadPlus List.monadPlus
+open RawMonadPlus {f = zero} List.monadPlus
   using ()
   renaming ( return to return′
            ; ∅      to fail′

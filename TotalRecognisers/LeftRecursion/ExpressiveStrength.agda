@@ -31,9 +31,10 @@ private
   module NatOrder             = DecTotalOrder Nat.decTotalOrder
 
 import TotalRecognisers.LeftRecursion
+open TotalRecognisers.LeftRecursion Bool using (_∧_; left-zero)
 private
   open module LR {Tok : Set} = TotalRecognisers.LeftRecursion Tok
-    hiding (P; ∞⟨_⟩P)
+    hiding (P; ∞⟨_⟩P; _∧_; left-zero)
 
   P : Set → Bool → Set
   P Tok = LR.P {Tok}

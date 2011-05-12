@@ -15,13 +15,14 @@ import Data.List.Any as Any
 import Data.List.Any.BagAndSetEquality as Eq
 open import Data.Maybe
 open import Function
+import Level
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 
 open Any.Membership-≡ using (bag) renaming (_≈[_]_ to _List-≈[_]_)
 private
-  module BagMonoid {A : Set} =
-    CommutativeMonoid (Eq.commutativeMonoid _ A)
-  open module ListMonad = RawMonad List.monad
+  module BagMonoid {k} {A : Set} =
+    CommutativeMonoid (Eq.commutativeMonoid k A)
+  open module ListMonad = RawMonad {f = Level.zero} List.monad
     using () renaming (_⊛_ to _⊛′_)
 
 open import TotalParserCombinators.Derivative using (D)

@@ -11,12 +11,13 @@ open import Data.List as List
 import Data.List.Any as Any
 import Data.List.Any.BagAndSetEquality as Eq
 open import Function
+open import Level
 
 open Any.Membership-≡ using () renaming (_≈[_]_ to _List-≈[_]_)
 private
   module BagMonoid {A : Set} =
     CommutativeMonoid (Eq.commutativeMonoid Any.Membership-≡.bag A)
-  open module ListMonad = RawMonad List.monad
+  open module ListMonad = RawMonad {f = zero} List.monad
     using () renaming (_⊛_ to _⊛′_; _>>=_ to _>>=′_)
 
 open import TotalParserCombinators.Derivative using (D)

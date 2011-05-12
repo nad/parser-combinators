@@ -32,33 +32,37 @@ s ∈? p = s ∈? p / emptyGrammar
 
 module Ex₁ where
 
-  -- e ∷= 0 + e | 0
+  mutual
 
-  data Nonterminal : NonTerminalType where
-    e : Nonterminal _ Char
+    -- e ∷= 0 + e | 0
 
-  grammar : Grammar Nonterminal Char
-  grammar e = tok '0' ⊛> tok '+' ⊛> ! e
-            ∣ tok '0'
+    data Nonterminal : NonTerminalType where
+      e : Nonterminal _ Char
+
+    grammar : Grammar Nonterminal Char
+    grammar e = tok '0' ⊛> tok '+' ⊛> ! e
+              ∣ tok '0'
 
   ex₁ : "0+0" ∈? ! e / grammar ≡ [ '0' ]
   ex₁ = refl
 
 module Ex₂ where
 
-  -- e ∷= f + e | f
-  -- f ∷= 0 | 0 * f | ( e )
+  mutual
 
-  data Nonterminal : NonTerminalType where
-    expr   : Nonterminal _ Char
-    factor : Nonterminal _ Char
+    -- e ∷= f + e | f
+    -- f ∷= 0 | 0 * f | ( e )
 
-  grammar : Grammar Nonterminal Char
-  grammar expr   = ! factor ⊛> tok '+' ⊛> ! expr
-                 ∣ ! factor
-  grammar factor = tok '0'
-                 ∣ tok '0' ⊛> tok '*' ⊛> ! factor
-                 ∣ tok '(' ⊛> ! expr <⊛ tok ')'
+    data Nonterminal : NonTerminalType where
+      expr   : Nonterminal _ Char
+      factor : Nonterminal _ Char
+
+    grammar : Grammar Nonterminal Char
+    grammar expr   = ! factor ⊛> tok '+' ⊛> ! expr
+                   ∣ ! factor
+    grammar factor = tok '0'
+                   ∣ tok '0' ⊛> tok '*' ⊛> ! factor
+                   ∣ tok '(' ⊛> ! expr <⊛ tok ')'
 
   ex₁ : "(0*)" ∈? ! expr / grammar ≡ []
   ex₁ = refl
@@ -69,14 +73,16 @@ module Ex₂ where
 {-
 module Ex₃ where
 
-  -- This is not allowed:
+  mutual
 
-  -- e ∷= f + e | f
-  -- f ∷= 0 | f * 0 | ( e )
+    -- This is not allowed:
 
-  data Nonterminal : NonTerminalType where
-    expr   : Nonterminal _ Char
-    factor : Nonterminal _ Char
+    -- e ∷= f + e | f
+    -- f ∷= 0 | f * 0 | ( e )
+
+    data Nonterminal : NonTerminalType where
+      expr   : Nonterminal _ Char
+      factor : Nonterminal _ Char
 
   grammar : Grammar Nonterminal Char
   grammar expr   = ! factor ⊛> tok '+' ⊛> ! expr
@@ -88,26 +94,29 @@ module Ex₃ where
 
 module Ex₄ where
 
-  -- The language aⁿbⁿcⁿ, which is not context free.
+  mutual
 
-  -- The non-terminal top returns the number of 'a' characters parsed.
+    -- The language aⁿbⁿcⁿ, which is not context free.
 
-  -- Note: It is important that the ℕ argument to bcs is not named,
-  -- because if it is Agda cannot infer the index.
+    -- The non-terminal top returns the number of 'a' characters
+    -- parsed.
 
-  data NT : NonTerminalType where
-    top :            NT _ ℕ  -- top     ∷= aⁿbⁿcⁿ
-    as  :        ℕ → NT _ ℕ  -- as n    ∷= aˡ⁺¹bⁿ⁺ˡ⁺¹cⁿ⁺ˡ⁺¹
-    bcs : Char → ℕ → NT _ ℕ  -- bcs x n ∷= xⁿ⁺¹
+    -- Note: It is important that the ℕ argument to bcs is not named,
+    -- because if it is Agda cannot infer the index.
 
-  grammar : Grammar NT Char
-  grammar top             = return 0 ∣ ! (as zero)
-  grammar (as n)          = suc <$ tok 'a' ⊛
-                            ( ! (as (suc n))
-                            ∣ _+_ <$> ! (bcs 'b' n) ⊛ ! (bcs 'c' n)
-                            )
-  grammar (bcs c zero)    = tok c ⊛> return 0
-  grammar (bcs c (suc n)) = tok c ⊛> ! (bcs c n)
+    data NT : NonTerminalType where
+      top :            NT _ ℕ  -- top     ∷= aⁿbⁿcⁿ
+      as  :        ℕ → NT _ ℕ  -- as n    ∷= aˡ⁺¹bⁿ⁺ˡ⁺¹cⁿ⁺ˡ⁺¹
+      bcs : Char → ℕ → NT _ ℕ  -- bcs x n ∷= xⁿ⁺¹
+
+    grammar : Grammar NT Char
+    grammar top             = return 0 ∣ ! (as zero)
+    grammar (as n)          = suc <$ tok 'a' ⊛
+                              ( ! (as (suc n))
+                              ∣ _+_ <$> ! (bcs 'b' n) ⊛ ! (bcs 'c' n)
+                              )
+    grammar (bcs c zero)    = tok c ⊛> return 0
+    grammar (bcs c (suc n)) = tok c ⊛> ! (bcs c n)
 
   ex₁ : "aaabbbccc" ∈? ! top / grammar ≡ [ 3 ]
   ex₁ = refl
@@ -117,49 +126,56 @@ module Ex₄ where
 
 module Ex₄′ where
 
-  -- A monadic variant of Ex₄.
+  mutual
 
-  aⁿbⁿcⁿ = return 0
-         ∣ tok 'a' +            !>>= λ as → ♯
-           (let n = length as in
-            exactly n (tok 'b') ⊛>
-            exactly n (tok 'c') ⊛>
-            return n)
+    -- A monadic variant of Ex₄.
 
-  ex₁ : "aaabbbccc" ∈? aⁿbⁿcⁿ ≡ [ 3 ]
-  ex₁ = refl
+    aⁿbⁿcⁿ = return 0
+           ∣ tok 'a' +            !>>= λ as → ♯
+             (let n = length as in
+              exactly n (tok 'b') ⊛>
+              exactly n (tok 'c') ⊛>
+              return n)
+
+    ex₁ : "aaabbbccc" ∈? aⁿbⁿcⁿ ≡ [ 3 ]
+    ex₁ = refl
 
   ex₂ : "aaabbccc" ∈? aⁿbⁿcⁿ ≡ []
   ex₂ = refl
 
 module Ex₅ where
 
-  -- A grammar making use of a parameterised parser from the library.
+  mutual
 
-  data NT : NonTerminalType where
-    a  : NT _ Char
-    as : NT _ ℕ
+    -- A grammar making use of a parameterised parser from the
+    -- library.
 
-  grammar : Grammar NT Char
-  grammar a  = tok 'a'
-  grammar as = length <$> ! a ⋆
+    data NT : NonTerminalType where
+      a  : NT _ Char
+      as : NT _ ℕ
+
+    grammar : Grammar NT Char
+    grammar a  = tok 'a'
+    grammar as = length <$> ! a ⋆
 
   ex₁ : "aaaaa" ∈? ! as / grammar ≡ [ 5 ]
   ex₁ = refl
 
 module Ex₆ where
 
-  -- A grammar which uses the chain≥ combinator.
+  mutual
 
-  data NT : NonTerminalType where
-    op   : NT _ (ℕ → ℕ → ℕ)
-    expr : (a : Assoc) → NT _ ℕ
+    -- A grammar which uses the chain≥ combinator.
 
-  grammar : Grammar NT Char
-  grammar op       = _+_ <$ tok '+'
-                   ∣ _*_ <$ tok '*'
-                   ∣ _∸_ <$ tok '∸'
-  grammar (expr a) = chain≥ 0 a number (! op)
+    data NT : NonTerminalType where
+      op   : NT _ (ℕ → ℕ → ℕ)
+      expr : (a : Assoc) → NT _ ℕ
+
+    grammar : Grammar NT Char
+    grammar op       = _+_ <$ tok '+'
+                     ∣ _*_ <$ tok '*'
+                     ∣ _∸_ <$ tok '∸'
+    grammar (expr a) = chain≥ 0 a number (! op)
 
   ex₁ : "12345" ∈? number / grammar ≡ [ 12345 ]
   ex₁ = refl
@@ -172,23 +188,25 @@ module Ex₆ where
 
 module Ex₇ where
 
-  -- A proper expression example.
+  mutual
 
-  data NT : NonTerminalType where
-    expr   : NT _ ℕ
-    term   : NT _ ℕ
-    factor : NT _ ℕ
-    addOp  : NT _ (ℕ → ℕ → ℕ)
-    mulOp  : NT _ (ℕ → ℕ → ℕ)
+    -- A proper expression example.
 
-  grammar : Grammar NT Char
-  grammar expr   = chain≥ 0 left (! term)   (! addOp)
-  grammar term   = chain≥ 0 left (! factor) (! mulOp)
-  grammar factor = tok '(' ⊛> ! expr <⊛ tok ')'
-                 ∣ number
-  grammar addOp  = _+_ <$ tok '+'
-                 ∣ _∸_ <$ tok '∸'
-  grammar mulOp  = _*_ <$ tok '*'
+    data NT : NonTerminalType where
+      expr   : NT _ ℕ
+      term   : NT _ ℕ
+      factor : NT _ ℕ
+      addOp  : NT _ (ℕ → ℕ → ℕ)
+      mulOp  : NT _ (ℕ → ℕ → ℕ)
+
+    grammar : Grammar NT Char
+    grammar expr   = chain≥ 0 left (! term)   (! addOp)
+    grammar term   = chain≥ 0 left (! factor) (! mulOp)
+    grammar factor = tok '(' ⊛> ! expr <⊛ tok ')'
+                   ∣ number
+    grammar addOp  = _+_ <$ tok '+'
+                   ∣ _∸_ <$ tok '∸'
+    grammar mulOp  = _*_ <$ tok '*'
 
   ex₁ : "1+5*2∸3" ∈? ! expr / grammar ≡ [ 8 ]
   ex₁ = refl
@@ -198,53 +216,59 @@ module Ex₇ where
 
 module Ex₈ where
 
-  -- An example illustrating the use of one grammar within another.
+  mutual
 
-  data NT : NonTerminalType where
-    lib   : ∀ {i R} (nt : Ex₇.NT i R) → NT i R
-    exprs : NT _ (List ℕ)
+    -- An example illustrating the use of one grammar within another.
 
-  expr = lib Ex₇.expr
+    data NT : NonTerminalType where
+      lib   : ∀ {i R} (nt : Ex₇.NT i R) → NT i R
+      exprs : NT _ (List ℕ)
 
-  grammar : Grammar NT Char
-  grammar (lib nt) = mapNT lib (Ex₇.grammar nt)
-  grammar exprs    = ! expr sepBy tok ','
+    expr = lib Ex₇.expr
+
+    grammar : Grammar NT Char
+    grammar (lib nt) = mapNT lib (Ex₇.grammar nt)
+    grammar exprs    = ! expr sepBy tok ','
 
   ex₁ : "1,2∸1" ∈? ! exprs / grammar ≡ [ 1 ∷ 1 ∷ [] ]
   ex₁ = refl
 
 module Ex₉ where
 
-  -- An example illustrating the use of one grammar within another
-  -- when the inner grammar contains non-terminals parameterised on
-  -- parsers, and the outer grammar instantiates one of these parsers
-  -- with an outer non-terminal.
+  mutual
 
-  infix 55 _★ _∔
+    -- An example illustrating the use of one grammar within another
+    -- when the inner grammar contains non-terminals parameterised on
+    -- parsers, and the outer grammar instantiates one of these
+    -- parsers with an outer non-terminal.
 
-  data LibraryNT (NT : NonTerminalType) (Tok : Set) :
-                 NonTerminalType where
-    _★ : ∀ {c R} → Parser NT Tok (false ◇ c) R →
-         LibraryNT NT Tok _ (List R)
-    _∔ : ∀ {c R} → Parser NT Tok (false ◇ c) R →
-         LibraryNT NT Tok _ (List R)
+    infix 55 _★ _∔
 
-  library : ∀ {NT Tok} → (∀ {i R} → LibraryNT NT Tok i R → NT i R) →
-            ∀ {i R} → LibraryNT NT Tok i R → Parser NT Tok i R
-  library lift (p ★) = return [] ∣ ! (lift (p ∔))
-  library lift (p ∔) = p              >>= λ x  →
-                       ! (lift (p ★)) >>= λ xs →
-                       return (x ∷ xs)
+    data LibraryNT (NT : NonTerminalType) (Tok : Set) :
+                   NonTerminalType where
+      _★ : ∀ {c R} → Parser NT Tok (false ◇ c) R →
+           LibraryNT NT Tok _ (List R)
+      _∔ : ∀ {c R} → Parser NT Tok (false ◇ c) R →
+           LibraryNT NT Tok _ (List R)
 
-  data NT : NonTerminalType where
-    lib : ∀ {i R} → LibraryNT NT Char i R → NT i R
-    a   : NT _ Char
-    as  : NT _ (List Char)
+    library : ∀ {NT Tok} → (∀ {i R} → LibraryNT NT Tok i R → NT i R) →
+              ∀ {i R} → LibraryNT NT Tok i R → Parser NT Tok i R
+    library lift (p ★) = return [] ∣ ! (lift (p ∔))
+    library lift (p ∔) = p              >>= λ x  →
+                         ! (lift (p ★)) >>= λ xs →
+                         return (x ∷ xs)
 
-  grammar : Grammar NT Char
-  grammar (lib nt) = library lib nt
-  grammar a        = tok 'a'
-  grammar as       = ! (lib (! a ★))
+  mutual
+
+    data NT : NonTerminalType where
+      lib : ∀ {i R} → LibraryNT NT Char i R → NT i R
+      a   : NT _ Char
+      as  : NT _ (List Char)
+
+    grammar : Grammar NT Char
+    grammar (lib nt) = library lib nt
+    grammar a        = tok 'a'
+    grammar as       = ! (lib (! a ★))
 
   ex₁ : "aa" ∈? ! as / grammar ≡ [ 'a' ∷ 'a' ∷ [] ]
   ex₁ = refl

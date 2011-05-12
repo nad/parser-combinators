@@ -14,6 +14,7 @@ open import Data.Maybe
 open import Data.Product
 open import Function
 import Function.Related as Related
+open import Level
 open import Relation.Binary
 import Relation.Binary.PropositionalEquality as P
 
@@ -21,7 +22,7 @@ open Any.Membership-≡ using (bag; _∈_; [_]-Order)
                       renaming (_≈[_]_ to _List-≈[_]_)
 open Related.EquationalReasoning
   renaming (_≈⟨_⟩_ to _≈⟨_⟩′_; _∎ to _∎′; sym to sym′)
-open RawMonad List.monad
+open RawMonad {f = zero} List.monad
   using () renaming (_⊛_ to _⊛′_; _>>=_ to _>>=′_)
 private
   module BSOrd {k} {A : Set} = Preorder ([ k ]-Order A)

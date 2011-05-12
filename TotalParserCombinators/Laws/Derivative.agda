@@ -13,8 +13,8 @@ open import Data.Maybe using (Maybe); open Data.Maybe.Maybe
 open import Function using (_∘_; _$_)
 
 private
-  module BagMonoid {A : Set} =
-    CommutativeMonoid (BSEq.commutativeMonoid _ A)
+  module BagMonoid {k} {A : Set} =
+    CommutativeMonoid (BSEq.commutativeMonoid k A)
 
 open import TotalParserCombinators.Derivative
 open import TotalParserCombinators.Congruence as Eq

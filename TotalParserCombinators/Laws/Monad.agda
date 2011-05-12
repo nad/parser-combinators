@@ -11,11 +11,12 @@ open import Data.List as List
 import Data.List.Any.BagAndSetEquality as BSEq
 import Data.List.Properties as ListProp
 open import Function
+open import Level
 
 private
-  module BagMonoid {A : Set} =
-    CommutativeMonoid (BSEq.commutativeMonoid _ A)
-  open module ListMonad = RawMonad List.monad
+  module BagMonoid {k} {A : Set} =
+    CommutativeMonoid (BSEq.commutativeMonoid k A)
+  open module ListMonad = RawMonad {f = zero} List.monad
          using () renaming (_>>=_ to _>>=′_)
 
 open import TotalParserCombinators.Derivative
@@ -46,7 +47,7 @@ left-distributive : ∀ {Tok R₁ R₂ xs} {f g : R₁ → List R₂}
                     (p₃ : (x : R₁) → Parser Tok R₂ (g x)) →
                     p₁ >>= (λ x → p₂ x ∣ p₃ x) ≅P p₁ >>= p₂ ∣ p₁ >>= p₃
 left-distributive {xs = xs} {f} {g} p₁ p₂ p₃ =
-  BSEq.>>=-left-distributive xs ∷ λ t → ♯ (
+  BSEq.>>=-left-distributive xs {f = f} ∷ λ t → ♯ (
     D t (p₁ >>= (λ x → p₂ x ∣ p₃ x))                       ≅⟨ D->>= p₁ (λ x → p₂ x ∣ p₃ x) ⟩
 
     D t p₁ >>= (λ x → p₂ x ∣ p₃ x) ∣

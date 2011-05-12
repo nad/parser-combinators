@@ -13,7 +13,9 @@ open import Relation.Nullary.Decidable
 
 import TotalRecognisers.Simple as P
 
-open P Char Char._≟_
+private
+  open module PC = P Char Char._≟_ hiding (_·_)
+  open PC.P using (_·_)
 
 ------------------------------------------------------------------------
 -- Recognisers for bits and binary numbers
