@@ -19,9 +19,9 @@ open import Function.Related.TypeIsomorphisms
 import Relation.Binary.PropositionalEquality as P
 import Relation.Binary.Sigma.Pointwise as Σ
 
-open Any.Membership-≡ using (_∈_) renaming (_≈[_]_ to _List-≈[_]_)
+open Any.Membership-≡ using (_∈_) renaming (_∼[_]_ to _List-∼[_]_)
 
-open import TotalParserCombinators.Congruence using (_≈[_]P_; _≅P_)
+open import TotalParserCombinators.Congruence using (_∼[_]P_; _≅P_)
 open import TotalParserCombinators.Derivative using (D)
 open import TotalParserCombinators.Parser
 import TotalParserCombinators.Pointwise as Pointwise
@@ -40,8 +40,8 @@ first-nonempty xs ys = xs
 
 first-nonempty-cong :
   ∀ {k R} {xs₁ xs₁′ xs₂ xs₂′ : List R} →
-  xs₁ List-≈[ ⌊ k ⌋⇔ ] xs₁′ → xs₂ List-≈[ ⌊ k ⌋⇔ ] xs₂′ →
-  first-nonempty xs₁ xs₂ List-≈[ ⌊ k ⌋⇔ ] first-nonempty xs₁′ xs₂′
+  xs₁ List-∼[ ⌊ k ⌋⇔ ] xs₁′ → xs₂ List-∼[ ⌊ k ⌋⇔ ] xs₂′ →
+  first-nonempty xs₁ xs₂ List-∼[ ⌊ k ⌋⇔ ] first-nonempty xs₁′ xs₂′
 first-nonempty-cong {xs₁ = []}    {[]}    eq₁ eq₂ = eq₂
 first-nonempty-cong {xs₁ = _ ∷ _} {_ ∷ _} eq₁ eq₂ = eq₁
 first-nonempty-cong {xs₁ = []} {_ ∷ _} eq₁ eq₂
@@ -55,14 +55,14 @@ first-nonempty-cong {xs₁ = _ ∷ _} {[]} eq₁ eq₂
 
 first-nonempty-left :
   ∀ {k R} {xs₁ xs₂ : List R} →
-  (∃ λ y → y ∈ xs₁) → first-nonempty xs₁ xs₂ List-≈[ k ] xs₁
+  (∃ λ y → y ∈ xs₁) → first-nonempty xs₁ xs₂ List-∼[ k ] xs₁
 first-nonempty-left {xs₁ = []}    (_ , ())
 first-nonempty-left {xs₁ = _ ∷ _} _        = _ ∎
   where open Related.EquationalReasoning
 
 first-nonempty-right :
   ∀ {k R} {xs₁ xs₂ : List R} →
-  (∄ λ y → y ∈ xs₁) → first-nonempty xs₁ xs₂ List-≈[ k ] xs₂
+  (∄ λ y → y ∈ xs₁) → first-nonempty xs₁ xs₂ List-∼[ k ] xs₂
 first-nonempty-right {xs₁ = x ∷ _} ∉x∷ = ⊥-elim $ ∉x∷ (x , here P.refl)
 first-nonempty-right {xs₁ = []}    _   = _ ∎
   where open Related.EquationalReasoning
@@ -99,8 +99,8 @@ D-◃ = AC.D-lift
 _◃-cong_ : ∀ {k Tok R xs₁ xs₁′ xs₂ xs₂′}
              {p₁  : Parser Tok R xs₁} {p₁′ : Parser Tok R xs₁′}
              {p₂  : Parser Tok R xs₂} {p₂′ : Parser Tok R xs₂′} →
-           p₁ ≈[ ⌊ k ⌋⇔ ]P p₁′ → p₂ ≈[ ⌊ k ⌋⇔ ]P p₂′ →
-           p₁ ◃ p₂ ≈[ ⌊ k ⌋⇔ ]P p₁′ ◃ p₂′
+           p₁ ∼[ ⌊ k ⌋⇔ ]P p₁′ → p₂ ∼[ ⌊ k ⌋⇔ ]P p₂′ →
+           p₁ ◃ p₂ ∼[ ⌊ k ⌋⇔ ]P p₁′ ◃ p₂′
 _◃-cong_ = AC.lift-cong
 
 -- If p₁ accepts s, then p₁ ◃ p₂ behaves as p₁ when applied to s.

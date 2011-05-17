@@ -18,7 +18,7 @@ open import Relation.Binary.Product.Pointwise
 
 open RawMonadPlus {f = zero} List.monadPlus using (_⊗_)
 
-open import TotalParserCombinators.Congruence using (_≈[_]P_; _≅P_)
+open import TotalParserCombinators.Congruence using (_∼[_]P_; _≅P_)
 open import TotalParserCombinators.Derivative using (D)
 open import TotalParserCombinators.Parser
 import TotalParserCombinators.Pointwise as Pointwise
@@ -50,7 +50,7 @@ D-& = And.D-lift
 _&-cong_ : ∀ {k Tok R xs₁ xs₁′ xs₂ xs₂′}
              {p₁  : Parser Tok R xs₁} {p₁′ : Parser Tok R xs₁′}
              {p₂  : Parser Tok R xs₂} {p₂′ : Parser Tok R xs₂′} →
-           p₁ ≈[ k ]P p₁′ → p₂ ≈[ k ]P p₂′ → p₁ & p₂ ≈[ k ]P p₁′ & p₂′
+           p₁ ∼[ k ]P p₁′ → p₂ ∼[ k ]P p₂′ → p₁ & p₂ ∼[ k ]P p₁′ & p₂′
 _&-cong_ = And.lift-cong
 
 -- _&_ is correct.

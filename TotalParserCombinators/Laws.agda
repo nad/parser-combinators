@@ -18,7 +18,7 @@ open import Function
 import Level
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 
-open Any.Membership-≡ using (bag) renaming (_≈[_]_ to _List-≈[_]_)
+open Any.Membership-≡ using (bag) renaming (_∼[_]_ to _List-∼[_]_)
 private
   module BagMonoid {k} {A : Set} =
     CommutativeMonoid (Eq.commutativeMonoid k A)
@@ -140,7 +140,7 @@ module Cast where
   -- Casts can be erased.
 
   correct : ∀ {Tok R xs₁ xs₂}
-              {xs₁≈xs₂ : xs₁ List-≈[ bag ] xs₂}
+              {xs₁≈xs₂ : xs₁ List-∼[ bag ] xs₂}
               {p : Parser Tok R xs₁} →
             cast xs₁≈xs₂ p ≅P p
   correct {xs₁≈xs₂ = xs₁≈xs₂} {p} =

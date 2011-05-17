@@ -116,7 +116,7 @@ mutual
                (p₂ : (x : R₁) → ∞⟨ xs ⟩Parser Tok R₂ (apply f x)) →
                                        Parser Tok R₂ (bind xs f)
     nonempty : ∀ {R xs} (p : Parser Tok R xs) → Parser Tok R []
-    cast     : ∀ {R xs₁ xs₂} (xs₁≈xs₂ : xs₁ ≈[ bag ] xs₂)
+    cast     : ∀ {R xs₁ xs₂} (xs₁≈xs₂ : xs₁ ∼[ bag ] xs₂)
                (p : Parser Tok R xs₁) → Parser Tok R xs₂
 
   ∞⟨_⟩Parser : {A : Set} → Maybe A → Set → (R : Set) → List R → Set₁

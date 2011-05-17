@@ -152,10 +152,10 @@ private
     ∀ {k Tok R₁ R₂ xs₁ xs₂ fs₁ fs₂}
       {p₁ : Parser Tok (R₁ → R₂) fs₁} {p₂ : Parser Tok R₁ xs₁}
       {p₃ : Parser Tok (R₁ → R₂) fs₂} {p₄ : Parser Tok R₁ xs₂} →
-    p₁ ≈[ k ]P p₃ → p₂ ≈[ k ]P p₄ → p₁ ⊛″ p₂ ≈[ k ]P p₃ ⊛″ p₄
+    p₁ ∼[ k ]P p₃ → p₂ ∼[ k ]P p₄ → p₁ ⊛″ p₂ ∼[ k ]P p₃ ⊛″ p₄
   _⊛-cong_ {p₁ = p₁} {p₂} {p₃} {p₄} p₁≈p₃ p₂≈p₄ =
     p₁ ⊛″ p₂  ≅⟨ sym $ ⊛-in-terms-of->>= p₁ p₂ ⟩
-    p₁ ⊛  p₂  ≈⟨ [ ○ - ○ - ○ - ○ ] p₁≈p₃ ⊛ p₂≈p₄ ⟩
+    p₁ ⊛  p₂  ∼⟨ [ ○ - ○ - ○ - ○ ] p₁≈p₃ ⊛ p₂≈p₄ ⟩
     p₃ ⊛  p₄  ≅⟨ ⊛-in-terms-of->>= p₃ p₄ ⟩
     p₃ ⊛″ p₄  ∎
 

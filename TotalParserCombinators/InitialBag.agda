@@ -22,7 +22,7 @@ open import Relation.Binary.PropositionalEquality as P
 open import Relation.Binary.HeterogeneousEquality as H
   using (refl) renaming (_≅_ to _≅′_)
 
-open Any.Membership-≡ using (_∈_) renaming (_≈[_]_ to _List-≈[_]_)
+open Any.Membership-≡ using (_∈_) renaming (_∼[_]_ to _List-∼[_]_)
 open Inv.Inverse
 open RawMonadPlus {f = zero} List.monadPlus
   using () renaming (_⊛_ to _⊛′_)
@@ -238,10 +238,10 @@ correct {p = p} = record
 
 cong : ∀ {k Tok R xs₁ xs₂}
          {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
-       p₁ ≈[ k ] p₂ → initial-bag p₁ List-≈[ k ] initial-bag p₂
+       p₁ ∼[ k ] p₂ → initial-bag p₁ List-∼[ k ] initial-bag p₂
 cong {xs₁ = xs₁} {xs₂} {p₁} {p₂} p₁≈p₂ {x} =
   (x ∈ xs₁)    ↔⟨ sym correct ⟩
-  x ∈ p₁ · []  ≈⟨ p₁≈p₂ ⟩
+  x ∈ p₁ · []  ∼⟨ p₁≈p₂ ⟩
   x ∈ p₂ · []  ↔⟨ correct ⟩
   (x ∈ xs₂)    ∎
   where open Related.EquationalReasoning

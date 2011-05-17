@@ -41,10 +41,10 @@ mono p₁≲p₂ = complete ∘ p₁≲p₂ ∘ sound _
 
 cong : ∀ {k Tok R xs₁ xs₂}
          {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
-       p₁ ≈[ k ] p₂ → ∀ {t} → D t p₁ ≈[ k ] D t p₂
+       p₁ ∼[ k ] p₂ → ∀ {t} → D t p₁ ∼[ k ] D t p₂
 cong {p₁ = p₁} {p₂} p₁≈p₂ {t} {x} {s} =
   x ∈ D t p₁ · s  ↔⟨ correct ⟩
-  x ∈ p₁ · t ∷ s  ≈⟨ p₁≈p₂ ⟩
+  x ∈ p₁ · t ∷ s  ∼⟨ p₁≈p₂ ⟩
   x ∈ p₂ · t ∷ s  ↔⟨ sym correct ⟩
   x ∈ D t p₂ · s  ∎
   where open Related.EquationalReasoning

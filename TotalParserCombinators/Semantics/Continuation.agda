@@ -14,7 +14,7 @@ open import Data.Product as Prod
 open import Function
 open import Relation.Binary.PropositionalEquality
 
-open Any.Membership-≡ using (bag) renaming (_≈[_]_ to _List-≈[_]_)
+open Any.Membership-≡ using (bag) renaming (_∼[_]_ to _List-∼[_]_)
 private
   module LM {Tok : Set} = Monoid (List.monoid Tok)
 
@@ -57,7 +57,7 @@ data _⊕_∈_·_ {Tok} : ∀ {R xs} → R → List Tok →
   nonempty   : ∀ {R xs x y s₂} s₁ {p : Parser Tok R xs}
                (x∈p : y ⊕ s₂ ∈ p · x ∷ s₁ ++ s₂) →
                y ⊕ s₂ ∈ nonempty p · x ∷ s₁ ++ s₂
-  cast       : ∀ {R xs₁ xs₂ x s₁ s₂} {xs₁≈xs₂ : xs₁ List-≈[ bag ] xs₂}
+  cast       : ∀ {R xs₁ xs₂ x s₁ s₂} {xs₁≈xs₂ : xs₁ List-∼[ bag ] xs₂}
                  {p : Parser Tok R xs₁}
                (x∈p : x ⊕ s₂ ∈ p · s₁) → x ⊕ s₂ ∈ cast xs₁≈xs₂ p · s₁
 

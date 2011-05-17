@@ -13,7 +13,7 @@ import Data.List.Any.BagAndSetEquality as Eq
 open import Function
 open import Level
 
-open Any.Membership-≡ using () renaming (_≈[_]_ to _List-≈[_]_)
+open Any.Membership-≡ using () renaming (_∼[_]_ to _List-∼[_]_)
 private
   module BagMonoid {A : Set} =
     CommutativeMonoid (Eq.commutativeMonoid Any.Membership-≡.bag A)
@@ -31,7 +31,7 @@ open import TotalParserCombinators.Parser
 -- return⋆ preserves equality.
 
 cong : ∀ {k Tok R} {xs₁ xs₂ : List R} →
-       xs₁ List-≈[ k ] xs₂ → return⋆ {Tok = Tok} xs₁ ≈[ k ]P return⋆ xs₂
+       xs₁ List-∼[ k ] xs₂ → return⋆ {Tok = Tok} xs₁ ∼[ k ]P return⋆ xs₂
 cong {xs₁ = xs₁} {xs₂} xs₁≈xs₂ = xs₁≈xs₂ ∷ λ t → ♯ (
   D t (return⋆ xs₁)  ≅⟨ D-return⋆ xs₁ ⟩
   fail               ≅⟨ sym $ D-return⋆ xs₂ ⟩

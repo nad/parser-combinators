@@ -25,7 +25,7 @@ open import Relation.Nullary
 
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics as S
-  hiding (_≅_; _≈[_]_; token)
+  hiding (_≅_; _∼[_]_; token)
 open import TotalParserCombinators.Lib
 private
   open module Tok = Token Bool _≟_ using (tok)
@@ -100,7 +100,7 @@ module Monadic where
 
   maximally-expressive :
     ∀ {Tok R} (f : List Tok → List R) {s} →
-    parse (grammar f) s ≈[ bag ] f s
+    parse (grammar f) s ∼[ bag ] f s
   maximally-expressive f {s} {x} =
     (x ∈ parse (grammar f) s)  ↔⟨ sym Backend.parse-correct ⟩
     x ∈ grammar f · s          ↔⟨ grammar-correct f ⟩
@@ -211,7 +211,7 @@ module Applicative where
 
   maximally-expressive :
     ∀ {R} (f : List Bool → List R) {s} →
-    parse (grammar f) s ≈[ bag ] f s
+    parse (grammar f) s ∼[ bag ] f s
   maximally-expressive f {s} {x} =
     (x ∈ parse (grammar f) s)  ↔⟨ sym Backend.parse-correct ⟩
     x ∈ grammar f · s          ↔⟨ grammar-correct f ⟩

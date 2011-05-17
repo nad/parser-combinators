@@ -20,7 +20,7 @@ import Relation.Binary.HeterogeneousEquality as H
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 open import Relation.Nullary
 
-open Any.Membership-≡ using (bag) renaming (_≈[_]_ to _List-≈[_]_)
+open Any.Membership-≡ using (bag) renaming (_∼[_]_ to _List-∼[_]_)
 
 open import TotalParserCombinators.Parser
 
@@ -63,7 +63,7 @@ data _∈_·_ {Tok} :
   nonempty : ∀ {R xs x y s} {p : Parser Tok R xs}
              (x∈p : y ∈ p · x ∷ s) → y ∈ nonempty p · x ∷ s
   cast     : ∀ {R xs₁ xs₂ x s}
-               {xs₁≈xs₂ : xs₁ List-≈[ bag ] xs₂} {p : Parser Tok R xs₁}
+               {xs₁≈xs₂ : xs₁ List-∼[ bag ] xs₂} {p : Parser Tok R xs₁}
              (x∈p : x ∈ p · s) → x ∈ cast xs₁≈xs₂ p · s
 
 -- Some variants with fewer implicit arguments. (The arguments xs and
@@ -87,7 +87,7 @@ data _∈_·_ {Tok} :
 ------------------------------------------------------------------------
 -- Parser and language equivalence
 
-infix 4 _≈[_]_ _≈_ _≅_ _≲_
+infix 4 _∼[_]_ _≈_ _≅_ _≲_
 
 -- There are two kinds of equivalences. Parser equivalences are
 -- stronger, and correspond to bag equality. Language equivalences are
@@ -106,25 +106,25 @@ open Any.Membership-≡ public
 -- General definition of equivalence between parsers. (Note that this
 -- definition also gives access to some ordering relations.)
 
-_≈[_]_ : ∀ {Tok R xs₁ xs₂} →
+_∼[_]_ : ∀ {Tok R xs₁ xs₂} →
          Parser Tok R xs₁ → Kind → Parser Tok R xs₂ → Set₁
-p₁ ≈[ k ] p₂ = ∀ {x s} → Related k (x ∈ p₁ · s) (x ∈ p₂ · s)
+p₁ ∼[ k ] p₂ = ∀ {x s} → Related k (x ∈ p₁ · s) (x ∈ p₂ · s)
 
 -- Language equivalence. (Corresponds to set equality.)
 
 _≈_ : ∀ {Tok R xs₁ xs₂} → Parser Tok R xs₁ → Parser Tok R xs₂ → Set₁
-p₁ ≈ p₂ = p₁ ≈[ language ] p₂
+p₁ ≈ p₂ = p₁ ∼[ language ] p₂
 
 -- Parser equivalence. (Corresponds to bag equality.)
 
 _≅_ : ∀ {Tok R xs₁ xs₂} → Parser Tok R xs₁ → Parser Tok R xs₂ → Set₁
-p₁ ≅ p₂ = p₁ ≈[ parser ] p₂
+p₁ ≅ p₂ = p₁ ∼[ parser ] p₂
 
 -- p₁ ≲ p₂ means that the language defined by p₂ contains all the
 -- string/result pairs contained in the language defined by p₁.
 
 _≲_ : ∀ {Tok R xs₁ xs₂} → Parser Tok R xs₁ → Parser Tok R xs₂ → Set₁
-p₁ ≲ p₂ = p₁ ≈[ sublanguage ] p₂
+p₁ ≲ p₂ = p₁ ∼[ sublanguage ] p₂
 
 -- p₁ ≈ p₂ iff both p₁ ≲ p₂ and p₂ ≲ p₁.
 

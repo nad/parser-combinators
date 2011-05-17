@@ -22,9 +22,9 @@ open import Level
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 import Relation.Binary.Sigma.Pointwise as Σ
 
-open Any.Membership-≡ using (_∈_) renaming (_≈[_]_ to _List-≈[_]_)
+open Any.Membership-≡ using (_∈_) renaming (_∼[_]_ to _List-∼[_]_)
 
-open import TotalParserCombinators.Congruence as C using (_≈[_]P_; _≅P_)
+open import TotalParserCombinators.Congruence as C using (_∼[_]P_; _≅P_)
 open import TotalParserCombinators.Derivative using (D)
 open import TotalParserCombinators.Parser
 import TotalParserCombinators.Pointwise as Pointwise
@@ -41,8 +41,8 @@ not-index xs = if null xs then [ tt ] else []
 -- not-index preserves equality.
 
 not-index-cong : ∀ {k R} {xs xs′ : List R} →
-                 xs List-≈[ ⌊ k ⌋⇔ ] xs′ →
-                 not-index xs List-≈[ ⌊ k ⌋⇔ ] not-index xs′
+                 xs List-∼[ ⌊ k ⌋⇔ ] xs′ →
+                 not-index xs List-∼[ ⌊ k ⌋⇔ ] not-index xs′
 not-index-cong {xs = []   } {xs′ = []   } eq = ↔⇒ Inv.id
 not-index-cong {xs = _ ∷ _} {xs′ = _ ∷ _} eq = ↔⇒ Inv.id
 not-index-cong {xs = []   } {xs′ = _ ∷ _} eq
@@ -132,7 +132,7 @@ D-¬ = Not.D-lift fail
 
 ¬-cong_ : ∀ {k Tok R xs xs′}
             {p : Parser Tok R xs} {p′ : Parser Tok R xs′} →
-          p ≈[ ⌊ k ⌋⇔ ]P p′ → ¬ p ≈[ ⌊ k ⌋⇔ ]P ¬ p′
+          p ∼[ ⌊ k ⌋⇔ ]P p′ → ¬ p ∼[ ⌊ k ⌋⇔ ]P ¬ p′
 ¬-cong_ = Not.lift-cong C.fail
 
 -- ¬_ is correct (assuming that propositional equality is
