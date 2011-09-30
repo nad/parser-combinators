@@ -19,6 +19,8 @@ open import Data.Bool
 import Data.Bool.Properties as Bool
 private
   module BoolCS = CommutativeSemiring Bool.commutativeSemiring-∧-∨
+open import Data.Empty
+open import Data.Sum
 open import Function
 open import Data.List
 open import Data.Product
@@ -90,6 +92,107 @@ data _∈_ : ∀ {n} → List Tok → P n → Set where
 
 cast : ∀ {n} {p p′ : P n} {s} → p ≡ p′ → s ∈ p → s ∈ p′
 cast refl s∈ = s∈
+
+------------------------------------------------------------------------
+-- Inversion lemmas
+
+-- Untyped parsers.
+
+record [P] : Set where
+  constructor untyped
+  field
+    {n} : Bool
+    p   : P n
+
+∈fail : ∀ {s} → s ∈ fail → ⊥
+∈fail s∈ = helper s∈ refl
+  where
+  helper : ∀ {s n} {p : P n} → s ∈ p → untyped p ≢ untyped fail
+  helper empty                    ()
+  helper tok                      ()
+  helper (∣-left  {n₁ = true}  _) ()
+  helper (∣-left  {n₁ = false} _) ()
+  helper (∣-right {n₁ = true}  _) ()
+  helper (∣-right {n₁ = false} _) ()
+  helper (_·_ {n₁ = true}  _ _)   ()
+  helper (_·_ {n₁ = false} _ _)   ()
+
+∈empty : ∀ {s} → s ∈ empty → s ≡ []
+∈empty s∈ = helper s∈ refl
+  where
+  helper : ∀ {s n} {p : P n} → s ∈ p →
+           untyped p ≡ untyped empty → s ≡ []
+  helper empty                    refl = refl
+  helper tok                      ()
+  helper (∣-left  {n₁ = true}  _) ()
+  helper (∣-left  {n₁ = false} _) ()
+  helper (∣-right {n₁ = true}  _) ()
+  helper (∣-right {n₁ = false} _) ()
+  helper (_·_ {n₁ = true}  _ _)   ()
+  helper (_·_ {n₁ = false} _ _)   ()
+
+∈tok : ∀ {s t} → s ∈ tok t → s ≡ [ t ]
+∈tok {t = t} s∈ = helper s∈ refl
+  where
+  helper : ∀ {s n} {p : P n} → s ∈ p →
+           untyped p ≡ untyped (tok t) → s ≡ [ t ]
+  helper empty                    ()
+  helper tok                      refl = refl
+  helper (∣-left  {n₁ = true}  _) ()
+  helper (∣-left  {n₁ = false} _) ()
+  helper (∣-right {n₁ = true}  _) ()
+  helper (∣-right {n₁ = false} _) ()
+  helper (_·_ {n₁ = true}  _ _)   ()
+  helper (_·_ {n₁ = false} _ _)   ()
+
+∈∣ : ∀ {s n₁ n₂} (p₁ : P n₁) {p₂ : P n₂} →
+     s ∈ p₁ ∣ p₂ → s ∈ p₁ ⊎ s ∈ p₂
+∈∣ _ {p₂ = p₂} s∈ = helper s∈ _ refl
+  where
+  helper : ∀ {s n} {p : P n} → s ∈ p →
+           ∀ n₁ {p₁ : P n₁} → untyped p ≡ untyped (p₁ ∣ p₂) →
+           s ∈ p₁ ⊎ s ∈ p₂
+  helper empty                     true  ()
+  helper empty                     false ()
+  helper tok                       true  ()
+  helper tok                       false ()
+  helper (∣-left  {n₁ = true}  ∈₁) true  refl = inj₁ ∈₁
+  helper (∣-left  {n₁ = true}  _)  false ()
+  helper (∣-left  {n₁ = false} _)  true  ()
+  helper (∣-left  {n₁ = false} ∈₁) false refl = inj₁ ∈₁
+  helper (∣-right {n₁ = true}  ∈₂) true  refl = inj₂ ∈₂
+  helper (∣-right {n₁ = true}  _)  false ()
+  helper (∣-right {n₁ = false} _)  true  ()
+  helper (∣-right {n₁ = false} ∈₂) false refl = inj₂ ∈₂
+  helper (_·_ {n₁ = true}  _ _)    true  ()
+  helper (_·_ {n₁ = true}  _ _)    false ()
+  helper (_·_ {n₁ = false} _ _)    true  ()
+  helper (_·_ {n₁ = false} _ _)    false ()
+
+∈· : ∀ {s n₁ n₂} (p₁ : P n₁) {p₂ : ∞⟨ not n₁ ⟩P n₂} →
+     s ∈ p₁ · p₂ → ∃₂ λ s₁ s₂ → s ≡ s₁ ++ s₂ × s₁ ∈ p₁ × s₂ ∈ ♭? p₂
+∈· _ {p₂ = p₂} s∈ = helper s∈ _ refl
+  where
+  helper : ∀ {s n} {p : P n} → s ∈ p →
+           ∀ n₁ {p₁ : P n₁} {n₂} {p₂ : ∞⟨ not n₁ ⟩P n₂} →
+           untyped p ≡ untyped (p₁ · p₂) →
+           ∃₂ λ s₁ s₂ → s ≡ s₁ ++ s₂ × s₁ ∈ p₁ × s₂ ∈ ♭? p₂
+  helper empty                    true  ()
+  helper empty                    false ()
+  helper tok                      true  ()
+  helper tok                      false ()
+  helper (∣-left  {n₁ = true}  _) true  ()
+  helper (∣-left  {n₁ = true}  _) false ()
+  helper (∣-left  {n₁ = false} _) true  ()
+  helper (∣-left  {n₁ = false} _) false ()
+  helper (∣-right {n₁ = true}  _) true  ()
+  helper (∣-right {n₁ = true}  _) false ()
+  helper (∣-right {n₁ = false} _) true  ()
+  helper (∣-right {n₁ = false} _) false ()
+  helper (_·_ {n₁ = true}  ∈₁ ∈₂) true  refl = _ , _ , refl , ∈₁ , ∈₂
+  helper (_·_ {n₁ = true}  _ _)   false ()
+  helper (_·_ {n₁ = false} _ _)   true  ()
+  helper (_·_ {n₁ = false} ∈₁ ∈₂) false refl = _ , _ , refl , ∈₁ , ∈₂
 
 ------------------------------------------------------------------------
 -- Nullability
@@ -174,35 +277,44 @@ D-sound : ∀ {s n} {t} {p : P n} → s ∈ D t p → t ∷ s ∈ p
 D-sound s∈ = D-sound′ _ _ s∈
   where
   D-sound′ : ∀ {s n} t (p : P n) → s ∈ D t p → t ∷ s ∈ p
-  D-sound′ t fail                ()
-  D-sound′ t empty               ()
-  D-sound′ t (tok t′)            _                   with t′ ≟ t
-  D-sound′ t (tok .t)            empty               | yes refl = tok
-  D-sound′ t (tok t′)            ()                  | no  t′≢t
-  D-sound′ t (p₁ ∣ p₂)           (∣-left  ∈₁)        = ∣-left            (D-sound′ t p₁ ∈₁)
-  D-sound′ t (p₁ ∣ p₂)           (∣-right ∈₂)        = ∣-right {p₁ = p₁} (D-sound′ t p₂ ∈₂)
-  D-sound′ t (_·_ {true}  p₁ p₂) (∣-left  (∈₁ · ∈₂)) = D-sound′ t p₁ ∈₁ · cast (♭?♯? (not (D-nullable t p₁))) ∈₂
-  D-sound′ t (_·_ {true}  p₁ p₂) (∣-right ∈₂)        = ⇐ p₁ refl · D-sound′ t p₂ ∈₂
-  D-sound′ t (_·_ {false} p₁ p₂) (∈₁ · ∈₂)           = D-sound′ t p₁ ∈₁ · cast (♭?♯? (not (D-nullable t p₁))) ∈₂
+  D-sound′ t fail                s∈ = ⊥-elim (∈fail s∈)
+  D-sound′ t empty               s∈ = ⊥-elim (∈fail s∈)
+  D-sound′ t (tok t′)            s∈ with t′ ≟ t
+  D-sound′ t (tok .t)            s∈ | yes refl with ∈empty s∈
+  D-sound′ t (tok .t)            s∈ | yes refl | refl = tok
+  D-sound′ t (tok t′)            s∈ | no  t′≢t = ⊥-elim (∈fail s∈)
+  D-sound′ t (p₁ ∣ p₂)           s∈ with ∈∣ (D t p₁) s∈
+  D-sound′ t (p₁ ∣ p₂)           s∈ | inj₁ ∈₁ = ∣-left            (D-sound′ t p₁ ∈₁)
+  D-sound′ t (p₁ ∣ p₂)           s∈ | inj₂ ∈₂ = ∣-right {p₁ = p₁} (D-sound′ t p₂ ∈₂)
+  D-sound′ t (_·_ {true}  p₁ p₂) s∈ with ∈∣ (D t p₁ · ♯? p₂) s∈
+  D-sound′ t (_·_ {true}  p₁ p₂) s∈ | inj₁ ∈₁ with ∈· (D t p₁) ∈₁
+  D-sound′ t (_·_ {true}  p₁ p₂) s∈ | inj₁ ∈₁ | _ , _ , refl , ∈₁₁ , ∈₁₂ = D-sound′ t p₁ ∈₁₁ · cast (♭?♯? (not (D-nullable t p₁))) ∈₁₂
+  D-sound′ t (_·_ {true}  p₁ p₂) s∈ | inj₂ ∈₂ = ⇐ p₁ refl · D-sound′ t p₂ ∈₂
+  D-sound′ t (_·_ {false} p₁ p₂) s∈ with ∈· (D t p₁) s∈
+  D-sound′ t (_·_ {false} p₁ p₂) s∈ | _ , _ , refl , ∈₁ , ∈₂ = D-sound′ t p₁ ∈₁ · cast (♭?♯? (not (D-nullable t p₁))) ∈₂
 
 D-complete : ∀ {s n} {t} {p : P n} → t ∷ s ∈ p → s ∈ D t p
-D-complete {t = t} t∷s∈ = D-complete′ _ t∷s∈ refl
+D-complete {t = t} t∷s∈ = D-complete′ _ t∷s∈
   where
-  D-complete′ : ∀ {s s′ n} (p : P n) → s′ ∈ p → s′ ≡ t ∷ s → s ∈ D t p
-  D-complete′         fail     ()  refl
-  D-complete′         empty    ()  refl
-  D-complete′         (tok t′) _   refl with t′ ≟ t
-  D-complete′         (tok .t) tok refl | yes refl = empty
-  D-complete′ {[]}    (tok .t) tok refl | no  t′≢t with t′≢t refl
-  D-complete′ {[]}    (tok .t) tok refl | no  t′≢t | ()
-  D-complete′ {_ ∷ _} (tok t′) ()  refl | no  t′≢t
-  D-complete′ (p₁ ∣ p₂)           (∣-left  ∈₁)         refl = ∣-left                    (D-complete ∈₁)
-  D-complete′ (p₁ ∣ p₂)           (∣-right ∈₂)         refl = ∣-right {p₁ = D t p₁}     (D-complete ∈₂)
-  D-complete′ (_·_ {true}  p₁ p₂) (_·_ {[]}     ∈₁ ∈₂) refl = ∣-right {p₁ = D t p₁ · _} (D-complete ∈₂)
-  D-complete′ (_·_ {true}  p₁ p₂) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = ∣-left (D-complete ∈₁ · cast (sym (♭?♯? (not (D-nullable t p₁)))) ∈₂)
-  D-complete′ (_·_ {false} p₁ p₂) (_·_ {[]}     ∈₁ ∈₂) refl with ⇒ ∈₁
-  D-complete′ (_·_ {false} p₁ p₂) (_·_ {[]}     ∈₁ ∈₂) refl | ()
-  D-complete′ (_·_ {false} p₁ p₂) (_·_ {._ ∷ _} ∈₁ ∈₂) refl = D-complete ∈₁ · cast (sym (♭?♯? (not (D-nullable t p₁)))) ∈₂
+  D-complete′ : ∀ {s n} (p : P n) → t ∷ s ∈ p → s ∈ D t p
+  D-complete′ fail                s∈ = ⊥-elim (∈fail s∈)
+  D-complete′ empty               s∈ with ∈empty s∈
+  D-complete′ empty               s∈ | ()
+  D-complete′ (tok t′)            s∈ with ∈tok s∈
+  D-complete′ (tok .t)            s∈ | refl with t ≟ t
+  D-complete′ (tok .t)            s∈ | refl | yes refl = empty
+  D-complete′ (tok .t)            s∈ | refl | no  t≢t  = ⊥-elim (t≢t refl)
+  D-complete′ (p₁ ∣ p₂)           s∈ with ∈∣ p₁ s∈
+  D-complete′ (p₁ ∣ p₂)           s∈ | inj₁ ∈₁ = ∣-left                (D-complete ∈₁)
+  D-complete′ (p₁ ∣ p₂)           s∈ | inj₂ ∈₂ = ∣-right {p₁ = D t p₁} (D-complete ∈₂)
+  D-complete′ (p₁ · p₂)           s∈ with ∈· p₁ s∈
+  D-complete′ (p₁ · p₂)           s∈ | []     , []     , ()   , ∈₁ , ∈₂
+  D-complete′ (_·_ {true}  p₁ p₂) s∈ | []     , .t ∷ _ , refl , ∈₁ , ∈₂ = ∣-right {p₁ = D t p₁ · _} (D-complete ∈₂)
+  D-complete′ (_·_ {true}  p₁ p₂) s∈ | .t ∷ _ , _      , refl , ∈₁ , ∈₂ = ∣-left (D-complete ∈₁ ·
+                                                                                  cast (sym (♭?♯? (not (D-nullable t p₁)))) ∈₂)
+  D-complete′ (_·_ {false} p₁ p₂) s∈ | []     , .t ∷ _ , refl , ∈₁ , ∈₂ with ⇒ ∈₁
+  D-complete′ (_·_ {false} p₁ p₂) s∈ | []     , .t ∷ _ , refl , ∈₁ , ∈₂ | ()
+  D-complete′ (_·_ {false} p₁ p₂) s∈ | .t ∷ _ , _      , refl , ∈₁ , ∈₂ = D-complete ∈₁ · cast (sym (♭?♯? (not (D-nullable t p₁)))) ∈₂
 
 ------------------------------------------------------------------------
 -- _∈_ is decidable
