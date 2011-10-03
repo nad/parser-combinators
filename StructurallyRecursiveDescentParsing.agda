@@ -27,8 +27,11 @@ import StructurallyRecursiveDescentParsing.Lib
 import StructurallyRecursiveDescentParsing.Examples
 
 -- An example: parsing PBM image files.
+--
+-- This example is commented out because it type-checks really slowly
+-- (if at all) using the current version of Agda (Oct 2011).
 
-import StructurallyRecursiveDescentParsing.PBM
+-- import StructurallyRecursiveDescentParsing.PBM
 
 -- A depth-first backend.
 

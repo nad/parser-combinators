@@ -17,7 +17,7 @@ open import Category.Applicative.Indexed
 open import Category.Monad.Indexed
 open import Category.Monad.State
 open import Coinduction
-open import Level
+import Level
 
 open import StructurallyRecursiveDescentParsing.Simplified
 
@@ -26,7 +26,7 @@ open import StructurallyRecursiveDescentParsing.Simplified
 
 private
 
-  P : Set → IFun ℕ zero
+  P : Set → IFun ℕ Level.zero
   P Tok = IStateT (BoundedVec Tok) List
 
   open module M₁ {Tok : Set} =

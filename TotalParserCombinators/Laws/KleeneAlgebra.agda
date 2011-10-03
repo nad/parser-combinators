@@ -37,10 +37,9 @@ p₁ ≲′ p₂ = p₁ ∣ p₂ ≈ p₂
 ≲⇔≲′ : ∀ {Tok R xs₁ xs₂}
        (p₁ : Parser Tok R xs₁) (p₂ : Parser Tok R xs₂) →
        p₁ ≲ p₂ ⇔ p₁ ≲′ p₂
-≲⇔≲′ {xs₁ = xs₁} p₁ p₂ =
-  equivalence
-    (λ (p₁≲p₂ : p₁ ≲ p₂) {_} → equivalence (helper p₁≲p₂) (∣-right xs₁))
-    (λ (p₁≲′p₂ : p₁ ≲′ p₂) s∈p₁ → Equivalence.to p₁≲′p₂ ⟨$⟩ ∣-left s∈p₁)
+≲⇔≲′ {xs₁ = xs₁} p₁ p₂ = equivalence
+  (λ (p₁≲p₂ : p₁ ≲ p₂) {x s} → equivalence (helper p₁≲p₂) (∣-right xs₁))
+  (λ (p₁≲′p₂ : p₁ ≲′ p₂) s∈p₁ → Equivalence.to p₁≲′p₂ ⟨$⟩ ∣-left s∈p₁)
   where
   helper : p₁ ≲ p₂ → p₁ ∣ p₂ ≲ p₂
   helper p₁≲p₂ (∣-left       s∈p₁) = p₁≲p₂ s∈p₁

@@ -149,10 +149,10 @@ module Semantics where
                    {p₁ : ParserProg (R i)}
                    {p₂ : ParserProg (∃ R)}
                  (x∈p₁ : x ∈⟦ p₁ ⟧· s) → (, x) ∈⟦ p₁ ∥ p₂ ⟧· s
-    ∥ʳ         : ∀ {I i} {R : I → Set} {x s}
+    ∥ʳ         : ∀ {I i} {R : I → Set} {s i′} {x : R i′}
                    {p₁ : ParserProg (R i)}
                    {p₂ : ParserProg (∃ R)}
-                 (x∈p₂ : x ∈⟦ p₂ ⟧· s) → x ∈⟦ p₁ ∥ p₂ ⟧· s
+                 (x∈p₂ : (, x) ∈⟦ p₂ ⟧· s) → (, x) ∈⟦ p₁ ∥ p₂ ⟧· s
 
   -- The semantics is correct. (Note that this proof only establishes
   -- language equivalence, not parser equivalence; see
@@ -257,10 +257,11 @@ module Semantics-⊕ where
                    {p₁ : ParserProg (R i)}
                    {p₂ : ParserProg (∃ R)}
                  (x∈p₁ : x ⊕ s′ ∈⟦ p₁ ⟧· s) → (, x) ⊕ s′ ∈⟦ p₁ ∥ p₂ ⟧· s
-    ∥ʳ         : ∀ {I i} {R : I → Set} {x s s′}
+    ∥ʳ         : ∀ {I i} {R : I → Set} {s s′ i′} {x : R i′}
                    {p₁ : ParserProg (R i)}
                    {p₂ : ParserProg (∃ R)}
-                 (x∈p₂ : x ⊕ s′ ∈⟦ p₂ ⟧· s) → x ⊕ s′ ∈⟦ p₁ ∥ p₂ ⟧· s
+                 (x∈p₂ : (, x) ⊕ s′ ∈⟦ p₂ ⟧· s) →
+                 (, x) ⊕ s′ ∈⟦ p₁ ∥ p₂ ⟧· s
 
   tok-sound : ∀ {t t′ s₁ s} →
               t′ ⊕ s₁ ∈ tok t · s →

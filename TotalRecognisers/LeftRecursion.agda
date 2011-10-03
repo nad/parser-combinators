@@ -147,10 +147,10 @@ p₁ ≈ p₂ = ∀ {s} → s ∈ p₁ ⇔ s ∈ p₂
 ≈⇔≤≥ : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
        p₁ ≈ p₂ ⇔ (p₁ ≤ p₂ × p₂ ≤ p₁)
 ≈⇔≤≥ = equivalence
-         (λ p₁≈p₂  → ((λ {_} → _⟨$⟩_ (Equivalence.to   p₁≈p₂))
-                     , λ {_} → _⟨$⟩_ (Equivalence.from p₁≈p₂)))
-         (λ p₁≤≥p₂ {s} → equivalence (proj₁ p₁≤≥p₂ {s})
-                                     (proj₂ p₁≤≥p₂ {s}))
+         (λ p₁≈p₂  → ((λ {s} → _⟨$⟩_ (Equivalence.to   (p₁≈p₂ {s = s})))
+                     , λ {s} → _⟨$⟩_ (Equivalence.from (p₁≈p₂ {s = s}))))
+         (λ p₁≤≥p₂ {s} → equivalence (proj₁ p₁≤≥p₂ {s = s})
+                                     (proj₂ p₁≤≥p₂ {s = s}))
 
 -- Some lemmas.
 

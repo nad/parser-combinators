@@ -131,11 +131,12 @@ p₁ ≲ p₂ = p₁ ∼[ sublanguage ] p₂
 ≈⇔≲≳ : ∀ {Tok R xs₁ xs₂}
          {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
        p₁ ≈ p₂ ⇔ (p₁ ≲ p₂ × p₂ ≲ p₁)
-≈⇔≲≳ = Eq.equivalence {t = suc zero}
-         (λ p₁≈p₂  → ((λ {_} → _⟨$⟩_ (Equivalence.to   p₁≈p₂))
-                     , λ {_} → _⟨$⟩_ (Equivalence.from p₁≈p₂)))
-         (λ p₁≲≳p₂ {s} → Eq.equivalence (proj₁ p₁≲≳p₂ {s})
-                                        (proj₂ p₁≲≳p₂ {s}))
+≈⇔≲≳ = Eq.equivalence
+  (λ p₁≈p₂  →
+     ((λ {x s} → _⟨$⟩_ (Equivalence.to   (p₁≈p₂ {x = x} {s = s})))
+     , λ {x s} → _⟨$⟩_ (Equivalence.from (p₁≈p₂ {x = x} {s = s}))))
+  (λ p₁≲≳p₂ → λ {x s} → Eq.equivalence (proj₁ p₁≲≳p₂ {s = s})
+                                       (proj₂ p₁≲≳p₂ {s = s}))
 
 -- Parser equivalence implies language equivalence.
 

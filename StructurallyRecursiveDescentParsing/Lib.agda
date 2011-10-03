@@ -28,7 +28,7 @@ private
 open import Relation.Nullary
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
-open import Level
+import Level
 
 ------------------------------------------------------------------------
 -- Some important derived combinators
@@ -333,7 +333,7 @@ any = sat just
 ------------------------------------------------------------------------
 -- Token parsers
 
-module Token (A : DecSetoid zero zero) where
+module Token (A : DecSetoid Level.zero Level.zero) where
 
   open DecSetoid A using (_≟_) renaming (Carrier to Tok)
 

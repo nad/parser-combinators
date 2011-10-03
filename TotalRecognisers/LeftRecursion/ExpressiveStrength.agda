@@ -115,7 +115,7 @@ pred⇒grammar′ : (f : List Bool → Bool) →
 pred⇒grammar′ f =
   (p f , λ {s} → equivalence (p-sound f) (p-complete f s))
   where
-  extend : ∀ {A B} → (List A → B) → A → (List A → B)
+  extend : {A B : Set} → (List A → B) → A → (List A → B)
   extend f x = λ xs → f (xs ∷ʳ x)
 
   p : (f : List Bool → Bool) → P Bool (f [])

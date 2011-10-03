@@ -288,10 +288,11 @@ module Semantics-⊕ where
                    {p₁ : ParserProg (R i)}
                    {p₂ : ParserProg (∃ R)}
                  (x∈p₁ : x ⊕ s′ ∈⟦ p₁ ⟧· s) → (, x) ⊕ s′ ∈⟦ p₁ ∥ p₂ ⟧· s
-    ∥ʳ         : ∀ {I i} {R : I → Set} {x s s′}
+    ∥ʳ         : ∀ {I i} {R : I → Set} {s s′ i′} {x : R i′}
                    {p₁ : ParserProg (R i)}
                    {p₂ : ParserProg (∃ R)}
-                 (x∈p₂ : x ⊕ s′ ∈⟦ p₂ ⟧· s) → x ⊕ s′ ∈⟦ p₁ ∥ p₂ ⟧· s
+                 (x∈p₂ : (, x) ⊕ s′ ∈⟦ p₂ ⟧· s) →
+                 (, x) ⊕ s′ ∈⟦ p₁ ∥ p₂ ⟧· s
 
   -- The semantics is correct.
 

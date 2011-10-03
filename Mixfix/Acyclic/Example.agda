@@ -63,44 +63,42 @@ wellTyped = record { nameParts = "⊢" ∷ "∶" ∷ [] }
 ------------------------------------------------------------------------
 -- Precedence graph
 
-abstract  -- To speed up type-checking.
+prec : List (∃₂ Operator) → List Precedence → Precedence
+prec ops = precedence (λ fix → List.gfilter (hasFixity fix) ops)
 
-  prec : List (∃₂ Operator) → List Precedence → Precedence
-  prec ops = precedence (λ fix → List.gfilter (hasFixity fix) ops)
+mutual
 
-  mutual
+  a  = prec ((, , atom) ∷ [])                       []
+  pl = prec ((, , plus) ∷ [])                       (a ∷ [])
+  ii = prec ((, , ifThen) ∷ (, , ifThenElse) ∷ [])  (pl ∷ a ∷ [])
+  c  = prec ((, , comma) ∷ [])                      (ii ∷ pl ∷ a ∷ [])
+  wt = prec ((, , wellTyped) ∷ [])                  (c ∷ a ∷ [])
 
-    a  = prec ((, , atom) ∷ [])                       []
-    pl = prec ((, , plus) ∷ [])                       (a ∷ [])
-    ii = prec ((, , ifThen) ∷ (, , ifThenElse) ∷ [])  (pl ∷ a ∷ [])
-    c  = prec ((, , comma) ∷ [])                      (ii ∷ pl ∷ a ∷ [])
-    wt = prec ((, , wellTyped) ∷ [])                  (c ∷ a ∷ [])
-
-  g : PrecedenceGraph
-  g = wt ∷ c ∷ ii ∷ pl ∷ a ∷ []
+g : PrecedenceGraph
+g = wt ∷ c ∷ ii ∷ pl ∷ a ∷ []
 
 ------------------------------------------------------------------------
 -- Expressions
 
-  open PrecedenceCorrect acyclic g
+open PrecedenceCorrect acyclic g
 
-  • : ExprIn a non
-  • = ⟪ here refl ∙ [] ⟫
+• : ExprIn a non
+• = ⟪ here refl ∙ [] ⟫
 
-  _+_ : Outer pl left → Expr (a ∷ []) → ExprIn pl left
-  e₁ + e₂ = e₁ ⟨ here refl ∙ [] ⟩ˡ e₂
+_+_ : Outer pl left → Expr (a ∷ []) → ExprIn pl left
+e₁ + e₂ = e₁ ⟨ here refl ∙ [] ⟩ˡ e₂
 
-  i_t_ : Expr g → Outer ii right → ExprIn ii right
-  i e₁ t e₂ = ⟪ here refl ∙ e₁ ∷ [] ⟩ e₂
+i_t_ : Expr g → Outer ii right → ExprIn ii right
+i e₁ t e₂ = ⟪ here refl ∙ e₁ ∷ [] ⟩ e₂
 
-  i_t_e_ : Expr g → Expr g → Outer ii right → ExprIn ii right
-  i e₁ t e₂ e e₃ = ⟪ there (here refl) ∙ e₁ ∷ e₂ ∷ [] ⟩ e₃
+i_t_e_ : Expr g → Expr g → Outer ii right → ExprIn ii right
+i e₁ t e₂ e e₃ = ⟪ there (here refl) ∙ e₁ ∷ e₂ ∷ [] ⟩ e₃
 
-  _,_ : Outer c left → Expr (ii ∷ pl ∷ a ∷ []) → ExprIn c left
-  e₁ , e₂ = e₁ ⟨ here refl ∙ [] ⟩ˡ e₂
+_,_ : Outer c left → Expr (ii ∷ pl ∷ a ∷ []) → ExprIn c left
+e₁ , e₂ = e₁ ⟨ here refl ∙ [] ⟩ˡ e₂
 
-  _⊢_∶ : Outer wt left → Expr g → Expr g
-  e₁ ⊢ e₂ ∶ = here refl ∙ (e₁ ⟨ here refl ∙ [ e₂ ] ⟫)
+_⊢_∶ : Outer wt left → Expr g → Expr g
+e₁ ⊢ e₂ ∶ = here refl ∙ (e₁ ⟨ here refl ∙ [ e₂ ] ⟫)
 
 ------------------------------------------------------------------------
 -- Some tests

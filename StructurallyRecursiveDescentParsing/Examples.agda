@@ -186,6 +186,12 @@ module Ex₆ where
   ex₃ : "1+5*2∸3" ∈? ! (expr right) / grammar ≡ [ 1 ]
   ex₃ = refl
 
+-- The following two examples have been commented out because they
+-- type-check really slowly (if at all) using the current version of
+-- Agda (Oct 2011).
+
+{-
+
 module Ex₇ where
 
   mutual
@@ -232,6 +238,8 @@ module Ex₈ where
 
   ex₁ : "1,2∸1" ∈? ! exprs / grammar ≡ [ 1 ∷ 1 ∷ [] ]
   ex₁ = refl
+
+-}
 
 module Ex₉ where
 

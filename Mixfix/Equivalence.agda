@@ -90,9 +90,9 @@ module AcyclicToCyclic where
       postLeft⁺ o∈ (+-[] f∈)     =                     <$> o∈ ⊛∞ postLeft f∈
       postLeft⁺ o∈ (+-∷  f∈ fs∈) = postLeft⁺ (∣ˡ (<$> (<$> o∈ ⊛∞ postLeft f∈))) fs∈
 
-      prec′ : ∀ {s s′ e} →
-              e ⊕ s′ ∈⟦ Acyclic.prec p ⟧A· s →
-              e ⊕ s′ ∈⟦  Cyclic.prec p ⟧C· s
+      prec′ : ∀ {s s′ assoc} {e : ExprIn p assoc} →
+              (, e) ⊕ s′ ∈⟦ Acyclic.prec p ⟧A· s →
+              (, e) ⊕ s′ ∈⟦  Cyclic.prec p ⟧C· s
       prec′ (∥ˡ (<$> i∈))                      = ∥ˡ (<$> inner _ i∈)
       prec′ (∥ʳ (∥ˡ (<$> ↑₁∈ ⊛ i∈ ⊛ ↑₂∈)))     = ∥ʳ (∥ˡ (<$> precs _ ↑₁∈ ⊛ inner _ i∈ ⊛∞ precs _ ↑₂∈ ))
       prec′ (∥ʳ (∥ʳ (∥ˡ (<$> fs∈ ⊛ ↑∈))))      = ∥ʳ (∥ʳ (∥ˡ (preRight⁺ fs∈ ↑∈)))
@@ -163,9 +163,9 @@ module CyclicToAcyclic where
         where module AS = ALib.Semantics-⊕
       postLeft⁺ (<$> ∣ʳ (<$> ↑∈)    ⊛∞ f∈) = <$> precs _ ↑∈ ⊛    +-[]     (postLeft f∈)
 
-      prec′ : ∀ {s s′ e} →
-              e ⊕ s′ ∈⟦  Cyclic.prec p ⟧C· s →
-              e ⊕ s′ ∈⟦ Acyclic.prec p ⟧A· s
+      prec′ : ∀ {s s′ assoc} {e : ExprIn p assoc} →
+              (, e) ⊕ s′ ∈⟦  Cyclic.prec p ⟧C· s →
+              (, e) ⊕ s′ ∈⟦ Acyclic.prec p ⟧A· s
       prec′ (∥ˡ (<$> i∈))                   = ∥ˡ (<$> inner _ i∈)
       prec′ (∥ʳ (∥ˡ (<$> ↑₁∈ ⊛ i∈ ⊛∞ ↑₂∈))) = ∥ʳ (∥ˡ (<$> precs _ ↑₁∈ ⊛ inner _ i∈ ⊛ precs _ ↑₂∈ ))
       prec′ (∥ʳ (∥ʳ (∥ˡ pre∈)))             = ∥ʳ (∥ʳ (∥ˡ (preRight⁺ pre∈)))

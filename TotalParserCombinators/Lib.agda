@@ -20,7 +20,7 @@ open import Data.Nat
 open import Data.Product as Prod
 open import Data.Unit using (⊤)
 open import Data.Vec as Vec using (Vec; []; _∷_)
-open import Level
+import Level
 open import Relation.Binary
 open import Relation.Binary.HeterogeneousEquality as H
 open import Relation.Binary.PropositionalEquality as P
@@ -29,7 +29,7 @@ open import Relation.Nullary.Decidable
 
 open Any.Membership-≡
 private
-  open module ListMonad = RawMonad {f = zero} List.monad
+  open module ListMonad = RawMonad {f = Level.zero} List.monad
          using () renaming (_⊛_ to _⊛′_; _>>=_ to _>>=′_)
 
 import TotalParserCombinators.InitialBag as I
