@@ -24,7 +24,7 @@ open import Data.String as String
 open import Data.Unit
 open import Data.Vec as Vec using (Vec; _++_; [_])
 open import Function
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality as P using (_≡_)
 
 open import TotalParserCombinators.BreadthFirst
 open import TotalParserCombinators.Lib
@@ -117,4 +117,4 @@ pbm =
 --                  (black ∷ black ∷ []) ∷ [])
 
 --   ex : parse pbm (String.toList $ show image) ≡ List.[_] image
---   ex = refl
+--   ex = P.refl

@@ -21,7 +21,7 @@ open import Data.List.NonEmpty using (foldr; foldl)
 open import Data.Product
 open import Data.Bool
 import Data.String as String
-open import Relation.Binary.PropositionalEquality
+import Relation.Binary.PropositionalEquality as P
 
 open PrecedenceCorrect acyclic g
 
@@ -50,8 +50,8 @@ mutual
 
   precs : (ps : List Precedence) → Parser (Expr ps)
   precs []       = fail
-  precs (p ∷ ps) = (λ e → here refl ∙ proj₂ e) <$> prec p
-                 ∣ weakenE                     <$> precs ps
+  precs (p ∷ ps) = (λ e → here P.refl ∙ proj₂ e) <$> prec p
+                 ∣ weakenE                       <$> precs ps
 
   -- Expressions corresponding to one node in the precedence graph:
   -- operator applications where the outermost operator has
@@ -96,8 +96,8 @@ mutual
           Parser (Inner ops)
   inner []               = fail
   inner ((_ , op) ∷ ops) =
-      (λ args → here refl ∙ args) <$> (expr between nameParts op)
-    ∣ weakenI                     <$> inner ops
+      (λ args → here P.refl ∙ args) <$> (expr between nameParts op)
+    ∣ weakenI                       <$> inner ops
 
 -- Expression parsers.
 

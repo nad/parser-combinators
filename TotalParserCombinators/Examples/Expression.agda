@@ -10,7 +10,7 @@ open import Data.List
 open import Data.Nat
 open import Data.String as String using (String)
 open import Function
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality as P using (_≡_)
 
 open import TotalParserCombinators.BreadthFirst
 open import TotalParserCombinators.Lib
@@ -76,13 +76,13 @@ module Tests where
   -- type-checking times.
 
   -- ex₁ : test Applicative.term "1*(2+3)" ≡ [ 5 ]
-  -- ex₁ = refl
+  -- ex₁ = P.refl
 
   -- ex₂ : test Applicative.term "1*(2+3" ≡ []
-  -- ex₂ = refl
+  -- ex₂ = P.refl
 
   ex₃ : test Monadic.term "1+2+3" ≡ [ 6 ]
-  ex₃ = refl
+  ex₃ = P.refl
 
   ex₄ : test Monadic.term "+32" ≡ []
-  ex₄ = refl
+  ex₄ = P.refl

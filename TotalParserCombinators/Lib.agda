@@ -22,8 +22,8 @@ open import Data.Unit using (⊤)
 open import Data.Vec as Vec using (Vec; []; _∷_)
 import Level
 open import Relation.Binary
-open import Relation.Binary.HeterogeneousEquality as H
-open import Relation.Binary.PropositionalEquality as P
+open import Relation.Binary.HeterogeneousEquality as H using (_≅_)
+open import Relation.Binary.PropositionalEquality as P using (_≡_)
 open import Relation.Nullary
 open import Relation.Nullary.Decidable
 
@@ -77,16 +77,16 @@ module KleeneStar where
 
     sound : ∀ {Tok R xs s} {p : Parser Tok R []} →
             xs ∈ p ⋆ · s → xs ∈[ p ]⋆· s
-    sound xs∈ = sound′ xs∈ refl
+    sound xs∈ = sound′ xs∈ H.refl
 
     private
 
       sound′ : ∀ {Tok R xs ys s}
                  {p : Parser Tok R []} {p⋆ : Parser Tok (List R) ys} →
                xs ∈ p⋆ · s → p⋆ ≅ p ⋆ → xs ∈[ p ]⋆· s
-      sound′ (∣-left []∈)              refl with []∈
+      sound′ (∣-left []∈)              H.refl with []∈
       ... | S.return = []
-      sound′ (∣-right .([ [] ]) x∷xs∈) refl with x∷xs∈
+      sound′ (∣-right .([ [] ]) x∷xs∈) H.refl with x∷xs∈
       ... | <$> x∈p ⊛ xs∈p⋆ = x∈p ∷ sound xs∈p⋆
       sound′ S.return     ()
       sound′ S.token      ()
@@ -109,7 +109,7 @@ module KleeneStar where
     complete∘sound :
       ∀ {Tok R xs s} {p : Parser Tok R []} (xs∈ : xs ∈ p ⋆ · s) →
       complete (sound xs∈) ≡ xs∈
-    complete∘sound xs∈ = H.≅-to-≡ $ complete∘sound′ xs∈ refl
+    complete∘sound xs∈ = H.≅-to-≡ $ complete∘sound′ xs∈ H.refl
 
     private
 
@@ -118,11 +118,11 @@ module KleeneStar where
           {p : Parser Tok R []} {p⋆ : Parser Tok (List R) ys}
         (xs∈ : xs ∈ p⋆ · s) (eq : p⋆ ≅ p ⋆) →
         complete (sound′ xs∈ eq) ≅ xs∈
-      complete∘sound′ (∣-left []∈)              refl with []∈
-      ... | S.return = refl
-      complete∘sound′ (∣-right .([ [] ]) x∷xs∈) refl with x∷xs∈
+      complete∘sound′ (∣-left []∈)              H.refl with []∈
+      ... | S.return = H.refl
+      complete∘sound′ (∣-right .([ [] ]) x∷xs∈) H.refl with x∷xs∈
       ... | _⊛_ {s₁ = _ ∷ _} (<$> x∈p) xs∈p⋆
-            rewrite complete∘sound xs∈p⋆ = refl
+            rewrite complete∘sound xs∈p⋆ = H.refl
       ... | _⊛_ {s₁ = []}    (<$> x∈p) xs∈p⋆ with I.complete x∈p
       ...   | ()
       complete∘sound′ S.return     ()
@@ -136,7 +136,7 @@ module KleeneStar where
   sound∘complete : ∀ {Tok R xs s} {p : Parser Tok R []}
                    (xs∈ : xs ∈[ p ]⋆· s) →
                    sound (complete xs∈) ≡ xs∈
-  sound∘complete []                           = refl
+  sound∘complete []                           = P.refl
   sound∘complete (_∷_ {s₁ = []}    x∈p xs∈p⋆) with I.complete x∈p
   ... | ()
   sound∘complete (_∷_ {s₁ = _ ∷ _} x∈p xs∈p⋆) =
@@ -170,13 +170,13 @@ module KleeneStar where
              (f (return x)) (I.complete ∘ complete ∘ lemma)
     where
     to : P.setoid ℕ ⟶ P.setoid (List R)
-    to = →-to-⟶ (flip replicate x)
+    to = P.→-to-⟶ (flip replicate x)
 
     helper : ∀ {xs ys} → _≡_ {A = List R} (x ∷ xs) (x ∷ ys) → xs ≡ ys
-    helper refl = refl
+    helper P.refl = P.refl
 
     injective : Injective to
-    injective {zero}  {zero}  _  = refl
+    injective {zero}  {zero}  _  = P.refl
     injective {suc m} {suc n} eq = P.cong suc $
                                      injective $ helper eq
     injective {zero}  {suc n} ()
@@ -236,14 +236,14 @@ module Exactly where
     helper : ∀ {xs s} → xs ∈[ p ]⋆· s →
              ∃₂ λ i (ys : Vec R i) →
                   xs ≡ Vec.toList ys × ys ∈ p ^ i · s
-    helper []         = (0 , [] , refl , S.return)
+    helper []         = (0 , [] , P.refl , S.return)
     helper (∈p ∷ ∈p⋆) =
       Prod.map suc (λ {i} →
         Prod.map (_∷_ _) (
           Prod.map (P.cong (_∷_ _))
                    (λ ∈pⁱ → [ ○ - ○ ] <$> ∈p ⊛ ∈pⁱ)))
        (helper ∈p⋆)
-  ... | (i , ys , refl , ∈pⁱ) = (i , <$> ∈pⁱ)
+  ... | (i , ys , P.refl , ∈pⁱ) = (i , <$> ∈pⁱ)
 
 ------------------------------------------------------------------------
 -- A parser which returns any element in a given list
@@ -257,34 +257,34 @@ module Return⋆ where
   sound : ∀ {Tok R x} {s : List Tok}
           (xs : List R) → x ∈ return⋆ xs · s → s ≡ [] × x ∈ xs
   sound []       ()
-  sound (y ∷ ys) (∣-left S.return)       = (refl , here refl)
+  sound (y ∷ ys) (∣-left S.return)       = (P.refl , here P.refl)
   sound (y ∷ ys) (∣-right .([ y ]) x∈ys) =
     Prod.map id there $ sound ys x∈ys
 
   complete : ∀ {Tok R x} {xs : List R} →
              x ∈ xs → x ∈ return⋆ {Tok} xs · []
-  complete (here refl)  = ∣-left S.return
-  complete (there x∈xs) =
+  complete (here P.refl) = ∣-left S.return
+  complete (there x∈xs)  =
     ∣-right [ _ ] (complete x∈xs)
 
   complete∘sound : ∀ {Tok R x} {s : List Tok}
                    (xs : List R) (x∈xs : x ∈ return⋆ xs · s) →
                    complete {Tok = Tok} (proj₂ $ sound xs x∈xs) ≅ x∈xs
   complete∘sound []       ()
-  complete∘sound (y ∷ ys) (∣-left S.return)       = refl
+  complete∘sound (y ∷ ys) (∣-left S.return)       = H.refl
   complete∘sound (y ∷ ys) (∣-right .([ y ]) x∈ys)
     with sound ys x∈ys | complete∘sound ys x∈ys
   complete∘sound (y ∷ ys) (∣-right .([ y ]) .(complete p))
-    | (refl , p) | refl = refl
+    | (P.refl , p) | H.refl = H.refl
 
   sound∘complete : ∀ {Tok R x} {xs : List R} (x∈xs : x ∈ xs) →
                    sound {Tok = Tok} {s = []} xs (complete x∈xs) ≡
-                   (refl , x∈xs)
-  sound∘complete       (here refl)            = refl
+                   (P.refl , x∈xs)
+  sound∘complete       (here P.refl)          = P.refl
   sound∘complete {Tok} (there {xs = xs} x∈xs)
     with sound {Tok = Tok} xs (complete x∈xs)
        | sound∘complete {Tok} {xs = xs} x∈xs
-  sound∘complete (there x∈xs) | .(refl , x∈xs) | refl = refl
+  sound∘complete (there x∈xs) | .(P.refl , x∈xs) | P.refl = P.refl
 
   correct : ∀ {Tok R} {xs : List R} {x s} →
             (s ≡ [] × x ∈ xs) ↔ x ∈ return⋆ {Tok} xs · s
@@ -299,17 +299,18 @@ module Return⋆ where
     where
     complete′ : ∀ {Tok R x} {xs : List R} {s : List Tok} →
                 s ≡ [] × x ∈ xs → x ∈ return⋆ xs · s
-    complete′ (refl , x∈xs) = complete x∈xs
+    complete′ (P.refl , x∈xs) = complete x∈xs
 
     sound∘complete′ : ∀ {Tok R x} {xs : List R} {s : List Tok}
                       (p : s ≡ [] × x ∈ xs) → sound xs (complete′ p) ≡ p
-    sound∘complete′ (refl , x∈xs) = sound∘complete x∈xs
+    sound∘complete′ (P.refl , x∈xs) = sound∘complete x∈xs
 
     complete′∘sound : ∀ {Tok R x} {s : List Tok}
                       (xs : List R) (x∈xs : x ∈ return⋆ xs · s) →
                       complete′ (sound xs x∈xs) ≡ x∈xs
     complete′∘sound xs x∈ with sound xs x∈ | complete∘sound xs x∈
-    complete′∘sound xs .(complete x∈xs) | (refl , x∈xs) | refl = refl
+    complete′∘sound xs .(complete x∈xs) | (P.refl , x∈xs) | H.refl =
+      P.refl
 
 ------------------------------------------------------------------------
 -- The sat parser
@@ -340,21 +341,21 @@ module Sat where
     }
     where
     to : ∀ {s} m → (s ≡ [] × m ≡ just x) → x ∈ ok {Tok} m · s
-    to (just .x) (refl , refl) = S.return
-    to nothing   (refl , ())
+    to (just .x) (P.refl , P.refl) = S.return
+    to nothing   (P.refl , ())
 
     from : ∀ {s} m → x ∈ ok {Tok} m · s → s ≡ [] × m ≡ just x
-    from (just .x) S.return = (refl , refl)
+    from (just .x) S.return = (P.refl , P.refl)
     from nothing   ()
 
     from∘to : ∀ {s} m (eqs : s ≡ [] × m ≡ just x) →
               from m (to m eqs) ≡ eqs
-    from∘to (just .x) (refl , refl) = refl
-    from∘to nothing   (refl , ())
+    from∘to (just .x) (P.refl , P.refl) = P.refl
+    from∘to nothing   (P.refl , ())
 
     to∘from : ∀ {s} m (x∈ : x ∈ ok {Tok} m · s) →
               to m (from m x∈) ≡ x∈
-    to∘from (just .x) S.return = refl
+    to∘from (just .x) S.return = P.refl
     to∘from nothing   ()
 
   -- sat p accepts a single token t iff p t ≡ just x for some x. The
@@ -375,9 +376,9 @@ module Sat where
     }
     where
     to : ∀ {s} → (∃ λ t → s ≡ [ t ] × p t ≡ just x) → x ∈ sat p · s
-    to (t , refl , p-t≡just-x) =
+    to (t , P.refl , p-t≡just-x) =
       [ ○ - ○ ] S.token >>=
-                (Inverse.to (ok-correct (p t)) ⟨$⟩ (refl , p-t≡just-x))
+                (Inverse.to (ok-correct (p t)) ⟨$⟩ (P.refl , p-t≡just-x))
 
     from : ∀ {s} → x ∈ sat p · s → ∃ λ t → s ≡ [ t ] × p t ≡ just x
     from (S.token {x = t} >>= x∈ok-p-t) =
@@ -386,7 +387,7 @@ module Sat where
 
     from∘to : ∀ {s} (eqs : ∃ λ t → s ≡ [ t ] × p t ≡ just x) →
               from (to eqs) ≡ eqs
-    from∘to (t , refl , p-t≡just-x) =
+    from∘to (t , P.refl , p-t≡just-x) =
       P.cong₂ (λ eq₁ eq₂ → (t , eq₁ , eq₂))
               (P.proof-irrelevance _ _)
               (P.proof-irrelevance _ _)
@@ -396,8 +397,8 @@ module Sat where
       with Inverse.from (ok-correct (p t)) ⟨$⟩ x∈ok-p-t
          | Inverse.right-inverse-of (ok-correct (p t)) x∈ok-p-t
     to∘from (S.token {x = t} >>= .(Inverse.to (ok-correct (p t)) ⟨$⟩
-                                     (refl , p-t≡just-x)))
-      | (refl , p-t≡just-x) | refl = refl
+                                     (P.refl , p-t≡just-x)))
+      | (P.refl , p-t≡just-x) | P.refl = P.refl
 
 open Sat public using (sat)
 
@@ -433,35 +434,35 @@ module Token
   sound : ∀ t {t′ s} →
           t′ ∈ tok t · s → t ≡ t′ × s ≡ [ t′ ]
   sound t t′∈ with Inverse.from (Sat.correct (p t)) ⟨$⟩ t′∈
-  sound t t′∈ | (t″ , refl , p-t-t″≡just-t′) with t ≟ t″
-  sound t t∈  | (.t , refl , refl) | yes refl = (refl , refl)
-  sound t t′∈ | (t″ , refl , ())   | no  _
+  sound t t′∈ | (t″ , P.refl , p-t-t″≡just-t′) with t ≟ t″
+  sound t t∈  | (.t , P.refl , P.refl) | yes P.refl = (P.refl , P.refl)
+  sound t t′∈ | (t″ , P.refl , ())     | no  _
 
   private
     p-lemma : ∀ t → p t t ≡ just t
     p-lemma t with t ≟ t
-    ... | yes refl = refl
-    ... | no  t≢t  with t≢t refl
+    ... | yes P.refl = P.refl
+    ... | no  t≢t    with t≢t P.refl
     ...   | ()
 
   complete : ∀ {t} → t ∈ tok t · [ t ]
   complete {t} =
-    Inverse.to (Sat.correct (p t)) ⟨$⟩ (t , refl , p-lemma t)
+    Inverse.to (Sat.correct (p t)) ⟨$⟩ (t , P.refl , p-lemma t)
 
   η : ∀ {t} (t∈ : t ∈ tok t · [ t ]) → t∈ ≡ complete {t = t}
-  η {t = t} t∈ = H.≅-to-≡ $ helper t∈ refl
+  η {t = t} t∈ = H.≅-to-≡ $ helper t∈ P.refl
     where
     helper₂ : (t∈ : t ∈ Sat.ok {Tok = Tok} (p t t) · []) →
               t∈ ≡ Inverse.to (Sat.ok-correct (p t t)) ⟨$⟩
-                     (refl , p-lemma t)
+                     (P.refl , p-lemma t)
     helper₂ t∈       with t ≟ t
-    helper₂ S.return | yes refl = refl
-    helper₂ t∈       | no  t≢t  with t≢t refl
+    helper₂ S.return | yes P.refl = P.refl
+    helper₂ t∈       | no  t≢t  with t≢t P.refl
     helper₂ t∈       | no  t≢t  | ()
 
     helper : ∀ {s} (t∈ : t ∈ tok t · s) → s ≡ [ t ] →
              t∈ ≅ complete {t = t}
-    helper (S.token >>= t∈) refl rewrite helper₂ t∈ = refl
+    helper (S.token >>= t∈) P.refl rewrite helper₂ t∈ = H.refl
 
 ------------------------------------------------------------------------
 -- Map then choice
@@ -479,7 +480,7 @@ module ⋁ where
           (f : (x : R₁) → Parser Tok R₂ (i x)) (xs : List R₁) →
           y ∈ ⋁ f xs · s → ∃ λ x → (x ∈ xs) × (y ∈ f x · s)
   sound f xs (∈ret⋆ >>= y∈fx) with Return⋆.sound xs ∈ret⋆
-  ...   | (refl , x∈xs) = (_ , x∈xs , y∈fx)
+  ...   | (P.refl , x∈xs) = (_ , x∈xs , y∈fx)
 
   complete : ∀ {Tok R₁ R₂ x y s} {i : R₁ → List R₂} →
              (f : (x : R₁) → Parser Tok R₂ (i x)) {xs : List R₁} →
@@ -496,7 +497,7 @@ module ⋁ where
     with Return⋆.sound xs ∈ret⋆
        | Inverse.right-inverse-of Return⋆.correct ∈ret⋆
   complete∘sound f xs (.(Return⋆.complete x∈xs) >>= y∈fx)
-    | (refl , x∈xs) | refl = refl
+    | (P.refl , x∈xs) | P.refl = P.refl
 
   sound∘complete :
     ∀ {Tok R₁ R₂ x y s} {i : R₁ → List R₂} →
@@ -506,8 +507,8 @@ module ⋁ where
   sound∘complete {Tok} f {xs} x∈xs y∈fx
     with Return⋆.sound {Tok = Tok} xs (Return⋆.complete x∈xs)
        | Inverse.left-inverse-of (Return⋆.correct {Tok = Tok})
-                                 (refl , x∈xs)
-  ... | (refl , .x∈xs) | refl = refl
+                                 (P.refl , x∈xs)
+  ... | (P.refl , .x∈xs) | P.refl = P.refl
 
 ------------------------------------------------------------------------
 -- Digits and numbers

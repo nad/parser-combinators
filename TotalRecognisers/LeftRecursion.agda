@@ -21,7 +21,7 @@ open import Data.List as List using (List; []; _∷_; _++_; [_])
 private
   module ListMonoid {A : Set} = Monoid (List.monoid A)
 open import Data.Product as Prod
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality hiding ([_])
 open import Relation.Nullary
 open import Relation.Nullary.Decidable as Dec
 

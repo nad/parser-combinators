@@ -3,7 +3,7 @@
 ------------------------------------------------------------------------
 
 open import Relation.Binary
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality hiding ([_])
 
 -- The recognisers are parametrised on the alphabet.
 

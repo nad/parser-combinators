@@ -12,7 +12,7 @@ import Data.List.Properties as ListProp
 open import Data.Maybe using (Maybe)
 open import Data.Product as Prod
 open import Function
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality as P using (_≡_)
 
 open Any.Membership-≡ using (bag) renaming (_∼[_]_ to _List-∼[_]_)
 private
@@ -67,37 +67,37 @@ private
 
   cast∈′ : ∀ {Tok R xs} {p : Parser Tok R xs} {x s s′ s₁} →
            s ≡ s′ → x ⊕ s₁ ∈ p · s → x ⊕ s₁ ∈ p · s′
-  cast∈′ refl x∈ = x∈
+  cast∈′ P.refl x∈ = x∈
 
 -- The definition is sound and complete with respect to the one in
 -- TotalParserCombinators.Semantics.
 
 sound′ : ∀ {Tok R xs x s₂ s} {p : Parser Tok R xs} →
          x ⊕ s₂ ∈ p · s → ∃ λ s₁ → s ≡ s₁ ++ s₂ × x ∈ p · s₁
-sound′ return                      = ([]    , refl , return)
-sound′ {x = x} token               = ([ x ] , refl , token)
+sound′ return                      = ([]    , P.refl , return)
+sound′ {x = x} token               = ([ x ] , P.refl , token)
 sound′ (∣-left x∈p₁)               = Prod.map id (Prod.map id ∣-left)       (sound′ x∈p₁)
 sound′ (∣-right e₁ x∈p₁)           = Prod.map id (Prod.map id (∣-right e₁)) (sound′ x∈p₁)
 sound′ (<$> x∈p)                   = Prod.map id (Prod.map id <$>_)         (sound′ x∈p)
 sound′ ([ xs - fs ] f∈p₁ ⊛ x∈p₂)   with sound′ f∈p₁ | sound′ x∈p₂
-sound′ ([ xs - fs ] f∈p₁ ⊛ x∈p₂)   | (s₁ , refl , f∈p₁′) | (s₂ , refl , x∈p₂′) =
-                                     (s₁ ++ s₂ , sym (LM.assoc s₁ s₂ _) ,
+sound′ ([ xs - fs ] f∈p₁ ⊛ x∈p₂)   | (s₁ , P.refl , f∈p₁′) | (s₂ , P.refl , x∈p₂′) =
+                                     (s₁ ++ s₂ , P.sym (LM.assoc s₁ s₂ _) ,
                                       S.[_-_]_⊛_ xs fs f∈p₁′ x∈p₂′)
 sound′ (nonempty s₁ x∈p)           with sound′ x∈p
 sound′ (nonempty s₁ x∈p)           | (y ∷ s , eq , x∈p′) = (y ∷ s , eq , nonempty x∈p′)
 sound′ (nonempty s₁ x∈p)           | ([]    , eq , x∈p′)
-                                     with ListProp.left-identity-unique (_ ∷ s₁) (sym eq)
+                                     with ListProp.left-identity-unique (_ ∷ s₁) (P.sym eq)
 sound′ (nonempty s₁ x∈p)           | ([]    , eq , x∈p′) | ()
 sound′ (cast x∈p)                  = Prod.map id (Prod.map id cast) (sound′ x∈p)
 sound′ ([ f - xs ] x∈p₁ >>= y∈p₂x) with sound′ x∈p₁ | sound′ y∈p₂x
-sound′ ([ f - xs ] x∈p₁ >>= y∈p₂x) | (s₁ , refl , x∈p₁′) | (s₂ , refl , y∈p₂x′) =
-  (s₁ ++ s₂ , sym (LM.assoc s₁ s₂ _) , S.[_-_]_>>=_ f xs x∈p₁′ y∈p₂x′)
+sound′ ([ f - xs ] x∈p₁ >>= y∈p₂x) | (s₁ , P.refl , x∈p₁′) | (s₂ , P.refl , y∈p₂x′) =
+  (s₁ ++ s₂ , P.sym (LM.assoc s₁ s₂ _) , S.[_-_]_>>=_ f xs x∈p₁′ y∈p₂x′)
 
 sound : ∀ {Tok R xs x s} {p : Parser Tok R xs} →
         x ⊕ [] ∈ p · s → x ∈ p · s
 sound x∈p with sound′ x∈p
-sound x∈p | (s , refl , x∈p′) with s ++ [] | Prod.proj₂ LM.identity s
-sound x∈p | (s , refl , x∈p′) | .s | refl = x∈p′
+sound x∈p | (s , P.refl , x∈p′) with s ++ [] | Prod.proj₂ LM.identity s
+sound x∈p | (s , P.refl , x∈p′) | .s | P.refl = x∈p′
 
 extend : ∀ {Tok R xs x s s′ s″} {p : Parser Tok R xs} →
          x ⊕ s′ ∈ p · s → x ⊕ s′ ++ s″ ∈ p · s ++ s″
@@ -112,8 +112,8 @@ extend (cast x∈p)                   = cast (extend x∈p)
 extend (nonempty s₁ x∈p)            = cast₂ (nonempty s₁ (cast₁ (extend x∈p)))
   where
   lem   = LM.assoc (_ ∷ s₁) _ _
-  cast₁ = cast∈′      lem
-  cast₂ = cast∈′ (sym lem)
+  cast₁ = cast∈′        lem
+  cast₂ = cast∈′ (P.sym lem)
 
 complete : ∀ {Tok R xs x s} {p : Parser Tok R xs} →
            x ∈ p · s → x ⊕ [] ∈ p · s
@@ -128,10 +128,10 @@ complete (cast x∈p)                             = cast (complete x∈p)
 complete (nonempty {s = s} x∈p)                 = cast₂ (nonempty s (cast₁ (complete x∈p)))
   where
   lem   = Prod.proj₂ LM.identity _
-  cast₁ = cast∈′ (sym lem)
-  cast₂ = cast∈′      lem
+  cast₁ = cast∈′ (P.sym lem)
+  cast₂ = cast∈′        lem
 
 complete′ : ∀ {Tok R xs x s₂ s} {p : Parser Tok R xs} →
             (∃ λ s₁ → s ≡ s₁ ++ s₂ × x ∈ p · s₁) →
             x ⊕ s₂ ∈ p · s
-complete′ (s₁ , refl , x∈p) = extend (complete x∈p)
+complete′ (s₁ , P.refl , x∈p) = extend (complete x∈p)

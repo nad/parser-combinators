@@ -13,7 +13,7 @@ private
 open import Data.Product as Prod
 open import Function
 open import Data.Empty
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality as P using (_≡_)
 
 open import StructurallyRecursiveDescentParsing.Simplified
 open import TotalParserCombinators.Parser using (○; ◌)
@@ -79,7 +79,7 @@ complete (p₁ !>>= p₂)           (x∈p₁ >>= y∈p₂x)   = complete p₁ x
 
 cast∈ : ∀ {Tok e R} {p p′ : Parser Tok e R} {x x′ s s′} →
         x ≡ x′ → p ≡ p′ → s ≡ s′ → x ∈ p · s → x′ ∈ p′ · s′
-cast∈ refl refl refl x∈ = x∈
+cast∈ P.refl P.refl P.refl x∈ = x∈
 
 ------------------------------------------------------------------------
 -- A variant of the semantics
@@ -115,26 +115,26 @@ data _⊕_∈_·_ {Tok} : ∀ {R e} → R → List Tok →
 
 ⊕-sound′ : ∀ {Tok R e x s₂ s} {p : Parser Tok e R} →
            x ⊕ s₂ ∈ p · s → ∃ λ s₁ → (s ≡ s₁ ++ s₂) × (x ∈ p · s₁)
-⊕-sound′ return            = ([]    , refl , return)
-⊕-sound′ {x = x} token     = ([ x ] , refl , token)
+⊕-sound′ return            = ([]    , P.refl , return)
+⊕-sound′ {x = x} token     = ([ x ] , P.refl , token)
 ⊕-sound′ (∣ˡ x∈p₁)         with ⊕-sound′ x∈p₁
-⊕-sound′ (∣ˡ x∈p₁)         | (s₁ , refl , x∈p₁′) = (s₁ , refl , ∣ˡ    x∈p₁′)
+⊕-sound′ (∣ˡ x∈p₁)         | (s₁ , P.refl , x∈p₁′) = (s₁ , P.refl , ∣ˡ    x∈p₁′)
 ⊕-sound′ (∣ʳ e₁ x∈p₁)      with ⊕-sound′ x∈p₁
-⊕-sound′ (∣ʳ e₁ x∈p₁)      | (s₁ , refl , x∈p₁′) = (s₁ , refl , ∣ʳ e₁ x∈p₁′)
+⊕-sound′ (∣ʳ e₁ x∈p₁)      | (s₁ , P.refl , x∈p₁′) = (s₁ , P.refl , ∣ʳ e₁ x∈p₁′)
 ⊕-sound′ (x∈p₁ ?>>= y∈p₂x) with ⊕-sound′ x∈p₁ | ⊕-sound′ y∈p₂x
-⊕-sound′ (x∈p₁ ?>>= y∈p₂x) | (s₁ , refl , x∈p₁′) | (s₂ , refl , y∈p₂x′) =
-                             (s₁ ++ s₂ , sym (LM.assoc s₁ s₂ _)
+⊕-sound′ (x∈p₁ ?>>= y∈p₂x) | (s₁ , P.refl , x∈p₁′) | (s₂ , P.refl , y∈p₂x′) =
+                             (s₁ ++ s₂ , P.sym (LM.assoc s₁ s₂ _)
                                        , x∈p₁′ ?>>= y∈p₂x′)
 ⊕-sound′ (x∈p₁ !>>= y∈p₂x) with ⊕-sound′ x∈p₁ | ⊕-sound′ y∈p₂x
-⊕-sound′ (x∈p₁ !>>= y∈p₂x) | (s₁ , refl , x∈p₁′) | (s₂ , refl , y∈p₂x′) =
-                             (s₁ ++ s₂ , sym (LM.assoc s₁ s₂ _)
+⊕-sound′ (x∈p₁ !>>= y∈p₂x) | (s₁ , P.refl , x∈p₁′) | (s₂ , P.refl , y∈p₂x′) =
+                             (s₁ ++ s₂ , P.sym (LM.assoc s₁ s₂ _)
                                        , x∈p₁′ !>>= y∈p₂x′)
 
 ⊕-sound : ∀ {Tok R e x s} {p : Parser Tok e R} →
           x ⊕ [] ∈ p · s → x ∈ p · s
 ⊕-sound x∈p with ⊕-sound′ x∈p
-⊕-sound x∈p | (s , refl , x∈p′) with s ++ [] | proj₂ LM.identity s
-⊕-sound x∈p | (s , refl , x∈p′) | .s | refl = x∈p′
+⊕-sound x∈p | (s , P.refl , x∈p′) with s ++ [] | proj₂ LM.identity s
+⊕-sound x∈p | (s , P.refl , x∈p′) | .s | P.refl = x∈p′
 
 extend : ∀ {Tok R e x s s′ s″} {p : Parser Tok e R} →
          x ⊕ s′ ∈ p · s → x ⊕ s′ ++ s″ ∈ p · s ++ s″
@@ -159,4 +159,4 @@ extend (x∈p₁ !>>= y∈p₂x) = extend x∈p₁ !>>= extend y∈p₂x
 ⊕-complete′ : ∀ {Tok R e x s₂ s} {p : Parser Tok e R} →
               (∃ λ s₁ → s ≡ s₁ ++ s₂ × x ∈ p · s₁) →
               x ⊕ s₂ ∈ p · s
-⊕-complete′ (s₁ , refl , x∈p) = extend (⊕-complete x∈p)
+⊕-complete′ (s₁ , P.refl , x∈p) = extend (⊕-complete x∈p)

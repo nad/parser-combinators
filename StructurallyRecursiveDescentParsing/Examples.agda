@@ -13,7 +13,7 @@ import Data.String as S
 open C using (Char)
 open S using (String)
 open import Coinduction
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality as P using (_≡_)
 
 open import StructurallyRecursiveDescentParsing.Index
 open import StructurallyRecursiveDescentParsing.Grammar
@@ -44,7 +44,7 @@ module Ex₁ where
               ∣ tok '0'
 
   ex₁ : "0+0" ∈? ! e / grammar ≡ [ '0' ]
-  ex₁ = refl
+  ex₁ = P.refl
 
 module Ex₂ where
 
@@ -65,10 +65,10 @@ module Ex₂ where
                    ∣ tok '(' ⊛> ! expr <⊛ tok ')'
 
   ex₁ : "(0*)" ∈? ! expr / grammar ≡ []
-  ex₁ = refl
+  ex₁ = P.refl
 
   ex₂ : "0*(0+0)" ∈? ! expr / grammar ≡ [ '0' ]
-  ex₂ = refl
+  ex₂ = P.refl
 
 {-
 module Ex₃ where
@@ -119,10 +119,10 @@ module Ex₄ where
     grammar (bcs c (suc n)) = tok c ⊛> ! (bcs c n)
 
   ex₁ : "aaabbbccc" ∈? ! top / grammar ≡ [ 3 ]
-  ex₁ = refl
+  ex₁ = P.refl
 
   ex₂ : "aaabbccc" ∈? ! top / grammar ≡ []
-  ex₂ = refl
+  ex₂ = P.refl
 
 module Ex₄′ where
 
@@ -138,10 +138,10 @@ module Ex₄′ where
               return n)
 
     ex₁ : "aaabbbccc" ∈? aⁿbⁿcⁿ ≡ [ 3 ]
-    ex₁ = refl
+    ex₁ = P.refl
 
   ex₂ : "aaabbccc" ∈? aⁿbⁿcⁿ ≡ []
-  ex₂ = refl
+  ex₂ = P.refl
 
 module Ex₅ where
 
@@ -159,7 +159,7 @@ module Ex₅ where
     grammar as = length <$> ! a ⋆
 
   ex₁ : "aaaaa" ∈? ! as / grammar ≡ [ 5 ]
-  ex₁ = refl
+  ex₁ = P.refl
 
 module Ex₆ where
 
@@ -178,13 +178,13 @@ module Ex₆ where
     grammar (expr a) = chain≥ 0 a number (! op)
 
   ex₁ : "12345" ∈? number / grammar ≡ [ 12345 ]
-  ex₁ = refl
+  ex₁ = P.refl
 
   ex₂ : "1+5*2∸3" ∈? ! (expr left) / grammar ≡ [ 9 ]
-  ex₂ = refl
+  ex₂ = P.refl
 
   ex₃ : "1+5*2∸3" ∈? ! (expr right) / grammar ≡ [ 1 ]
-  ex₃ = refl
+  ex₃ = P.refl
 
 -- The following two examples have been commented out because they
 -- type-check really slowly (if at all) using the current version of
@@ -215,10 +215,10 @@ module Ex₇ where
     grammar mulOp  = _*_ <$ tok '*'
 
   ex₁ : "1+5*2∸3" ∈? ! expr / grammar ≡ [ 8 ]
-  ex₁ = refl
+  ex₁ = P.refl
 
   ex₂ : "1+5*(2∸3)" ∈? ! expr / grammar ≡ [ 1 ]
-  ex₂ = refl
+  ex₂ = P.refl
 
 module Ex₈ where
 
@@ -237,7 +237,7 @@ module Ex₈ where
     grammar exprs    = ! expr sepBy tok ','
 
   ex₁ : "1,2∸1" ∈? ! exprs / grammar ≡ [ 1 ∷ 1 ∷ [] ]
-  ex₁ = refl
+  ex₁ = P.refl
 
 -}
 
@@ -279,4 +279,4 @@ module Ex₉ where
     grammar as       = ! (lib (! a ★))
 
   ex₁ : "aa" ∈? ! as / grammar ≡ [ 'a' ∷ 'a' ∷ [] ]
-  ex₁ = refl
+  ex₁ = P.refl

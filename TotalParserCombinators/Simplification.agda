@@ -14,7 +14,7 @@ open import Data.Product
 open import Data.Product.N-ary
 open import Function
 open import Relation.Binary.PropositionalEquality as P
-  using (_≡_; refl; _with-≡_)
+  using (_≡_; refl; [_])
 open import Relation.Binary.HeterogeneousEquality
   using (refl) renaming (_≅_ to _≅H_)
 
@@ -124,9 +124,9 @@ mutual
              Simplify₁ (P.subst (∞⟨ f₁ ⟩Parser Tok R₁) eq₁ p₁₁ >>= p₁₂ ∣
                         P.subst (∞⟨ f₂ ⟩Parser Tok R₂) eq₂ p₂₁ >>= p₂₂)
     helper p₁₁ eq₁ p₁₂ p₂₁ eq₂ p₂₂
-      with P.inspect (♭? p₁₁) | P.inspect (♭? p₂₁)
+      with ♭? p₁₁ | P.inspect ♭? p₁₁ | ♭? p₂₁ | P.inspect ♭? p₂₁
     helper {Tok} {f₁ = f₁} {f₂} p₁₁ eq₁ p₁₂ p₂₁ eq₂ p₂₂
-      | token with-≡ eq₁′ | token with-≡ eq₂′ = result _ (
+      | token | [ eq₁′ ] | token | [ eq₂′ ] = result _ (
       cast₁ p₁₁ >>= p₁₂ ∣ cast₂ p₂₁ >>= p₂₂          ≅⟨ [ forced? p₁₁ - ○ - forced?′ p₁₂ - ○ ] Subst.correct∞ eq₁ p₁₁ >>=
                                                                                                (λ t → ♭? (p₁₂ t) ∎) ∣′
                                                         [ forced? p₂₁ - ○ - forced?′ p₂₂ - ○ ] Subst.correct∞ eq₂ p₂₁ >>=
@@ -141,7 +141,7 @@ mutual
       where
       cast₁ = P.subst (∞⟨ f₁ ⟩Parser Tok Tok) eq₁
       cast₂ = P.subst (∞⟨ f₂ ⟩Parser Tok Tok) eq₂
-    helper _ _ _ _ _ _ | _ | _ = result _ (_ ∎)
+    helper _ _ _ _ _ _ | _ | _ | _ | _ = result _ (_ ∎)
 
   simplify₁ (p₁ ∣ p₂) | result p₁′ p₁≅p₁′ | result p₂′ p₂≅p₂′ =
     result _ (

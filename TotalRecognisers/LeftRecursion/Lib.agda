@@ -14,7 +14,7 @@ open import Data.List
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Product as Prod
 open import Relation.Binary
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality hiding ([_])
 open import Relation.Nullary.Decidable
 
 import TotalRecognisers.LeftRecursion

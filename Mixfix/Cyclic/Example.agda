@@ -22,7 +22,7 @@ open DecSetoid (ListEq.decSetoid String.decSetoid) using (_≟_)
 open import Function using (_∘_)
 open import Data.Bool using (Bool; if_then_else_)
 open import Relation.Nullary.Decidable using (⌊_⌋)
-open import Relation.Binary.PropositionalEquality
+import Relation.Binary.PropositionalEquality as P
 open import IO
 
 open import Mixfix.Fixity hiding (_≟_)
@@ -104,23 +104,23 @@ mutual
 open PrecedenceCorrect cyclic g
 
 • : ExprIn a non
-• = ⟪ here refl ∙ [] ⟫
+• = ⟪ here P.refl ∙ [] ⟫
 
 _+_ : Outer pl left → Expr (a ∷ []) → ExprIn pl left
-e₁ + e₂ = e₁ ⟨ here refl ∙ [] ⟩ˡ e₂
+e₁ + e₂ = e₁ ⟨ here P.refl ∙ [] ⟩ˡ e₂
 
 i_t_ : Expr anyPrecedence → Outer ii right → ExprIn ii right
-i e₁ t e₂ = ⟪ here refl ∙ e₁ ∷ [] ⟩ e₂
+i e₁ t e₂ = ⟪ here P.refl ∙ e₁ ∷ [] ⟩ e₂
 
 i_t_e_ : Expr anyPrecedence → Expr anyPrecedence → Outer ii right →
          ExprIn ii right
-i e₁ t e₂ e e₃ = ⟪ there (here refl) ∙ e₁ ∷ e₂ ∷ [] ⟩ e₃
+i e₁ t e₂ e e₃ = ⟪ there (here P.refl) ∙ e₁ ∷ e₂ ∷ [] ⟩ e₃
 
 _,_ : Outer c left → Expr (ii ∷ pl ∷ a ∷ []) → ExprIn c left
-e₁ , e₂ = e₁ ⟨ here refl ∙ [] ⟩ˡ e₂
+e₁ , e₂ = e₁ ⟨ here P.refl ∙ [] ⟩ˡ e₂
 
 _⊢_∶ : Outer wt left → Expr anyPrecedence → ExprIn wt left
-e₁ ⊢ e₂ ∶ = e₁ ⟨ here refl ∙ [ e₂ ] ⟫
+e₁ ⊢ e₂ ∶ = e₁ ⟨ here P.refl ∙ [ e₂ ] ⟫
 
 ------------------------------------------------------------------------
 -- Some tests

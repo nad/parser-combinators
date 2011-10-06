@@ -22,7 +22,7 @@ open import Data.Nat.InfinitelyOften as Inf
 open import Data.Product
 open import Data.Sum
 open import Relation.Binary
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality hiding ([_])
 open import Relation.Nullary
 open import Relation.Nullary.Decidable
 open import Relation.Nullary.Negation

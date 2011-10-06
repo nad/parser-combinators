@@ -25,7 +25,7 @@ open import Function using (_∘_; _$_)
 open import Data.Bool using (Bool; if_then_else_)
 import Data.Bool.Show as Bool
 open import Relation.Nullary.Decidable using (⌊_⌋)
-open import Relation.Binary.PropositionalEquality
+import Relation.Binary.PropositionalEquality as P
 open import IO
 
 open import Mixfix.Fixity hiding (_≟_)
@@ -83,22 +83,22 @@ g = wt ∷ c ∷ ii ∷ pl ∷ a ∷ []
 open PrecedenceCorrect acyclic g
 
 • : ExprIn a non
-• = ⟪ here refl ∙ [] ⟫
+• = ⟪ here P.refl ∙ [] ⟫
 
 _+_ : Outer pl left → Expr (a ∷ []) → ExprIn pl left
-e₁ + e₂ = e₁ ⟨ here refl ∙ [] ⟩ˡ e₂
+e₁ + e₂ = e₁ ⟨ here P.refl ∙ [] ⟩ˡ e₂
 
 i_t_ : Expr g → Outer ii right → ExprIn ii right
-i e₁ t e₂ = ⟪ here refl ∙ e₁ ∷ [] ⟩ e₂
+i e₁ t e₂ = ⟪ here P.refl ∙ e₁ ∷ [] ⟩ e₂
 
 i_t_e_ : Expr g → Expr g → Outer ii right → ExprIn ii right
-i e₁ t e₂ e e₃ = ⟪ there (here refl) ∙ e₁ ∷ e₂ ∷ [] ⟩ e₃
+i e₁ t e₂ e e₃ = ⟪ there (here P.refl) ∙ e₁ ∷ e₂ ∷ [] ⟩ e₃
 
 _,_ : Outer c left → Expr (ii ∷ pl ∷ a ∷ []) → ExprIn c left
-e₁ , e₂ = e₁ ⟨ here refl ∙ [] ⟩ˡ e₂
+e₁ , e₂ = e₁ ⟨ here P.refl ∙ [] ⟩ˡ e₂
 
 _⊢_∶ : Outer wt left → Expr g → Expr g
-e₁ ⊢ e₂ ∶ = here refl ∙ (e₁ ⟨ here refl ∙ [ e₂ ] ⟫)
+e₁ ⊢ e₂ ∶ = here P.refl ∙ (e₁ ⟨ here P.refl ∙ [ e₂ ] ⟫)
 
 ------------------------------------------------------------------------
 -- Some tests
