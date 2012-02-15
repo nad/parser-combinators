@@ -47,7 +47,7 @@ open import TotalParserCombinators.Semantics using (_∈_·_)
 -- Note that this definition is closely related to Theorem 4.4 in
 -- Brzozowski's paper "Derivatives of Regular Expressions".
 --
--- Note also that _∙_ is allowed to pattern match on one of the input
+-- Note also that _∙_ is allowed to pattern match on the input
 -- indices, so it may not be obvious that lift preserves equality.
 -- This fact is established explicitly below (by making use of
 -- _∙-cong_).
