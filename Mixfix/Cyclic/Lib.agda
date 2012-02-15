@@ -192,10 +192,10 @@ module Semantics where
     with s ++ [] | proj₂ LM.identity s
   ... | .s | refl = +-[] (complete p x∈p)
 
-  complete (p between (t ∷ [])) (<$> t∈) with Tok.sound _ t∈
+  complete (p between (t ∷ [])) (<$> t∈) with Tok.sound t t∈
   ... | (refl , refl) = between-[]
   complete (p between (t ∷ t′ ∷ ts)) (<$> t∈ ⊛ x∈p ⊛ xs∈)
-    with Tok.sound _ t∈
+    with Tok.sound t t∈
   ... | (refl , refl) =
     between-∷ (complete (♭ p) x∈p) (complete (p between (t′ ∷ ts)) xs∈)
 
@@ -263,12 +263,12 @@ module Semantics-⊕ where
                  (x∈p₂ : (, x) ⊕ s′ ∈⟦ p₂ ⟧· s) →
                  (, x) ⊕ s′ ∈⟦ p₁ ∥ p₂ ⟧· s
 
-  tok-sound : ∀ {t t′ s₁ s} →
+  tok-sound : ∀ t {t′ s₁ s} →
               t′ ⊕ s₁ ∈ tok t · s →
               t ≡ t′ × s ≡ t′ ∷ s₁
-  tok-sound     ∈ with ContSem.sound′ ∈
-  tok-sound     ∈ | (s         , refl , ∈′) with Tok.sound _ ∈′
-  tok-sound {t} ∈ | (.(t ∷ []) , refl , ∈′) | (refl , refl) = (refl , refl)
+  tok-sound t ∈ with ContSem.sound′ ∈
+  tok-sound t ∈ | (s         , refl , ∈′) with Tok.sound t ∈′
+  tok-sound t ∈ | (.(t ∷ []) , refl , ∈′) | (refl , refl) = (refl , refl)
 
   tok-complete : ∀ {t s} → t ⊕ s ∈ tok t · t ∷ s
   tok-complete = ContSem.complete′ (_ , refl , Tok.complete)
@@ -303,10 +303,10 @@ module Semantics-⊕ where
   complete (p +) ([ .○ - .◌ ] <$> x∈p ⊛ ∣-left (<$> xs∈p+)) = +-∷  (complete p x∈p) (complete (p +) xs∈p+)
   complete (p +) ([ .○ - .◌ ] <$> x∈p ⊛ ∣-right .[] return) = +-[] (complete p x∈p)
 
-  complete (p between (t ∷ [])) (<$> t∈) with tok-sound t∈
+  complete (p between (t ∷ [])) (<$> t∈) with tok-sound t t∈
   ... | (refl , refl) = between-[]
   complete (p between (t ∷ t′ ∷ ts)) ([ .○ - .◌ ] [ .○ - .◌ ] <$> t∈ ⊛ x∈p ⊛ xs∈)
-    with tok-sound t∈
+    with tok-sound t t∈
   ... | (refl , refl) =
     between-∷ (complete (♭ p) x∈p) (complete (p between (t′ ∷ ts)) xs∈)
 
