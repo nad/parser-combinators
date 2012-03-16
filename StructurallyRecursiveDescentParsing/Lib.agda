@@ -180,19 +180,21 @@ mutual
   atLeast zero    p = p ⋆
   atLeast (suc n) p = _∷_ <$> p ⊛ atLeast n p
 
-mutual
+-- exactly n p parses n occurrences of p.
+--
+-- (Note that, unlike what is written in "Structurally Recursive
+-- Descent Parsing", Agda as of 2012-03-16 can no longer infer
+-- exactly-index's second right-hand side.)
 
-  -- exactly n p parses n occurrences of p.
+exactly-index : Index → ℕ → Index
+exactly-index i zero    = 1I
+exactly-index i (suc n) = (1I · i · 1I) · exactly-index i n · 1I
 
-  exactly-index : Index → ℕ → Index
-  exactly-index i zero    = _
-  exactly-index i (suc n) = _
-
-  exactly : ∀ {NT Tok i R} n →
-            Parser NT Tok i R →
-            Parser NT Tok (exactly-index i n) (Vec R n)
-  exactly zero    p = return []
-  exactly (suc n) p = _∷_ <$> p ⊛ exactly n p
+exactly : ∀ {NT Tok i R} n →
+          Parser NT Tok i R →
+          Parser NT Tok (exactly-index i n) (Vec R n)
+exactly zero    p = return []
+exactly (suc n) p = _∷_ <$> p ⊛ exactly n p
 
 -- A function with a similar type:
 
@@ -279,35 +281,31 @@ private
 ------------------------------------------------------------------------
 -- N-ary variants of _∣_
 
-mutual
+-- choice ps parses one of the elements in ps.
 
-  -- choice ps parses one of the elements in ps.
+choice-corners : Corners → ℕ → Corners
+choice-corners c zero    = ε
+choice-corners c (suc n) = c ∪ choice-corners c n
 
-  choice-corners : Corners → ℕ → Corners
-  choice-corners c zero    = _
-  choice-corners c (suc n) = _
+choice : ∀ {NT Tok c R n} →
+         Vec (Parser NT Tok (false ◇ c) R) n →
+         Parser NT Tok (false ◇ choice-corners c n) R
+choice []       = fail
+choice (p ∷ ps) = p ∣ choice ps
 
-  choice : ∀ {NT Tok c R n} →
-           Vec (Parser NT Tok (false ◇ c) R) n →
-           Parser NT Tok (false ◇ choice-corners c n) R
-  choice []       = fail
-  choice (p ∷ ps) = p ∣ choice ps
+-- choiceMap f xs ≈ choice (map f xs), but avoids use of Vec and
+-- fromList.
 
-mutual
+choiceMap-corners : {A : Set} → (A → Corners) → List A → Corners
+choiceMap-corners c []       = ε
+choiceMap-corners c (x ∷ xs) = c x ∪ choiceMap-corners c xs
 
-  -- choiceMap f xs ≈ choice (map f xs), but avoids use of Vec and
-  -- fromList.
-
-  choiceMap-corners : {A : Set} → (A → Corners) → List A → Corners
-  choiceMap-corners c []       = _
-  choiceMap-corners c (x ∷ xs) = _
-
-  choiceMap : ∀ {NT Tok R} {A : Set} {c : A → Corners} →
-              ((x : A) → Parser NT Tok (false ◇ c x) R) →
-              (xs : List A) →
-              Parser NT Tok (false ◇ choiceMap-corners c xs) R
-  choiceMap f []       = fail
-  choiceMap f (x ∷ xs) = f x ∣ choiceMap f xs
+choiceMap : ∀ {NT Tok R} {A : Set} {c : A → Corners} →
+            ((x : A) → Parser NT Tok (false ◇ c x) R) →
+            (xs : List A) →
+            Parser NT Tok (false ◇ choiceMap-corners c xs) R
+choiceMap f []       = fail
+choiceMap f (x ∷ xs) = f x ∣ choiceMap f xs
 
 ------------------------------------------------------------------------
 -- sat and friends
