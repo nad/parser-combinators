@@ -29,17 +29,15 @@ data Corners : Set where
 
 -- The index type.
 
+infix 4 _◇_
+
 record Index : Set where
+  constructor _◇_
   field
     empty   : Empty
     corners : Corners
 
 open Index public
-
-infix 4 _◇_
-
-_◇_ : Empty → Corners → Index
-e ◇ c = record { empty = e; corners = c }
 
 -- Type signature for non-terminals. The second argument is the result
 -- type.
