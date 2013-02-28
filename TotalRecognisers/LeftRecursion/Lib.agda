@@ -7,7 +7,7 @@ module TotalRecognisers.LeftRecursion.Lib (Tok : Set) where
 open import Coinduction
 open import Data.Bool hiding (_∧_)
 open import Data.Bool.Properties
-open import Function
+open import Function hiding (_∋_)
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence using (module Equivalence)
 open import Data.List

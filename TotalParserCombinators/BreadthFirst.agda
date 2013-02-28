@@ -120,7 +120,7 @@ parse = Parse.parse ,_ _∎
 
 parse-correct : ∀ {Tok R xs x s} {p : Parser Tok R xs} →
                 x ∈ p · s ↔ x ∈ parse p s
-parse-correct = Parse.correct _ _
+parse-correct = Parse.correct _ _∎
 
 -- Parsing with simplification.
 
@@ -131,7 +131,7 @@ parse-with-simplification = Parse.parse (λ p → , simplify p) S.correct
 parse-with-simplification-correct :
   ∀ {Tok R xs x s} {p : Parser Tok R xs} →
   x ∈ p · s ↔ x ∈ parse-with-simplification p s
-parse-with-simplification-correct = Parse.correct _ _
+parse-with-simplification-correct = Parse.correct _ S.correct
 
 ------------------------------------------------------------------------
 -- An observation

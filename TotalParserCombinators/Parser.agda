@@ -8,7 +8,7 @@ open import Algebra
 open import Category.Monad
 open import Coinduction
 open import Data.List as List
-open import Data.Maybe
+open import Data.Maybe using (Maybe; nothing; just)
 import Data.List.Any as Any
 import Data.List.Properties as ListProp
 open import Data.Product using (proj₂)
@@ -76,7 +76,7 @@ module Claims where
     sym $ ListProp.Monad.right-zero (flatten mxs)
 
   bind-nothing : {A B : Set} (mxs : Maybe (List A)) →
-                 bind mxs nothing ≡ ([] ∶ List B)
+                 bind mxs nothing ≡ [] {A = B}
   bind-nothing mxs = refl
 
 ------------------------------------------------------------------------

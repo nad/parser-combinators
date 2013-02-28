@@ -65,7 +65,7 @@ private
       x ∈ []            ∎′
 
   []-⊛flatten : ∀ {A B : Set} (xs : Maybe (List A)) →
-                [] ⊛flatten xs List-∼[ bag ] ([] ∶ List B)
+                [] ⊛flatten xs List-∼[ bag ] [] {A = B}
   []-⊛flatten nothing   = BSOrd.refl
   []-⊛flatten (just xs) = BSOrd.refl
 

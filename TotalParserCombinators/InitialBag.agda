@@ -128,13 +128,13 @@ mutual
     sound∘complete′ return                                refl = refl
     sound∘complete′ (∣-left {xs₁ = xs₁} {xs₂ = xs₂} x∈p₁) refl
       rewrite left-inverse-of (++↔ {P = _≡_ _} {xs = xs₁} {ys = xs₂}) (inj₁ (complete x∈p₁)) =
-        H.cong (∣-left ∶ (_ → _ ∈ _ · _)) (sound∘complete′ x∈p₁ refl)
+        H.cong _∈_·_.∣-left (sound∘complete′ x∈p₁ refl)
     sound∘complete′ (∣-right xs₁ x∈p₂) refl
       rewrite left-inverse-of (++↔ {P = _≡_ _} {xs = xs₁}) (inj₂ (complete x∈p₂)) =
-        H.cong (∣-right xs₁ ∶ (_ → _ ∈ _ · _)) (sound∘complete′ x∈p₂ refl)
+        H.cong (_∈_·_.∣-right xs₁) (sound∘complete′ x∈p₂ refl)
     sound∘complete′ (<$>_ {f = f} x∈p) refl
       rewrite left-inverse-of (map-∈↔ {f = f}) (_ , complete x∈p , refl) =
-        H.cong (<$>_ ∶ (_ → _ ∈ _ · _)) (sound∘complete′ x∈p refl)
+        H.cong _∈_·_.<$>_ (sound∘complete′ x∈p refl)
     sound∘complete′ (_⊛_ {s₁ = []} {fs = fs} {xs = just xs} f∈p₁ x∈p₂) refl
       with complete f∈p₁ | complete x∈p₂
       | from inv ⟨$⟩ (to inv ⟨$⟩ (_ , _ , complete f∈p₁ , complete x∈p₂ , refl))
