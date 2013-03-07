@@ -48,4 +48,3 @@ import StructurallyRecursiveDescentParsing.DepthFirst
 
 import StructurallyRecursiveDescentParsing.Simplified
 import StructurallyRecursiveDescentParsing.Simplified.Semantics
-import StructurallyRecursiveDescentParsing.Simplified.Lemmas

@@ -11,7 +11,7 @@ open import Data.Bool using (Bool; true; false)
 open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.List as List using (List; []; _∷_; _++_)
 private module LM {A : Set} = Monoid (List.monoid A)
-open import Data.List.NonEmpty using (List⁺; [_]; _∷_; _∷ʳ_)
+open import Data.List.NonEmpty using (List⁺; _∷_; [_]; _∷⁺_)
 open import Data.Maybe using (Maybe; just; nothing; maybe)
 open import Data.Vec using (Vec; []; _∷_)
 open import Data.Product
@@ -19,7 +19,7 @@ import Data.String as String
 open import Relation.Binary
 open DecSetoid String.decSetoid using (_≟_)
 open import Relation.Nullary
-open import Relation.Binary.PropositionalEquality using (_≡_; refl)
+open import Relation.Binary.PropositionalEquality as P using (_≡_; refl)
 
 open import TotalParserCombinators.Parser
   renaming (_⊛_ to _⊛′_; _<$>_ to _<$>′_)
@@ -81,7 +81,7 @@ data ParserProg : Set → Set1 where
 ⟦ f <$> p            ⟧ = f <$>′ ⟦ p ⟧
 ⟦ p +                ⟧ = one <$>′  ⟦ p ⟧
                               ⊛′ ♯ (⟦ just <$> p + ⟧ ∣ return nothing)
-                         where one = λ x → maybe (_∷_ x) [ x ]
+                         where one = λ x → maybe (_∷⁺_ x) [ x ]
 ⟦ p between (t ∷ []) ⟧ = const [] <$>′ tok t
 ⟦ p between
        (t ∷ t′ ∷ ts) ⟧ = const _∷_ <$>′  tok t
@@ -137,7 +137,7 @@ module Semantics where
                  (x∈p : x ∈⟦ p ⟧· s) → [ x ] ∈⟦ p + ⟧· s
     +-∷        : ∀ {R x s₁ s₂ xs} {p : ParserProg R}
                  (x∈p : x ∈⟦ p ⟧· s₁) (xs∈p : xs ∈⟦ p + ⟧· s₂) →
-                 x ∷ xs ∈⟦ p + ⟧· s₁ ++ s₂
+                 x ∷⁺ xs ∈⟦ p + ⟧· s₁ ++ s₂
     between-[] : ∀ {R t} {p : ∞ (ParserProg R)} →
                  [] ∈⟦ p between (t ∷ []) ⟧· t ∷ []
     between-∷  : ∀ {R n t x xs s₁ s₂}
@@ -188,9 +188,10 @@ module Semantics where
 
   complete (p +) (<$> x∈p ⊛ ∣-left (<$> xs∈p+)) =
     +-∷ (complete p x∈p) (complete (p +) xs∈p+)
-  complete (p +) (_⊛_ {s₁ = s} (<$> x∈p) (∣-right .[] return))
-    with s ++ [] | proj₂ LM.identity s
-  ... | .s | refl = +-[] (complete p x∈p)
+  complete (p +) (_⊛_ {s₁ = s} (<$> x∈p) (∣-right .[] return)) =
+    P.subst (λ s → _ ∈⟦ p + ⟧· s)
+            (P.sym (proj₂ LM.identity s))
+            (+-[] (complete p x∈p))
 
   complete (p between (t ∷ [])) (<$> t∈) with Tok.sound t t∈
   ... | (refl , refl) = between-[]
@@ -245,7 +246,7 @@ module Semantics-⊕ where
                  (x∈p : x ⊕ s₁ ∈⟦ p ⟧· s) → [ x ] ⊕ s₁ ∈⟦ p + ⟧· s
     +-∷        : ∀ {R x s s₁ s₂ xs} {p : ParserProg R}
                  (x∈p : x ⊕ s₁ ∈⟦ p ⟧· s) (xs∈p : xs ⊕ s₂ ∈⟦ p + ⟧· s₁) →
-                 x ∷ xs ⊕ s₂ ∈⟦ p + ⟧· s
+                 x ∷⁺ xs ⊕ s₂ ∈⟦ p + ⟧· s
     between-[] : ∀ {R t s} {p : ∞ (ParserProg R)} →
                  [] ⊕ s ∈⟦ p between (t ∷ []) ⟧· t ∷ s
     between-∷  : ∀ {R n t x xs s s₁ s₂}

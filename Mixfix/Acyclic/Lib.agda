@@ -24,7 +24,7 @@ open import Data.Bool using (Bool; true; false)
 open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.List as List using (List; []; _∷_; _++_)
 private module LM {A : Set} = Monoid (List.monoid A)
-open import Data.List.NonEmpty using (List⁺; [_]; _∷_; _∷ʳ_)
+open import Data.List.NonEmpty using (List⁺; [_]; _∷⁺_; _⁺∷ʳ_)
 open import Data.Vec using (Vec; []; _∷_)
 open import Data.Product
 import Data.String as String
@@ -107,7 +107,7 @@ private
 ⟦ p₁ ⊛ p₂                 ⟧ = ⟦ p₁ ⟧ !>>= λ f → ♯ ⟦ f <$> p₂ ⟧
 ⟦ f <$> p                 ⟧ = ⟦ p  ⟧ !>>= λ x → ♯′ return (f x)
 ⟦ p +                     ⟧ = ⟦ p  ⟧ !>>= λ x → ♯
-                              (⟦ _∷_ x <$> p + ⟧ ∣ return [ x ])
+                              (⟦ _∷⁺_ x <$> p + ⟧ ∣ return [ x ])
 ⟦ p between (t ∷ [])      ⟧ = tok t !>>= λ _ → ♯′ return []
 ⟦ p between (t ∷ t′ ∷ ts) ⟧ = tok t !>>= λ _ → ♯
                               ⟦ _∷_ <$> ♭ p ⊛ (p between (t′ ∷ ts)) ⟧
@@ -151,7 +151,7 @@ module Semantics where
                  (x∈p : x ∈⟦ p ⟧· s) → [ x ] ∈⟦ p + ⟧· s
     +-∷        : ∀ {R x s₁ s₂ xs} {p : ParserProg R}
                  (x∈p : x ∈⟦ p ⟧· s₁) (xs∈p : xs ∈⟦ p + ⟧· s₂) →
-                 x ∷ xs ∈⟦ p + ⟧· s₁ ++ s₂
+                 x ∷⁺ xs ∈⟦ p + ⟧· s₁ ++ s₂
     between-[] : ∀ {R t} {p : ∞ (ParserProg R)} →
                  [] ∈⟦ p between (t ∷ []) ⟧· t ∷ []
     between-∷  : ∀ {R n t x xs s₁ s₂}
@@ -276,7 +276,7 @@ module Semantics-⊕ where
                  (x∈p : x ⊕ s₁ ∈⟦ p ⟧· s) → [ x ] ⊕ s₁ ∈⟦ p + ⟧· s
     +-∷        : ∀ {R x s s₁ s₂ xs} {p : ParserProg R}
                  (x∈p : x ⊕ s₁ ∈⟦ p ⟧· s) (xs∈p : xs ⊕ s₂ ∈⟦ p + ⟧· s₁) →
-                 x ∷ xs ⊕ s₂ ∈⟦ p + ⟧· s
+                 x ∷⁺ xs ⊕ s₂ ∈⟦ p + ⟧· s
     between-[] : ∀ {R t s} {p : ∞ (ParserProg R)} →
                  [] ⊕ s ∈⟦ p between (t ∷ []) ⟧· t ∷ s
     between-∷  : ∀ {R n t x xs s s₁ s₂}
@@ -356,7 +356,7 @@ module Semantics-⊕ where
 
   +-∷ʳ : ∀ {R x s s₁ s₂ xs} {p : ParserProg R} →
          xs ⊕ s₁ ∈⟦ p + ⟧· s → x ⊕ s₂ ∈⟦ p ⟧· s₁ →
-         xs ∷ʳ x ⊕ s₂ ∈⟦ p + ⟧· s
+         xs ⁺∷ʳ x ⊕ s₂ ∈⟦ p + ⟧· s
   +-∷ʳ (+-[] x∈p)     y∈p = +-∷ x∈p (+-[] y∈p)
   +-∷ʳ (+-∷ x∈p xs∈p) y∈p = +-∷ x∈p (+-∷ʳ xs∈p y∈p)
 

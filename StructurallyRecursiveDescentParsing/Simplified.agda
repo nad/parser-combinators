@@ -15,9 +15,8 @@ open import Data.List.NonEmpty as List⁺
 open import Data.List.NonEmpty.Properties
 open import Level
 open import Relation.Binary
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 
-open ≡-Reasoning
 open Any.Membership-≡
 open RawMonad {f = zero} List.monad using () renaming (_>>=_ to _>>=′_)
 open RawMonad {f = zero} List⁺.monad using () renaming (_>>=_ to _>>=⁺_)
@@ -25,7 +24,6 @@ private
   open module BagS {A : Set} = Setoid ([ bag ]-Equality A)
     using () renaming (_≈_ to _Bag-≈_)
 
-open import StructurallyRecursiveDescentParsing.Simplified.Lemmas
 open import TotalParserCombinators.Parser as P
   hiding (Parser; module Parser)
 
@@ -98,15 +96,7 @@ private
             initial p₁ ++ initial p₂ ≡ initial (p₁ ∣ p₂)
   ∣-lemma {false} {false} p₁ p₂ = refl
   ∣-lemma {false} {true}  p₁ p₂ = refl
-  ∣-lemma {true}          p₁ p₂ = begin
-    (head xs ∷ tail xs) ++ ys ≡⟨ cong (λ xs → xs ++ ys) (η xs) ⟩
-    List⁺.toList xs ++ ys     ≡⟨ toList-⁺++ xs ys ⟩
-    List⁺.toList (xs ⁺++ ys)  ≡⟨ sym (η xsys) ⟩
-    head xsys ∷ tail xsys     ∎
-    where
-    xs   = initial⁺ p₁ refl
-    ys   = initial p₂
-    xsys = xs ⁺++ ys
+  ∣-lemma {true}          p₁ p₂ = refl
 
   ?>>=-lemma : ∀ {e₂ Tok R₁ R₂}
                (p₁ : Parser Tok true R₁) (p₂ : R₁ → Parser Tok e₂ R₂) →
@@ -115,7 +105,7 @@ private
                initial (p₁ ?>>= p₂)
   ?>>=-lemma {false} p₁ p₂ = ListProp.Monad.right-zero
                                (tail (initial⁺ p₁ refl))
-  ?>>=-lemma {true}  p₁ p₂ = cong₂ _∷_ (head->>= f xs) (tail->>= f xs)
+  ?>>=-lemma {true}  p₁ p₂ = toList->>= f xs
     where f  = λ x → initial⁺ (p₂ x) refl
           xs = initial⁺ p₁ refl
 
