@@ -183,10 +183,10 @@ module Semantics where
     add-[] {s = s} x∈p rewrite proj₂ LM.identity s = x∈p
 
   ⊛-complete : ∀ {s₁ s₂ R₁ R₂ f x}
-                 {p₁ : ParserProg (R₁ → R₂)} {p₂ : ParserProg R₁} →
+               (p₁ : ParserProg (R₁ → R₂)) {p₂ : ParserProg R₁} →
                f ∈ ⟦ p₁ ⟧ · s₁ → x ∈ ⟦ p₂ ⟧ · s₂ →
                f x ∈ ⟦ p₁ ⊛ p₂ ⟧ · s₁ ++ s₂
-  ⊛-complete f∈p₁ x∈p₂ = f∈p₁ !>>= drop-[] (x∈p₂ !>>= return)
+  ⊛-complete _ f∈p₁ x∈p₂ = f∈p₁ !>>= drop-[] (x∈p₂ !>>= return)
 
   tok-sound : ∀ {t t′ s} →
               t′ ∈ tok t · s →
@@ -206,18 +206,18 @@ module Semantics where
 
   sound : ∀ {R x s} {p : ParserProg R} →
           x ∈⟦ p ⟧· s → x ∈ ⟦ p ⟧ · s
-  sound (∣ˡ x∈p₁)      = ∣ˡ       (sound x∈p₁)
-  sound (∣ʳ x∈p₂)      = ∣ʳ false (sound x∈p₂)
-  sound (f∈p₁ ⊛ x∈p₂)  = ⊛-complete (sound f∈p₁) (sound x∈p₂)
-  sound (<$> x∈p)      = drop-[] (sound x∈p !>>= return)
-  sound (+-[] x∈p)     = drop-[] (sound x∈p !>>= ∣ʳ false return)
-  sound (+-∷ x∈p xs∈p) = sound x∈p !>>= ∣ˡ (drop-[] (sound xs∈p !>>= return))
-  sound (∥ˡ x∈p₁)      = drop-[] (∣ˡ {x = (, _)} (sound x∈p₁ !>>= return))
-  sound (∥ʳ x∈p₂)      = ∣ʳ false (sound x∈p₂)
-  sound between-[]     = tok-complete !>>= return
-  sound (between-∷ {s₁ = s₁} {ts = _ ∷ _} x∈p xs∈⋯) =
+  sound (∣ˡ x∈p₁)                 = ∣ˡ       (sound x∈p₁)
+  sound (∣ʳ x∈p₂)                 = ∣ʳ false (sound x∈p₂)
+  sound (_⊛_ {p₁ = p₁} f∈p₁ x∈p₂) = ⊛-complete p₁ (sound f∈p₁) (sound x∈p₂)
+  sound (<$> x∈p)                 = drop-[] (sound x∈p !>>= return)
+  sound (+-[] x∈p)                = drop-[] (sound x∈p !>>= ∣ʳ false return)
+  sound (+-∷ x∈p xs∈p)            = sound x∈p !>>= ∣ˡ (drop-[] (sound xs∈p !>>= return))
+  sound (∥ˡ x∈p₁)                 = drop-[] (∣ˡ {x = (, _)} (sound x∈p₁ !>>= return))
+  sound (∥ʳ x∈p₂)                 = ∣ʳ false (sound x∈p₂)
+  sound between-[]                = tok-complete !>>= return
+  sound (between-∷ {s₁ = s₁} {p = p} {ts = _ ∷ _} x∈p xs∈⋯) =
     tok-complete !>>=
-    ⊛-complete (drop-[] {s = s₁} (sound x∈p !>>= return)) (sound xs∈⋯)
+    ⊛-complete (_ <$> ♭ p) (drop-[] {s = s₁} (sound x∈p !>>= return)) (sound xs∈⋯)
 
   complete : ∀ {R x s} (p : ParserProg R) →
              x ∈ ⟦ p ⟧ · s → x ∈⟦ p ⟧· s
@@ -297,10 +297,10 @@ module Semantics-⊕ where
   -- The semantics is correct.
 
   ⊛-complete : ∀ {s s₁ s₂ R₁ R₂ f x}
-                 {p₁ : ParserProg (R₁ → R₂)} {p₂ : ParserProg R₁} →
+               (p₁ : ParserProg (R₁ → R₂)) {p₂ : ParserProg R₁} →
                f ⊕ s₁ ∈ ⟦ p₁ ⟧ · s → x ⊕ s₂ ∈ ⟦ p₂ ⟧ · s₁ →
                f x ⊕ s₂ ∈ ⟦ p₁ ⊛ p₂ ⟧ · s
-  ⊛-complete f∈p₁ x∈p₂ = f∈p₁ !>>= (x∈p₂ !>>= return)
+  ⊛-complete _ f∈p₁ x∈p₂ = f∈p₁ !>>= (x∈p₂ !>>= return)
 
   tok-sound : ∀ {t t′ s₁ s} →
               t′ ⊕ s₁ ∈ tok t · s →
@@ -314,18 +314,18 @@ module Semantics-⊕ where
 
   sound : ∀ {R x s s′} {p : ParserProg R} →
           x ⊕ s′ ∈⟦ p ⟧· s → x ⊕ s′ ∈ ⟦ p ⟧ · s
-  sound (∣ˡ x∈p₁)      = ∣ˡ       (sound x∈p₁)
-  sound (∣ʳ x∈p₂)      = ∣ʳ false (sound x∈p₂)
-  sound (f∈p₁ ⊛ x∈p₂)  = ⊛-complete (sound f∈p₁) (sound x∈p₂)
-  sound (<$> x∈p)      = sound x∈p !>>= return
-  sound (+-[] x∈p)     = sound x∈p !>>= ∣ʳ false return
-  sound (+-∷ x∈p xs∈p) = sound x∈p !>>= ∣ˡ (sound xs∈p !>>= return)
-  sound (∥ˡ x∈p₁)      = ∣ˡ (sound x∈p₁ !>>= return)
-  sound (∥ʳ x∈p₂)      = ∣ʳ false (sound x∈p₂)
-  sound between-[]     = tok-complete !>>= return
-  sound (between-∷ {ts = _ ∷ _} x∈p xs∈⋯) =
+  sound (∣ˡ x∈p₁)                 = ∣ˡ       (sound x∈p₁)
+  sound (∣ʳ x∈p₂)                 = ∣ʳ false (sound x∈p₂)
+  sound (_⊛_ {p₁ = p₁} f∈p₁ x∈p₂) = ⊛-complete p₁ (sound f∈p₁) (sound x∈p₂)
+  sound (<$> x∈p)                 = sound x∈p !>>= return
+  sound (+-[] x∈p)                = sound x∈p !>>= ∣ʳ false return
+  sound (+-∷ x∈p xs∈p)            = sound x∈p !>>= ∣ˡ (sound xs∈p !>>= return)
+  sound (∥ˡ x∈p₁)                 = ∣ˡ (sound x∈p₁ !>>= return)
+  sound (∥ʳ x∈p₂)                 = ∣ʳ false (sound x∈p₂)
+  sound between-[]                = tok-complete !>>= return
+  sound (between-∷ {p = p} {ts = _ ∷ _} x∈p xs∈⋯) =
     tok-complete !>>=
-    ⊛-complete (sound x∈p !>>= return) (sound xs∈⋯)
+    ⊛-complete (_ <$> ♭ p) (sound x∈p !>>= return) (sound xs∈⋯)
 
   complete : ∀ {R x s s′} (p : ParserProg R) →
              x ⊕ s′ ∈ ⟦ p ⟧ · s → x ⊕ s′ ∈⟦ p ⟧· s
