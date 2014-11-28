@@ -23,7 +23,7 @@ module TotalRecognisers.Simple.AlternativeBackend
          where
 
 open import Coinduction
-open import Data.Bool
+open import Data.Bool hiding (_≟_)
 open import Data.List
 open import Relation.Nullary.Decidable
 

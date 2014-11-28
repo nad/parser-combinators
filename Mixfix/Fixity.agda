@@ -5,7 +5,7 @@
 module Mixfix.Fixity where
 
 open import Data.Fin using (Fin; zero; suc; #_)
-open import Data.Fin.Props using (eq?)
+open import Data.Fin.Properties using (eq?)
 open import Function.LeftInverse
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality as Eq

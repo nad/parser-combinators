@@ -57,9 +57,9 @@ module Example where
 
   open Vec
 
-  image = toPBM ((white ∷ black ∷ []) ∷
-                 (black ∷ white ∷ []) ∷
-                 (black ∷ black ∷ []) ∷ [])
+  image = toPBM ((white ∷ black ∷ white ∷ []) ∷
+                 (black ∷ white ∷ black ∷ []) ∷
+                 (white ∷ black ∷ white ∷ []) ∷ [])
 
   ex : parseComplete (⟦ pbm ⟧ emptyGrammar)
                      (String.toList (show image)) ≡

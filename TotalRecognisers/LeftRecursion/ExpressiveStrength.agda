@@ -34,7 +34,7 @@ import TotalRecognisers.LeftRecursion
 open TotalRecognisers.LeftRecursion Bool using (_∧_; left-zero)
 private
   open module LR {Tok : Set} = TotalRecognisers.LeftRecursion Tok
-    hiding (P; ∞⟨_⟩P; _∧_; left-zero)
+    hiding (P; ∞⟨_⟩P; _∧_; left-zero; _∷_)
 
   P : Set → Bool → Set
   P Tok = LR.P {Tok}
@@ -42,8 +42,7 @@ private
   ∞⟨_⟩P : Bool → Set → Bool → Set
   ∞⟨ b ⟩P Tok n = LR.∞⟨_⟩P {Tok} b n
 
-import TotalRecognisers.LeftRecursion.Lib as Lib
-open Lib Bool
+open import TotalRecognisers.LeftRecursion.Lib Bool hiding (_∷_)
 
 ------------------------------------------------------------------------
 -- A boring lemma

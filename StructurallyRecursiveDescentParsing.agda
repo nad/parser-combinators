@@ -23,18 +23,12 @@ import StructurallyRecursiveDescentParsing.Grammar
 import StructurallyRecursiveDescentParsing.Lib
 
 -- Some small examples.
---
--- This module is not included, because it type-checks really slowly
--- (if at all) using the current version of Agda (Feb 2013).
 
--- import StructurallyRecursiveDescentParsing.Examples
+import StructurallyRecursiveDescentParsing.Examples
 
 -- An example: parsing PBM image files.
---
--- This module is not included, because it type-checks really slowly
--- (if at all) using the current version of Agda (Oct 2011).
 
--- import StructurallyRecursiveDescentParsing.PBM
+import StructurallyRecursiveDescentParsing.PBM
 
 -- A depth-first backend.
 

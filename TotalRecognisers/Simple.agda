@@ -15,7 +15,7 @@ module TotalRecognisers.Simple
 
 open import Algebra
 open import Coinduction
-open import Data.Bool
+open import Data.Bool hiding (_≟_)
 import Data.Bool.Properties as Bool
 private
   module BoolCS = CommutativeSemiring Bool.commutativeSemiring-∧-∨

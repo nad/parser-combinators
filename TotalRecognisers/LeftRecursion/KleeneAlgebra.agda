@@ -5,13 +5,13 @@
 module TotalRecognisers.LeftRecursion.KleeneAlgebra (Tok : Set) where
 
 open import Algebra
-import Algebra.Props.BooleanAlgebra
+import Algebra.Properties.BooleanAlgebra
 open import Coinduction
 open import Data.Bool hiding (_∧_)
 import Data.Bool.Properties as Bool
 private
   module BoolCS = CommutativeSemiring Bool.commutativeSemiring-∨-∧
-  module BoolBA = Algebra.Props.BooleanAlgebra Bool.booleanAlgebra
+  module BoolBA = Algebra.Properties.BooleanAlgebra Bool.booleanAlgebra
 open import Function
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence as Eq using (_⇔_; equivalence)

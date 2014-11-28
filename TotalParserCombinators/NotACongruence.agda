@@ -7,6 +7,7 @@ module TotalParserCombinators.NotACongruence where
 open import Coinduction
 open import Data.Bool
 open import Data.List
+open import Function
 open import Function.Equality
 open import Function.Inverse as Inv
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
@@ -36,10 +37,10 @@ module Example₁ where
 
   -- The following two parsers are (parser) equal.
 
-  p₁ : Parser Bool Bool (true ∷ false ∷ [])
+  p₁ : Parser Bool Bool (true ∷ (false ∷ []))
   p₁ = return true ∣ return false
 
-  p₂ : Parser Bool Bool (false ∷ true ∷ [])
+  p₂ : Parser Bool Bool (false ∷ (true ∷ []))
   p₂ = return false ∣ return true
 
   equal : p₁ ≅P p₂
@@ -49,11 +50,12 @@ module Example₁ where
 
   unambiguous-is-not-a-congruence :
     ¬ (unambiguous p₁ ≅ unambiguous p₂)
-  unambiguous-is-not-a-congruence eq
-    with Inverse.to eq ⟨$⟩ S.∣-right [] (S.∣-left S.return)
-  ... | S.∣-right .[] (S.∣-left               ())
-  ... | S.∣-right .[] (S.∣-right .([ false ]) ())
-  ... | S.∣-left []∈ = helper refl []∈
+  unambiguous-is-not-a-congruence eq =
+    case Inverse.to eq ⟨$⟩ S.∣-right [] (S.∣-left S.return) of λ
+      { (S.∣-right .[] (S.∣-left               ()))
+      ; (S.∣-right .[] (S.∣-right .([ false ]) ()))
+      ; (S.∣-left []∈) → helper refl []∈
+      }
     where
     helper : ∀ {s} {f : Bool → List Bool}
                {p : ∀ b → ∞ (Parser Bool Bool (f b))} →

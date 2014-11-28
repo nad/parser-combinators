@@ -49,7 +49,7 @@ _≟-Paren_ : Decidable (_≡_ {A = Paren})
 ⟧ ≟-Paren ⟦ = no λ()
 ⟧ ≟-Paren ⟧ = yes P.refl
 
-open LR Paren
+open LR Paren hiding (_∷_)
 private
   open module Tok = Lib.Tok Paren _≟-Paren_ using (tok)
 
