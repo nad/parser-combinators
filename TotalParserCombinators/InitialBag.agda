@@ -38,7 +38,7 @@ private
   abstract
 
     ⊛-∈↔ : ∀ {A B : Set} (fs : List (A → B)) {xs y} →
-           (∃₂ λ f x → f ∈ fs × x ∈ xs × y ≡ f x) ↔ y ∈ fs ⊛′ xs
+           (∃₂ λ f x → f ∈ fs × x ∈ xs × y ≡ f x) ↔ y ∈ (fs ⊛′ xs)
     ⊛-∈↔ = M.⊛-∈↔
 
 ------------------------------------------------------------------------

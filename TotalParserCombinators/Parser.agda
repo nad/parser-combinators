@@ -61,7 +61,7 @@ bind mxs (just f) = flatten mxs >>=′ f
 module Claims where
 
   ⊛flatten-⊛-flatten : ∀ {A B : Set} (fs : List (A → B)) mxs →
-                       fs ⊛flatten mxs ≡ fs ⊛′ flatten mxs
+                       fs ⊛flatten mxs ≡ (fs ⊛′ flatten mxs)
   ⊛flatten-⊛-flatten fs nothing   = sym $ ListProp.Monad.right-zero fs
   ⊛flatten-⊛-flatten fs (just xs) = refl
 

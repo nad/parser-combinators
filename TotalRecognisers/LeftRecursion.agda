@@ -23,7 +23,7 @@ private
 open import Data.Product as Prod
 open import Relation.Binary.PropositionalEquality hiding ([_])
 open import Relation.Nullary
-open import Relation.Nullary.Decidable as Dec
+open import Relation.Nullary.Decidable as Decidable
 
 ------------------------------------------------------------------------
 -- A "right-strict" variant of _∧_
@@ -218,7 +218,7 @@ index-correct = equivalence ⇒ (⇐ _)
 -- We can decide if the empty string belongs to a given language.
 
 nullable? : ∀ {n} (p : P n) → Dec ([] ∈ p)
-nullable? {n} p = Dec.map (Eq.sym index-correct) (Bool._≟_ n true)
+nullable? {n} p = Decidable.map (Eq.sym index-correct) (Bool._≟_ n true)
 
 ------------------------------------------------------------------------
 -- Derivative
@@ -327,7 +327,7 @@ t ∷ s ∈? p | no  s∉Dtp = no  (s∉Dtp ∘ D-complete)
 
 -- The last three lines could be replaced by the following one:
 --
--- t ∷ s ∈? p = Dec.map D-correct (s ∈? D t p)
+-- t ∷ s ∈? p = Decidable.map D-correct (s ∈? D t p)
 
 ------------------------------------------------------------------------
 -- Alternative characterisation of equality

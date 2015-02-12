@@ -15,7 +15,7 @@ open import Function.Equivalence
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 open import Relation.Nullary
-open import Relation.Nullary.Decidable as Dec
+open import Relation.Nullary.Decidable as Decidable
 
 private
   module ListMonoid {A : Set} = Monoid (List.monoid A)
@@ -89,7 +89,7 @@ decide-matching xs = xs ∈? matching
 -- And thus we reach our goal.
 
 goal : Goal
-goal xs = Dec.map ∈m⇔M (decide-matching xs)
+goal xs = Decidable.map ∈m⇔M (decide-matching xs)
 
 -- Some examples.
 

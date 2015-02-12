@@ -84,7 +84,7 @@ module <$> where
       return f ⊛ D t p    ≅⟨ sym $ D-return-⊛ f p ⟩
       D t (return f ⊛ p)  ∎)
     where
-    lemma : ∀ xs → List.map f xs ≡ [ f ] ⊛′ xs
+    lemma : ∀ xs → List.map f xs ≡ ([ f ] ⊛′ xs)
     lemma []       = P.refl
     lemma (x ∷ xs) = P.cong (_∷_ (f x)) $ lemma xs
 
