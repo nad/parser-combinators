@@ -58,6 +58,7 @@ record Simplify₁ {Tok R xs} (p : Parser Tok R xs) : Set₁ where
 -- fail     >>= p              → fail
 -- return x >>= p              → p x
 -- nonempty fail               → fail
+-- nonempty (return x)         → fail
 -- cast eq p                   → p
 --
 -- Some ♯_'s may be removed, but care is taken to ensure that
@@ -248,13 +249,17 @@ mutual
   -- • nonempty:
 
   simplify₁ (nonempty p) with simplify₁ p
-  ... | result fail p≅∅  = result _ (
-                           nonempty p     ≅⟨ nonempty p≅∅ ⟩
-                           nonempty fail  ≅⟨ Nonempty.zero ⟩
-                           fail           ∎)
-  ... | result p′   p≅p′ = result _ (
-                           nonempty p   ≅⟨ nonempty p≅p′ ⟩
-                           nonempty p′  ∎)
+  ... | result fail       p≅∅  = result _ (
+                                 nonempty p     ≅⟨ nonempty p≅∅ ⟩
+                                 nonempty fail  ≅⟨ Nonempty.zero ⟩
+                                 fail           ∎)
+  ... | result (return x) p≅ε  = result _ (
+                                 nonempty p           ≅⟨ nonempty p≅ε ⟩
+                                 nonempty (return x)  ≅⟨ Nonempty.nonempty-return ⟩
+                                 fail                 ∎)
+  ... | result p′         p≅p′ = result _ (
+                                 nonempty p   ≅⟨ nonempty p≅p′ ⟩
+                                 nonempty p′  ∎)
 
   -- • cast:
 
