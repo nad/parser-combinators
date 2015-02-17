@@ -116,6 +116,12 @@ module Nonempty where
   zero : ∀ {Tok R} → nonempty {Tok = Tok} {R = R} fail ≅P fail
   zero = BagMonoid.refl ∷ λ t → ♯ (fail ∎)
 
+  -- nonempty (return x) is parser equivalent to fail.
+
+  nonempty-return :
+    ∀ {Tok R} {x : R} → nonempty {Tok = Tok} (return x) ≅P fail
+  nonempty-return = BagMonoid.refl ∷ λ t → ♯ (fail ∎)
+
   -- nonempty can be defined in terms of token, _>>=_ and D.
 
   private
