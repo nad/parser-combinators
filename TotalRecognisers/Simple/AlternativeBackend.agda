@@ -53,6 +53,8 @@ run _             _       = false
 
 -- Process "programs".
 
+infixl 5 _∣_
+
 data ProcP : Set where
   -- Process primitives.
   tokenBind : (p : Tok → ∞ ProcP) → ProcP

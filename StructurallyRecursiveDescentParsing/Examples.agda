@@ -23,6 +23,8 @@ open Token C.decSetoid
 
 -- Some functions used to simplify the examples a little.
 
+infix 5 _∈?_/_ _∈?_
+
 _∈?_/_ : ∀ {NT i R} →
          String → Parser NT Char i R → Grammar NT Char → List R
 s ∈? p / g = parseComplete (⟦ p ⟧ g) (S.toList s)

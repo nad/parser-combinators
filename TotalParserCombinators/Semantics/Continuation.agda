@@ -28,7 +28,10 @@ open import TotalParserCombinators.Semantics as S
 -- (and it is proved to be language equivalent to the semantics in
 -- TotalParserCombinators.Semantics).
 
-infix 4 _⊕_∈_·_
+infix  60 <$>_
+infixl 50 [_-_]_⊛_
+infixl 10 [_-_]_>>=_
+infix   4 _⊕_∈_·_
 
 data _⊕_∈_·_ {Tok} : ∀ {R xs} → R → List Tok →
                      Parser Tok R xs → List Tok → Set₁ where
@@ -78,7 +81,7 @@ sound′ return                      = ([]    , P.refl , return)
 sound′ {x = x} token               = ([ x ] , P.refl , token)
 sound′ (∣-left x∈p₁)               = Prod.map id (Prod.map id ∣-left)       (sound′ x∈p₁)
 sound′ (∣-right e₁ x∈p₁)           = Prod.map id (Prod.map id (∣-right e₁)) (sound′ x∈p₁)
-sound′ (<$> x∈p)                   = Prod.map id (Prod.map id <$>_)         (sound′ x∈p)
+sound′ (<$> x∈p)                   = Prod.map id (Prod.map id (<$>_))       (sound′ x∈p)
 sound′ ([ xs - fs ] f∈p₁ ⊛ x∈p₂)   with sound′ f∈p₁ | sound′ x∈p₂
 sound′ ([ xs - fs ] f∈p₁ ⊛ x∈p₂)   | (s₁ , P.refl , f∈p₁′) | (s₂ , P.refl , x∈p₂′) =
                                      (s₁ ++ s₂ , P.sym (LM.assoc s₁ s₂ _) ,

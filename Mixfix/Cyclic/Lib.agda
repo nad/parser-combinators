@@ -109,7 +109,7 @@ module Semantics where
   -- the details of ⟦_⟧ do not need to be understood.
 
   infix  60 <$>_
-  infixl 50 _⊛_
+  infixl 50 _⊛_ _⊛∞_
   infix  4  _∈⟦_⟧·_
 
   data _∈⟦_⟧·_ : ∀ {R} → R → ParserProg R → List NamePart → Set₁ where
@@ -216,7 +216,7 @@ module Semantics-⊕ where
     hiding (sound; complete)
 
   infix  60 <$>_
-  infixl 50 _⊛_
+  infixl 50 _⊛_ _⊛∞_
   infix  4  _⊕_∈⟦_⟧·_
 
   data _⊕_∈⟦_⟧·_ : ∀ {R} →

@@ -272,10 +272,12 @@ private
   ex : shiftʳ x ((a , y) ∷ (b , z) ∷ []) ≡ ((x , a) ∷ (y , b) ∷ [] , z)
   ex = refl
 
-  exʳ : chain≥-combine right x ((_+_ , y) ∷ (_*_ , z) ∷ []) ≡ x + (y * z)
+  exʳ : chain≥-combine right x ((_+_ , y) ∷ (_*_ , z) ∷ []) ≡
+        (x + (y * z))
   exʳ = refl
 
-  exˡ : chain≥-combine left  x ((_+_ , y) ∷ (_*_ , z) ∷ []) ≡ (x + y) * z
+  exˡ : chain≥-combine left  x ((_+_ , y) ∷ (_*_ , z) ∷ []) ≡
+        ((x + y) * z)
   exˡ = refl
 
 ------------------------------------------------------------------------
