@@ -8,7 +8,6 @@ open import Algebra
 open import Coinduction
 open import Function using (const)
 open import Data.Bool using (Bool; true; false)
-open import Data.Empty using (⊥)
 open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.List as List using (List; []; _∷_; _++_)
 private module LM {A : Set} = Monoid (List.monoid A)
@@ -17,12 +16,9 @@ open import Data.Maybe using (Maybe; just; nothing; maybe)
 open import Data.Vec using (Vec; []; _∷_)
 open import Data.Product
 import Data.String as String
-open import Data.Unit using (⊤)
-open import Level using (Lift)
 open import Relation.Binary
 open DecSetoid String.decSetoid using (_≟_)
 open import Relation.Nullary
-open import Relation.Binary.HeterogeneousEquality using (_≅_; refl)
 open import Relation.Binary.PropositionalEquality as P using (_≡_; refl)
 
 open import TotalParserCombinators.Parser
@@ -93,46 +89,6 @@ data ParserProg : Set → Set₁ where
                                     ⊛′ ♯ ⟦ p between (t′ ∷ ts) ⟧
 ⟦ p₁ ∥ p₂            ⟧ = ,_ <$>′ ⟦ p₁ ⟧
                        ∣         ⟦ p₂ ⟧
-
--- No confusion for ParserProg, following McBride, Goguen and McKinna.
-
-No-confusion : {R₁ R₂ : Set} → ParserProg R₁ → ParserProg R₂ → Set₁
-No-confusion fail fail = Lift ⊤
-No-confusion (_∣_ {R = R₁} p₁₁ p₂₁)
-             (_∣_ {R = R₂} p₁₂ p₂₂) =
-             R₁ ≡ R₂ × p₁₁ ≅ p₁₂ × p₂₁ ≅ p₂₂
-No-confusion (_⊛_ {R₁ = R₁₁} {R₂ = R₂₁} p₁₁ p₂₁)
-             (_⊛_ {R₁ = R₁₂} {R₂ = R₂₂} p₁₂ p₂₂) =
-             R₁₁ ≡ R₁₂ × R₂₁ ≡ R₂₂ × p₁₁ ≅ p₁₂ × p₂₁ ≅ p₂₂
-No-confusion (_⊛∞_ {R₁ = R₁₁} {R₂ = R₂₁} p₁₁ p₂₁)
-             (_⊛∞_ {R₁ = R₁₂} {R₂ = R₂₂} p₁₂ p₂₂) =
-             R₁₁ ≡ R₁₂ × R₂₁ ≡ R₂₂ × p₁₁ ≅ p₁₂ × p₂₁ ≅ p₂₂
-No-confusion (_<$>_ {R₁ = R₁₁} {R₂ = R₂₁} f₁ p₁)
-             (_<$>_ {R₁ = R₁₂} {R₂ = R₂₂} f₂ p₂) =
-             R₁₁ ≡ R₁₂ × R₂₁ ≡ R₂₂ × f₁ ≅ f₂ × p₁ ≅ p₂
-No-confusion (_+ {R = R₁} p₁)
-             (_+ {R = R₂} p₂) =
-             R₁ ≡ R₂ × p₁ ≅ p₂
-No-confusion (_between_ {R = R₁} {n = n₁} p₁ toks₁)
-             (_between_ {R = R₂} {n = n₂} p₂ toks₂) =
-             R₁ ≡ R₂ × n₁ ≡ n₂ × p₁ ≅ p₂ × toks₁ ≅ toks₂
-No-confusion (_∥_ {I = I₁} {i = i₁} {R = R₁} p₁₁ p₂₁)
-             (_∥_ {I = I₂} {i = i₂} {R = R₂} p₁₂ p₂₂) =
-             I₁ ≡ I₂ × i₁ ≅ i₂ × R₁ ≅ R₂ × p₁₁ ≅ p₁₂ × p₂₁ ≅ p₂₂
-No-confusion _ _ = Lift ⊥
-
-no-confusion :
-  {R₁ R₂ : Set} {p₁ : ParserProg R₁} {p₂ : ParserProg R₂} →
-  R₁ ≡ R₂ → p₁ ≅ p₂ → No-confusion p₁ p₂
-no-confusion {p₁ = fail}        refl refl = _
-no-confusion {p₁ = _ ∣ _}       refl refl = refl , refl , refl
-no-confusion {p₁ = _ ⊛ _}       refl refl = refl , refl , refl , refl
-no-confusion {p₁ = _ ⊛∞ _}      refl refl = refl , refl , refl , refl
-no-confusion {p₁ = _ <$> _}     refl refl = refl , refl , refl , refl
-no-confusion {p₁ = _ +}         refl refl = refl , refl
-no-confusion {p₁ = _ between _} refl refl = refl , refl , refl , refl
-no-confusion {p₁ = _ ∥ _}       refl refl = refl , refl , refl , refl ,
-                                            refl
 
 ------------------------------------------------------------------------
 -- Semantics of the programs

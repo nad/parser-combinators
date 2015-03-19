@@ -21,7 +21,6 @@ module Mixfix.Acyclic.Lib where
 open import Algebra
 open import Coinduction
 open import Data.Bool using (Bool; true; false)
-open import Data.Empty using (⊥)
 open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.List as List using (List; []; _∷_; _++_)
 private module LM {A : Set} = Monoid (List.monoid A)
@@ -29,13 +28,10 @@ open import Data.List.NonEmpty using (List⁺; [_]; _∷⁺_; _⁺∷ʳ_)
 open import Data.Vec using (Vec; []; _∷_)
 open import Data.Product
 import Data.String as String
-open import Data.Unit using (⊤)
 open import Relation.Binary
 open DecSetoid String.decSetoid using (_≟_)
-open import Level using (Lift; lift)
 open import Relation.Nullary
-open import Relation.Binary.HeterogeneousEquality using (_≅_; refl)
-open import Relation.Binary.PropositionalEquality as P
+open import Relation.Binary.PropositionalEquality
   using (_≡_; refl; cong)
 
 import StructurallyRecursiveDescentParsing.Simplified as Simplified
@@ -116,42 +112,6 @@ private
 ⟦ p between (t ∷ t′ ∷ ts) ⟧ = tok t !>>= λ _ → ♯
                               ⟦ _∷_ <$> ♭ p ⊛ (p between (t′ ∷ ts)) ⟧
 ⟦ p₁ ∥ p₂                 ⟧ = (⟦ p₁ ⟧ !>>= λ x → ♯′ return (, x)) ∣ ⟦ p₂ ⟧
-
--- No confusion for ParserProg, following McBride, Goguen and McKinna.
-
-No-confusion : {R₁ R₂ : Set} → ParserProg R₁ → ParserProg R₂ → Set₁
-No-confusion fail fail = Lift ⊤
-No-confusion (_∣_ {R = R₁} p₁₁ p₂₁)
-             (_∣_ {R = R₂} p₁₂ p₂₂) =
-             R₁ ≡ R₂ × p₁₁ ≅ p₁₂ × p₂₁ ≅ p₂₂
-No-confusion (_⊛_ {R₁ = R₁₁} {R₂ = R₂₁} p₁₁ p₂₁)
-             (_⊛_ {R₁ = R₁₂} {R₂ = R₂₂} p₁₂ p₂₂) =
-             R₁₁ ≡ R₁₂ × R₂₁ ≡ R₂₂ × p₁₁ ≅ p₁₂ × p₂₁ ≅ p₂₂
-No-confusion (_<$>_ {R₁ = R₁₁} {R₂ = R₂₁} f₁ p₁)
-             (_<$>_ {R₁ = R₁₂} {R₂ = R₂₂} f₂ p₂) =
-             R₁₁ ≡ R₁₂ × R₂₁ ≡ R₂₂ × f₁ ≅ f₂ × p₁ ≅ p₂
-No-confusion (_+ {R = R₁} p₁)
-             (_+ {R = R₂} p₂) =
-             R₁ ≡ R₂ × p₁ ≅ p₂
-No-confusion (_between_ {R = R₁} {n = n₁} p₁ toks₁)
-             (_between_ {R = R₂} {n = n₂} p₂ toks₂) =
-             R₁ ≡ R₂ × n₁ ≡ n₂ × p₁ ≅ p₂ × toks₁ ≅ toks₂
-No-confusion (_∥_ {I = I₁} {i = i₁} {R = R₁} p₁₁ p₂₁)
-             (_∥_ {I = I₂} {i = i₂} {R = R₂} p₁₂ p₂₂) =
-             I₁ ≡ I₂ × i₁ ≅ i₂ × R₁ ≅ R₂ × p₁₁ ≅ p₁₂ × p₂₁ ≅ p₂₂
-No-confusion _ _ = Lift ⊥
-
-no-confusion :
-  {R₁ R₂ : Set} {p₁ : ParserProg R₁} {p₂ : ParserProg R₂} →
-  R₁ ≡ R₂ → p₁ ≅ p₂ → No-confusion p₁ p₂
-no-confusion {p₁ = fail}        refl refl = _
-no-confusion {p₁ = _ ∣ _}       refl refl = refl , refl , refl
-no-confusion {p₁ = _ ⊛ _}       refl refl = refl , refl , refl , refl
-no-confusion {p₁ = _ <$> _}     refl refl = refl , refl , refl , refl
-no-confusion {p₁ = _ +}         refl refl = refl , refl
-no-confusion {p₁ = _ between _} refl refl = refl , refl , refl , refl
-no-confusion {p₁ = _ ∥ _}       refl refl = refl , refl , refl , refl ,
-                                            refl
 
 ------------------------------------------------------------------------
 -- Semantics of the programs
@@ -394,49 +354,11 @@ module Semantics-⊕ where
 
   -- Some lemmas.
 
-  +-elim :
-    ∀ {R} {p : ParserProg R} {s}
-    (P : ∀ {xs s₁} → xs ⊕ s ∈⟦ p + ⟧· s₁ → Set₁) →
-    (∀ {x s₁} (x∈p : x ⊕ s ∈⟦ p ⟧· s₁) → P (+-[] x∈p)) →
-    (∀ {x s₁ s₂ xs}
-       (x∈p : x ⊕ s₂ ∈⟦ p ⟧· s₁) (xs∈p+ : xs ⊕ s ∈⟦ p + ⟧· s₂) →
-       P xs∈p+ → P (+-∷ x∈p xs∈p+)) →
-    ∀ {xs s₁} (xs∈p+ : xs ⊕ s ∈⟦ p + ⟧· s₁) → P xs∈p+
-  +-elim {R} {p} {s} P n c xs∈p+ = +-elim′ xs∈p+ refl refl refl
-    where
-    cast :
-      ∀ {R R′} {p : ParserProg R} {p′ : ParserProg R′} {xs xs′ s₁ s₂} →
-      R ≡ R′ → p ≅ p′ → xs ≅ xs′ →
-      xs ⊕ s₂ ∈⟦ p ⟧· s₁ → xs′ ⊕ s₂ ∈⟦ p′ ⟧· s₁
-    cast refl refl refl xs∈ = xs∈
-
-    +-elim′ :
-      ∀ {R′} {p′ : ParserProg R′} {xs xs′ s₁}
-      (xs′∈p′ : xs′ ⊕ s ∈⟦ p′ ⟧· s₁)
-      (R′≡ : R′ ≡ List⁺ R) (p′≅ : p′ ≅ p +) (xs′≅ : xs′ ≅ xs) →
-      P (cast R′≡ p′≅ xs′≅ xs′∈p′)
-    +-elim′ xs′∈p′          R′≡ p′≅  xs′≅ with no-confusion R′≡ p′≅
-    +-elim′ (+-[] x∈p)      R′≡ refl xs′≅ | refl , refl with R′≡ | xs′≅
-    +-elim′ (+-[] x∈p)      _   refl _    | refl , refl | refl | refl = n x∈p
-    +-elim′ (+-∷ x∈p xs∈p+) R′≡ refl xs′≅ | refl , refl with R′≡ | xs′≅
-    +-elim′ (+-∷ x∈p xs∈p+) _   refl _    | refl , refl | refl | refl = c x∈p xs∈p+ (+-elim P n c xs∈p+)
-    +-elim′ (∣ˡ _)          _   _    _    | lift ()
-    +-elim′ (∣ʳ _)          _   _    _    | lift ()
-    +-elim′ (_ ⊛ _)         _   _    _    | lift ()
-    +-elim′ (<$> _)         _   _    _    | lift ()
-    +-elim′ between-[]      _   _    _    | lift ()
-    +-elim′ (between-∷ _ _) _   _    _    | lift ()
-    +-elim′ (∥ˡ _)          _   _    _    | lift ()
-    +-elim′ (∥ʳ _)          _   _    _    | lift ()
-
   +-∷ʳ : ∀ {R x s s₁ s₂ xs} {p : ParserProg R} →
          xs ⊕ s₁ ∈⟦ p + ⟧· s → x ⊕ s₂ ∈⟦ p ⟧· s₁ →
          xs ⁺∷ʳ x ⊕ s₂ ∈⟦ p + ⟧· s
-  +-∷ʳ xs∈p+ y∈p =
-    +-elim (λ {xs s} _ → xs ⁺∷ʳ _ ⊕ _ ∈⟦ _ ⟧· s)
-           (λ x∈p   → +-∷ x∈p (+-[] y∈p))
-           (λ x∈p _ → +-∷ x∈p)
-           xs∈p+
+  +-∷ʳ (+-[] x∈p)     y∈p = +-∷ x∈p (+-[] y∈p)
+  +-∷ʳ (+-∷ x∈p xs∈p) y∈p = +-∷ x∈p (+-∷ʳ xs∈p y∈p)
 
   cast∈ : ∀ {R x₁ x₂ s s′} {p : ParserProg R} →
           x₁ ≡ x₂ → x₁ ⊕ s′ ∈⟦ p ⟧· s → x₂ ⊕ s′ ∈⟦ p ⟧· s
