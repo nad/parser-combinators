@@ -24,7 +24,7 @@ open import Data.Bool using (Bool; true; false)
 open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.List as List using (List; []; _∷_; _++_)
 private module LM {A : Set} = Monoid (List.monoid A)
-open import Data.List.NonEmpty using (List⁺; [_]; _∷⁺_; _⁺∷ʳ_)
+open import Data.List.NonEmpty using (List⁺; _∷_; [_]; _∷⁺_; _⁺∷ʳ_)
 open import Data.Vec using (Vec; []; _∷_)
 open import Data.Product
 import Data.String as String
@@ -357,8 +357,8 @@ module Semantics-⊕ where
   +-∷ʳ : ∀ {R x s s₁ s₂ xs} {p : ParserProg R} →
          xs ⊕ s₁ ∈⟦ p + ⟧· s → x ⊕ s₂ ∈⟦ p ⟧· s₁ →
          xs ⁺∷ʳ x ⊕ s₂ ∈⟦ p + ⟧· s
-  +-∷ʳ (+-[] x∈p)     y∈p = +-∷ x∈p (+-[] y∈p)
-  +-∷ʳ (+-∷ x∈p xs∈p) y∈p = +-∷ x∈p (+-∷ʳ xs∈p y∈p)
+  +-∷ʳ {xs = _ ∷ ._} (+-[] x∈p)     y∈p = +-∷ x∈p (+-[] y∈p)
+  +-∷ʳ {xs = _ ∷ ._} (+-∷ x∈p xs∈p) y∈p = +-∷ x∈p (+-∷ʳ xs∈p y∈p)
 
   cast∈ : ∀ {R x₁ x₂ s s′} {p : ParserProg R} →
           x₁ ≡ x₂ → x₁ ⊕ s′ ∈⟦ p ⟧· s → x₂ ⊕ s′ ∈⟦ p ⟧· s

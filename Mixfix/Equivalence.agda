@@ -13,6 +13,7 @@ module Mixfix.Equivalence
 
 open import Function using (_∘_)
 open import Data.List using (List; []; _∷_)
+open import Data.List.NonEmpty using (_∷_)
 open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.Product
 open import Data.Vec using (Vec; []; _∷_)
@@ -73,8 +74,8 @@ module AcyclicToCyclic where
                  fs          ⊕ s′ ∈⟦ A.preRight +       ⟧A· s  →
                  e           ⊕ s″ ∈⟦ Acyclic.precs sucs ⟧A· s′ →
                  A.appʳ fs e ⊕ s″ ∈⟦ C.preRight⁺        ⟧C· s
-      preRight⁺ (+-[] f∈)     ↑∈ = preRight f∈ ⊛∞ ∣ʳ (<$> precs _ ↑∈)
-      preRight⁺ (+-∷  f∈ fs∈) ↑∈ = preRight f∈ ⊛∞ ∣ˡ (<$> preRight⁺ fs∈ ↑∈)
+      preRight⁺ {fs = _ ∷ ._} (+-[] f∈)     ↑∈ = preRight f∈ ⊛∞ ∣ʳ (<$> precs _ ↑∈)
+      preRight⁺ {fs = _ ∷ ._} (+-∷  f∈ fs∈) ↑∈ = preRight f∈ ⊛∞ ∣ˡ (<$> preRight⁺ fs∈ ↑∈)
 
       postLeft : ∀ {s s′ f} →
                  f ⊕ s′ ∈⟦ A.postLeft ⟧A· s →
@@ -87,8 +88,8 @@ module AcyclicToCyclic where
                                          ∣ tighter <$> C.p↑ ⟧C· s →
                   fs               ⊕ s″ ∈⟦ A.postLeft +       ⟧A· s′ →
                   ALemma.appˡ o fs ⊕ s″ ∈⟦ C.postLeft⁺        ⟧C· s
-      postLeft⁺ o∈ (+-[] f∈)     =                     <$> o∈ ⊛∞ postLeft f∈
-      postLeft⁺ o∈ (+-∷  f∈ fs∈) = postLeft⁺ (∣ˡ (<$> (<$> o∈ ⊛∞ postLeft f∈))) fs∈
+      postLeft⁺ {fs = _ ∷ ._} o∈ (+-[] f∈)     =                     <$> o∈ ⊛∞ postLeft f∈
+      postLeft⁺ {fs = _ ∷ ._} o∈ (+-∷  f∈ fs∈) = postLeft⁺ (∣ˡ (<$> (<$> o∈ ⊛∞ postLeft f∈))) fs∈
 
       prec′ : ∀ {s s′ assoc} {e : ExprIn p assoc} →
               (, e) ⊕ s′ ∈⟦ Acyclic.prec p ⟧A· s →
