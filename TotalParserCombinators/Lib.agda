@@ -74,28 +74,10 @@ module KleeneStar where
 
   -- The implementation is correct.
 
-  mutual
-
-    sound : ∀ {Tok R xs s} {p : Parser Tok R []} →
-            xs ∈ p ⋆ · s → xs ∈[ p ]⋆· s
-    sound xs∈ = sound′ xs∈ H.refl
-
-    private
-
-      sound′ : ∀ {Tok R xs ys s}
-                 {p : Parser Tok R []} {p⋆ : Parser Tok (List R) ys} →
-               xs ∈ p⋆ · s → p⋆ ≅ p ⋆ → xs ∈[ p ]⋆· s
-      sound′ (∣-left []∈)              H.refl with []∈
-      ... | S.return = []
-      sound′ (∣-right .([ [] ]) x∷xs∈) H.refl with x∷xs∈
-      ... | <$> x∈p ⊛ xs∈p⋆ = x∈p ∷ sound xs∈p⋆
-      sound′ S.return     ()
-      sound′ S.token      ()
-      sound′ (<$> _)      ()
-      sound′ (_ ⊛ _)      ()
-      sound′ (_ >>= _)    ()
-      sound′ (nonempty _) ()
-      sound′ (cast _)     ()
+  sound : ∀ {Tok R xs s} {p : Parser Tok R []} →
+          xs ∈ p ⋆ · s → xs ∈[ p ]⋆· s
+  sound (∣-left S.return)              = []
+  sound (∣-right ._ (<$> x∈p ⊛ xs∈p⋆)) = x∈p ∷ sound xs∈p⋆
 
   complete : ∀ {Tok R xs s} {p : Parser Tok R []} →
              xs ∈[ p ]⋆· s → xs ∈ p ⋆ · s
@@ -105,34 +87,15 @@ module KleeneStar where
   complete (_∷_ {s₁ = _ ∷ _} x∈p xs∈p⋆) =
     ∣-right [ [] ] ([ ○ - ◌ ] <$> x∈p ⊛ complete xs∈p⋆)
 
-  mutual
-
-    complete∘sound :
-      ∀ {Tok R xs s} {p : Parser Tok R []} (xs∈ : xs ∈ p ⋆ · s) →
-      complete (sound xs∈) ≡ xs∈
-    complete∘sound xs∈ = H.≅-to-≡ $ complete∘sound′ xs∈ H.refl
-
-    private
-
-      complete∘sound′ :
-        ∀ {Tok R xs ys s}
-          {p : Parser Tok R []} {p⋆ : Parser Tok (List R) ys}
-        (xs∈ : xs ∈ p⋆ · s) (eq : p⋆ ≅ p ⋆) →
-        complete (sound′ xs∈ eq) ≅ xs∈
-      complete∘sound′ (∣-left []∈)              H.refl with []∈
-      ... | S.return = H.refl
-      complete∘sound′ (∣-right .([ [] ]) x∷xs∈) H.refl with x∷xs∈
-      ... | _⊛_ {s₁ = _ ∷ _} (<$> x∈p) xs∈p⋆
-            rewrite complete∘sound xs∈p⋆ = H.refl
-      ... | _⊛_ {s₁ = []}    (<$> x∈p) xs∈p⋆ with I.complete x∈p
-      ...   | ()
-      complete∘sound′ S.return     ()
-      complete∘sound′ S.token      ()
-      complete∘sound′ (<$> _)      ()
-      complete∘sound′ (_ ⊛ _)      ()
-      complete∘sound′ (_ >>= _)    ()
-      complete∘sound′ (nonempty _) ()
-      complete∘sound′ (cast _)     ()
+  complete∘sound :
+    ∀ {Tok R xs s} {p : Parser Tok R []} (xs∈ : xs ∈ p ⋆ · s) →
+    complete (sound xs∈) ≡ xs∈
+  complete∘sound (∣-left S.return) = P.refl
+  complete∘sound (∣-right ._ (_⊛_ {s₁ = _ ∷ _} (<$> x∈p) xs∈p⋆))
+    rewrite complete∘sound xs∈p⋆ = P.refl
+  complete∘sound (∣-right ._ (_⊛_ {s₁ = []}    (<$> x∈p) xs∈p⋆))
+    with I.complete x∈p
+  ... | ()
 
   sound∘complete : ∀ {Tok R xs s} {p : Parser Tok R []}
                    (xs∈ : xs ∈[ p ]⋆· s) →
