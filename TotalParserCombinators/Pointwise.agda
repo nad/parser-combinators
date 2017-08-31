@@ -5,9 +5,9 @@
 {-# OPTIONS --universe-polymorphism #-}
 
 open import Data.List
-import Data.List.Any as Any
+open import Data.List.Any.Membership.Propositional
+  using (_∈_) renaming (_∼[_]_ to _List-∼[_]_)
 open import Function.Related as Related using (Kind)
-open Any.Membership-≡ using (_∈_) renaming (_∼[_]_ to _List-∼[_]_)
 
 module TotalParserCombinators.Pointwise
   (R₁ R₂ : Set) {R₃ : Set}

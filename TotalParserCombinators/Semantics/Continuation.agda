@@ -7,14 +7,14 @@ module TotalParserCombinators.Semantics.Continuation where
 open import Algebra
 open import Coinduction
 open import Data.List as List
-import Data.List.Any as Any
+open import Data.List.Any.Membership.Propositional
+  using (bag) renaming (_∼[_]_ to _List-∼[_]_)
 import Data.List.Properties as ListProp
 open import Data.Maybe using (Maybe)
 open import Data.Product as Prod
 open import Function
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 
-open Any.Membership-≡ using (bag) renaming (_∼[_]_ to _List-∼[_]_)
 private
   module LM {Tok : Set} = Monoid (List.monoid Tok)
 

@@ -9,7 +9,9 @@ module TotalParserCombinators.Not where
 open import Data.Bool
 open import Data.Empty
 open import Data.List
-open import Data.List.Any as Any using (here; there)
+open import Data.List.Any using (here; there)
+open import Data.List.Any.Membership.Propositional
+  using (_∈_) renaming (_∼[_]_ to _List-∼[_]_)
 open import Data.Product
 open import Data.Unit
 open import Function
@@ -21,8 +23,6 @@ import Function.Related.TypeIsomorphisms as Iso
 open import Level
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 import Relation.Binary.Sigma.Pointwise as Σ
-
-open Any.Membership-≡ using (_∈_) renaming (_∼[_]_ to _List-∼[_]_)
 
 open import TotalParserCombinators.Congruence as C using (_∼[_]P_; _≅P_)
 open import TotalParserCombinators.Derivative using (D)

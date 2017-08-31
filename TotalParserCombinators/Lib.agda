@@ -13,10 +13,11 @@ open import Function.Inverse using (_↔_; module Inverse)
 open import Data.Bool
 open import Data.Char as Char using (Char; _==_)
 open import Data.List as List
-open import Data.List.Any as Any
-import Data.List.Any.Membership as ∈
+open import Data.List.Any
+open import Data.List.Any.Membership.Propositional
+import Data.List.Any.Membership.Propositional.Properties as ∈
 open import Data.Maybe
-open import Data.Nat
+open import Data.Nat hiding (_^_)
 open import Data.Product as Prod
 open import Data.Unit using (⊤)
 open import Data.Vec as Vec using (Vec; []; _∷_)
@@ -27,7 +28,6 @@ open import Relation.Binary.PropositionalEquality as P using (_≡_)
 open import Relation.Nullary
 open import Relation.Nullary.Decidable
 
-open Any.Membership-≡
 private
   open module ListMonad = RawMonad {f = Level.zero} List.monad
          using ()

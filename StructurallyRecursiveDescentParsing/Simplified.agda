@@ -8,7 +8,7 @@ open import Category.Monad
 open import Coinduction
 open import Data.Bool
 open import Data.List as List using (List; _∷_; []; _++_)
-import Data.List.Any as Any
+open import Data.List.Any.Membership.Propositional
 import Data.List.Properties as ListProp
 open import Data.List.NonEmpty as List⁺
   using (List⁺; _∷_; [_]; _⁺++_; head; tail)
@@ -17,7 +17,6 @@ open import Level
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 
-open Any.Membership-≡
 open RawMonad {f = zero} List.monad using () renaming (_>>=_ to _>>=′_)
 open RawMonad {f = zero} List⁺.monad using () renaming (_>>=_ to _>>=⁺_)
 private

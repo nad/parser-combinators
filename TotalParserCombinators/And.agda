@@ -7,7 +7,7 @@ module TotalParserCombinators.And where
 open import Category.Monad
 import Data.List as List
 open import Data.List.Any.BagAndSetEquality
-open import Data.List.Any.Membership
+open import Data.List.Any.Membership.Propositional.Properties
 open import Data.Product
 open import Function
 open import Function.Inverse using (_↔_)

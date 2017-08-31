@@ -15,16 +15,15 @@ module TotalParserCombinators.Congruence where
 
 open import Coinduction
 open import Data.List
-import Data.List.Any as Any
+open import Data.List.Any.Membership.Propositional
+  using (bag) renaming (_∼[_]_ to _List-∼[_]_)
 open import Data.Maybe
-open import Data.Nat
+open import Data.Nat hiding (_^_)
 open import Data.Product
 open import Data.Product.N-ary
 open import Function
 open import Function.Related using (Symmetric-kind; ⌊_⌋)
 open import Relation.Binary.PropositionalEquality using (_≡_; _≗_)
-
-open Any.Membership-≡ using (bag) renaming (_∼[_]_ to _List-∼[_]_)
 
 open import TotalParserCombinators.Derivative using (D)
 open import TotalParserCombinators.CoinductiveEquality as CE

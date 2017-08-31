@@ -6,11 +6,11 @@ module TotalParserCombinators.CoinductiveEquality where
 
 open import Coinduction
 open import Data.List
-import Data.List.Any as Any
+open import Data.List.Any.Membership.Propositional
+  using (_∈_) renaming (_∼[_]_ to _List-∼[_]_)
 open import Function.Equivalence as Eq using (_⇔_)
 import Function.Related as Related
 
-open Any.Membership-≡ using (_∈_) renaming (_∼[_]_ to _List-∼[_]_)
 open Related.EquationalReasoning
 
 open import TotalParserCombinators.Parser

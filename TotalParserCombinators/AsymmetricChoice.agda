@@ -8,7 +8,9 @@ module TotalParserCombinators.AsymmetricChoice where
 
 open import Data.Empty
 open import Data.List
-open import Data.List.Any as Any using (here)
+open import Data.List.Any using (here)
+open import Data.List.Any.Membership.Propositional
+  using (_∈_) renaming (_∼[_]_ to _List-∼[_]_)
 open import Data.Product
 open import Function
 open import Function.Equality using (_⟨$⟩_)
@@ -18,8 +20,6 @@ open import Function.Related as Related
 open import Function.Related.TypeIsomorphisms
 import Relation.Binary.PropositionalEquality as P
 import Relation.Binary.Sigma.Pointwise as Σ
-
-open Any.Membership-≡ using (_∈_) renaming (_∼[_]_ to _List-∼[_]_)
 
 open import TotalParserCombinators.Congruence using (_∼[_]P_; _≅P_)
 open import TotalParserCombinators.Derivative using (D)

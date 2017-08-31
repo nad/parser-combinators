@@ -15,8 +15,8 @@ module Mixfix.Acyclic.Grammar
 
 open import Coinduction
 open import Data.List using (List; []; _∷_)
-open import Data.List.Any as Any using (here; there)
-open Any.Membership-≡ using (_∈_)
+open import Data.List.Any using (here; there)
+open import Data.List.Any.Membership.Propositional using (_∈_)
 open import Data.List.NonEmpty using (foldr; foldl)
 open import Data.Product
 open import Data.Bool

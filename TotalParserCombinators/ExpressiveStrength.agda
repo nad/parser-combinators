@@ -10,7 +10,7 @@ open import Coinduction
 open import Data.Bool
 open import Data.List as List
 open import Data.List.Any
-open Membership-≡
+open import Data.List.Any.Membership.Propositional
 import Data.List.Properties as ListProp
 open import Data.List.Reverse
 open import Data.Product

@@ -11,14 +11,14 @@ open import Algebra
 open import Category.Monad
 open import Coinduction
 open import Data.List as List
-import Data.List.Any as Any
+open import Data.List.Any.Membership.Propositional
+  using (bag) renaming (_∼[_]_ to _List-∼[_]_)
 import Data.List.Any.BagAndSetEquality as Eq
 open import Data.Maybe
 open import Function
 import Level
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 
-open Any.Membership-≡ using (bag) renaming (_∼[_]_ to _List-∼[_]_)
 private
   module BagMonoid {k} {A : Set} =
     CommutativeMonoid (Eq.commutativeMonoid k A)

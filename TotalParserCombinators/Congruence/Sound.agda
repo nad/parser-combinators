@@ -7,9 +7,10 @@ module TotalParserCombinators.Congruence.Sound where
 open import Category.Monad
 open import Coinduction
 open import Data.List as List
-import Data.List.Properties as ListProp
-import Data.List.Any as Any
 open import Data.List.Any.BagAndSetEquality
+open import Data.List.Any.Membership.Propositional
+  using (bag; _∈_; [_]-Order) renaming (_∼[_]_ to _List-∼[_]_)
+import Data.List.Properties as ListProp
 open import Data.Maybe
 open import Data.Product
 open import Function
@@ -18,8 +19,6 @@ open import Level
 open import Relation.Binary
 import Relation.Binary.PropositionalEquality as P
 
-open Any.Membership-≡ using (bag; _∈_; [_]-Order)
-                      renaming (_∼[_]_ to _List-∼[_]_)
 open Related.EquationalReasoning
   renaming (_∼⟨_⟩_ to _∼⟨_⟩′_; _∎ to _∎′; sym to sym′)
 open RawMonad {f = zero} List.monad

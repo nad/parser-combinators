@@ -9,14 +9,13 @@ open import Category.Monad
 open import Coinduction
 open import Data.List as List
 open import Data.Maybe using (Maybe; nothing; just)
-import Data.List.Any as Any
+open import Data.List.Any.Membership.Propositional
 import Data.List.Properties as ListProp
 open import Data.Product using (proj₂)
 open import Function
 open import Level
 open import Relation.Binary.PropositionalEquality
 
-open Any.Membership-≡
 open RawMonadPlus {f = zero} List.monadPlus
   using ()
   renaming ( return to return′

@@ -19,6 +19,7 @@ open import Data.List as List
 open import Data.List.Reverse
 open import Data.Nat as Nat
 open import Data.Nat.InfinitelyOften as Inf
+import Data.Nat.Properties as NatProp
 open import Data.Product
 open import Data.Sum
 open import Relation.Binary
@@ -28,7 +29,7 @@ open import Relation.Nullary.Decidable
 open import Relation.Nullary.Negation
 private
   module ListMonoid {A : Set} = Monoid (List.monoid A)
-  module NatOrder             = DecTotalOrder Nat.decTotalOrder
+  module NatOrder             = DecTotalOrder NatProp.≤-decTotalOrder
 
 import TotalRecognisers.LeftRecursion
 open TotalRecognisers.LeftRecursion Bool using (_∧_; left-zero)

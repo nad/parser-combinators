@@ -5,7 +5,7 @@
 module TotalParserCombinators.BreadthFirst where
 
 open import Data.List
-import Data.List.Any as Any
+open import Data.List.Any.Membership.Propositional
 open import Data.Product
 open import Function
 open import Function.Equality using (_⟨$⟩_)
@@ -13,8 +13,6 @@ open import Function.Inverse using (_↔_; module Inverse)
 open import Relation.Binary.HeterogeneousEquality as H
   using () renaming (_≅_ to _≅H_)
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
-
-open Any.Membership-≡
 
 open import TotalParserCombinators.Congruence using (_≅P_; _∎)
 import TotalParserCombinators.Congruence.Sound as CS

@@ -6,8 +6,8 @@ module Mixfix.Expr where
 
 open import Data.Vec  using (Vec)
 open import Data.List using (List; []; _∷_)
-open import Data.List.Any as Any using (here; there)
-open Any.Membership-≡ using (_∈_)
+open import Data.List.Any using (here; there)
+open import Data.List.Any.Membership.Propositional using (_∈_)
 open import Data.Product using (∃; _,_)
 
 open import Mixfix.Fixity

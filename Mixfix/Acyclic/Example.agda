@@ -8,8 +8,8 @@ open import Coinduction
 open import Data.Vec using ([]; _∷_; [_])
 open import Data.List as List
   using (List; []; _∷_) renaming ([_] to L[_])
-open import Data.List.Any as Any using (here; there)
-open Any.Membership-≡ using (_∈_)
+open import Data.List.Any using (here; there)
+open import Data.List.Any.Membership.Propositional using (_∈_)
 import Data.Colist as Colist
 open import Data.Product using (∃₂; ,_)
 open import Data.Unit using (⊤)

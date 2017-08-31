@@ -14,8 +14,8 @@ module Mixfix.Cyclic.Grammar
 open import Coinduction
 open import Function using (flip; _$_)
 open import Data.List using (List; []; _∷_)
-open import Data.List.Any as Any using (here; there)
-open Any.Membership-≡ using (_∈_)
+open import Data.List.Any using (here; there)
+open import Data.List.Any.Membership.Propositional using (_∈_)
 open import Data.Product
 import Relation.Binary.PropositionalEquality as P
 

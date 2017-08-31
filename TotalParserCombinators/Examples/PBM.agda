@@ -17,7 +17,7 @@ open import Data.Bool
 open import Data.Char as Char using (Char; _==_)
 open import Data.List as List using (List)
 open import Data.Maybe
-open import Data.Nat
+open import Data.Nat hiding (_^_)
 import Data.Nat.Show as ℕ
 open import Data.String as String
   using (String) renaming (_++_ to _<+>_)
