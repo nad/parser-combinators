@@ -110,7 +110,7 @@ pbm =
 
 -- module Example where
 
---   open Vec
+--   open Vec.Vec
 
 --   image = toPBM ((white ∷ black ∷ []) ∷
 --                  (black ∷ white ∷ []) ∷
