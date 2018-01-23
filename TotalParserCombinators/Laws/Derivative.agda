@@ -8,7 +8,7 @@ open import Algebra
 open import Coinduction
 open import Data.List
 import Data.List.Any.BagAndSetEquality as BSEq
-import Data.List.Properties as ListProp
+import Data.List.Categorical as List
 open import Data.Maybe using (Maybe); open Data.Maybe.Maybe
 open import Function using (_∘_; _$_)
 
@@ -63,7 +63,7 @@ mutual
   left-zero-⊛ : ∀ {Tok R₁ R₂ xs} (p : Parser Tok R₁ xs) →
                 fail ⊛ p ≅P fail {R = R₂}
   left-zero-⊛ {xs = xs} p =
-    BagMonoid.reflexive (ListProp.Applicative.left-zero xs) ∷ λ t → ♯ (
+    BagMonoid.reflexive (List.Applicative.left-zero xs) ∷ λ t → ♯ (
       D t (fail ⊛ p)           ≅⟨ D-⊛ fail p ⟩
       fail ⊛ p ∣ fail ⊛ D t p  ≅⟨ left-zero-⊛ p ∣ left-zero-⊛ (D t p) ⟩
       fail ∣ fail              ≅⟨ AdditiveMonoid.right-identity fail ⟩
@@ -74,7 +74,7 @@ mutual
 right-zero-⊛ : ∀ {Tok R₁ R₂ fs} (p : Parser Tok (R₁ → R₂) fs) →
                p ⊛ fail ≅P fail
 right-zero-⊛ {fs = fs} p =
-  BagMonoid.reflexive (ListProp.Applicative.right-zero fs) ∷ λ t → ♯ (
+  BagMonoid.reflexive (List.Applicative.right-zero fs) ∷ λ t → ♯ (
     D t (p ⊛ fail)                    ≅⟨ D-⊛ p fail ⟩
     D t p ⊛ fail ∣ return⋆ fs ⊛ fail  ≅⟨ right-zero-⊛ (D t p) ∣ right-zero-⊛ (return⋆ fs) ⟩
     fail ∣ fail                       ≅⟨ AdditiveMonoid.left-identity fail ⟩
@@ -125,7 +125,7 @@ mutual
                  (p : (x : R₁) → Parser Tok R₂ (f x)) →
                  fail >>= p ≅P fail
   left-zero->>= {f = f} p =
-    BagMonoid.reflexive (ListProp.Monad.left-zero f) ∷ λ t → ♯ (
+    BagMonoid.reflexive (List.MonadProperties.left-zero f) ∷ λ t → ♯ (
       D t (fail >>= p)                         ≅⟨ D->>= {t = t} fail p ⟩
       fail >>= p ∣ fail >>= (λ x → D t (p x))  ≅⟨ left-zero->>= p ∣ left-zero->>= (λ x → D t (p x)) ⟩
       fail ∣ fail                              ≅⟨ AdditiveMonoid.right-identity fail ⟩
@@ -137,7 +137,7 @@ right-zero->>= : ∀ {Tok R₁ R₂} {xs : List R₁}
                 (p : Parser Tok R₁ xs) →
                 p >>= (λ _ → fail) ≅P fail {Tok = Tok} {R = R₂}
 right-zero->>= {xs = xs} p =
-  BagMonoid.reflexive (ListProp.Monad.right-zero xs) ∷ λ t → ♯ (
+  BagMonoid.reflexive (List.MonadProperties.right-zero xs) ∷ λ t → ♯ (
     D t (p >>= λ _ → fail)                                ≅⟨ D->>= p (λ _ → fail) ⟩
     D t p >>= (λ _ → fail) ∣ return⋆ xs >>= (λ _ → fail)  ≅⟨ right-zero->>= (D t p) ∣ right-zero->>= (return⋆ xs) ⟩
     fail ∣ fail                                           ≅⟨ AdditiveMonoid.left-identity fail ⟩

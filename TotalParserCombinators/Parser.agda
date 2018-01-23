@@ -7,16 +7,17 @@ module TotalParserCombinators.Parser where
 open import Algebra
 open import Category.Monad
 open import Coinduction
-open import Data.List as List
+open import Data.List
 open import Data.Maybe using (Maybe; nothing; just)
 open import Data.List.Any.Membership.Propositional
-import Data.List.Properties as ListProp
+open import Data.List.Categorical as ListMonad
+  using () renaming (module MonadProperties to ListMonadProp)
 open import Data.Product using (proj₂)
 open import Function
 open import Level
 open import Relation.Binary.PropositionalEquality
 
-open RawMonadPlus {f = zero} List.monadPlus
+open RawMonadPlus {f = zero} ListMonad.monadPlus
   using ()
   renaming ( return to return′
            ; ∅      to fail′
@@ -61,7 +62,7 @@ module Claims where
 
   ⊛flatten-⊛-flatten : ∀ {A B : Set} (fs : List (A → B)) mxs →
                        fs ⊛flatten mxs ≡ (fs ⊛′ flatten mxs)
-  ⊛flatten-⊛-flatten fs nothing   = sym $ ListProp.Monad.right-zero fs
+  ⊛flatten-⊛-flatten fs nothing   = sym $ ListMonadProp.right-zero fs
   ⊛flatten-⊛-flatten fs (just xs) = refl
 
   ⊛flatten-nothing : {A B : Set} (fs : List (A → B)) →
@@ -72,7 +73,7 @@ module Claims where
                            bind mxs mf ≡ (flatten mxs >>=′ apply mf)
   bind-flatten->>=-apply mxs (just f) = refl
   bind-flatten->>=-apply mxs nothing  =
-    sym $ ListProp.Monad.right-zero (flatten mxs)
+    sym $ ListMonadProp.right-zero (flatten mxs)
 
   bind-nothing : {A B : Set} (mxs : Maybe (List A)) →
                  bind mxs nothing ≡ [] {A = B}

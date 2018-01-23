@@ -6,11 +6,12 @@ module TotalParserCombinators.Derivative.Definition where
 
 open import Category.Monad
 open import Coinduction
-open import Data.List as List using (List; map)
+open import Data.List using (List; map)
+import Data.List.Categorical
 import Data.Maybe; open Data.Maybe.Maybe
 open import Level
 
-open RawMonadPlus {f = zero} List.monadPlus
+open RawMonadPlus {f = zero} Data.List.Categorical.monadPlus
   using ()
   renaming ( return to return′
            ; ∅      to fail′

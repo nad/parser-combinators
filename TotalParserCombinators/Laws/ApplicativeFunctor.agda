@@ -7,12 +7,13 @@ module TotalParserCombinators.Laws.ApplicativeFunctor where
 open import Algebra
 open import Category.Monad
 open import Coinduction
-open import Data.List as List
+open import Data.List
 import Data.List.Any.BagAndSetEquality as BSEq
+import Data.List.Categorical
 open import Function
 open import Level
 
-open RawMonad {f = zero} List.monad
+open RawMonad {f = zero} Data.List.Categorical.monad
   using () renaming (_⊛_ to _⊛′_; _>>=_ to _>>=′_)
 private
   module BagMonoid {k} {A : Set} =

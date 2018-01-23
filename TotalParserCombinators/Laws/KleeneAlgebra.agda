@@ -5,7 +5,8 @@
 module TotalParserCombinators.Laws.KleeneAlgebra where
 
 open import Algebra
-open import Data.List as List
+open import Data.List
+open import Data.List.Properties
 open import Data.Nat using (ℕ)
 open import Data.Product using (_,_; proj₂)
 open import Function using (_$_)
@@ -106,8 +107,7 @@ not-Kleene-algebra {Tok} t f _⋆′ fold =
             ([ ○ - ○ ] ∈p >>=
                        fix ([ ○ - ○ ] ⋆′-complete ∈p⋆ >>= return′)))
     where
-    fix = cast∈ P.refl P.refl $
-                proj₂ (Monoid.identity $ List.monoid Tok) _
+    fix = cast∈ P.refl P.refl $ ++-identityʳ _
 
 -- This shows that the parser combinators do not form a Kleene
 -- algebra (interpreted liberally) using _⊛_ for composition, return

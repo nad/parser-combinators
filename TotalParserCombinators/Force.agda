@@ -7,7 +7,7 @@
 module TotalParserCombinators.Force where
 
 open import Coinduction
-import Data.List.Properties as ListProp
+import Data.List.Categorical as ListMonad
 open import Data.Maybe
 open import Data.Nat
 open import Function
@@ -34,14 +34,14 @@ force (suc n) (p₁ ⊛ p₂)        with forced? p₁ | forced? p₂
 ... | just xs | just fs = force (suc n)   p₁  ⊛ force (suc n)   p₂
 ... | nothing | nothing = force      n (♭ p₁) ⊛ force      n (♭ p₂)
 ... | nothing | just fs =
-  P.subst (Parser _ _) (ListProp.Applicative.right-zero fs) $
+  P.subst (Parser _ _) (ListMonad.Applicative.right-zero fs) $
                           force      n (♭ p₁) ⊛ force (suc n)   p₂
 force (suc n) (p₁ >>= p₂)      with forced? p₁ | forced?′ p₂
 ... | just f  | nothing = force (suc n)   p₁  >>= λ x → force      n (♭ (p₂ x))
 ... | just f  | just xs = force (suc n)   p₁  >>= λ x → force (suc n)   (p₂ x)
 ... | nothing | nothing = force      n (♭ p₁) >>= λ x → force      n (♭ (p₂ x))
 ... | nothing | just xs =
-  P.subst (Parser _ _) (ListProp.Monad.right-zero xs) $
+  P.subst (Parser _ _) (ListMonad.MonadProperties.right-zero xs) $
                           force n (♭ p₁) >>= λ x → force (suc n) (p₂ x)
 
 -- force preserves the semantics of its argument.
@@ -64,7 +64,7 @@ correct (suc n) (p₁ ⊛ p₂)        with forced? p₁ | forced? p₂
   forced                             ≅⟨ [ ○ - ◌ - ○ - ○ ] correct n (♭ p₁) ⊛ correct (suc n) p₂ ⟩
   p₁ ⊛ p₂                            ∎
   where
-  lemma  = ListProp.Applicative.right-zero fs
+  lemma  = ListMonad.Applicative.right-zero fs
   forced = force n (♭ p₁) ⊛ force (suc n) p₂
 correct (suc n) (p₁ >>= p₂)      with forced? p₁ | forced?′ p₂
 ... | just f  | nothing = [ ○ - ○ - ○ - ◌ ] correct (suc n)   p₁  >>= λ x → correct      n (♭ (p₂ x))
@@ -76,4 +76,4 @@ correct (suc n) (p₁ >>= p₂)      with forced? p₁ | forced?′ p₂
   p₁ >>= p₂                          ∎
   where
   forced = force n (♭ p₁) >>= λ x → force (suc n) (p₂ x)
-  lemma  = ListProp.Monad.right-zero xs
+  lemma  = ListMonad.MonadProperties.right-zero xs

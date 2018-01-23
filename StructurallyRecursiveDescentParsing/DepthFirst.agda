@@ -11,6 +11,7 @@ open import Data.Bool
 open import Data.Product as Prod
 open import Data.BoundedVec.Inefficient
 import Data.List as L; open L using (List)
+import Data.List.Categorical
 open import Data.Nat
 open import Function
 open import Category.Applicative.Indexed
@@ -30,7 +31,8 @@ private
   P Tok = IStateT (BoundedVec Tok) List
 
   open module M₁ {Tok : Set} =
-    RawIMonadPlus (StateTIMonadPlus (BoundedVec Tok) L.monadPlus)
+    RawIMonadPlus (StateTIMonadPlus (BoundedVec Tok)
+                     Data.List.Categorical.monadPlus)
     using ()
     renaming ( return to return′
              ; _>>=_  to _>>=′_
@@ -40,7 +42,8 @@ private
              )
 
   open module M₂ {Tok : Set} =
-    RawIMonadState (StateTIMonadState (BoundedVec Tok) L.monad)
+    RawIMonadState (StateTIMonadState (BoundedVec Tok)
+                      Data.List.Categorical.monad)
     using ()
     renaming ( get    to get′
              ; put    to put′
@@ -92,4 +95,5 @@ parse p s = L.map (Prod.map id toList) (parse↓ _ p (fromList s))
 -- A variant which only returns parses which leave no remaining input.
 
 parseComplete : ∀ {Tok i R} → Parser Tok i R → List Tok → List R
-parseComplete p s = L.map proj₁ (L.filter (L.null ∘ proj₂) (parse p s))
+parseComplete p s =
+  L.map proj₁ (L.boolFilter (L.null ∘ proj₂) (parse p s))

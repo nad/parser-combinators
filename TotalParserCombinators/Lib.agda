@@ -16,6 +16,7 @@ open import Data.List as List
 open import Data.List.Any
 open import Data.List.Any.Membership.Propositional
 import Data.List.Any.Membership.Propositional.Properties as ∈
+import Data.List.Categorical
 open import Data.Maybe
 open import Data.Nat hiding (_^_)
 open import Data.Product as Prod
@@ -29,7 +30,8 @@ open import Relation.Nullary
 open import Relation.Nullary.Decidable
 
 private
-  open module ListMonad = RawMonad {f = Level.zero} List.monad
+  open module ListMonad =
+         RawMonad {f = Level.zero} Data.List.Categorical.monad
          using ()
          renaming (_<$>_ to _<$>′_; _⊛_ to _⊛′_; _>>=_ to _>>=′_)
 

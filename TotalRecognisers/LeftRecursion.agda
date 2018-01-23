@@ -17,9 +17,11 @@ open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence as Eq
   using (_⇔_; equivalence; module Equivalence)
   renaming (_∘_ to _⟨∘⟩_)
-open import Data.List as List using (List; []; _∷_; _++_; [_])
+open import Data.List using (List; []; _∷_; _++_; [_])
+import Data.List.Properties
 private
-  module ListMonoid {A : Set} = Monoid (List.monoid A)
+  module ListMonoid {A : Set} =
+    Monoid (Data.List.Properties.++-monoid A)
 open import Data.Product as Prod
 open import Relation.Binary.PropositionalEquality hiding ([_])
 open import Relation.Nullary

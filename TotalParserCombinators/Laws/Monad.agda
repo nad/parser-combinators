@@ -7,17 +7,18 @@ module TotalParserCombinators.Laws.Monad where
 open import Algebra
 open import Category.Monad
 open import Coinduction
-open import Data.List as List
+open import Data.List
 import Data.List.Any.BagAndSetEquality as BSEq
-import Data.List.Properties as ListProp
+open import Data.List.Categorical
+  using () renaming (module MonadProperties to ListMonad)
 open import Function
 open import Level
 
 private
   module BagMonoid {k} {A : Set} =
     CommutativeMonoid (BSEq.commutativeMonoid k A)
-  open module ListMonad = RawMonad {f = zero} List.monad
-         using () renaming (_>>=_ to _>>=′_)
+  open RawMonad {f = zero} Data.List.Categorical.monad
+    using () renaming (_>>=_ to _>>=′_)
 
 open import TotalParserCombinators.Derivative
 open import TotalParserCombinators.Congruence as Eq
@@ -71,7 +72,7 @@ right-distributive : ∀ {Tok R₁ R₂ xs₁ xs₂} {f : R₁ → List R₂}
                      (p₃ : (x : R₁) → Parser Tok R₂ (f x)) →
                      (p₁ ∣ p₂) >>= p₃ ≅P p₁ >>= p₃ ∣ p₂ >>= p₃
 right-distributive {xs₁ = xs₁} {xs₂} {f} p₁ p₂ p₃ =
-  BagMonoid.reflexive (ListProp.Monad.right-distributive xs₁ xs₂ f) ∷ λ t → ♯ (
+  BagMonoid.reflexive (ListMonad.right-distributive xs₁ xs₂ f) ∷ λ t → ♯ (
     D t ((p₁ ∣ p₂) >>= p₃)                                  ≅⟨ D->>= (p₁ ∣ p₂) p₃ ⟩
 
     (D t p₁ ∣ D t p₂) >>= p₃ ∣
@@ -97,7 +98,7 @@ left-identity : ∀ {Tok R₁ R₂} {f : R₁ → List R₂}
                 (x : R₁) (p : (x : R₁) → Parser Tok R₂ (f x)) →
                 return x >>= p ≅P p x
 left-identity {f = f} x p =
-  BagMonoid.reflexive (ListProp.Monad.left-identity x f) ∷ λ t → ♯ (
+  BagMonoid.reflexive (ListMonad.left-identity x f) ∷ λ t → ♯ (
     D t (return x >>= p)                              ≅⟨ D->>= (return x) p ⟩
     fail >>= p ∣ return⋆ [ x ] >>= (λ x → D t (p x))  ≅⟨ left-zero p ∣′
                                                          [ ○ - ○ - ○ - ○ ] AdditiveMonoid.right-identity (return x) >>=
@@ -109,7 +110,7 @@ left-identity {f = f} x p =
 right-identity : ∀ {Tok R xs}
                  (p : Parser Tok R xs) → p >>= return ≅P p
 right-identity {xs = xs} p =
-  BagMonoid.reflexive (ListProp.Monad.right-identity xs) ∷ λ t → ♯ (
+  BagMonoid.reflexive (ListMonad.right-identity xs) ∷ λ t → ♯ (
     D t (p >>= return)                              ≅⟨ D->>= p return ⟩
     D t p >>= return ∣ return⋆ xs >>= (λ _ → fail)  ≅⟨ right-identity (D t p) ∣′ right-zero (return⋆ xs) ⟩
     D t p            ∣ fail                         ≅⟨ AdditiveMonoid.right-identity (D t p) ⟩
@@ -122,7 +123,7 @@ associative : ∀ {Tok R₁ R₂ R₃ xs}
               (p₃ : (x : R₂) → Parser Tok R₃ (g x)) →
               p₁ >>= (λ x → p₂ x >>= p₃) ≅P p₁ >>= p₂ >>= p₃
 associative {xs = xs} {f} {g} p₁ p₂ p₃ =
-  BagMonoid.reflexive (ListProp.Monad.associative xs f g) ∷ λ t → ♯ (
+  BagMonoid.reflexive (ListMonad.associative xs f g) ∷ λ t → ♯ (
     D t (p₁ >>= λ x → p₂ x >>= p₃)                               ≅⟨ D->>= p₁ (λ x → p₂ x >>= p₃) ⟩
 
     D t p₁ >>= (λ x → p₂ x >>= p₃) ∣

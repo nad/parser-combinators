@@ -15,9 +15,10 @@ private
 open import Function
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence as Eq using (_⇔_; equivalence)
-open import Data.List as List
+open import Data.List
+open import Data.List.Properties
 private
-  module ListMonoid {A : Set} = Monoid (List.monoid A)
+  module ListMonoid {A : Set} = Monoid (++-monoid A)
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Product as Prod
 open import Relation.Binary.HeterogeneousEquality using (_≅_; refl)

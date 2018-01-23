@@ -22,9 +22,10 @@ open import Algebra
 open import Coinduction
 open import Data.Bool using (Bool; true; false)
 open import Data.Nat using (ℕ; zero; suc; _+_)
-open import Data.List as List using (List; []; _∷_; _++_)
-private module LM {A : Set} = Monoid (List.monoid A)
+open import Data.List using (List; []; _∷_; _++_)
 open import Data.List.NonEmpty using (List⁺; _∷_; [_]; _∷⁺_; _⁺∷ʳ_)
+import Data.List.Properties
+private module LM {A : Set} = Monoid (Data.List.Properties.++-monoid A)
 open import Data.Vec using (Vec; []; _∷_)
 open import Data.Product
 import Data.String as String

@@ -9,7 +9,8 @@ module TotalRecognisers.LeftRecursion.MatchingParentheses where
 open import Algebra
 open import Coinduction
 open import Data.Bool
-open import Data.List as List
+open import Data.List
+open import Data.List.Properties
 open import Data.Product
 open import Function.Equivalence
 open import Relation.Binary
@@ -18,7 +19,7 @@ open import Relation.Nullary
 open import Relation.Nullary.Decidable as Decidable
 
 private
-  module ListMonoid {A : Set} = Monoid (List.monoid A)
+  module ListMonoid {A : Set} = Monoid (++-monoid A)
 
 import TotalRecognisers.LeftRecursion as LR
 import TotalRecognisers.LeftRecursion.Lib as Lib

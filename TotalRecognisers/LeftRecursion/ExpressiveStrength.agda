@@ -15,7 +15,8 @@ open import Function
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence
   using (_⇔_; equivalence; module Equivalence)
-open import Data.List as List
+open import Data.List
+import Data.List.Properties as ListProp
 open import Data.List.Reverse
 open import Data.Nat as Nat
 open import Data.Nat.InfinitelyOften as Inf
@@ -28,7 +29,7 @@ open import Relation.Nullary
 open import Relation.Nullary.Decidable
 open import Relation.Nullary.Negation
 private
-  module ListMonoid {A : Set} = Monoid (List.monoid A)
+  module ListMonoid {A : Set} = Monoid (ListProp.++-monoid A)
   module NatOrder             = DecTotalOrder NatProp.≤-decTotalOrder
 
 import TotalRecognisers.LeftRecursion

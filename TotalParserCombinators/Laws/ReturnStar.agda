@@ -7,17 +7,19 @@ module TotalParserCombinators.Laws.ReturnStar where
 open import Algebra
 open import Category.Monad
 open import Coinduction
-open import Data.List as List
+open import Data.List
 import Data.List.Any.BagAndSetEquality as Eq
 open import Data.List.Any.Membership.Propositional
   using (bag) renaming (_∼[_]_ to _List-∼[_]_)
+import Data.List.Categorical
 open import Function
 open import Level
 
 private
   module BagMonoid {A : Set} =
     CommutativeMonoid (Eq.commutativeMonoid bag A)
-  open module ListMonad = RawMonad {f = zero} List.monad
+  open module ListMonad =
+    RawMonad {f = zero} Data.List.Categorical.monad
     using () renaming (_⊛_ to _⊛′_; _>>=_ to _>>=′_)
 
 open import TotalParserCombinators.Derivative using (D)

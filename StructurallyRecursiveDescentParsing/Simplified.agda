@@ -7,8 +7,9 @@ module StructurallyRecursiveDescentParsing.Simplified where
 open import Category.Monad
 open import Coinduction
 open import Data.Bool
-open import Data.List as List using (List; _∷_; []; _++_)
+open import Data.List using (List; _∷_; []; _++_)
 open import Data.List.Any.Membership.Propositional
+import Data.List.Categorical as ListMonad
 import Data.List.Properties as ListProp
 open import Data.List.NonEmpty as List⁺
   using (List⁺; _∷_; [_]; _⁺++_; head; tail)
@@ -17,8 +18,10 @@ open import Level
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 
-open RawMonad {f = zero} List.monad using () renaming (_>>=_ to _>>=′_)
-open RawMonad {f = zero} List⁺.monad using () renaming (_>>=_ to _>>=⁺_)
+open RawMonad {f = zero} ListMonad.monad
+  using () renaming (_>>=_ to _>>=′_)
+open RawMonad {f = zero} List⁺.monad
+  using () renaming (_>>=_ to _>>=⁺_)
 private
   open module BagS {A : Set} = Setoid ([ bag ]-Equality A)
     using () renaming (_≈_ to _Bag-≈_)
@@ -102,7 +105,7 @@ private
                initial (p₂ (head (initial⁺ p₁ refl))) ++
                  (tail (initial⁺ p₁ refl) >>=′ λ x → initial (p₂ x)) ≡
                initial (p₁ ?>>= p₂)
-  ?>>=-lemma {false} p₁ p₂ = ListProp.Monad.right-zero
+  ?>>=-lemma {false} p₁ p₂ = ListMonad.MonadProperties.right-zero
                                (tail (initial⁺ p₁ refl))
   ?>>=-lemma {true}  p₁ p₂ = toList->>= f xs
     where f  = λ x → initial⁺ (p₂ x) refl

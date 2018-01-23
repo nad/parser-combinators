@@ -13,11 +13,12 @@ open import Category.Monad
 open import Coinduction
 open import Data.Bool
 open import Data.List as List
+import Data.List.Categorical
 open import Data.Maybe
 open import Data.Unit
 open import Level
 
-open RawMonadPlus {f = zero} List.monadPlus
+open RawMonadPlus {f = zero} Data.List.Categorical.monadPlus
   using () renaming (_⊛_ to _⊛′_)
 
 open import TotalParserCombinators.Parser as Parser

@@ -6,11 +6,11 @@ module TotalParserCombinators.Congruence.Sound where
 
 open import Category.Monad
 open import Coinduction
-open import Data.List as List
+open import Data.List
 open import Data.List.Any.BagAndSetEquality
 open import Data.List.Any.Membership.Propositional
   using (bag; _∈_; [_]-Order) renaming (_∼[_]_ to _List-∼[_]_)
-import Data.List.Properties as ListProp
+import Data.List.Categorical as ListMonad
 open import Data.Maybe
 open import Data.Product
 open import Function
@@ -21,7 +21,7 @@ import Relation.Binary.PropositionalEquality as P
 
 open Related.EquationalReasoning
   renaming (_∼⟨_⟩_ to _∼⟨_⟩′_; _∎ to _∎′; sym to sym′)
-open RawMonad {f = zero} List.monad
+open RawMonad {f = zero} ListMonad.monad
   using () renaming (_⊛_ to _⊛′_; _>>=_ to _>>=′_)
 private
   module BSOrd {k} {A : Set} = Preorder ([ k ]-Order A)
@@ -54,13 +54,13 @@ private
     helper (just xs₁) (just xs₂) xs₁≈xs₂     = ⊛-cong fs₁≈fs₂ xs₁≈xs₂
     helper nothing    (just xs₂)  []≈xs₂ {x} =
       x ∈ []            ↔⟨ BSOrd.reflexive $ P.sym $
-                             ListProp.Applicative.right-zero fs₂ ⟩
+                             ListMonad.Applicative.right-zero fs₂ ⟩
       x ∈ (fs₂ ⊛′ [])   ∼⟨ ⊛-cong (BSOrd.refl {x = fs₂}) []≈xs₂ ⟩′
       x ∈ (fs₂ ⊛′ xs₂)  ∎′
     helper (just xs₁) nothing    xs₁∼[]  {x} =
       x ∈ (fs₁ ⊛′ xs₁)  ∼⟨ ⊛-cong (BSOrd.refl {x = fs₁}) xs₁∼[] ⟩′
       x ∈ (fs₁ ⊛′ [])   ↔⟨ BSOrd.reflexive $
-                             ListProp.Applicative.right-zero fs₁ ⟩
+                             ListMonad.Applicative.right-zero fs₁ ⟩
       x ∈ []            ∎′
 
   []-⊛flatten : ∀ {A B : Set} (xs : Maybe (List A)) →
@@ -82,13 +82,13 @@ private
     helper (just f₁) (just f₂) f₁≈f₂     = >>=-cong xs₁≈xs₂ f₁≈f₂
     helper nothing   (just f₂) []≈f₂ {x} =
       x ∈ []                           ∼⟨ BSOrd.reflexive $ P.sym $
-                                             ListProp.Monad.right-zero (flatten xs₂) ⟩′
+                                             ListMonad.MonadProperties.right-zero (flatten xs₂) ⟩′
       x ∈ (flatten xs₂ >>=′ λ _ → [])  ∼⟨ >>=-cong (BSOrd.refl {x = flatten xs₂}) []≈f₂ ⟩′
       x ∈ (flatten xs₂ >>=′ f₂)        ∎′
     helper (just f₁) nothing   f₁∼[] {x} =
       x ∈ (flatten xs₁ >>=′ f₁)        ∼⟨ >>=-cong (BSOrd.refl {x = flatten xs₁}) f₁∼[] ⟩′
       x ∈ (flatten xs₁ >>=′ λ _ → [])  ∼⟨ BSOrd.reflexive $
-                                            ListProp.Monad.right-zero (flatten xs₁) ⟩′
+                                            ListMonad.MonadProperties.right-zero (flatten xs₁) ⟩′
       x ∈ []                           ∎′
 
   bind-nothing : ∀ {A B : Set} (f : Maybe (A → List B)) →

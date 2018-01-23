@@ -6,13 +6,14 @@ module TotalParserCombinators.Derivative.SoundComplete where
 
 open import Category.Monad
 open import Coinduction
-open import Data.List as List
+open import Data.List
+import Data.List.Categorical
 open import Data.Maybe
 open import Data.Product
 open import Level
 open import Relation.Binary.PropositionalEquality
 
-open RawMonad {f = zero} List.monad
+open RawMonad {f = zero} Data.List.Categorical.monad
   using () renaming (_>>=_ to _>>=′_; _⊛_ to _⊛′_)
 
 open import TotalParserCombinators.Derivative.Definition

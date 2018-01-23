@@ -7,9 +7,10 @@ module StructurallyRecursiveDescentParsing.Simplified.Semantics where
 open import Algebra
 open import Coinduction
 open import Data.Bool
-open import Data.List as List
+open import Data.List
+import Data.List.Properties
 private
-  module LM {Tok : Set} = Monoid (List.monoid Tok)
+  module LM {Tok : Set} = Monoid (Data.List.Properties.++-monoid Tok)
 open import Data.Product as Prod
 open import Function
 open import Data.Empty

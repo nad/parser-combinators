@@ -14,6 +14,7 @@ open import Data.List as List
 open import Data.List.Any.Membership.Propositional
   using (bag) renaming (_∼[_]_ to _List-∼[_]_)
 import Data.List.Any.BagAndSetEquality as Eq
+import Data.List.Categorical
 open import Data.Maybe
 open import Function
 import Level
@@ -22,7 +23,8 @@ open import Relation.Binary.PropositionalEquality as P using (_≡_)
 private
   module BagMonoid {k} {A : Set} =
     CommutativeMonoid (Eq.commutativeMonoid k A)
-  open module ListMonad = RawMonad {f = Level.zero} List.monad
+  open module ListMonad =
+    RawMonad {f = Level.zero} Data.List.Categorical.monad
     using () renaming (_⊛_ to _⊛′_)
 
 open import TotalParserCombinators.Derivative using (D)

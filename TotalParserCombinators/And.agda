@@ -5,9 +5,9 @@
 module TotalParserCombinators.And where
 
 open import Category.Monad
-import Data.List as List
 open import Data.List.Any.BagAndSetEquality
 open import Data.List.Any.Membership.Propositional.Properties
+import Data.List.Categorical
 open import Data.Product
 open import Function
 open import Function.Inverse using (_↔_)
@@ -16,7 +16,8 @@ open import Function.Related.TypeIsomorphisms
 open import Level
 open import Relation.Binary.Product.Pointwise
 
-open RawMonadPlus {f = zero} List.monadPlus using (_⊗_)
+open RawMonadPlus {f = zero} Data.List.Categorical.monadPlus
+  using (_⊗_)
 
 open import TotalParserCombinators.Congruence using (_∼[_]P_; _≅P_)
 open import TotalParserCombinators.Derivative using (D)

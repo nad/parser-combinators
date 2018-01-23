@@ -5,13 +5,14 @@
 module TotalParserCombinators.InitialBag where
 
 open import Category.Monad
-open import Data.List as List
+open import Data.List
 open import Data.List.Any as Any
 open import Data.List.Any.Membership.Propositional
   using (_∈_) renaming (_∼[_]_ to _List-∼[_]_)
 open import Data.List.Any.Membership.Propositional.Properties as M
   hiding (⊛-∈↔)
 open import Data.List.Any.Properties
+import Data.List.Categorical
 open import Data.Maybe
 open import Data.Product
 open import Data.Sum
@@ -26,7 +27,7 @@ open import Relation.Binary.HeterogeneousEquality as H
   using (refl) renaming (_≅_ to _≅′_)
 
 open Inv.Inverse
-open RawMonadPlus {f = zero} List.monadPlus
+open RawMonadPlus {f = zero} Data.List.Categorical.monadPlus
   using () renaming (_⊛_ to _⊛′_)
 
 open import TotalParserCombinators.Parser

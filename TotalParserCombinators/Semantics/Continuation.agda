@@ -6,7 +6,7 @@ module TotalParserCombinators.Semantics.Continuation where
 
 open import Algebra
 open import Coinduction
-open import Data.List as List
+open import Data.List
 open import Data.List.Any.Membership.Propositional
   using (bag) renaming (_∼[_]_ to _List-∼[_]_)
 import Data.List.Properties as ListProp
@@ -16,7 +16,7 @@ open import Function
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 
 private
-  module LM {Tok : Set} = Monoid (List.monoid Tok)
+  module LM {Tok : Set} = Monoid (ListProp.++-monoid Tok)
 
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics as S
