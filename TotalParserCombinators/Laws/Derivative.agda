@@ -7,8 +7,8 @@ module TotalParserCombinators.Laws.Derivative where
 open import Algebra
 open import Coinduction
 open import Data.List
-import Data.List.Any.BagAndSetEquality as BSEq
 import Data.List.Categorical as List
+import Data.List.Relation.BagAndSetEquality as BSEq
 open import Data.Maybe using (Maybe); open Data.Maybe.Maybe
 open import Function using (_∘_; _$_)
 

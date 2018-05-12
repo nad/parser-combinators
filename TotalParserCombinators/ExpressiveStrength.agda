@@ -10,8 +10,9 @@ open import Coinduction
 open import Data.Bool
 open import Data.List as List
 open import Data.List.Any
-open import Data.List.Any.Membership.Propositional
+open import Data.List.Membership.Propositional
 import Data.List.Properties as ListProp
+open import Data.List.Relation.BagAndSetEquality
 open import Data.List.Reverse
 open import Data.Product
 open import Function

@@ -8,9 +8,9 @@ open import Algebra
 open import Category.Monad
 open import Coinduction
 open import Data.List
-import Data.List.Any.BagAndSetEquality as BSEq
 open import Data.List.Categorical
   using () renaming (module MonadProperties to ListMonad)
+import Data.List.Relation.BagAndSetEquality as BSEq
 open import Function
 open import Level
 

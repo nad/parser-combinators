@@ -6,7 +6,7 @@ module TotalParserCombinators.Semantics where
 
 open import Coinduction
 open import Data.List hiding (drop)
-open import Data.List.Any.Membership.Propositional
+open import Data.List.Relation.BagAndSetEquality
   using (bag) renaming (_∼[_]_ to _List-∼[_]_)
 open import Data.Maybe using (Maybe); open Data.Maybe.Maybe
 open import Data.Product
@@ -92,7 +92,7 @@ infix 4 _∼[_]_ _≈_ _≅_ _≲_
 -- stronger, and correspond to bag equality. Language equivalences are
 -- weaker, and correspond to set equality.
 
-open Data.List.Any.Membership.Propositional public
+open Data.List.Relation.BagAndSetEquality public
   using (Kind)
   renaming ( bag      to parser
            ; set      to language

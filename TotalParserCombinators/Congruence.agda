@@ -15,7 +15,7 @@ module TotalParserCombinators.Congruence where
 
 open import Coinduction
 open import Data.List
-open import Data.List.Any.Membership.Propositional
+open import Data.List.Relation.BagAndSetEquality
   using (bag) renaming (_∼[_]_ to _List-∼[_]_)
 open import Data.Maybe
 open import Data.Nat hiding (_^_)

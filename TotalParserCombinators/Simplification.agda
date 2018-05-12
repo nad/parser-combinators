@@ -7,11 +7,11 @@ module TotalParserCombinators.Simplification where
 open import Algebra
 open import Coinduction
 open import Data.List using (List; [])
-import Data.List.Any.BagAndSetEquality as BSEq
+import Data.List.Relation.BagAndSetEquality as BSEq
 open import Data.Maybe using (Maybe); open Data.Maybe.Maybe
 open import Data.Nat
 open import Data.Product
-open import Data.Product.N-ary
+open import Data.Product.N-ary hiding ([])
 open import Function
 open import Relation.Binary.PropositionalEquality as P
   using (_≡_; refl; [_])

@@ -5,7 +5,7 @@
 module TotalParserCombinators.BreadthFirst where
 
 open import Data.List
-open import Data.List.Any.Membership.Propositional
+open import Data.List.Membership.Propositional
 open import Data.Product
 open import Function
 open import Function.Equality using (_⟨$⟩_)

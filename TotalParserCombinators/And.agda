@@ -5,8 +5,8 @@
 module TotalParserCombinators.And where
 
 open import Category.Monad
-open import Data.List.Any.BagAndSetEquality
-open import Data.List.Any.Membership.Propositional.Properties
+open import Data.List.Relation.BagAndSetEquality
+open import Data.List.Membership.Propositional.Properties
 import Data.List.Categorical
 open import Data.Product
 open import Function

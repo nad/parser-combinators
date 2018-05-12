@@ -8,9 +8,9 @@ open import Category.Monad
 open import Coinduction
 open import Data.Bool
 open import Data.List using (List; _∷_; []; _++_)
-open import Data.List.Any.Membership.Propositional
 import Data.List.Categorical as ListMonad
 import Data.List.Properties as ListProp
+open import Data.List.Relation.BagAndSetEquality
 open import Data.List.NonEmpty as List⁺
   using (List⁺; _∷_; [_]; _⁺++_; head; tail)
 open import Data.List.NonEmpty.Properties

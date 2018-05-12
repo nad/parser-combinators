@@ -15,7 +15,7 @@ open import Coinduction
 open import Function using (flip; _$_)
 open import Data.List using (List; []; _∷_)
 open import Data.List.Any using (here; there)
-open import Data.List.Any.Membership.Propositional using (_∈_)
+open import Data.List.Membership.Propositional using (_∈_)
 open import Data.Product
 import Relation.Binary.PropositionalEquality as P
 

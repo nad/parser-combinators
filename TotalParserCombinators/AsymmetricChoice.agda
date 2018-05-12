@@ -9,8 +9,9 @@ module TotalParserCombinators.AsymmetricChoice where
 open import Data.Empty
 open import Data.List
 open import Data.List.Any using (here)
-open import Data.List.Any.Membership.Propositional
-  using (_∈_) renaming (_∼[_]_ to _List-∼[_]_)
+open import Data.List.Membership.Propositional using (_∈_)
+open import Data.List.Relation.BagAndSetEquality
+  using () renaming (_∼[_]_ to _List-∼[_]_)
 open import Data.Product
 open import Function
 open import Function.Equality using (_⟨$⟩_)

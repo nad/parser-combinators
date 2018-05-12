@@ -7,9 +7,9 @@ module TotalParserCombinators.Semantics.Continuation where
 open import Algebra
 open import Coinduction
 open import Data.List
-open import Data.List.Any.Membership.Propositional
-  using (bag) renaming (_∼[_]_ to _List-∼[_]_)
 import Data.List.Properties as ListProp
+open import Data.List.Relation.BagAndSetEquality
+  using (bag) renaming (_∼[_]_ to _List-∼[_]_)
 open import Data.Maybe using (Maybe)
 open import Data.Product as Prod
 open import Function

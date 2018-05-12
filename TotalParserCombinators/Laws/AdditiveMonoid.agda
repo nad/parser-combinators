@@ -6,7 +6,7 @@ module TotalParserCombinators.Laws.AdditiveMonoid where
 
 open import Algebra
 open import Coinduction
-import Data.List.Any.BagAndSetEquality as Eq
+import Data.List.Relation.BagAndSetEquality as Eq
 open import Data.Product using (proj₁; proj₂)
 open import Function
 

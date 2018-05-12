@@ -8,8 +8,8 @@ open import Algebra
 open import Category.Monad
 open import Coinduction
 open import Data.List
-import Data.List.Any.BagAndSetEquality as BSEq
 import Data.List.Categorical
+import Data.List.Relation.BagAndSetEquality as BSEq
 open import Function
 open import Level
 

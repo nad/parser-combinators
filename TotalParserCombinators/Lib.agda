@@ -14,9 +14,10 @@ open import Data.Bool
 open import Data.Char as Char using (Char; _==_)
 open import Data.List as List
 open import Data.List.Any
-open import Data.List.Any.Membership.Propositional
-import Data.List.Any.Membership.Propositional.Properties as ∈
 import Data.List.Categorical
+open import Data.List.Membership.Propositional
+import Data.List.Membership.Propositional.Properties as ∈
+open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_)
 open import Data.Maybe
 open import Data.Nat hiding (_^_)
 open import Data.Product as Prod

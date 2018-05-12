@@ -11,10 +11,9 @@ open import Algebra
 open import Category.Monad
 open import Coinduction
 open import Data.List as List
-open import Data.List.Any.Membership.Propositional
-  using (bag) renaming (_∼[_]_ to _List-∼[_]_)
-import Data.List.Any.BagAndSetEquality as Eq
 import Data.List.Categorical
+open import Data.List.Relation.BagAndSetEquality as Eq
+  using (bag) renaming (_∼[_]_ to _List-∼[_]_)
 open import Data.Maybe
 open import Function
 import Level
