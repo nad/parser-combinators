@@ -18,7 +18,7 @@ open import Coinduction
 open import Data.Bool hiding (_≟_)
 import Data.Bool.Properties as Bool
 private
-  module BoolCS = CommutativeSemiring Bool.commutativeSemiring-∧-∨
+  module BoolCS = CommutativeSemiring Bool.∧-∨-commutativeSemiring
 open import Function
 open import Data.List
 open import Data.Product

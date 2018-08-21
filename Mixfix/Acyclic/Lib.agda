@@ -112,7 +112,8 @@ private
 ⟦ p between (t ∷ [])      ⟧ = tok t !>>= λ _ → ♯′ return []
 ⟦ p between (t ∷ t′ ∷ ts) ⟧ = tok t !>>= λ _ → ♯
                               ⟦ _∷_ <$> ♭ p ⊛ (p between (t′ ∷ ts)) ⟧
-⟦ p₁ ∥ p₂                 ⟧ = (⟦ p₁ ⟧ !>>= λ x → ♯′ return (, x)) ∣ ⟦ p₂ ⟧
+⟦ p₁ ∥ p₂                 ⟧ = (⟦ p₁ ⟧ !>>= λ x → ♯′ return (-, x)) ∣
+                              ⟦ p₂ ⟧
 
 ------------------------------------------------------------------------
 -- Semantics of the programs
@@ -163,7 +164,7 @@ module Semantics where
     ∥ˡ         : ∀ {I i} {R : I → Set} {x s}
                    {p₁ : ParserProg (R i)}
                    {p₂ : ParserProg (∃ R)}
-                 (x∈p₁ : x ∈⟦ p₁ ⟧· s) → (, x) ∈⟦ p₁ ∥ p₂ ⟧· s
+                 (x∈p₁ : x ∈⟦ p₁ ⟧· s) → (-, x) ∈⟦ p₁ ∥ p₂ ⟧· s
     ∥ʳ         : ∀ {I i} {R : I → Set} {x s}
                    {p₁ : ParserProg (R i)}
                    {p₂ : ParserProg (∃ R)}
@@ -213,7 +214,7 @@ module Semantics where
   sound (<$> x∈p)                 = drop-[] (sound x∈p !>>= return)
   sound (+-[] x∈p)                = drop-[] (sound x∈p !>>= ∣ʳ false return)
   sound (+-∷ x∈p xs∈p)            = sound x∈p !>>= ∣ˡ (drop-[] (sound xs∈p !>>= return))
-  sound (∥ˡ x∈p₁)                 = drop-[] (∣ˡ {x = (, _)} (sound x∈p₁ !>>= return))
+  sound (∥ˡ x∈p₁)                 = drop-[] (∣ˡ {x = (-, _)} (sound x∈p₁ !>>= return))
   sound (∥ʳ x∈p₂)                 = ∣ʳ false (sound x∈p₂)
   sound between-[]                = tok-complete !>>= return
   sound (between-∷ {s₁ = s₁} {p = p} {ts = _ ∷ _} x∈p xs∈⋯) =
@@ -288,12 +289,13 @@ module Semantics-⊕ where
     ∥ˡ         : ∀ {I i} {R : I → Set} {x s s′}
                    {p₁ : ParserProg (R i)}
                    {p₂ : ParserProg (∃ R)}
-                 (x∈p₁ : x ⊕ s′ ∈⟦ p₁ ⟧· s) → (, x) ⊕ s′ ∈⟦ p₁ ∥ p₂ ⟧· s
+                 (x∈p₁ : x ⊕ s′ ∈⟦ p₁ ⟧· s) →
+                 (-, x) ⊕ s′ ∈⟦ p₁ ∥ p₂ ⟧· s
     ∥ʳ         : ∀ {I i} {R : I → Set} {s s′ i′} {x : R i′}
                    {p₁ : ParserProg (R i)}
                    {p₂ : ParserProg (∃ R)}
-                 (x∈p₂ : (, x) ⊕ s′ ∈⟦ p₂ ⟧· s) →
-                 (, x) ⊕ s′ ∈⟦ p₁ ∥ p₂ ⟧· s
+                 (x∈p₂ : (-, x) ⊕ s′ ∈⟦ p₂ ⟧· s) →
+                 (-, x) ⊕ s′ ∈⟦ p₁ ∥ p₂ ⟧· s
 
   -- The semantics is correct.
 

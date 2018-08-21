@@ -24,7 +24,7 @@ open import Coinduction
 open import Algebra
 import Data.Bool.Properties as Bool
 private
-  module BCS = CommutativeSemiring Bool.commutativeSemiring-∨-∧
+  module BCS = CommutativeSemiring Bool.∨-∧-commutativeSemiring
 open import Relation.Nullary
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality

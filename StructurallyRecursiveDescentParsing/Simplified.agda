@@ -11,8 +11,9 @@ open import Data.List using (List; _∷_; []; _++_)
 import Data.List.Categorical as ListMonad
 import Data.List.Properties as ListProp
 open import Data.List.Relation.BagAndSetEquality
-open import Data.List.NonEmpty as List⁺
+open import Data.List.NonEmpty
   using (List⁺; _∷_; [_]; _⁺++_; head; tail)
+import Data.List.NonEmpty.Categorical as List⁺
 open import Data.List.NonEmpty.Properties
 open import Level
 open import Relation.Binary

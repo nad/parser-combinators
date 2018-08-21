@@ -9,8 +9,8 @@ open import Data.Vec using ([]; _∷_; [_])
 open import Data.List as List
   using (List; []; _∷_) renaming ([_] to L[_])
 open import Data.List.Any as Any using (here; there)
-import Data.Colist as Colist
-open import Data.Product using (∃₂; ,_)
+import Codata.Musical.Colist as Colist
+open import Data.Product using (∃₂; -,_)
 open import Data.Unit using (⊤)
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Fin using (Fin; #_; zero; suc)
@@ -74,7 +74,7 @@ mutual
   g : PrecedenceGraph
   g = record
     { levels = levels
-    ; ops    = λ p fix → List.gfilter (hasFixity fix) (ops p)
+    ; ops    = λ p fix → List.mapMaybe (hasFixity fix) (ops p)
     ; ↑      = ↑
     }
     where
@@ -82,12 +82,12 @@ mutual
     Precedence = Fin levels
 
     ops : Precedence → List (∃₂ Operator)
-    ops zero                             = (, , atom)       ∷ []
-    ops (suc zero)                       = (, , plus)       ∷ []
-    ops (suc (suc zero))                 = (, , ifThen)     ∷
-                                           (, , ifThenElse) ∷ []
-    ops (suc (suc (suc zero)))           = (, , comma)      ∷ []
-    ops (suc (suc (suc (suc zero))))     = (, , wellTyped)  ∷ []
+    ops zero                             = (-, -, atom)       ∷ []
+    ops (suc zero)                       = (-, -, plus)       ∷ []
+    ops (suc (suc zero))                 = (-, -, ifThen)     ∷
+                                           (-, -, ifThenElse) ∷ []
+    ops (suc (suc (suc zero)))           = (-, -, comma)      ∷ []
+    ops (suc (suc (suc (suc zero))))     = (-, -, wellTyped)  ∷ []
     ops (suc (suc (suc (suc (suc ())))))
 
     ↑ : Precedence → List (Precedence)

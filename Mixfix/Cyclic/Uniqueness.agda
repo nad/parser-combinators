@@ -14,7 +14,7 @@ open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.List using (List; []; _∷_)
 open import Data.List.Any using (here)
 open import Data.Vec using (Vec; []; _∷_)
-open import Data.Product using (_,_; ,_; proj₂)
+open import Data.Product using (_,_; -,_; proj₂)
 open import Relation.Binary.HeterogeneousEquality using (_≅_; refl)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 
@@ -64,8 +64,8 @@ module Unique where
     helper : ∀ {assoc₁ assoc₂ s₁ s₂}
              {e₁ : ExprIn p assoc₁} {e₂ : ExprIn p assoc₂} →
              assoc₁ ≡ assoc₂ → e₁ ≅ e₂ →
-             (∈₁ : (, e₁) ∈⟦ Grammar.prec p ⟧· s₁) →
-             (∈₂ : (, e₂) ∈⟦ Grammar.prec p ⟧· s₂) →
+             (∈₁ : (-, e₁) ∈⟦ Grammar.prec p ⟧· s₁) →
+             (∈₂ : (-, e₂) ∈⟦ Grammar.prec p ⟧· s₂) →
              ∣ˡ {p₁ = (λ e → here refl ∙ proj₂ e) <$> Grammar.prec p}
                 {p₂ = weakenE <$> Grammar.precs ps} (<$> ∈₁) ≋
              ∣ˡ {p₁ = (λ e → here refl ∙ proj₂ e) <$> Grammar.prec p}
@@ -74,8 +74,8 @@ module Unique where
     helper refl refl ∈ .∈  | refl = refl
 
   prec : ∀ {p assoc s₁ s₂} {e : ExprIn p assoc}
-         (∈₁ : (, e) ∈⟦ Grammar.prec p ⟧· s₁)
-         (∈₂ : (, e) ∈⟦ Grammar.prec p ⟧· s₂) →
+         (∈₁ : (-, e) ∈⟦ Grammar.prec p ⟧· s₁)
+         (∈₂ : (-, e) ∈⟦ Grammar.prec p ⟧· s₂) →
          ∈₁ ≋ ∈₂
   prec {p} ∈₁′ ∈₂′ = prec′ ∈₁′ ∈₂′ refl
     where
@@ -150,8 +150,8 @@ module Unique where
               (<$> (∣ˡ (<$> _)) ⊛∞ ∣ʳ (<$> _ ⊛ _)) ()
 
     prec′ : ∀ {assoc s₁ s₂} {e₁ e₂ : ExprIn p assoc} →
-            (∈₁ : (, e₁) ∈⟦ Grammar.prec p ⟧· s₁)
-            (∈₂ : (, e₂) ∈⟦ Grammar.prec p ⟧· s₂) →
+            (∈₁ : (-, e₁) ∈⟦ Grammar.prec p ⟧· s₁)
+            (∈₂ : (-, e₂) ∈⟦ Grammar.prec p ⟧· s₂) →
             e₁ ≡ e₂ → ∈₁ ≋ ∈₂
     prec′ (∥ˡ (<$> ∈₁)) (∥ˡ (<$>  ∈₂)) refl with inner _ ∈₁ ∈₂ refl
     prec′ (∥ˡ (<$> ∈₁)) (∥ˡ (<$> .∈₁)) refl | refl = refl

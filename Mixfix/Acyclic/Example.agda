@@ -10,8 +10,8 @@ open import Data.List as List
   using (List; []; _∷_) renaming ([_] to L[_])
 open import Data.List.Any using (here; there)
 open import Data.List.Membership.Propositional using (_∈_)
-import Data.Colist as Colist
-open import Data.Product using (∃₂; ,_)
+import Codata.Musical.Colist as Colist
+open import Data.Product using (∃₂; -,_)
 open import Data.Unit using (⊤)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Nat using (zero; suc)
@@ -64,15 +64,15 @@ wellTyped = record { nameParts = "⊢" ∷ "∶" ∷ [] }
 -- Precedence graph
 
 prec : List (∃₂ Operator) → List Precedence → Precedence
-prec ops = precedence (λ fix → List.gfilter (hasFixity fix) ops)
+prec ops = precedence (λ fix → List.mapMaybe (hasFixity fix) ops)
 
 mutual
 
-  a  = prec ((, , atom) ∷ [])                       []
-  pl = prec ((, , plus) ∷ [])                       (a ∷ [])
-  ii = prec ((, , ifThen) ∷ (, , ifThenElse) ∷ [])  (pl ∷ a ∷ [])
-  c  = prec ((, , comma) ∷ [])                      (ii ∷ pl ∷ a ∷ [])
-  wt = prec ((, , wellTyped) ∷ [])                  (c ∷ a ∷ [])
+  a  = prec ((-, -, atom) ∷ [])                        []
+  pl = prec ((-, -, plus) ∷ [])                        (a ∷ [])
+  ii = prec ((-, -, ifThen) ∷ (-, -, ifThenElse) ∷ []) (pl ∷ a ∷ [])
+  c  = prec ((-, -, comma) ∷ [])                       (ii ∷ pl ∷ a ∷ [])
+  wt = prec ((-, -, wellTyped) ∷ [])                   (c ∷ a ∷ [])
 
 g : PrecedenceGraph
 g = wt ∷ c ∷ ii ∷ pl ∷ a ∷ []

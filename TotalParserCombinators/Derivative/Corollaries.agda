@@ -10,6 +10,8 @@ open import Function.Inverse using (_↔_)
 import Function.Related as Related
 import Relation.Binary.PropositionalEquality as P
 
+open Related using (SK-sym)
+
 open import TotalParserCombinators.Derivative.Definition
 open import TotalParserCombinators.Derivative.LeftInverse
 open import TotalParserCombinators.Derivative.RightInverse
@@ -45,6 +47,6 @@ cong : ∀ {k Tok R xs₁ xs₂}
 cong {p₁ = p₁} {p₂} p₁≈p₂ {t} {x} {s} =
   x ∈ D t p₁ · s  ↔⟨ correct ⟩
   x ∈ p₁ · t ∷ s  ∼⟨ p₁≈p₂ ⟩
-  x ∈ p₂ · t ∷ s  ↔⟨ sym correct ⟩
+  x ∈ p₂ · t ∷ s  ↔⟨ SK-sym correct ⟩
   x ∈ D t p₂ · s  ∎
   where open Related.EquationalReasoning

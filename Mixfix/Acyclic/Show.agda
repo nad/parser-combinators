@@ -18,7 +18,7 @@ open import Data.Vec using (Vec; []; _∷_)
 import Data.DifferenceList as DiffList
 open DiffList using (DiffList; _++_)
               renaming (_∷_ to cons; [_] to singleton)
-open import Data.Product using (∃; _,_; ,_)
+open import Data.Product using (∃; _,_; -,_)
 open import Function using (_∘_; flip)
 open import Data.Maybe using (Maybe; nothing; just)
 import Data.String as String
@@ -88,7 +88,7 @@ module Correctness where
     expr (there x∈xs ∙ e) = ∣ʳ (<$> expr (x∈xs ∙ e))
 
     exprIn : ∀ {p assoc s} (e : ExprIn p assoc) →
-             (, e) ⊕ s ∈⟦ Grammar.prec p ⟧· Show.exprIn e s
+             (-, e) ⊕ s ∈⟦ Grammar.prec p ⟧· Show.exprIn e s
     exprIn {precedence ops sucs} e = exprIn′ _ e
       where
       p        = precedence ops sucs
@@ -123,7 +123,7 @@ module Correctness where
       postLeft (similar e ⟨ op ⟩ˡ r) = lemmaˡ (∣ʳ (<$> inner op ⊛ expr r)) (postLeft e)
 
       exprIn′ : ∀ assoc {s} (e : ExprIn p assoc) →
-                (, e) ⊕ s ∈⟦ Grammar.prec p ⟧· Show.exprIn e s
+                (-, e) ⊕ s ∈⟦ Grammar.prec p ⟧· Show.exprIn e s
       exprIn′ non      ⟪ op ⟫    = ∥ˡ (<$> inner op)
       exprIn′ non   (l ⟨ op ⟩ r) = ∥ʳ (∥ˡ (<$> expr l ⊛ inner op ⊛ expr r))
       exprIn′ right e            = ∥ʳ (∥ʳ (∥ˡ (preRight e)))

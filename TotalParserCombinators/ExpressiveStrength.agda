@@ -24,6 +24,8 @@ open import Relation.Binary.HeterogeneousEquality
   using (_≅_; _≇_; refl)
 open import Relation.Nullary
 
+open Related using (SK-sym)
+
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics as S
   hiding (_≅_; _∼[_]_; token)
@@ -103,7 +105,7 @@ module Monadic where
     ∀ {Tok R} (f : List Tok → List R) {s} →
     parse (grammar f) s ∼[ bag ] f s
   maximally-expressive f {s} {x} =
-    (x ∈ parse (grammar f) s)  ↔⟨ sym Backend.parse-correct ⟩
+    (x ∈ parse (grammar f) s)  ↔⟨ SK-sym Backend.parse-correct ⟩
     x ∈ grammar f · s          ↔⟨ grammar-correct f ⟩
     x ∈ f s                    ∎
     where open Related.EquationalReasoning
@@ -214,7 +216,7 @@ module Applicative where
     ∀ {R} (f : List Bool → List R) {s} →
     parse (grammar f) s ∼[ bag ] f s
   maximally-expressive f {s} {x} =
-    (x ∈ parse (grammar f) s)  ↔⟨ sym Backend.parse-correct ⟩
+    (x ∈ parse (grammar f) s)  ↔⟨ SK-sym Backend.parse-correct ⟩
     x ∈ grammar f · s          ↔⟨ grammar-correct f ⟩
     x ∈ f s                    ∎
     where open Related.EquationalReasoning

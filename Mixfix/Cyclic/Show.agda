@@ -16,7 +16,7 @@ open import Data.List.Membership.Propositional using (_∈_)
 open import Data.Vec using (Vec; []; _∷_)
 open import Data.DifferenceList as DiffList
   using (DiffList; _++_) renaming (_∷_ to cons; [_] to singleton)
-open import Data.Product using (∃; _,_; ,_)
+open import Data.Product using (∃; _,_; -,_)
 open import Function using (_∘_)
 open import Relation.Binary.PropositionalEquality
   using (_≡_; refl)
@@ -84,7 +84,7 @@ module Correctness where
     expr (there x∈xs ∙ e) = ∣ʳ (<$> expr (x∈xs ∙ e))
 
     exprIn : ∀ {p assoc s} (e : ExprIn p assoc) →
-             (, e) ⊕ s ∈⟦ Grammar.prec p ⟧· Show.exprIn e s
+             (-, e) ⊕ s ∈⟦ Grammar.prec p ⟧· Show.exprIn e s
     exprIn {p} e = exprIn′ _ e
       where
       module N = Grammar.Prec p
@@ -118,7 +118,7 @@ module Correctness where
         postLeft⁺ (e ⟨ op ⟩ˡ r) = <$> outerˡ e ⊛∞ ∣ʳ (<$> inner op ⊛ expr r)
 
       exprIn′ : ∀ assoc {s} (e : ExprIn p assoc) →
-                (, e) ⊕ s ∈⟦ Grammar.prec p ⟧· Show.exprIn e s
+                (-, e) ⊕ s ∈⟦ Grammar.prec p ⟧· Show.exprIn e s
       exprIn′ non      ⟪ op ⟫    = ∥ˡ (<$> inner op)
       exprIn′ non   (l ⟨ op ⟩ r) = ∥ʳ (∥ˡ (<$> expr l ⊛ inner op ⊛∞ expr r))
       exprIn′ right e            = ∥ʳ (∥ʳ (∥ˡ (preRight⁺ e)))

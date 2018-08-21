@@ -292,7 +292,7 @@ module NotExpressible where
       where
       right : ∀ {s} → s ∈ p₁ · p₂ → s ∈ ♭? p₂
       right (_·_ {s₁ = []}    _ ∈p₂) = ∈p₂
-      right (_·_ {s₁ = _ ∷ _} ∈p₁ _) = ⊥-elim (¬a₁ (, , ∈p₁))
+      right (_·_ {s₁ = _ ∷ _} ∈p₁ _) = ⊥-elim (¬a₁ (-, -, ∈p₁))
     ... | inj₂ is-fail = witness mp (∉ ∘ proj₂)
       where
       ∉ : ∀ {s} → ¬ s ∈ p₁ · p₂
@@ -306,7 +306,7 @@ module NotExpressible where
                (Inf.map left mp)
       where
       left : ∀ {s} → s ∈ p₁ · p₂ → s ∈ ♭? p₁
-      left (_·_ {s₂ = _ ∷ _}        _ ∈p₂) = ⊥-elim (¬a₂ (, , ∈p₂))
+      left (_·_ {s₂ = _ ∷ _}        _ ∈p₂) = ⊥-elim (¬a₂ (-, -, ∈p₂))
       left (_·_ {s₁ = s₁} {s₂ = []} ∈p₁ _) =
         cast∈ (sym $ proj₂ ListMonoid.identity s₁) refl ∈p₁
     ... | inj₂ is-fail = witness mp (∉ ∘ proj₂)

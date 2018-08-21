@@ -89,7 +89,7 @@ sound′ ([ xs - fs ] f∈p₁ ⊛ x∈p₂)   | (s₁ , P.refl , f∈p₁′) |
 sound′ (nonempty s₁ x∈p)           with sound′ x∈p
 sound′ (nonempty s₁ x∈p)           | (y ∷ s , eq , x∈p′) = (y ∷ s , eq , nonempty x∈p′)
 sound′ (nonempty s₁ x∈p)           | ([]    , eq , x∈p′)
-                                     with ListProp.left-identity-unique (_ ∷ s₁) (P.sym eq)
+                                     with ListProp.++-identityˡ-unique (_ ∷ s₁) (P.sym eq)
 sound′ (nonempty s₁ x∈p)           | ([]    , eq , x∈p′) | ()
 sound′ (cast x∈p)                  = Prod.map id (Prod.map id cast) (sound′ x∈p)
 sound′ ([ f - xs ] x∈p₁ >>= y∈p₂x) with sound′ x∈p₁ | sound′ y∈p₂x

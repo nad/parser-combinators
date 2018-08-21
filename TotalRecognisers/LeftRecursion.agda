@@ -11,7 +11,7 @@ open import Coinduction
 open import Data.Bool as Bool hiding (_∧_)
 import Data.Bool.Properties as Bool
 private
-  module BoolCS = CommutativeSemiring Bool.commutativeSemiring-∧-∨
+  module BoolCS = CommutativeSemiring Bool.∧-∨-commutativeSemiring
 open import Function
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence as Eq

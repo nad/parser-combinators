@@ -19,8 +19,9 @@ open import Level
 open import Relation.Binary
 import Relation.Binary.PropositionalEquality as P
 
+open Related using (SK-sym)
 open Related.EquationalReasoning
-  renaming (_∼⟨_⟩_ to _∼⟨_⟩′_; _∎ to _∎′; sym to sym′)
+  renaming (_∼⟨_⟩_ to _∼⟨_⟩′_; _∎ to _∎′)
 open RawMonad {f = zero} ListMonad.monad
   using () renaming (_⊛_ to _⊛′_; _>>=_ to _>>=′_)
 private
@@ -106,7 +107,7 @@ initial-bag-cong (xs₁≈xs₂ ∷ Dp₁≈Dp₂)   = xs₁≈xs₂
 initial-bag-cong (p ∎)                 = BSOrd.refl
 initial-bag-cong (p₁ ∼⟨ p₁≈p₂ ⟩ p₂≈p₃) = _ ∼⟨ initial-bag-cong p₁≈p₂ ⟩′ initial-bag-cong p₂≈p₃
 initial-bag-cong (p₁ ≅⟨ p₁≅p₂ ⟩ p₂≈p₃) = _ ↔⟨ initial-bag-cong p₁≅p₂ ⟩  initial-bag-cong p₂≈p₃
-initial-bag-cong (sym p₁≈p₂)           = sym′ (initial-bag-cong p₁≈p₂)
+initial-bag-cong (sym p₁≈p₂)           = SK-sym (initial-bag-cong p₁≈p₂)
 initial-bag-cong (return x₁≡x₂)        = BSOrd.reflexive $ P.cong [_] x₁≡x₂
 initial-bag-cong fail                  = BSOrd.refl
 initial-bag-cong token                 = BSOrd.refl
@@ -118,7 +119,7 @@ initial-bag-cong (cast {xs₁  = xs₁}  {xs₂  = xs₂}
                        {xs₁′ = xs₁′} {xs₂′ = xs₂′}
                        {xs₁≈xs₁′ = xs₁≈xs₁′} {xs₂≈xs₂′ = xs₂≈xs₂′}
                        p₁≈p₂) {x} =
-  x ∈ xs₁′  ↔⟨ sym′ xs₁≈xs₁′ ⟩
+  x ∈ xs₁′  ↔⟨ SK-sym xs₁≈xs₁′ ⟩
   x ∈ xs₁   ∼⟨ initial-bag-cong p₁≈p₂ ⟩′
   x ∈ xs₂   ↔⟨ xs₂≈xs₂′ ⟩
   x ∈ xs₂′  ∎′
@@ -128,7 +129,7 @@ initial-bag-cong ([ just (xs₁ , xs₂) - just _  ] p₁≈p₃ ⊛ p₂≈p₄
                                                                         (initial-bag-cong p₁≈p₃) (initial-bag-cong p₂≈p₄)
 initial-bag-cong ([ just (xs₁ , xs₂) - nothing ] p₁≈p₃ ⊛ p₂≈p₄) {x} =
   x ∈ [] ⊛flatten xs₁  ↔⟨ []-⊛flatten xs₁ ⟩
-  x ∈ []               ↔⟨ sym′ $ []-⊛flatten xs₂ ⟩
+  x ∈ []               ↔⟨ SK-sym $ []-⊛flatten xs₂ ⟩
   x ∈ [] ⊛flatten xs₂  ∎′
 
 initial-bag-cong ([ nothing        - _       ] p₁≈p₃ >>= p₂≈p₄)     = BSOrd.refl
@@ -136,7 +137,7 @@ initial-bag-cong ([ just (f₁ , f₂) - just _  ] p₁≈p₃ >>= p₂≈p₄) 
                                                                         (initial-bag-cong p₁≈p₃) (λ x → initial-bag-cong (p₂≈p₄ x))
 initial-bag-cong ([ just (f₁ , f₂) - nothing ] p₁≈p₃ >>= p₂≈p₄) {x} =
   x ∈ bind nothing f₁  ↔⟨ bind-nothing f₁ ⟩
-  x ∈ []               ↔⟨ sym′ $ bind-nothing f₂ ⟩
+  x ∈ []               ↔⟨ SK-sym $ bind-nothing f₂ ⟩
   x ∈ bind nothing f₂  ∎′
 
 ------------------------------------------------------------------------
@@ -149,7 +150,7 @@ D-cong (xs₁≈xs₂ ∷ Dp₁≈Dp₂)   {t} = ♭ (Dp₁≈Dp₂ t)
 D-cong (p ∎)                 {t} = D t p ∎
 D-cong (p₁ ∼⟨ p₁≈p₂ ⟩ p₂≈p₃) {t} = D t p₁ ∼⟨ D-cong p₁≈p₂ ⟩ D-cong p₂≈p₃
 D-cong (p₁ ≅⟨ p₁≅p₂ ⟩ p₂≈p₃) {t} = D t p₁ ≅⟨ D-cong p₁≅p₂ ⟩ D-cong p₂≈p₃
-D-cong (sym p₁≈p₂)               = sym (D-cong p₁≈p₂)
+D-cong (sym p₁≈p₂)               = _∼[_]P_.sym (D-cong p₁≈p₂)
 D-cong (return x₁≡x₂)            = fail ∎
 D-cong fail                      = fail ∎
 D-cong token                 {t} = return t ∎
@@ -168,7 +169,7 @@ D-cong ([_-_]_⊛_ nothing (just (fs₁ , fs₂)) {p₁} {p₂} {p₃} {p₄} p�
                                                                  [ just (○ , ○) - just (○ , ○) ]
                                                                    Return⋆.cong (initial-bag-cong (♭ p₁≈p₃)) ⊛ D-cong p₂≈p₄ ⟩
   ♯ D t (♭ p₃) ⊛ ♭? p₄ ∣ return⋆ (flatten fs₂) ⊛ D t (♭? p₄)  ≅⟨ [ ◌ - ○ - ○ - ○ ] D t (♭ p₃) ∎ ⊛ (♭? p₄ ∎) ∣ (_ ∎) ⟩
-    D t (♭ p₃) ⊛ ♭? p₄ ∣ return⋆ (flatten fs₂) ⊛ D t (♭? p₄)  ≅⟨ sym $ D.D-⊛ p₃ p₄ ⟩
+    D t (♭ p₃) ⊛ ♭? p₄ ∣ return⋆ (flatten fs₂) ⊛ D t (♭? p₄)  ≅⟨ _∼[_]P_.sym $ D.D-⊛ p₃ p₄ ⟩
   D t (p₃ ⊛ p₄)                                               ∎
 D-cong ([_-_]_⊛_ (just _) nothing {p₁} {p₂} {p₃} {p₄} p₁≈p₃ p₂≈p₄) {t} =
   D t (p₁ ⊛ p₂)                                   ≅⟨ D.D-⊛ p₁ p₂ ⟩
@@ -178,14 +179,14 @@ D-cong ([_-_]_⊛_ (just _) nothing {p₁} {p₂} {p₃} {p₄} p₁≈p₃ p₂
                                                      [ just (○ , ○) - nothing ] (return⋆ [] ∎) ⊛ ♯ D-cong (♭ p₂≈p₄) ⟩
   D t (♭? p₃) ⊛ ♭ p₄ ∣ return⋆ [] ⊛ ♯ D t (♭ p₄)  ≅⟨ (D t (♭? p₃) ⊛ ♭ p₄ ∎) ∣
                                                      [ ○ - ○ - ◌ - ○ ] return⋆ [] ∎ ⊛ (D t (♭ p₄) ∎) ⟩
-  D t (♭? p₃) ⊛ ♭ p₄ ∣ return⋆ [] ⊛   D t (♭ p₄)  ≅⟨ sym $ D.D-⊛ p₃ p₄ ⟩
+  D t (♭? p₃) ⊛ ♭ p₄ ∣ return⋆ [] ⊛   D t (♭ p₄)  ≅⟨ _∼[_]P_.sym $ D.D-⊛ p₃ p₄ ⟩
   D t (p₃ ⊛ p₄)                                   ∎
 D-cong ([_-_]_⊛_ (just _) (just (fs₁ , fs₂)) {p₁} {p₂} {p₃} {p₄} p₁≈p₃ p₂≈p₄) {t} =
   D t (p₁ ⊛ p₂)                                              ≅⟨ D.D-⊛ p₁ p₂ ⟩
   D t (♭? p₁) ⊛ ♭? p₂ ∣ return⋆ (flatten fs₁) ⊛ D t (♭? p₂)  ∼⟨ [ just (○ , ○) - just (○ , ○) ] D-cong p₁≈p₃ ⊛ p₂≈p₄ ∣
                                                                 [ just (○ , ○) - just (○ , ○) ] Return⋆.cong (initial-bag-cong p₁≈p₃) ⊛
                                                                                                 D-cong p₂≈p₄ ⟩
-  D t (♭? p₃) ⊛ ♭? p₄ ∣ return⋆ (flatten fs₂) ⊛ D t (♭? p₄)  ≅⟨ sym $ D.D-⊛ p₃ p₄ ⟩
+  D t (♭? p₃) ⊛ ♭? p₄ ∣ return⋆ (flatten fs₂) ⊛ D t (♭? p₄)  ≅⟨ _∼[_]P_.sym $ D.D-⊛ p₃ p₄ ⟩
   D t (p₃ ⊛ p₄)                                              ∎
 
 D-cong ([_-_]_>>=_ nothing nothing {p₁} {p₂} {p₃} {p₄} p₁≈p₃ p₂≈p₄) {t} =
@@ -201,7 +202,7 @@ D-cong ([_-_]_>>=_ nothing (just (xs₁ , xs₂)) {p₁} {p₂} {p₃} {p₄} p�
                                                                                (λ x → D-cong (p₂≈p₄ x)) ⟩
   ♯ D t (♭ p₃) >>= (♭? ∘ p₄) ∣ return⋆ (flatten xs₂) >>= (D t ∘ ♭? ∘ p₄)  ≅⟨ [ ◌ - ○ - ○ - ○ ] D t (♭ p₃) ∎ >>= (λ x → ♭? (p₄ x) ∎) ∣
                                                                              (_ ∎) ⟩
-    D t (♭ p₃) >>= (♭? ∘ p₄) ∣ return⋆ (flatten xs₂) >>= (D t ∘ ♭? ∘ p₄)  ≅⟨ sym $ D.D->>= p₃ p₄ ⟩
+    D t (♭ p₃) >>= (♭? ∘ p₄) ∣ return⋆ (flatten xs₂) >>= (D t ∘ ♭? ∘ p₄)  ≅⟨ _∼[_]P_.sym $ D.D->>= p₃ p₄ ⟩
   D t (p₃ >>= p₄)                                                         ∎
 D-cong ([_-_]_>>=_ (just _) nothing {p₁} {p₂} {p₃} {p₄} p₁≈p₃ p₂≈p₄) {t} =
   D t (p₁ >>= p₂)                                                     ≅⟨ D.D->>= p₁ p₂ ⟩
@@ -212,7 +213,7 @@ D-cong ([_-_]_>>=_ (just _) nothing {p₁} {p₂} {p₃} {p₄} p₁≈p₃ p₂
                                                                                                     (λ x → ♯ D-cong (♭ (p₂≈p₄ x))) ⟩
   D t (♭? p₃) >>= (♭ ∘ p₄) ∣ return⋆ [] >>= (λ x → ♯ D t (♭ (p₄ x)))  ≅⟨ (D t (♭? p₃) >>= (♭ ∘ p₄) ∎) ∣
                                                                          [ ○ - ○ - ◌ - ○ ] return⋆ [] ∎ >>= (λ x → D t (♭ (p₄ x)) ∎) ⟩
-  D t (♭? p₃) >>= (♭ ∘ p₄) ∣ return⋆ [] >>= (D t ∘ ♭ ∘ p₄)            ≅⟨ sym $ D.D->>= p₃ p₄ ⟩
+  D t (♭? p₃) >>= (♭ ∘ p₄) ∣ return⋆ [] >>= (D t ∘ ♭ ∘ p₄)            ≅⟨ _∼[_]P_.sym $ D.D->>= p₃ p₄ ⟩
   D t (p₃ >>= p₄)                                                     ∎
 D-cong ([_-_]_>>=_ (just _) (just (xs₁ , xs₂)) {p₁} {p₂} {p₃} {p₄} p₁≈p₃ p₂≈p₄) {t} =
   D t (p₁ >>= p₂)                                                        ≅⟨ D.D->>= p₁ p₂ ⟩
@@ -220,7 +221,7 @@ D-cong ([_-_]_>>=_ (just _) (just (xs₁ , xs₂)) {p₁} {p₂} {p₃} {p₄} p
                                                                             [ just (○ , ○) - just (○ , ○) ]
                                                                               Return⋆.cong (initial-bag-cong p₁≈p₃) >>=
                                                                               (λ x → D-cong (p₂≈p₄ x)) ⟩
-  D t (♭? p₃) >>= (♭? ∘ p₄) ∣ return⋆ (flatten xs₂) >>= (D t ∘ ♭? ∘ p₄)  ≅⟨ sym $ D.D->>= p₃ p₄ ⟩
+  D t (♭? p₃) >>= (♭? ∘ p₄) ∣ return⋆ (flatten xs₂) >>= (D t ∘ ♭? ∘ p₄)  ≅⟨ _∼[_]P_.sym $ D.D->>= p₃ p₄ ⟩
   D t (p₃ >>= p₄)                                                        ∎
 
 ------------------------------------------------------------------------

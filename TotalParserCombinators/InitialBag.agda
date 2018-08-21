@@ -30,6 +30,7 @@ open import Relation.Binary.HeterogeneousEquality as H
 open Inv.Inverse
 open RawMonadPlus {f = zero} Data.List.Categorical.monadPlus
   using () renaming (_⊛_ to _⊛′_)
+open Related using (SK-sym)
 
 open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics
@@ -244,7 +245,7 @@ cong : ∀ {k Tok R xs₁ xs₂}
          {p₁ : Parser Tok R xs₁} {p₂ : Parser Tok R xs₂} →
        p₁ ∼[ k ] p₂ → initial-bag p₁ List-∼[ k ] initial-bag p₂
 cong {xs₁ = xs₁} {xs₂} {p₁} {p₂} p₁≈p₂ {x} =
-  (x ∈ xs₁)    ↔⟨ sym correct ⟩
+  (x ∈ xs₁)    ↔⟨ SK-sym correct ⟩
   x ∈ p₁ · []  ∼⟨ p₁≈p₂ ⟩
   x ∈ p₂ · []  ↔⟨ correct ⟩
   (x ∈ xs₂)    ∎

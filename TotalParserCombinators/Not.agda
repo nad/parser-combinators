@@ -99,11 +99,11 @@ not-index-correct ext (x ∷ xs) = record
   to ()
 
   from : (∄ λ y → y ∈ ys) → tt ∈ []
-  from y∉∷ with y∉∷ (, here P.refl)
+  from y∉∷ with y∉∷ (-, here P.refl)
   ... | ()
 
   to∘from : (p : ∄ λ y → y ∈ ys) → to (from p) ≡ p
-  to∘from y∉∷ with y∉∷ (, here P.refl)
+  to∘from y∉∷ with y∉∷ (-, here P.refl)
   ... | ()
 
 ------------------------------------------------------------------------

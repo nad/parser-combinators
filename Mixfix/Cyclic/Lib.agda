@@ -88,8 +88,8 @@ data ParserProg : Set → Set₁ where
        (t ∷ t′ ∷ ts) ⟧ = const _∷_ <$>′  tok t
                                     ⊛′ ♯ ⟦ ♭ p ⟧
                                     ⊛′ ♯ ⟦ p between (t′ ∷ ts) ⟧
-⟦ p₁ ∥ p₂            ⟧ = ,_ <$>′ ⟦ p₁ ⟧
-                       ∣         ⟦ p₂ ⟧
+⟦ p₁ ∥ p₂            ⟧ = -,_ <$>′ ⟦ p₁ ⟧
+                       ∣          ⟦ p₂ ⟧
 
 ------------------------------------------------------------------------
 -- Semantics of the programs
@@ -149,11 +149,11 @@ module Semantics where
     ∥ˡ         : ∀ {I i} {R : I → Set} {x s}
                    {p₁ : ParserProg (R i)}
                    {p₂ : ParserProg (∃ R)}
-                 (x∈p₁ : x ∈⟦ p₁ ⟧· s) → (, x) ∈⟦ p₁ ∥ p₂ ⟧· s
+                 (x∈p₁ : x ∈⟦ p₁ ⟧· s) → (-, x) ∈⟦ p₁ ∥ p₂ ⟧· s
     ∥ʳ         : ∀ {I i} {R : I → Set} {s i′} {x : R i′}
                    {p₁ : ParserProg (R i)}
                    {p₂ : ParserProg (∃ R)}
-                 (x∈p₂ : (, x) ∈⟦ p₂ ⟧· s) → (, x) ∈⟦ p₁ ∥ p₂ ⟧· s
+                 (x∈p₂ : (-, x) ∈⟦ p₂ ⟧· s) → (-, x) ∈⟦ p₁ ∥ p₂ ⟧· s
 
   -- The semantics is correct. (Note that this proof only establishes
   -- language equivalence, not parser equivalence; see
@@ -169,7 +169,7 @@ module Semantics where
   sound (+-[] x∈p)     = cast∈ refl refl (proj₂ LM.identity _)
                            ([ ○ - ◌ ] <$> sound x∈p ⊛′ ∣-right [] return)
   sound (+-∷ x∈p xs∈p) = [ ○ - ◌ ] <$> sound x∈p ⊛′ ∣-left (<$> sound xs∈p)
-  sound (∥ˡ x∈p₁)      = ∣-left {x = (, _)} (<$> sound x∈p₁)
+  sound (∥ˡ x∈p₁)      = ∣-left {x = (-, _)} (<$> sound x∈p₁)
   sound (∥ʳ x∈p₂)      = ∣-right [] (sound x∈p₂)
   sound between-[]     = <$> Tok.complete
   sound (between-∷ {ts = _ ∷ _} x∈p xs∈⋯) =
@@ -258,12 +258,13 @@ module Semantics-⊕ where
     ∥ˡ         : ∀ {I i} {R : I → Set} {x s s′}
                    {p₁ : ParserProg (R i)}
                    {p₂ : ParserProg (∃ R)}
-                 (x∈p₁ : x ⊕ s′ ∈⟦ p₁ ⟧· s) → (, x) ⊕ s′ ∈⟦ p₁ ∥ p₂ ⟧· s
+                 (x∈p₁ : x ⊕ s′ ∈⟦ p₁ ⟧· s) →
+                 (-, x) ⊕ s′ ∈⟦ p₁ ∥ p₂ ⟧· s
     ∥ʳ         : ∀ {I i} {R : I → Set} {s s′ i′} {x : R i′}
                    {p₁ : ParserProg (R i)}
                    {p₂ : ParserProg (∃ R)}
-                 (x∈p₂ : (, x) ⊕ s′ ∈⟦ p₂ ⟧· s) →
-                 (, x) ⊕ s′ ∈⟦ p₁ ∥ p₂ ⟧· s
+                 (x∈p₂ : (-, x) ⊕ s′ ∈⟦ p₂ ⟧· s) →
+                 (-, x) ⊕ s′ ∈⟦ p₁ ∥ p₂ ⟧· s
 
   tok-sound : ∀ t {t′ s₁ s} →
               t′ ⊕ s₁ ∈ tok t · s →
@@ -284,7 +285,7 @@ module Semantics-⊕ where
   sound (<$> x∈p)      = <$> sound x∈p
   sound (+-[] x∈p)     = [ ○ - ◌ ] <$> sound x∈p ⊛ ∣-right [] return
   sound (+-∷ x∈p xs∈p) = [ ○ - ◌ ] <$> sound x∈p ⊛ ∣-left (<$> sound xs∈p)
-  sound (∥ˡ x∈p₁)      = ∣-left {x = (, _)} (<$> sound x∈p₁)
+  sound (∥ˡ x∈p₁)      = ∣-left {x = (-, _)} (<$> sound x∈p₁)
   sound (∥ʳ x∈p₂)      = ∣-right [] (sound x∈p₂)
   sound between-[]     = <$> tok-complete
   sound (between-∷ {ts = _ ∷ _} x∈p xs∈⋯) =

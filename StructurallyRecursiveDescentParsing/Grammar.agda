@@ -52,7 +52,7 @@ Grammar NT Tok = ∀ {i R} → NT i R → Parser NT Tok i R
 -- An empty non-terminal type.
 
 EmptyNT : NonTerminalType
-EmptyNT _ _ = Lift ⊥
+EmptyNT _ _ = Lift _ ⊥
 
 -- An empty grammar.
 

@@ -8,7 +8,7 @@ open import Data.List
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Relation.BagAndSetEquality
   using () renaming (_∼[_]_ to _List-∼[_]_)
-open import Function.Related as Related using (Kind)
+open import Function.Related as Related using (Kind; SK-sym)
 
 module TotalParserCombinators.Pointwise
   (R₁ R₂ : Set) {R₃ : Set}
@@ -132,7 +132,7 @@ lift-property P P-cong P-∙ {s = []} p₁ p₂ =
 lift-property P P-cong P-∙ {s = t ∷ s} p₁ p₂ =
    Equivalence.from
     (P (λ x → x ∈ p₁ · t ∷ s) (λ x → x ∈ p₂ · t ∷ s)
-       (λ x → x ∈ lift p₁ p₂ · t ∷ s)                 ∼⟨ sym $ P-cong (λ _ → D.correct) (λ _ → D.correct) (λ _ → D.correct) ⟩
+       (λ x → x ∈ lift p₁ p₂ · t ∷ s)                 ∼⟨ SK-sym $ P-cong (λ _ → D.correct) (λ _ → D.correct) (λ _ → D.correct) ⟩
 
      P (λ x → x ∈ D t p₁ · s) (λ x → x ∈ D t p₂ · s)
        (λ x → x ∈ D t (lift p₁ p₂) · s)               ∼⟨ P-cong (λ _ → _ ∎) (λ _ → _ ∎) (λ _ → CS.sound (D-lift p₁ p₂)) ⟩

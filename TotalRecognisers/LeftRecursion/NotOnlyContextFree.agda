@@ -21,9 +21,10 @@ private
     Monoid (Data.List.Properties.++-monoid A)
 open import Data.Nat as Nat using (ℕ; zero; suc; _+_)
 import Data.Nat.Properties as NatProp
-open NatProp.SemiringSolver
 private
-  module NatCS = CommutativeSemiring NatProp.commutativeSemiring
+  module NatCS = CommutativeSemiring NatProp.*-+-commutativeSemiring
+import Data.Nat.Solver
+open Data.Nat.Solver.+-*-Solver
 open import Data.Product
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality

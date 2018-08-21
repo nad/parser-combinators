@@ -114,17 +114,17 @@ module Parse
 -- Parsing without simplification.
 
 parse : ∀ {Tok R xs} → Parser Tok R xs → List Tok → List R
-parse = Parse.parse ,_ _∎
+parse = Parse.parse -,_ _∎
 
 parse-correct : ∀ {Tok R xs x s} {p : Parser Tok R xs} →
                 x ∈ p · s ↔ x ∈ parse p s
-parse-correct = Parse.correct ,_ _∎
+parse-correct = Parse.correct -,_ _∎
 
 -- Parsing with simplification.
 
 parse-with-simplification :
   ∀ {Tok R xs} → Parser Tok R xs → List Tok → List R
-parse-with-simplification = Parse.parse (λ p → , simplify p) S.correct
+parse-with-simplification = Parse.parse (λ p → -, simplify p) S.correct
 
 parse-with-simplification-correct :
   ∀ {Tok R xs x s} {p : Parser Tok R xs} →

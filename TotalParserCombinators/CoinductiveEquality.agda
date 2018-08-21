@@ -12,6 +12,7 @@ open import Data.List.Relation.BagAndSetEquality
 open import Function.Equivalence as Eq using (_⇔_)
 import Function.Related as Related
 
+open Related using (SK-sym)
 open Related.EquationalReasoning
 
 open import TotalParserCombinators.Parser
@@ -42,10 +43,10 @@ sound : ∀ {k Tok R xs₁ xs₂}
 sound {xs₁ = xs₁} {xs₂} {p₁} {p₂} (xs₁≈xs₂ ∷ rest) {x} {[]} =
   x ∈ p₁ · []  ↔⟨ I.correct ⟩
   (x ∈ xs₁)    ∼⟨ xs₁≈xs₂ ⟩
-  (x ∈ xs₂)    ↔⟨ sym I.correct ⟩
+  (x ∈ xs₂)    ↔⟨ SK-sym I.correct ⟩
   x ∈ p₂ · []  ∎
 sound {xs₁ = xs₁} {xs₂} {p₁} {p₂} (xs₁≈xs₂ ∷ rest) {x} {t ∷ s} =
-  x ∈   p₁   · t ∷ s  ↔⟨ sym D.correct ⟩
+  x ∈   p₁   · t ∷ s  ↔⟨ SK-sym D.correct ⟩
   x ∈ D t p₁ ·     s  ∼⟨ sound (♭ (rest t)) ⟩
   x ∈ D t p₂ ·     s  ↔⟨ D.correct ⟩
   x ∈   p₂   · t ∷ s  ∎

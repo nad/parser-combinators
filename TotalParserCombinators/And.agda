@@ -18,6 +18,7 @@ open import Relation.Binary.Product.Pointwise
 
 open RawMonadPlus {f = zero} Data.List.Categorical.monadPlus
   using (_⊗_)
+open Related using (SK-sym)
 
 open import TotalParserCombinators.Congruence using (_∼[_]P_; _≅P_)
 open import TotalParserCombinators.Derivative using (D)
@@ -64,5 +65,5 @@ correct {x₁ = x₁} {x₂} =
     (λ F G H → H (x₁ , x₂) ↔ (F x₁ × G x₂))
     (λ F↔F′ G↔G′ H↔H′ →
        Related-cong (H↔H′ (x₁ , x₂)) (F↔F′ x₁ ×-↔ G↔G′ x₂))
-    (sym ⊗-∈↔)
+    (SK-sym ⊗-∈↔)
   where open Related.EquationalReasoning
