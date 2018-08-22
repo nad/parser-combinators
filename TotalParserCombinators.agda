@@ -74,6 +74,10 @@ import TotalParserCombinators.AsymmetricChoice
 import TotalParserCombinators.And
 import TotalParserCombinators.Not
 
+-- A lookahead operator cannot be defined.
+
+import TotalParserCombinators.NoLookahead
+
 -- An alternative semantics.
 
 import TotalParserCombinators.Semantics.Continuation
