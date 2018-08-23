@@ -12,6 +12,7 @@ open import Category.Monad
 open import Coinduction
 open import Data.List as List
 import Data.List.Categorical
+open import Data.List.Properties
 open import Data.List.Relation.BagAndSetEquality as Eq
   using (bag) renaming (_∼[_]_ to _List-∼[_]_)
 open import Data.Maybe
@@ -106,6 +107,13 @@ module <$> where
     f <$> return x       ≅⟨ return-⊛ {f = f} (return x) ⟩
     return f ⊛ return x  ≅⟨ ApplicativeFunctor.homomorphism f x ⟩
     return (f x)         ∎
+
+  -- Adjacent uses of _<$>_ can be fused.
+
+  <$>-<$> : ∀ {Tok R₁ R₂ R₃ xs}
+              {f : R₂ → R₃} {g : R₁ → R₂} {p : Parser Tok R₁ xs} →
+            f <$> (g <$> p) ≅P (f ∘ g) <$> p
+  <$>-<$> = BagMonoid.reflexive (P.sym (map-compose _)) ∷ λ _ → ♯ <$>-<$>
 
 ------------------------------------------------------------------------
 -- A law for nonempty
