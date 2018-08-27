@@ -146,12 +146,8 @@ right {x = x} =
 -- possible to construct an asymmetric choice operator that, in a
 -- certain sense, is more like the prioritised choice of parsing
 -- expression grammars (see Ford's "Parsing Expression Grammars: A
--- Recognition-Based Syntactic Foundation").
---
--- Note that the proof would go through if the Parser type was
--- extended with more constructors, as long as the extend lemma could
--- still be proved (and the semantics of some of the existing
--- constructors were unchanged).
+-- Recognition-Based Syntactic Foundation") without changing the
+-- interface of the parser combinator library.
 
 not-PEG-choice :
   ¬ ∃₂ λ (_◅-bag_ : {R : Set} → List R → List R → List R)

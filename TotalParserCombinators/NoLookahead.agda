@@ -24,12 +24,8 @@ open import TotalParserCombinators.Parser
 open import TotalParserCombinators.Semantics.Continuation
 
 -- It is impossible to define a lookahead operator satisfying a
--- certain specification.
---
--- Note that the proof would go through if the Parser type was
--- extended with more constructors, as long as the extend lemma could
--- still be proved (and the semantics of return and fail were
--- unchanged).
+-- certain specification (without changing the interface of the parser
+-- combinator library).
 
 no-lookahead :
   ¬ ∃ λ (look : ∀ {Tok R} {f-bag : List Tok → List R} →
