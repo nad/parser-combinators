@@ -30,7 +30,9 @@ open import TotalParserCombinators.Congruence using (_∼[_]P_; _≅P_)
 open import TotalParserCombinators.Derivative using (D)
 open import TotalParserCombinators.Parser
 import TotalParserCombinators.Pointwise as Pointwise
-open import TotalParserCombinators.Semantics as S using (_∈_·_; _≲_)
+open import TotalParserCombinators.Semantics using (_∈_·_)
+open import TotalParserCombinators.Semantics.Continuation as S
+  using (_⊕_∈_·_)
 
 ------------------------------------------------------------------------
 -- An initial bag operator
@@ -140,82 +142,66 @@ right {x = x} =
 -- In "Parsing with First-Class Derivatives" Brachthäuser, Rendel and
 -- Ostermann state that "[...] and biased alternative cannot be
 -- expressed as user defined combinators". Here I give a formal proof
--- of a variant of this statement (in the present setting):
---
--- It is not possible to construct an asymmetric choice operator that,
--- in a certain sense, is more like that of parsing expression
--- grammars (see Ford's "Parsing Expression Grammars: A
+-- of a variant of this statement (in the present setting): it is not
+-- possible to construct an asymmetric choice operator that, in a
+-- certain sense, is more like the prioritised choice of parsing
+-- expression grammars (see Ford's "Parsing Expression Grammars: A
 -- Recognition-Based Syntactic Foundation").
 --
--- Note that the proof would still go through if the Parser type was
--- extended with more constructors, as long as the semantics of these
--- constructors was specified in the usual way (not by, for instance,
--- giving an extra rule for _⊛_).
+-- Note that the proof would go through if the Parser type was
+-- extended with more constructors, as long as the extend lemma could
+-- still be proved (and the semantics of some of the existing
+-- constructors were unchanged).
 
 not-PEG-choice :
   ¬ ∃₂ λ (_◅-bag_ : {R : Set} → List R → List R → List R)
          (_◅_ : ∀ {Tok R xs₁ xs₂} →
                Parser Tok R xs₁ → Parser Tok R xs₂ →
                Parser Tok R (xs₁ ◅-bag xs₂)) →
-      ∀ {Tok R₁ R₂ xs₁ xs₂ xs x s}
-      (p₁ : Parser Tok (R₁ → R₂) xs₁)
-      (p₂ : Parser Tok (R₁ → R₂) xs₂)
-      (p : Parser Tok R₁ xs) →
-      ((∃ λ y → y ∈ p₁ ⊛ p · s) →
-       x ∈ (p₁ ◅ p₂) ⊛ p · s ⇔ x ∈ p₁ ⊛ p · s)
+      ∀ {Tok R xs₁ xs₂ s₁}
+      (p₁ : Parser Tok R xs₁)
+      (p₂ : Parser Tok R xs₂) →
+      ((∃₂ λ y s₂ → y ⊕ s₂ ∈ p₁ · s₁) →
+       ∀ {x s₂} → x ⊕ s₂ ∈ p₁ ◅ p₂ · s₁ ⇔ x ⊕ s₂ ∈ p₁ · s₁)
         ×
-      (¬ (∃ λ y → y ∈ p₁ ⊛ p · s) →
-       x ∈ (p₁ ◅ p₂) ⊛ p · s ⇔ x ∈ p₂ ⊛ p · s)
+      (¬ (∃₂ λ y s₂ → y ⊕ s₂ ∈ p₁ · s₁) →
+       ∀ {x s₂} → x ⊕ s₂ ∈ p₁ ◅ p₂ · s₁ ⇔ x ⊕ s₂ ∈ p₂ · s₁)
 not-PEG-choice (_ , _◅_ , correct) = false∉p₁⊛·[-] false∈p₁⊛·[-]
   where
-  p₁ p₂ : Parser ⊤ (⊤ → Bool) _
-  p₁ = const (const true) <$> token
-  p₂ = return (const false)
+  p₁ p₂ : Parser ⊤ Bool _
+  p₁ = const true <$> token
+  p₂ = return false
 
-  false∈p₂⊛·[] : false ∈ p₂ ⊛ return _ · []
-  false∈p₂⊛·[] = S.return S.⊛ S.return
+  false∈p₂·[] : false ⊕ [] ∈ p₂ · []
+  false∈p₂·[] = S.return
 
-  ∉p₁⊛·[] : ∀ {b s} → b ∈ p₁ ⊛ return _ · s → s ≢ []
-  ∉p₁⊛·[] (S.<$> S.token S.⊛ _) ()
+  ∄∈p₁·[] : ¬ ∃₂ (λ b s → b ⊕ s ∈ p₁ · [])
+  ∄∈p₁·[] (_ , _ , S.<$> ())
 
-  ∄∈p₁⊛·[] : ¬ ∃ (λ b → b ∈ p₁ ⊛ return _ · [])
-  ∄∈p₁⊛·[] (_ , ∈p₁⊛·[]) = ∉p₁⊛·[] ∈p₁⊛·[] P.refl
+  false∈p₁◅p₂·[] : false ⊕ [] ∈ p₁ ◅ p₂ · []
+  false∈p₁◅p₂·[] =
+    Equivalence.from (proj₂ (correct _ _) ∄∈p₁·[]) ⟨$⟩ false∈p₂·[]
 
-  false∈p₁◅p₂⊛·[] : false ∈ (p₁ ◅ p₂) ⊛ return _ · []
-  false∈p₁◅p₂⊛·[] =
-    Equivalence.from (proj₂ (correct _ _ _) ∄∈p₁⊛·[]) ⟨$⟩ false∈p₂⊛·[]
+  false∈p₁◅p₂·[-] : false ⊕ [ _ ] ∈ p₁ ◅ p₂ · [ _ ]
+  false∈p₁◅p₂·[-] = S.extend false∈p₁◅p₂·[]
 
-  false∈<$>p₁◅p₂⊛⊛·[-] :
-    false ∈ const <$> ((p₁ ◅ p₂) ⊛ return _)
-                   ⊛  (return _ ∣ token) · [ _ ]
-  false∈<$>p₁◅p₂⊛⊛·[-] =
-    S.<$> false∈p₁◅p₂⊛·[] S.⊛ S.∣-right _ S.token
+  true∈p₁·[-] : true ⊕ [] ∈ p₁ · [ _ ]
+  true∈p₁·[-] = S.<$> S.token
 
-  <$>⊛⊛≲⊛<$> :
-    ∀ {xs ys} {p : Parser ⊤ (⊤ → Bool) xs} {q : Parser ⊤ ⊤ ys} →
-    const <$> (p ⊛ return tt) ⊛ q ≲ p ⊛ (const tt <$> q)
-  <$>⊛⊛≲⊛<$> (S.<$> (S._⊛_ {s₁ = s₁} ∈p S.return) S.⊛ ∈q) =
-    S.cast∈ P.refl P.refl (P.sym (P.cong (_++ _) (++-identityʳ s₁)))
-      (∈p S.⊛ (S.<$> ∈q))
+  false∈p₁·[-] : false ⊕ [ _ ] ∈ p₁ · [ _ ]
+  false∈p₁·[-] =
+    Equivalence.to (proj₁ (correct _ _) (-, -, true∈p₁·[-])) ⟨$⟩
+      false∈p₁◅p₂·[-]
 
-  false∈p₁◅p₂⊛·[-] :
-    false ∈ (p₁ ◅ p₂) ⊛ (const _ <$> (return _ ∣ token)) · [ _ ]
-  false∈p₁◅p₂⊛·[-] = <$>⊛⊛≲⊛<$> false∈<$>p₁◅p₂⊛⊛·[-]
-
-  true∈p₁⊛·[-] : true ∈ p₁ ⊛ (const _ <$> (return _ ∣ token)) · [ _ ]
-  true∈p₁⊛·[-] = S.<$> S.token S.⊛ S.<$> S.∣-left S.return
-
-  false∈p₁⊛·[-] : false ∈ p₁ ⊛ (const _ <$> (return _ ∣ token)) · [ _ ]
-  false∈p₁⊛·[-] =
-    Equivalence.to (proj₁ (correct _ _ _) (-, true∈p₁⊛·[-])) ⟨$⟩
-      false∈p₁◅p₂⊛·[-]
+  false∈p₁⊛·[-] :
+    false ⊕ [] ∈ const <$> p₁ ⊛ (return _ ∣ token) · [ _ ]
+  false∈p₁⊛·[-] = S.[ _ - _ ] S.<$> false∈p₁·[-] ⊛ S.∣-right _ S.token
 
   false∉p₁⊛·[-] :
-    ¬ false ∈ p₁ ⊛ (const _ <$> (return _ ∣ token)) · [ _ ]
-  false∉p₁⊛·[-] ∈p₁⊛⋆ = lemma ∈p₁⊛⋆ P.refl P.refl
+    ¬ false ⊕ [] ∈ const <$> p₁ ⊛ (return _ ∣ token) · [ _ ]
+  false∉p₁⊛·[-] = flip lemma P.refl
     where
     lemma :
-      ∀ {b s} →
-      b ∈ p₁ ⊛ (const _ <$> (return _ ∣ token)) · s →
-      b ≡ false → s ≡ [ _ ] → ⊥
-    lemma (S.<$> S.token S.⊛ _) () P.refl
+      ∀ {b} →
+      b ⊕ [] ∈ const <$> p₁ ⊛ (return _ ∣ token) · [ _ ] → b ≢ false
+    lemma (S.[ _ - _ ] S.<$> (S.<$> S.token) ⊛ _) ()
