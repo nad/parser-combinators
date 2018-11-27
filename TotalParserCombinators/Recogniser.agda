@@ -10,7 +10,7 @@
 module TotalParserCombinators.Recogniser where
 
 open import Category.Monad
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.Bool
 open import Data.List as List
 import Data.List.Categorical

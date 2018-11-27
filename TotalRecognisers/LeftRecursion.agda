@@ -7,7 +7,7 @@
 module TotalRecognisers.LeftRecursion (Tok : Set) where
 
 open import Algebra
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.Bool as Bool hiding (_∧_)
 import Data.Bool.Properties as Bool
 private

@@ -8,7 +8,7 @@ open import Data.Bool
 open import Data.Empty
 open import Data.Product
 open import Relation.Binary.PropositionalEquality
-open import Coinduction
+open import Codata.Musical.Notation
 open import Level
 
 open import StructurallyRecursiveDescentParsing.Index

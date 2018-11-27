@@ -8,7 +8,7 @@
 
 module TotalRecognisers.Simple.ExpressiveStrength where
 
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.Bool
 open import Data.Bool.Properties
 open import Function

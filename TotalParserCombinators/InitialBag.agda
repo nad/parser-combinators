@@ -63,7 +63,7 @@ mutual
     complete′ (∣-left      x∈p₁)                                        refl = to ++↔                ⟨$⟩ inj₁ (complete x∈p₁)
     complete′ (∣-right xs₁ x∈p₂)                                        refl = to (++↔ {P = _≡_ _}
                                                                                        {xs = xs₁})   ⟨$⟩ inj₂ (complete x∈p₂)
-    complete′ (<$> x∈p)                                                 refl = to map-∈↔             ⟨$⟩ (_ , complete x∈p , refl)
+    complete′ (<$> x∈p)                                                 refl = to (map-∈↔ _)         ⟨$⟩ (_ , complete x∈p , refl)
     complete′ (_⊛_   {s₁ = []} {xs = just _}                f∈p₁ x∈p₂)  refl = to (⊛-∈↔ _)           ⟨$⟩ (_ , _ , complete f∈p₁
                                                                                                                 , complete x∈p₂ , refl)
     complete′ (_>>=_ {s₁ = []} {xs = just xs} {f = just _}  x∈p₁ y∈p₂x) refl = to (>>=-∈↔ {xs = xs}) ⟨$⟩ (_ , complete x∈p₁
@@ -90,7 +90,7 @@ mutual
   sound (_∣_ {xs₁ = xs₁} p₁ p₂) x∈xs with from (++↔ {P = _≡_ _} {xs = xs₁}) ⟨$⟩ x∈xs
   ... | inj₁ x∈xs₁ = ∣-left      (sound p₁ x∈xs₁)
   ... | inj₂ x∈xs₂ = ∣-right xs₁ (sound p₂ x∈xs₂)
-  sound (f <$> p) x∈xs with from (map-∈↔ {f = f}) ⟨$⟩ x∈xs
+  sound (f <$> p) x∈xs with from (map-∈↔ f) ⟨$⟩ x∈xs
   ... | (y , y∈xs , refl) = <$> sound p y∈xs
   sound (_⊛_ {fs = fs} {just xs} p₁ p₂) y∈ys
     with from (⊛-∈↔ (flatten fs) {xs = xs}) ⟨$⟩ y∈ys
@@ -138,7 +138,7 @@ mutual
       rewrite left-inverse-of (++↔ {P = _≡_ _} {xs = xs₁}) (inj₂ (complete x∈p₂)) =
         H.cong (_∈_·_.∣-right xs₁) (sound∘complete′ x∈p₂ refl)
     sound∘complete′ (<$>_ {f = f} x∈p) refl
-      rewrite left-inverse-of (map-∈↔ {f = f}) (_ , complete x∈p , refl) =
+      rewrite left-inverse-of (map-∈↔ f) (_ , complete x∈p , refl) =
         H.cong _∈_·_.<$>_ (sound∘complete′ x∈p refl)
     sound∘complete′ (_⊛_ {s₁ = []} {fs = fs} {xs = just xs} f∈p₁ x∈p₂) refl
       with complete f∈p₁ | complete x∈p₂
@@ -192,10 +192,11 @@ complete∘sound (_∣_ {xs₁ = xs₁} p₁ p₂) .(to ++↔                   
 complete∘sound (_∣_ {xs₁ = xs₁} p₁ p₂) .(to (++↔ {P = _≡_ _} {xs = xs₁}) ⟨$⟩ inj₂ x∈xs₂) | inj₂ x∈xs₂ | refl =
   P.cong (_⟨$⟩_ (to (++↔ {P = _≡_ _} {xs = xs₁})) ∘ inj₂) $ complete∘sound p₂ x∈xs₂
 complete∘sound (f <$> p) x∈xs
-  with             from (map-∈↔ {f = f}) ⟨$⟩ x∈xs
-     | right-inverse-of (map-∈↔ {f = f})     x∈xs
-complete∘sound (f <$> p) .(to (map-∈↔ {f = f}) ⟨$⟩ (y , y∈xs , refl)) | (y , y∈xs , refl) | refl =
-  P.cong (λ y∈ → to map-∈↔ ⟨$⟩ (y , y∈ , refl)) $ complete∘sound p y∈xs
+  with             from (map-∈↔ f) ⟨$⟩ x∈xs
+     | right-inverse-of (map-∈↔ f)     x∈xs
+complete∘sound (f <$> p) .(to (map-∈↔ f) ⟨$⟩ (y , y∈xs , refl)) | (y , y∈xs , refl) | refl =
+  P.cong (λ y∈ → to (map-∈↔ _) ⟨$⟩ (y , y∈ , refl))
+         (complete∘sound p y∈xs)
 complete∘sound (_⊛_ {fs = fs} {just xs} p₁ p₂) y∈ys
   with from             (⊛-∈↔ (flatten fs) {xs = xs}) ⟨$⟩ y∈ys
      | right-inverse-of (⊛-∈↔ (flatten fs) {xs = xs})     y∈ys

@@ -6,7 +6,7 @@ module TotalParserCombinators.Laws.ReturnStar where
 
 open import Algebra
 open import Category.Monad
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.List
 import Data.List.Categorical
 open import Data.List.Relation.BagAndSetEquality as Eq

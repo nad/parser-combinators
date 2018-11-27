@@ -6,7 +6,7 @@ module TotalParserCombinators.Laws.Monad where
 
 open import Algebra
 open import Category.Monad
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.List
 open import Data.List.Categorical
   using () renaming (module MonadProperties to ListMonad)

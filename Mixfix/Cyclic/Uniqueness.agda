@@ -9,7 +9,7 @@ module Mixfix.Cyclic.Uniqueness
          (g : PrecedenceGraphInterface.PrecedenceGraph i)
          where
 
-open import Coinduction using (♭)
+open import Codata.Musical.Notation using (♭)
 open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.List using (List; []; _∷_)
 open import Data.List.Any using (here)

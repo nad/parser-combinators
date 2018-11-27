@@ -4,7 +4,7 @@
 
 module TotalParserCombinators.Derivative.LeftInverse where
 
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.Maybe
 open import Data.Product
 open import Relation.Binary.PropositionalEquality

@@ -5,7 +5,7 @@
 module Mixfix.Cyclic.Lib where
 
 open import Algebra
-open import Coinduction
+open import Codata.Musical.Notation
 open import Function using (const)
 open import Data.Bool using (Bool; true; false)
 open import Data.Nat using (ℕ; zero; suc; _+_)
@@ -16,7 +16,7 @@ open import Data.List.NonEmpty using (List⁺; _∷_; [_]; _∷⁺_)
 open import Data.Maybe using (Maybe; just; nothing; maybe)
 open import Data.Vec using (Vec; []; _∷_)
 open import Data.Product
-import Data.String as String
+import Data.String.Unsafe as String
 open import Relation.Binary
 open DecSetoid String.decSetoid using (_≟_)
 open import Relation.Nullary

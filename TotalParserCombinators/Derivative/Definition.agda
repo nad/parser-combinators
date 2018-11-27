@@ -5,7 +5,7 @@
 module TotalParserCombinators.Derivative.Definition where
 
 open import Category.Monad
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.List using (List; map)
 import Data.List.Categorical
 import Data.Maybe; open Data.Maybe.Maybe

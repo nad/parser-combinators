@@ -5,13 +5,14 @@
 module TotalParserCombinators.Lib where
 
 open import Category.Monad
-open import Coinduction
+open import Codata.Musical.Notation
 open import Function
 open import Function.Equality using (_⟶_; _⟨$⟩_)
 open import Function.Injection using (Injection; Injective)
 open import Function.Inverse using (_↔_; module Inverse)
 open import Data.Bool
-open import Data.Char as Char using (Char; _==_)
+open import Data.Char as Char using (Char)
+open import Data.Char.Unsafe using (_==_)
 open import Data.List as List
 open import Data.List.Any
 import Data.List.Categorical
@@ -27,6 +28,7 @@ import Level
 open import Relation.Binary
 open import Relation.Binary.HeterogeneousEquality as H using (_≅_)
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
+import Relation.Binary.PropositionalEquality.WithK as P
 open import Relation.Nullary
 open import Relation.Nullary.Decidable
 

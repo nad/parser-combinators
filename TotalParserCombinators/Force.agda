@@ -6,7 +6,7 @@
 
 module TotalParserCombinators.Force where
 
-open import Coinduction
+open import Codata.Musical.Notation
 import Data.List.Categorical as ListMonad
 open import Data.Maybe
 open import Data.Nat

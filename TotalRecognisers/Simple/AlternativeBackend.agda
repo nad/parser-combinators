@@ -22,7 +22,7 @@ module TotalRecognisers.Simple.AlternativeBackend
          -- The tokens must come with decidable equality.
          where
 
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.Bool hiding (_≟_)
 open import Data.List
 open import Relation.Nullary.Decidable

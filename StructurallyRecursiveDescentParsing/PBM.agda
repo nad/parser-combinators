@@ -15,9 +15,9 @@ module StructurallyRecursiveDescentParsing.PBM where
 
 import Data.Vec as Vec
 import Data.List as List
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.Bool
-open import Data.Char as Char using (_==_)
+open import Data.Char.Unsafe as Char using (_==_)
 import Data.String as String
 open import Data.Unit
 open import Function

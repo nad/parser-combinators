@@ -8,7 +8,7 @@
 module TotalRecognisers.LeftRecursion.ExpressiveStrength where
 
 open import Algebra
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.Bool as Bool hiding (_∧_)
 open import Data.Empty
 open import Function

@@ -6,7 +6,7 @@ module TotalParserCombinators.Parser where
 
 open import Algebra
 open import Category.Monad
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.List
 open import Data.Maybe using (Maybe; nothing; just)
 open import Data.List.Categorical as ListMonad

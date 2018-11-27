@@ -8,11 +8,11 @@ open import Data.List
 open import Data.Vec using ([]; _∷_)
 open import Data.Nat
 open import Data.Bool
-import Data.Char as C
+open import Data.Char using (Char)
+import Data.Char.Unsafe as C
 import Data.String as S
-open C using (Char)
 open S using (String)
-open import Coinduction
+open import Codata.Musical.Notation
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 
 open import StructurallyRecursiveDescentParsing.Index

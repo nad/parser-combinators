@@ -5,7 +5,7 @@
 module TotalParserCombinators.Congruence.Sound where
 
 open import Category.Monad
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.List
 open import Data.List.Membership.Propositional using (_∈_)
 import Data.List.Categorical as ListMonad

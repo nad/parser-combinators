@@ -4,7 +4,7 @@
 
 module Mixfix.Cyclic.Example where
 
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.Vec using ([]; _∷_; [_])
 open import Data.List as List
   using (List; []; _∷_) renaming ([_] to L[_])
@@ -16,6 +16,7 @@ open import Data.Nat using (ℕ; zero; suc)
 open import Data.Fin using (Fin; #_; zero; suc)
 import Data.String as String
 open String using (String; _++_)
+import Data.String.Unsafe as String
 open import Relation.Binary
 import Relation.Binary.List.Pointwise as ListEq
 open DecSetoid (ListEq.decSetoid String.decSetoid) using (_≟_)

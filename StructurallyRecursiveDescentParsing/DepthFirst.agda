@@ -17,7 +17,7 @@ open import Function
 open import Category.Applicative.Indexed
 open import Category.Monad.Indexed
 open import Category.Monad.State
-open import Coinduction
+open import Codata.Musical.Notation
 import Level
 
 open import StructurallyRecursiveDescentParsing.Simplified

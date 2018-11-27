@@ -5,7 +5,7 @@
 module TotalParserCombinators.Simplification where
 
 open import Algebra
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.List using (List; [])
 import Data.List.Relation.BagAndSetEquality as BSEq
 open import Data.Maybe using (Maybe); open Data.Maybe.Maybe

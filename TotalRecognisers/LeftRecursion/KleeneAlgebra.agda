@@ -6,7 +6,7 @@ module TotalRecognisers.LeftRecursion.KleeneAlgebra (Tok : Set) where
 
 open import Algebra
 import Algebra.Properties.BooleanAlgebra
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.Bool hiding (_∧_)
 import Data.Bool.Properties as Bool
 private

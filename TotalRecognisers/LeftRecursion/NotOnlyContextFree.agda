@@ -11,7 +11,7 @@
 module TotalRecognisers.LeftRecursion.NotOnlyContextFree where
 
 open import Algebra
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.Bool using (Bool; true; false; _∨_)
 open import Function
 open import Data.List as List using (List; []; _∷_; _++_; [_])

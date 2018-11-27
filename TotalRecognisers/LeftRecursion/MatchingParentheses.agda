@@ -7,7 +7,7 @@
 module TotalRecognisers.LeftRecursion.MatchingParentheses where
 
 open import Algebra
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.Bool
 open import Data.List
 open import Data.List.Properties

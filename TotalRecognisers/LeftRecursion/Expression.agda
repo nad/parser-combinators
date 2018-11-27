@@ -4,9 +4,10 @@
 
 module TotalRecognisers.LeftRecursion.Expression where
 
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.Bool hiding (_∧_)
 open import Data.Char as Char using (Char)
+import Data.Char.Unsafe as Char
 open import Data.Nat using (ℕ; _≤?_)
 open import Data.String as String using (String)
 open import Relation.Binary.PropositionalEquality

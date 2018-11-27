@@ -13,7 +13,7 @@ module Mixfix.Acyclic.Grammar
          (g : PrecedenceGraphInterface.PrecedenceGraph acyclic)
          where
 
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.List using (List; []; _∷_)
 open import Data.List.Any using (here; there)
 open import Data.List.Membership.Propositional using (_∈_)

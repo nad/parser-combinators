@@ -4,7 +4,7 @@
 
 module TotalParserCombinators.CoinductiveEquality where
 
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.List
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Relation.BagAndSetEquality

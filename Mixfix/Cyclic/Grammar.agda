@@ -11,7 +11,7 @@ module Mixfix.Cyclic.Grammar
          (g : PrecedenceGraphInterface.PrecedenceGraph i)
          where
 
-open import Coinduction
+open import Codata.Musical.Notation
 open import Function using (flip; _$_)
 open import Data.List using (List; []; _∷_)
 open import Data.List.Any using (here; there)

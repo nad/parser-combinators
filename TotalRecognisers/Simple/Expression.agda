@@ -4,9 +4,10 @@
 
 module TotalRecognisers.Simple.Expression where
 
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.Bool
-open import Data.Char as Char using (Char)
+open import Data.Char using (Char)
+import Data.Char.Unsafe as Char
 open import Data.String as String using (String)
 open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary.Decidable

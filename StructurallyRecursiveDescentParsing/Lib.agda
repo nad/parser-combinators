@@ -18,9 +18,9 @@ open import Data.Bool using (Bool; true; false; _∧_; _∨_)
 open import Function
 open import Data.Maybe
 open import Data.Unit using (⊤)
-import Data.Char as Char
-open Char using (Char; _==_)
-open import Coinduction
+open import Data.Char using (Char)
+open import Data.Char.Unsafe as Char using (_==_)
+open import Codata.Musical.Notation
 open import Algebra
 import Data.Bool.Properties as Bool
 private

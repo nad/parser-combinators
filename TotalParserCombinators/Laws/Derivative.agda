@@ -5,7 +5,7 @@
 module TotalParserCombinators.Laws.Derivative where
 
 open import Algebra
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.List
 import Data.List.Categorical as List
 import Data.List.Relation.BagAndSetEquality as BSEq

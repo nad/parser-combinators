@@ -13,7 +13,7 @@
 
 module TotalParserCombinators.Congruence where
 
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.List
 open import Data.List.Relation.BagAndSetEquality
   using (bag) renaming (_∼[_]_ to _List-∼[_]_)

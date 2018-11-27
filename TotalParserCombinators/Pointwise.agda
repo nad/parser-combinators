@@ -25,7 +25,7 @@ module TotalParserCombinators.Pointwise
               (xs₁ ∙ xs₂) List-∼[ ⌊ k ⌋ ] (xs₁′ ∙ xs₂′))
   where
 
-open import Coinduction
+open import Codata.Musical.Notation
 open import Function
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence using (_⇔_; module Equivalence)

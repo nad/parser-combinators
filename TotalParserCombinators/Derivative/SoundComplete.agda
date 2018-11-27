@@ -5,7 +5,7 @@
 module TotalParserCombinators.Derivative.SoundComplete where
 
 open import Category.Monad
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.List
 import Data.List.Categorical
 open import Data.Maybe

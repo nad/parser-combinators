@@ -9,7 +9,7 @@ module TotalParserCombinators.Laws where
 
 open import Algebra
 open import Category.Monad
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.List as List
 import Data.List.Categorical
 open import Data.List.Properties

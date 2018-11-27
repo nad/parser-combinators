@@ -5,7 +5,7 @@
 module StructurallyRecursiveDescentParsing.Simplified.Semantics where
 
 open import Algebra
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.Bool
 open import Data.List
 import Data.List.Properties

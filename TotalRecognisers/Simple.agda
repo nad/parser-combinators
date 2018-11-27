@@ -14,7 +14,7 @@ module TotalRecognisers.Simple
          where
 
 open import Algebra
-open import Coinduction
+open import Codata.Musical.Notation
 open import Data.Bool hiding (_≟_)
 import Data.Bool.Properties as Bool
 private
