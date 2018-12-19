@@ -2,6 +2,8 @@
 -- One can construct combinators which do not preserve equality
 ------------------------------------------------------------------------
 
+{-# OPTIONS --guardedness #-}
+
 module TotalParserCombinators.NotACongruence where
 
 open import Codata.Musical.Notation

@@ -2,6 +2,8 @@
 -- Brzozowski-style derivatives of parsers
 ------------------------------------------------------------------------
 
+{-# OPTIONS --guardedness #-}
+
 module TotalParserCombinators.Derivative.Definition where
 
 open import Category.Monad

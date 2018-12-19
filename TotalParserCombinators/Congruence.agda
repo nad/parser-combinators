@@ -11,6 +11,8 @@
 -- are also equalities. The related orderings are compatible
 -- preorders.
 
+{-# OPTIONS --guardedness #-}
+
 module TotalParserCombinators.Congruence where
 
 open import Codata.Musical.Notation

@@ -2,6 +2,8 @@
 -- An alternative definition of equality
 ------------------------------------------------------------------------
 
+{-# OPTIONS --guardedness #-}
+
 module TotalParserCombinators.CoinductiveEquality where
 
 open import Codata.Musical.Notation

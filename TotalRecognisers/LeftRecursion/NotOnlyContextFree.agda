@@ -8,6 +8,8 @@
 -- below provides a non-trivial example of the use of the parser
 -- combinators.
 
+{-# OPTIONS --guardedness #-}
+
 module TotalRecognisers.LeftRecursion.NotOnlyContextFree where
 
 open import Algebra

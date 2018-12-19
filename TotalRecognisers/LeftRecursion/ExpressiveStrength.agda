@@ -5,6 +5,8 @@
 -- alphabet is ℕ
 ------------------------------------------------------------------------
 
+{-# OPTIONS --guardedness #-}
+
 module TotalRecognisers.LeftRecursion.ExpressiveStrength where
 
 open import Algebra

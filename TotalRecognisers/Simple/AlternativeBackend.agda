@@ -13,6 +13,8 @@
 -- parsers which are simultaneously left and right recursive, like
 -- TotalRecognisers.LeftRecursion.leftRight.
 
+{-# OPTIONS --guardedness #-}
+
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
 

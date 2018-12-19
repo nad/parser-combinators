@@ -2,6 +2,8 @@
 -- The parser equivalence proof language is sound
 ------------------------------------------------------------------------
 
+{-# OPTIONS --guardedness #-}
+
 module TotalParserCombinators.Congruence.Sound where
 
 open import Category.Monad

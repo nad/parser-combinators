@@ -2,6 +2,8 @@
 -- Laws related to _⊛_ and return
 ------------------------------------------------------------------------
 
+{-# OPTIONS --guardedness #-}
+
 module TotalParserCombinators.Laws.ApplicativeFunctor where
 
 open import Algebra

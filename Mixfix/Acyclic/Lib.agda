@@ -16,6 +16,8 @@
 --   StructurallyRecursiveDescentParsing.DepthFirst only handles
 --   simplified parsers.
 
+{-# OPTIONS --guardedness #-}
+
 module Mixfix.Acyclic.Lib where
 
 open import Algebra

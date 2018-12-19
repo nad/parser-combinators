@@ -5,6 +5,8 @@
 -- This module also provides examples of parsers for which the indices
 -- cannot be inferred.
 
+{-# OPTIONS --guardedness #-}
+
 module StructurallyRecursiveDescentParsing.Lib where
 
 open import StructurallyRecursiveDescentParsing.Grammar

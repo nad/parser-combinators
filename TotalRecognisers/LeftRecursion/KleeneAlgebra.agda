@@ -2,6 +2,8 @@
 -- Recognisers form a Kleene algebra
 ------------------------------------------------------------------------
 
+{-# OPTIONS --guardedness #-}
+
 module TotalRecognisers.LeftRecursion.KleeneAlgebra (Tok : Set) where
 
 open import Algebra

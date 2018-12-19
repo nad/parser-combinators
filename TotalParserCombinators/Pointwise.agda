@@ -2,7 +2,7 @@
 -- Pointwise lifting of (binary) initial bag operators to parsers
 ------------------------------------------------------------------------
 
-{-# OPTIONS --universe-polymorphism #-}
+{-# OPTIONS --guardedness #-}
 
 open import Data.List
 open import Data.List.Membership.Propositional using (_∈_)

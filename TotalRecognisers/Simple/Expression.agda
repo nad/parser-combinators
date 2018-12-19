@@ -2,6 +2,8 @@
 -- Example: Right recursive expression grammar
 ------------------------------------------------------------------------
 
+{-# OPTIONS --guardedness #-}
+
 module TotalRecognisers.Simple.Expression where
 
 open import Codata.Musical.Notation

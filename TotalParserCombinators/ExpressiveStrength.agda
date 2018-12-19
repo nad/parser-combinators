@@ -4,6 +4,8 @@
 -- the lists of results)
 ------------------------------------------------------------------------
 
+{-# OPTIONS --guardedness #-}
+
 module TotalParserCombinators.ExpressiveStrength where
 
 open import Codata.Musical.Notation

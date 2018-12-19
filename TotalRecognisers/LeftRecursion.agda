@@ -2,6 +2,8 @@
 -- Total recognisers which can handle left recursion
 ------------------------------------------------------------------------
 
+{-# OPTIONS --guardedness #-}
+
 -- The recognisers are parametrised on the alphabet.
 
 module TotalRecognisers.LeftRecursion (Tok : Set) where

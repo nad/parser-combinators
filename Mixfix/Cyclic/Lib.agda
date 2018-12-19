@@ -2,6 +2,8 @@
 -- Small parser combinator library used by Mixfix.Cyclic.Grammar
 ------------------------------------------------------------------------
 
+{-# OPTIONS --guardedness #-}
+
 module Mixfix.Cyclic.Lib where
 
 open import Algebra
