@@ -358,8 +358,8 @@ module Sat where
               from (to eqs) ≡ eqs
     from∘to (t , P.refl , p-t≡just-x) =
       P.cong₂ (λ eq₁ eq₂ → (t , eq₁ , eq₂))
-              (P.≡-irrelevance _ _)
-              (P.≡-irrelevance _ _)
+              (P.≡-irrelevant _ _)
+              (P.≡-irrelevant _ _)
 
     to∘from : ∀ {s} (x∈ : x ∈ sat p · s) → to (from x∈) ≡ x∈
     to∘from (S.token {x = t} >>= x∈ok-p-t)

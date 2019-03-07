@@ -9,12 +9,12 @@ open import Data.List.Relation.BagAndSetEquality
 open import Data.List.Membership.Propositional.Properties
 import Data.List.Categorical
 open import Data.Product
+open import Data.Product.Function.NonDependent.Propositional
 open import Function
 open import Function.Inverse using (_↔_)
 import Function.Related as Related
 open import Function.Related.TypeIsomorphisms
 open import Level
-open import Relation.Binary.Product.Pointwise
 
 open RawMonadPlus {f = zero} Data.List.Categorical.monadPlus
   using (_⊗_)

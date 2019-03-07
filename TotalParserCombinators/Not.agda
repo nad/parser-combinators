@@ -14,6 +14,7 @@ open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Relation.BagAndSetEquality
   using () renaming (_∼[_]_ to _List-∼[_]_)
 open import Data.Product
+import Data.Product.Function.Dependent.Propositional as Σ
 open import Data.Unit
 open import Function
 open import Function.Equality using (_⟨$⟩_)
@@ -23,7 +24,6 @@ open import Function.Related
 import Function.Related.TypeIsomorphisms as Iso
 open import Level
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
-import Relation.Binary.Sigma.Pointwise as Σ
 
 open import TotalParserCombinators.Congruence as C using (_∼[_]P_; _≅P_)
 open import TotalParserCombinators.Derivative using (D)
