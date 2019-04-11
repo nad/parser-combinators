@@ -9,7 +9,7 @@ open import Data.Vec using ([]; _∷_)
 open import Data.Nat
 open import Data.Bool
 open import Data.Char using (Char)
-import Data.Char.Unsafe as C
+import Data.Char.Properties as C
 import Data.String as S
 open S using (String)
 open import Codata.Musical.Notation

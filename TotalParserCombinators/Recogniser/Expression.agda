@@ -8,8 +8,7 @@ module TotalParserCombinators.Recogniser.Expression where
 
 open import Codata.Musical.Notation
 open import Data.Bool
-open import Data.Char using (Char)
-import Data.Char.Unsafe as Char
+open import Data.Char as Char using (Char)
 open import Data.List
 open import Data.String as String using (String)
 open import Function

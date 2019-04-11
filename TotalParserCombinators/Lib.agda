@@ -13,8 +13,7 @@ open import Function.Equality using (_⟶_; _⟨$⟩_)
 open import Function.Injection using (Injection; Injective)
 open import Function.Inverse using (_↔_; module Inverse)
 open import Data.Bool
-open import Data.Char as Char using (Char)
-open import Data.Char.Unsafe using (_==_)
+open import Data.Char as Char using (Char; _==_)
 open import Data.List as List
 open import Data.List.Any
 import Data.List.Categorical

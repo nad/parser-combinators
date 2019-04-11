@@ -30,7 +30,7 @@ import Data.List.Properties
 private module LM {A : Set} = Monoid (Data.List.Properties.++-monoid A)
 open import Data.Vec using (Vec; []; _∷_)
 open import Data.Product
-import Data.String.Unsafe as String
+import Data.String.Properties as String
 open import Relation.Binary
 open DecSetoid String.decSetoid using (_≟_)
 open import Relation.Nullary

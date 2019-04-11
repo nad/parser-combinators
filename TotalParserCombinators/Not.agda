@@ -6,6 +6,7 @@
 
 module TotalParserCombinators.Not where
 
+open import Axiom.Extensionality.Propositional
 open import Data.Bool
 open import Data.Empty
 open import Data.List
@@ -57,7 +58,7 @@ not-index-cong {xs = _ ∷ _} {xs′ = []   } eq
 -- extensional.
 
 not-index-correct :
-  P.Extensionality zero zero →
+  Extensionality zero zero →
   ∀ {R} (xs : List R) → tt ∈ not-index xs ↔ ∄ λ x → x ∈ xs
 not-index-correct ext [] = record
   { to         = P.→-to-⟶ to
@@ -139,7 +140,7 @@ D-¬ = Not.D-lift fail
 -- ¬_ is correct (assuming that propositional equality is
 -- extensional).
 
-correct : (∀ {ℓ} → P.Extensionality ℓ zero) →
+correct : (∀ {ℓ} → Extensionality ℓ zero) →
           ∀ {Tok R xs s} (p : Parser Tok R xs) →
           tt ∈ ¬ p · s ↔ ∄ λ x → x ∈ p · s
 correct ext =

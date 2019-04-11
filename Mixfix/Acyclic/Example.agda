@@ -16,11 +16,11 @@ open import Data.Unit using (⊤)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Nat using (zero; suc)
 open import Data.Fin using (#_)
+import Data.List.Relation.Binary.Pointwise as ListEq
 import Data.String as String
 open String using (String; _++_)
-import Data.String.Unsafe as String
+import Data.String.Properties as String
 open import Relation.Binary
-import Relation.Binary.List.Pointwise as ListEq
 open DecSetoid (ListEq.decSetoid String.decSetoid) using (_≟_)
 open import Function using (_∘_; _$_)
 open import Data.Bool using (Bool; if_then_else_)

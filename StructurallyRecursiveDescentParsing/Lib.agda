@@ -20,8 +20,8 @@ open import Data.Bool using (Bool; true; false; _∧_; _∨_)
 open import Function
 open import Data.Maybe
 open import Data.Unit using (⊤)
-open import Data.Char using (Char)
-open import Data.Char.Unsafe as Char using (_==_)
+open import Data.Char using (Char; _==_)
+import Data.Char.Properties as Char
 open import Codata.Musical.Notation
 open import Algebra
 import Data.Bool.Properties as Bool

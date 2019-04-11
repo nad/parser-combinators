@@ -17,7 +17,8 @@ import Data.Vec as Vec
 import Data.List as List
 open import Codata.Musical.Notation
 open import Data.Bool
-open import Data.Char.Unsafe as Char using (_==_)
+open import Data.Char using (_==_)
+import Data.Char.Properties as Char
 import Data.String as String
 open import Data.Unit
 open import Function
