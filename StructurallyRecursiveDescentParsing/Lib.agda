@@ -18,7 +18,7 @@ open import Data.List using (List; []; _∷_; foldr; foldl; reverse)
 open import Data.Product
 open import Data.Bool using (Bool; true; false; _∧_; _∨_)
 open import Function
-open import Data.Maybe
+open import Data.Maybe hiding (_>>=_)
 open import Data.Unit using (⊤)
 open import Data.Char using (Char; _==_)
 import Data.Char.Properties as Char
@@ -369,7 +369,7 @@ digit = 0 <$ tok '0'
       ∣ 7 <$ tok '7'
       ∣ 8 <$ tok '8'
       ∣ 9 <$ tok '9'
-  where open Token Char.decSetoid
+  where open Token Char.≡-decSetoid
 
 number : ∀ {NT} → Parser NT Char _ ℕ
 number = toNum <$> digit +

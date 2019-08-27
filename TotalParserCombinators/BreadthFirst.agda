@@ -7,7 +7,7 @@ module TotalParserCombinators.BreadthFirst where
 open import Data.List
 open import Data.List.Membership.Propositional
 open import Data.Product
-open import Function
+open import Function.Core
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Inverse using (_↔_; module Inverse)
 open import Relation.Binary.HeterogeneousEquality as H

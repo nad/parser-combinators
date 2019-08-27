@@ -9,7 +9,7 @@ module TotalParserCombinators.Simplification where
 open import Algebra
 open import Codata.Musical.Notation
 open import Data.List using (List; [])
-import Data.List.Relation.BagAndSetEquality as BSEq
+import Data.List.Relation.Binary.BagAndSetEquality as BSEq
 open import Data.Maybe using (Maybe); open Data.Maybe.Maybe
 open import Data.Nat
 open import Data.Product

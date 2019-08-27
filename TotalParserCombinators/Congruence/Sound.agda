@@ -11,9 +11,9 @@ open import Codata.Musical.Notation
 open import Data.List
 open import Data.List.Membership.Propositional using (_∈_)
 import Data.List.Categorical as ListMonad
-open import Data.List.Relation.BagAndSetEquality
+open import Data.List.Relation.Binary.BagAndSetEquality
   renaming (_∼[_]_ to _List-∼[_]_)
-open import Data.Maybe
+open import Data.Maybe hiding (_>>=_)
 open import Data.Product
 open import Function
 import Function.Related as Related

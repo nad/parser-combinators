@@ -8,7 +8,7 @@ open import Algebra
 open import Codata.Musical.Notation
 open import Data.List
 import Data.List.Properties as ListProp
-open import Data.List.Relation.BagAndSetEquality
+open import Data.List.Relation.Binary.BagAndSetEquality
   using (bag) renaming (_∼[_]_ to _List-∼[_]_)
 open import Data.Maybe using (Maybe)
 open import Data.Product as Prod

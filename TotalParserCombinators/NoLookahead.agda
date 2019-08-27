@@ -13,7 +13,7 @@ open import Data.List
 open import Data.List.Properties
 open import Data.Product
 open import Data.Unit
-open import Function
+open import Function.Core
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence using (Equivalence; _⇔_)
 open import Relation.Binary.PropositionalEquality as PE using (_≡_)

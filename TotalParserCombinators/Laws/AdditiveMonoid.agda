@@ -8,7 +8,7 @@ module TotalParserCombinators.Laws.AdditiveMonoid where
 
 open import Algebra
 open import Codata.Musical.Notation
-import Data.List.Relation.BagAndSetEquality as Eq
+import Data.List.Relation.Binary.BagAndSetEquality as Eq
 open import Data.Product using (proj₁; proj₂)
 open import Function
 

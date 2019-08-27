@@ -7,7 +7,7 @@
 module TotalRecognisers.LeftRecursion.Expression where
 
 open import Codata.Musical.Notation
-open import Data.Bool hiding (_∧_)
+open import Data.Bool hiding (_∧_; _≤_; _≤?_)
 open import Data.Char as Char using (Char)
 open import Data.Nat using (ℕ; _≤?_)
 open import Data.String as String using (String)
@@ -31,8 +31,8 @@ digit : P _
 digit = sat in-range
   where
   in-range : Char → Bool
-  in-range t = ⌊ Char.toNat '0' ≤? Char.toNat  t  ⌋ ∧
-               ⌊ Char.toNat  t  ≤? Char.toNat '9' ⌋
+  in-range t = ⌊ Char.toℕ '0' ≤? Char.toℕ  t  ⌋ ∧
+               ⌊ Char.toℕ  t  ≤? Char.toℕ '9' ⌋
 
 -- Numbers.
 

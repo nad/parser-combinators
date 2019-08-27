@@ -9,13 +9,13 @@ module TotalRecognisers.LeftRecursion.KleeneAlgebra (Tok : Set) where
 open import Algebra
 import Algebra.Properties.BooleanAlgebra
 open import Codata.Musical.Notation
-open import Data.Bool hiding (_∧_)
+open import Data.Bool hiding (_∧_; _≤_)
 import Data.Bool.Properties as Bool
 private
   module BoolCS = CommutativeSemiring Bool.∨-∧-commutativeSemiring
   module BoolBA = Algebra.Properties.BooleanAlgebra
                     Bool.∨-∧-booleanAlgebra
-open import Function
+open import Function.Core
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence as Eq using (_⇔_; equivalence)
 open import Data.List

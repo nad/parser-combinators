@@ -8,7 +8,7 @@ open import Category.Monad
 open import Codata.Musical.Notation
 open import Data.List
 import Data.List.Categorical
-open import Data.Maybe
+open import Data.Maybe hiding (_>>=_)
 open import Data.Product
 open import Level
 open import Relation.Binary.PropositionalEquality

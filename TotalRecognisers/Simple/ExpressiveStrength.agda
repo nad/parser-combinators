@@ -13,7 +13,7 @@ module TotalRecognisers.Simple.ExpressiveStrength where
 open import Codata.Musical.Notation
 open import Data.Bool
 open import Data.Bool.Properties
-open import Function
+open import Function.Core
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence
   using (_⇔_; equivalence; module Equivalence)

@@ -8,19 +8,19 @@ module TotalParserCombinators.Lib where
 
 open import Category.Monad
 open import Codata.Musical.Notation
-open import Function
+open import Function.Core
 open import Function.Equality using (_⟶_; _⟨$⟩_)
 open import Function.Injection using (Injection; Injective)
 open import Function.Inverse using (_↔_; module Inverse)
-open import Data.Bool
+open import Data.Bool hiding (_≤?_)
 open import Data.Char as Char using (Char; _==_)
 open import Data.List as List
-open import Data.List.Any
 import Data.List.Categorical
 open import Data.List.Membership.Propositional
 import Data.List.Membership.Propositional.Properties as ∈
 open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_)
-open import Data.Maybe
+open import Data.List.Relation.Unary.Any
+open import Data.Maybe hiding (_>>=_)
 open import Data.Nat hiding (_^_)
 open import Data.Product as Prod
 open import Data.Unit using (⊤)
@@ -486,11 +486,11 @@ module ⋁ where
 digit = sat (λ t → if in-range t then just (to-number t) else nothing)
   where
   in-range : Char → Bool
-  in-range t = ⌊ Char.toNat '0' ≤? Char.toNat  t  ⌋ ∧
-               ⌊ Char.toNat  t  ≤? Char.toNat '9' ⌋
+  in-range t = ⌊ Char.toℕ '0' ≤? Char.toℕ  t  ⌋ ∧
+               ⌊ Char.toℕ  t  ≤? Char.toℕ '9' ⌋
 
   to-number : Char → ℕ
-  to-number t = Char.toNat t ∸ Char.toNat '0'
+  to-number t = Char.toℕ t ∸ Char.toℕ '0'
 
 -- Numbers.
 

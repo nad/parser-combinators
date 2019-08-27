@@ -9,7 +9,7 @@ module TotalParserCombinators.CoinductiveEquality where
 open import Codata.Musical.Notation
 open import Data.List
 open import Data.List.Membership.Propositional using (_∈_)
-open import Data.List.Relation.BagAndSetEquality
+open import Data.List.Relation.Binary.BagAndSetEquality
   using () renaming (_∼[_]_ to _List-∼[_]_)
 open import Function.Equivalence as Eq using (_⇔_)
 import Function.Related as Related

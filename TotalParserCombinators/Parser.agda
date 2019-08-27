@@ -13,7 +13,7 @@ open import Data.List
 open import Data.Maybe using (Maybe; nothing; just)
 open import Data.List.Categorical as ListMonad
   using () renaming (module MonadProperties to ListMonadProp)
-open import Data.List.Relation.BagAndSetEquality
+open import Data.List.Relation.Binary.BagAndSetEquality
 open import Data.Product using (proj₂)
 open import Function
 open import Level

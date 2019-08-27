@@ -6,12 +6,12 @@ module TotalParserCombinators.Semantics where
 
 open import Codata.Musical.Notation
 open import Data.List hiding (drop)
-open import Data.List.Relation.BagAndSetEquality
+open import Data.List.Relation.Binary.BagAndSetEquality
   using (bag) renaming (_∼[_]_ to _List-∼[_]_)
 open import Data.Maybe using (Maybe); open Data.Maybe.Maybe
 open import Data.Product
 open import Data.Unit using (⊤; tt)
-open import Function
+open import Function.Core
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence as Eq using (_⇔_; module Equivalence)
 open import Function.Inverse using (_↔_; module Inverse)
@@ -92,7 +92,7 @@ infix 4 _∼[_]_ _≈_ _≅_ _≲_
 -- stronger, and correspond to bag equality. Language equivalences are
 -- weaker, and correspond to set equality.
 
-open Data.List.Relation.BagAndSetEquality public
+open Data.List.Relation.Binary.BagAndSetEquality public
   using (Kind)
   renaming ( bag      to parser
            ; set      to language

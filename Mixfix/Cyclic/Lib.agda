@@ -20,7 +20,7 @@ open import Data.Vec using (Vec; []; _∷_)
 open import Data.Product
 import Data.String.Properties as String
 open import Relation.Binary
-open DecSetoid String.decSetoid using (_≟_)
+open DecSetoid String.≡-decSetoid using (_≟_)
 open import Relation.Nullary
 open import Relation.Binary.PropositionalEquality as P using (_≡_; refl)
 

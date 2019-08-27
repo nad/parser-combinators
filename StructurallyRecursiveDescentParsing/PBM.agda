@@ -27,7 +27,7 @@ open import Relation.Binary.PropositionalEquality
 open import StructurallyRecursiveDescentParsing.Grammar
 open import StructurallyRecursiveDescentParsing.Lib
 open import StructurallyRecursiveDescentParsing.DepthFirst
-open Token Char.decSetoid
+open Token Char.≡-decSetoid
 
 open import TotalParserCombinators.Examples.PBM using (module PBM)
 open PBM

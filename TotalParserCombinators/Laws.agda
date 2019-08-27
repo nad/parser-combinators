@@ -15,9 +15,9 @@ open import Codata.Musical.Notation
 open import Data.List as List
 import Data.List.Categorical
 open import Data.List.Properties
-open import Data.List.Relation.BagAndSetEquality as Eq
+open import Data.List.Relation.Binary.BagAndSetEquality as Eq
   using (bag) renaming (_∼[_]_ to _List-∼[_]_)
-open import Data.Maybe
+open import Data.Maybe hiding (_>>=_)
 open import Function
 import Level
 open import Relation.Binary.PropositionalEquality as P using (_≡_)

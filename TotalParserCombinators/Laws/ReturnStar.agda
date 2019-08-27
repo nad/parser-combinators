@@ -9,7 +9,7 @@ open import Category.Monad
 open import Codata.Musical.Notation
 open import Data.List
 import Data.List.Categorical
-open import Data.List.Relation.BagAndSetEquality as Eq
+open import Data.List.Relation.Binary.BagAndSetEquality as Eq
   using (bag) renaming (_∼[_]_ to _List-∼[_]_)
 open import Function
 open import Level

@@ -17,9 +17,9 @@ module TotalParserCombinators.Congruence where
 
 open import Codata.Musical.Notation
 open import Data.List
-open import Data.List.Relation.BagAndSetEquality
+open import Data.List.Relation.Binary.BagAndSetEquality
   using (bag) renaming (_∼[_]_ to _List-∼[_]_)
-open import Data.Maybe
+open import Data.Maybe hiding (_>>=_)
 open import Data.Nat hiding (_^_)
 open import Data.Product
 open import Data.Product.N-ary

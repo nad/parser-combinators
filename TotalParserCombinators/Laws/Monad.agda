@@ -12,7 +12,7 @@ open import Codata.Musical.Notation
 open import Data.List
 open import Data.List.Categorical
   using () renaming (module MonadProperties to ListMonad)
-import Data.List.Relation.BagAndSetEquality as BSEq
+import Data.List.Relation.Binary.BagAndSetEquality as BSEq
 open import Function
 open import Level
 

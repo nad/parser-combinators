@@ -6,18 +6,18 @@ module TotalParserCombinators.InitialBag where
 
 open import Category.Monad
 open import Data.List
-open import Data.List.Any
-open import Data.List.Any.Properties
 import Data.List.Categorical
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties as M
   hiding (⊛-∈↔)
-open import Data.List.Relation.BagAndSetEquality
+open import Data.List.Relation.Binary.BagAndSetEquality
   using () renaming (_∼[_]_ to _List-∼[_]_)
-open import Data.Maybe
+open import Data.List.Relation.Unary.Any
+open import Data.List.Relation.Unary.Any.Properties
+open import Data.Maybe hiding (_>>=_)
 open import Data.Product
 open import Data.Sum
-open import Function
+open import Function.Core
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Inverse as Inv using (_↔_)
 import Function.Related as Related

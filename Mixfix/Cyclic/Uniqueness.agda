@@ -12,7 +12,7 @@ module Mixfix.Cyclic.Uniqueness
 open import Codata.Musical.Notation using (♭)
 open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.List using (List; []; _∷_)
-open import Data.List.Any using (here)
+open import Data.List.Relation.Unary.Any using (here)
 open import Data.Vec using (Vec; []; _∷_)
 open import Data.Product using (_,_; -,_; proj₂)
 open import Relation.Binary.HeterogeneousEquality using (_≅_; refl)

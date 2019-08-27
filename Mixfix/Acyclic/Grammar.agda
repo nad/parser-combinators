@@ -17,8 +17,8 @@ module Mixfix.Acyclic.Grammar
 
 open import Codata.Musical.Notation
 open import Data.List using (List; []; _∷_)
-open import Data.List.Any using (here; there)
 open import Data.List.Membership.Propositional using (_∈_)
+open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.List.NonEmpty using (foldr; foldl)
 open import Data.Product
 open import Data.Bool

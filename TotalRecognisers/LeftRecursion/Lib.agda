@@ -7,7 +7,7 @@
 module TotalRecognisers.LeftRecursion.Lib (Tok : Set) where
 
 open import Codata.Musical.Notation
-open import Data.Bool hiding (_∧_)
+open import Data.Bool hiding (_∧_; _≤_)
 open import Data.Bool.Properties
 open import Function hiding (_∋_)
 open import Function.Equality using (_⟨$⟩_)

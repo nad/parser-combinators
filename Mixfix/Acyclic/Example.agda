@@ -8,8 +8,8 @@ open import Codata.Musical.Notation
 open import Data.Vec using ([]; _∷_; [_])
 open import Data.List as List
   using (List; []; _∷_) renaming ([_] to L[_])
-open import Data.List.Any using (here; there)
 open import Data.List.Membership.Propositional using (_∈_)
+open import Data.List.Relation.Unary.Any using (here; there)
 import Codata.Musical.Colist as Colist
 open import Data.Product using (∃₂; -,_)
 open import Data.Unit using (⊤)
@@ -21,7 +21,7 @@ import Data.String as String
 open String using (String; _++_)
 import Data.String.Properties as String
 open import Relation.Binary
-open DecSetoid (ListEq.decSetoid String.decSetoid) using (_≟_)
+open DecSetoid (ListEq.decSetoid String.≡-decSetoid) using (_≟_)
 open import Function using (_∘_; _$_)
 open import Data.Bool using (Bool; if_then_else_)
 import Data.Bool.Show as Bool

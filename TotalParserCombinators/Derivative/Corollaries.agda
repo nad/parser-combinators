@@ -5,7 +5,7 @@
 module TotalParserCombinators.Derivative.Corollaries where
 
 open import Data.List
-open import Function
+open import Function.Core
 open import Function.Inverse using (_↔_)
 import Function.Related as Related
 import Relation.Binary.PropositionalEquality as P

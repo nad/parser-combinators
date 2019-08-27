@@ -10,14 +10,14 @@ open import Axiom.Extensionality.Propositional
 open import Data.Bool
 open import Data.Empty
 open import Data.List
-open import Data.List.Any using (here; there)
 open import Data.List.Membership.Propositional using (_∈_)
-open import Data.List.Relation.BagAndSetEquality
+open import Data.List.Relation.Binary.BagAndSetEquality
   using () renaming (_∼[_]_ to _List-∼[_]_)
+open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Product
 import Data.Product.Function.Dependent.Propositional as Σ
 open import Data.Unit
-open import Function
+open import Function.Core
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence using (module Equivalence)
 open import Function.Inverse as Inv using (_↔_)

@@ -5,7 +5,7 @@
 module TotalParserCombinators.Derivative.LeftInverse where
 
 open import Codata.Musical.Notation
-open import Data.Maybe
+open import Data.Maybe hiding (_>>=_)
 open import Data.Product
 open import Relation.Binary.PropositionalEquality
 open import Relation.Binary.HeterogeneousEquality using (refl)

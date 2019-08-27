@@ -10,11 +10,11 @@ module TotalRecognisers.LeftRecursion (Tok : Set) where
 
 open import Algebra
 open import Codata.Musical.Notation
-open import Data.Bool as Bool hiding (_∧_)
+open import Data.Bool as Bool hiding (_∧_; _≤_)
 import Data.Bool.Properties as Bool
 private
   module BoolCS = CommutativeSemiring Bool.∧-∨-commutativeSemiring
-open import Function
+open import Function.Core
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence as Eq
   using (_⇔_; equivalence; module Equivalence)

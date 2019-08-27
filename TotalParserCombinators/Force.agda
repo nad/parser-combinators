@@ -8,7 +8,7 @@ module TotalParserCombinators.Force where
 
 open import Codata.Musical.Notation
 import Data.List.Categorical as ListMonad
-open import Data.Maybe
+open import Data.Maybe hiding (_>>=_)
 open import Data.Nat
 open import Function
 import Relation.Binary.PropositionalEquality as P

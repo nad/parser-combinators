@@ -6,7 +6,7 @@
 
 open import Data.List
 open import Data.List.Membership.Propositional using (_∈_)
-open import Data.List.Relation.BagAndSetEquality
+open import Data.List.Relation.Binary.BagAndSetEquality
   using () renaming (_∼[_]_ to _List-∼[_]_)
 open import Function.Related as Related using (Kind; SK-sym)
 
@@ -26,7 +26,7 @@ module TotalParserCombinators.Pointwise
   where
 
 open import Codata.Musical.Notation
-open import Function
+open import Function.Core
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence using (_⇔_; module Equivalence)
 open import Function.Inverse using (_↔_; module Inverse)
