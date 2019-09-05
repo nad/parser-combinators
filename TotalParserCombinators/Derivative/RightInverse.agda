@@ -42,7 +42,8 @@ mutual
           | I.sound∘complete f∈p₁
           | sound∘complete x∈p₂ = refl
 
-  sound∘complete′       (_⊛_ {s₁ = _ ∷ _} {fs = nothing} {xs = nothing} f∈p₁ x∈p₂) refl
+  sound∘complete′       {p = _⊛_ {xs = nothing} _ _}
+                        (_⊛_ {s₁ = _ ∷ _} {fs = nothing} {xs = nothing} f∈p₁ x∈p₂) refl
     rewrite sound∘complete f∈p₁ = refl
   sound∘complete′       (_⊛_ {s₁ = _ ∷ _} {fs = just _}  {xs = nothing} f∈p₁ x∈p₂) refl
     rewrite sound∘complete f∈p₁ = refl
@@ -60,7 +61,8 @@ mutual
           | I.sound∘complete x∈p₁
           | sound∘complete y∈p₂x = refl
 
-  sound∘complete′       (_>>=_ {s₁ = _ ∷ _} {xs = nothing} {f = nothing} x∈p₁ y∈p₂x) refl
+  sound∘complete′       {p = _>>=_ {xs = nothing} _ _}
+                        (_>>=_ {s₁ = _ ∷ _} {xs = nothing} {f = nothing} x∈p₁ y∈p₂x) refl
     rewrite sound∘complete x∈p₁ = refl
   sound∘complete′       (_>>=_ {s₁ = _ ∷ _} {xs = just _}  {f = nothing} x∈p₁ y∈p₂x) refl
     rewrite sound∘complete x∈p₁ = refl
