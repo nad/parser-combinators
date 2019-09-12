@@ -28,31 +28,27 @@ complete∘sound (f <$> p) (<$> x∈p)         rewrite complete∘sound p  x∈p
 complete∘sound (_⊛_ {fs = nothing} {xs = just _}  p₁ p₂)             (f∈p₁′  ⊛ x∈p₂)  rewrite complete∘sound p₁ f∈p₁′ = refl
 complete∘sound (_⊛_ {fs = just _}  {xs = just _}  p₁ p₂) (∣-left     (f∈p₁′  ⊛ x∈p₂)) rewrite complete∘sound p₁ f∈p₁′ = refl
 complete∘sound (_⊛_ {fs = just fs} {xs = just xs} p₁ p₂) (∣-right ._ (f∈ret⋆ ⊛ x∈p₂′))
-  with          Return⋆.sound fs f∈ret⋆
-     | Return⋆.complete∘sound fs f∈ret⋆
-complete∘sound (_⊛_ {fs = just fs} {xs = just xs} p₁ p₂) (∣-right ._ (.(Return⋆.complete f∈fs) ⊛ x∈p₂′)) | (refl , f∈fs) | refl
+  with (refl , f∈fs) ←          Return⋆.sound fs f∈ret⋆
+     | refl          ← Return⋆.complete∘sound fs f∈ret⋆
   rewrite I.complete∘sound p₁ f∈fs | complete∘sound p₂ x∈p₂′ = refl
 complete∘sound (_⊛_ {fs = nothing} {xs = nothing} p₁ p₂)             (f∈p₁′  ⊛ x∈p₂)  rewrite complete∘sound (♭ p₁) f∈p₁′ = refl
 complete∘sound (_⊛_ {fs = just fs} {xs = nothing} p₁ p₂) (∣-left     (f∈p₁′  ⊛ x∈p₂)) rewrite complete∘sound (♭ p₁) f∈p₁′ = refl
 complete∘sound (_⊛_ {fs = just fs} {xs = nothing} p₁ p₂) (∣-right ._ (f∈ret⋆ ⊛ x∈p₂′))
-  with          Return⋆.sound fs f∈ret⋆
-     | Return⋆.complete∘sound fs f∈ret⋆
-complete∘sound (_⊛_ {fs = just fs} {xs = nothing} p₁ p₂) (∣-right ._ (.(Return⋆.complete f∈fs) ⊛ x∈p₂′)) | (refl , f∈fs) | refl
+  with (refl , f∈fs) ←          Return⋆.sound fs f∈ret⋆
+     | refl          ← Return⋆.complete∘sound fs f∈ret⋆
   rewrite I.complete∘sound (♭ p₁) f∈fs | complete∘sound p₂ x∈p₂′ = refl
 
 complete∘sound (_>>=_ {xs = nothing} {f = just _} p₁ p₂)             (x∈p₁′  >>= y∈p₂x)  rewrite complete∘sound p₁ x∈p₁′ = refl
 complete∘sound (_>>=_ {xs = just _}  {f = just _} p₁ p₂) (∣-left     (x∈p₁′  >>= y∈p₂x)) rewrite complete∘sound p₁ x∈p₁′ = refl
 complete∘sound (_>>=_ {xs = just xs} {f = just _} p₁ p₂) (∣-right ._ (y∈ret⋆ >>= z∈p₂′y))
-  with          Return⋆.sound xs y∈ret⋆
-     | Return⋆.complete∘sound xs y∈ret⋆
-complete∘sound (_>>=_ {xs = just xs} {f = just _} p₁ p₂) (∣-right ._ (.(Return⋆.complete y∈xs) >>= z∈p₂′y)) | (refl , y∈xs) | refl
+  with (refl , y∈xs) ←          Return⋆.sound xs y∈ret⋆
+     | refl          ← Return⋆.complete∘sound xs y∈ret⋆
   rewrite I.complete∘sound p₁ y∈xs | complete∘sound (p₂ _) z∈p₂′y = refl
 complete∘sound (_>>=_ {xs = nothing} {f = nothing} p₁ p₂)             (x∈p₁′  >>= y∈p₂x)  rewrite complete∘sound (♭ p₁) x∈p₁′ = refl
 complete∘sound (_>>=_ {xs = just _}  {f = nothing} p₁ p₂) (∣-left     (x∈p₁′  >>= y∈p₂x)) rewrite complete∘sound (♭ p₁) x∈p₁′ = refl
 complete∘sound (_>>=_ {xs = just xs} {f = nothing} p₁ p₂) (∣-right ._ (y∈ret⋆ >>= z∈p₂′y))
-  with          Return⋆.sound xs y∈ret⋆
-     | Return⋆.complete∘sound xs y∈ret⋆
-complete∘sound (_>>=_ {xs = just xs} {f = nothing} p₁ p₂) (∣-right ._ (.(Return⋆.complete y∈xs) >>= z∈p₂′y)) | (refl , y∈xs) | refl
+  with (refl , y∈xs) ←          Return⋆.sound xs y∈ret⋆
+     | refl          ← Return⋆.complete∘sound xs y∈ret⋆
   rewrite I.complete∘sound (♭ p₁) y∈xs | complete∘sound (p₂ _) z∈p₂′y = refl
 
 complete∘sound (nonempty p) x∈p = complete∘sound p x∈p
