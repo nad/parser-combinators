@@ -11,7 +11,7 @@ open import Data.List.Relation.Binary.BagAndSetEquality
 open import Data.Maybe using (Maybe); open Data.Maybe.Maybe
 open import Data.Product
 open import Data.Unit using (⊤; tt)
-open import Function.Core
+open import Function.Base
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence as Eq using (_⇔_; module Equivalence)
 open import Function.Inverse using (_↔_; module Inverse)

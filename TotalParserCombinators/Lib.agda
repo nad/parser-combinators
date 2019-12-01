@@ -8,7 +8,7 @@ module TotalParserCombinators.Lib where
 
 open import Category.Monad
 open import Codata.Musical.Notation
-open import Function.Core
+open import Function.Base
 open import Function.Equality using (_⟶_; _⟨$⟩_)
 open import Function.Injection using (Injection; Injective)
 open import Function.Inverse using (_↔_; module Inverse)

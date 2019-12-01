@@ -10,7 +10,7 @@ open import Data.List.Membership.Propositional.Properties
 import Data.List.Categorical
 open import Data.Product
 open import Data.Product.Function.NonDependent.Propositional
-open import Function.Core
+open import Function.Base
 open import Function.Inverse using (_↔_)
 import Function.Related as Related
 open import Function.Related.TypeIsomorphisms

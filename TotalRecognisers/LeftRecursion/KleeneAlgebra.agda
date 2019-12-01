@@ -15,7 +15,7 @@ private
   module BoolCS = CommutativeSemiring Bool.∨-∧-commutativeSemiring
   module BoolBA = Algebra.Properties.BooleanAlgebra
                     Bool.∨-∧-booleanAlgebra
-open import Function.Core
+open import Function.Base
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence as Eq using (_⇔_; equivalence)
 open import Data.List

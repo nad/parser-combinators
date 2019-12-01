@@ -13,7 +13,7 @@ open import Algebra
 open import Codata.Musical.Notation
 open import Data.Bool as Bool hiding (_∧_)
 open import Data.Empty
-open import Function.Core
+open import Function.Base
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence
   using (_⇔_; equivalence; module Equivalence)

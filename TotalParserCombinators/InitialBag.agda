@@ -17,7 +17,7 @@ open import Data.List.Relation.Unary.Any.Properties
 open import Data.Maybe hiding (_>>=_)
 open import Data.Product
 open import Data.Sum
-open import Function.Core
+open import Function.Base
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Inverse as Inv using (_↔_)
 import Function.Related as Related

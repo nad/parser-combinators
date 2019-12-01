@@ -17,7 +17,7 @@ open import Data.List.Relation.Unary.Any using (here)
 open import Data.Product
 import Data.Product.Function.Dependent.Propositional as Σ
 open import Data.Unit
-open import Function.Core
+open import Function.Base
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Equivalence using (module Equivalence; _⇔_)
 open import Function.Inverse as Inv using (_↔_)

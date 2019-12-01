@@ -17,7 +17,7 @@ open import Data.List.Relation.Binary.BagAndSetEquality
 open import Data.List.Relation.Unary.Any
 open import Data.List.Reverse
 open import Data.Product
-open import Function.Core
+open import Function.Base
 open import Function.Inverse using (_↔_)
 import Function.Related as Related
 open import Relation.Binary.PropositionalEquality as P
