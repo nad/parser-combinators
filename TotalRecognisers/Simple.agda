@@ -195,7 +195,6 @@ D-complete {t = t} t∷s∈ = D-complete′ _ t∷s∈ refl
   D-complete′         (tok .t) tok refl | yes refl = empty
   D-complete′ {[]}    (tok .t) tok refl | no  t′≢t with t′≢t refl
   D-complete′ {[]}    (tok .t) tok refl | no  t′≢t | ()
-  D-complete′ {_ ∷ _} (tok t′) ()  refl | no  t′≢t
   D-complete′ (p₁ ∣ p₂)           (∣-left  ∈₁)         refl = ∣-left                    (D-complete ∈₁)
   D-complete′ (p₁ ∣ p₂)           (∣-right ∈₂)         refl = ∣-right {p₁ = D t p₁}     (D-complete ∈₂)
   D-complete′ (_·_ {true}  p₁ p₂) (_·_ {[]}     ∈₁ ∈₂) refl = ∣-right {p₁ = D t p₁ · _} (D-complete ∈₂)
