@@ -39,7 +39,10 @@ module Ex₁ where
     -- e ∷= 0 + e | 0
 
     data Nonterminal : NonTerminalType where
-      e : Nonterminal _ Char
+      e : Nonterminal i Char
+
+    private
+      i = _
 
     grammar : Grammar Nonterminal Char
     grammar e = tok '0' ⊛> tok '+' ⊛> ! e
@@ -56,8 +59,12 @@ module Ex₂ where
     -- f ∷= 0 | 0 * f | ( e )
 
     data Nonterminal : NonTerminalType where
-      expr   : Nonterminal _ Char
-      factor : Nonterminal _ Char
+      expr   : Nonterminal i₁ Char
+      factor : Nonterminal i₂ Char
+
+    private
+      i₁ = _
+      i₂ = _
 
     grammar : Grammar Nonterminal Char
     grammar expr   = ! factor ⊛> tok '+' ⊛> ! expr
@@ -83,8 +90,12 @@ module Ex₃ where
     -- f ∷= 0 | f * 0 | ( e )
 
     data Nonterminal : NonTerminalType where
-      expr   : Nonterminal _ Char
-      factor : Nonterminal _ Char
+      expr   : Nonterminal i₁ Char
+      factor : Nonterminal i₂ Char
+
+    private
+      i₁ = _
+      i₂ = _
 
   grammar : Grammar Nonterminal Char
   grammar expr   = ! factor ⊛> tok '+' ⊛> ! expr
@@ -103,13 +114,15 @@ module Ex₄ where
     -- The non-terminal top returns the number of 'a' characters
     -- parsed.
 
-    -- Note: It is important that the ℕ argument to bcs is not named,
-    -- because if it is Agda cannot infer the index.
-
     data NT : NonTerminalType where
-      top :            NT _ ℕ  -- top     ∷= aⁿbⁿcⁿ
-      as  :        ℕ → NT _ ℕ  -- as n    ∷= aˡ⁺¹bⁿ⁺ˡ⁺¹cⁿ⁺ˡ⁺¹
-      bcs : Char → ℕ → NT _ ℕ  -- bcs x n ∷= xⁿ⁺¹
+      top :            NT i₁ ℕ  -- top     ∷= aⁿbⁿcⁿ
+      as  :        ℕ → NT i₂ ℕ  -- as n    ∷= aˡ⁺¹bⁿ⁺ˡ⁺¹cⁿ⁺ˡ⁺¹
+      bcs : Char → ℕ → NT i₃ ℕ  -- bcs x n ∷= xⁿ⁺¹
+
+    private
+      i₁ = _
+      i₂ = _
+      i₃ = _
 
     grammar : Grammar NT Char
     grammar top             = return 0 ∣ ! (as zero)
@@ -153,8 +166,12 @@ module Ex₅ where
     -- library.
 
     data NT : NonTerminalType where
-      a  : NT _ Char
-      as : NT _ ℕ
+      a  : NT i₁ Char
+      as : NT i₂ ℕ
+
+    private
+      i₁ = _
+      i₂ = _
 
     grammar : Grammar NT Char
     grammar a  = tok 'a'
@@ -170,8 +187,12 @@ module Ex₆ where
     -- A grammar which uses the chain≥ combinator.
 
     data NT : NonTerminalType where
-      op   : NT _ (ℕ → ℕ → ℕ)
-      expr : (a : Assoc) → NT _ ℕ
+      op   : NT i₁ (ℕ → ℕ → ℕ)
+      expr : (a : Assoc) → NT i₂ ℕ
+
+    private
+      i₁ = _
+      i₂ = _
 
     grammar : Grammar NT Char
     grammar op       = _+_ <$ tok '+'
@@ -195,11 +216,18 @@ module Ex₇ where
     -- A proper expression example.
 
     data NT : NonTerminalType where
-      expr   : NT _ ℕ
-      term   : NT _ ℕ
-      factor : NT _ ℕ
-      addOp  : NT _ (ℕ → ℕ → ℕ)
-      mulOp  : NT _ (ℕ → ℕ → ℕ)
+      expr   : NT i₁ ℕ
+      term   : NT i₂ ℕ
+      factor : NT i₃ ℕ
+      addOp  : NT i₄ (ℕ → ℕ → ℕ)
+      mulOp  : NT i₅ (ℕ → ℕ → ℕ)
+
+    private
+      i₁ = _
+      i₂ = _
+      i₃ = _
+      i₄ = _
+      i₅ = _
 
     grammar : Grammar NT Char
     grammar expr   = chain≥ 0 left (! term)   (! addOp)
@@ -224,7 +252,10 @@ module Ex₈ where
 
     data NT : NonTerminalType where
       lib   : ∀ {i R} (nt : Ex₇.NT i R) → NT i R
-      exprs : NT _ (List ℕ)
+      exprs : NT i (List ℕ)
+
+    private
+      i = _
 
     expr = lib Ex₇.expr
 
@@ -249,9 +280,14 @@ module Ex₉ where
     data LibraryNT (NT : NonTerminalType) (Tok : Set) :
                    NonTerminalType where
       _★ : ∀ {c R} → Parser NT Tok (false ◇ c) R →
-           LibraryNT NT Tok _ (List R)
+           LibraryNT NT Tok (i₁ c) (List R)
       _∔ : ∀ {c R} → Parser NT Tok (false ◇ c) R →
-           LibraryNT NT Tok _ (List R)
+           LibraryNT NT Tok (i₂ c) (List R)
+
+    private
+      i₁ i₂ : _ → _
+      i₁ = _
+      i₂ = _
 
     library : ∀ {NT Tok} → (∀ {i R} → LibraryNT NT Tok i R → NT i R) →
               ∀ {i R} → LibraryNT NT Tok i R → Parser NT Tok i R
@@ -264,8 +300,12 @@ module Ex₉ where
 
     data NT : NonTerminalType where
       lib : ∀ {i R} → LibraryNT NT Char i R → NT i R
-      a   : NT _ Char
-      as  : NT _ (List Char)
+      a   : NT i₃ Char
+      as  : NT i₄ (List Char)
+
+    private
+      i₃ = _
+      i₄ = _
 
     grammar : Grammar NT Char
     grammar (lib nt) = library lib nt
