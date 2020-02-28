@@ -22,7 +22,7 @@ open import Data.List.Relation.Binary.BagAndSetEquality
 open import Data.Maybe hiding (_>>=_)
 open import Data.Nat hiding (_^_)
 open import Data.Product
-open import Data.Product.N-ary
+open import Data.Vec.Recursive
 open import Function
 open import Function.Related using (Symmetric-kind; ⌊_⌋)
 open import Relation.Binary.PropositionalEquality using (_≡_; _≗_)

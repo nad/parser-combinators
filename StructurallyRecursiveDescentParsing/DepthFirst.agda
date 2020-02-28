@@ -9,10 +9,12 @@ module StructurallyRecursiveDescentParsing.DepthFirst where
 
 open import Data.Bool
 open import Data.Product as Prod
-open import Data.BoundedVec.Inefficient
 import Data.List as L; open L using (List)
 import Data.List.Categorical
 open import Data.Nat
+open import Data.Nat.Properties
+open import Data.Vec using ([]; _∷_)
+open import Data.Vec.Bounded hiding ([]; _∷_)
 open import Function
 open import Category.Applicative.Indexed
 open import Category.Monad.Indexed
@@ -28,10 +30,10 @@ open import StructurallyRecursiveDescentParsing.Simplified
 private
 
   P : Set → IFun ℕ Level.zero
-  P Tok = IStateT (BoundedVec Tok) List
+  P Tok = IStateT (Vec≤ Tok) List
 
   open module M₁ {Tok : Set} =
-    RawIMonadPlus (StateTIMonadPlus (BoundedVec Tok)
+    RawIMonadPlus (StateTIMonadPlus (Vec≤ Tok)
                      Data.List.Categorical.monadPlus)
     using ()
     renaming ( return to return′
@@ -42,7 +44,7 @@ private
              )
 
   open module M₂ {Tok : Set} =
-    RawIMonadState (StateTIMonadState (BoundedVec Tok)
+    RawIMonadState (StateTIMonadState (Vec≤ Tok)
                       Data.List.Categorical.monad)
     using ()
     renaming ( get    to get′
@@ -65,7 +67,7 @@ private
 
 mutual
   parse↓ : ∀ {Tok e R} n → Parser Tok e R →
-           P Tok n (if e then n else pred n) R
+           P Tok n (if e then n else n ∸ 1) R
   parse↓ n       (return x)                  = return′ x
   parse↓ n       fail                        = fail′
   parse↓ n       (_∣_ {true}          p₁ p₂) = parse↓ n       p₁   ∣′       parse↑ n     p₂
@@ -76,15 +78,15 @@ mutual
   parse↓ (suc n) (p₁ !>>= p₂)                = parse↓ (suc n) p₁ >>=′ λ x → parse↑ n (♭ (p₂ x))
   parse↓ n       token                       = get′ >>=′ eat
     where
-    eat : ∀ {Tok n} → BoundedVec Tok n → P Tok n (pred n) Tok
-    eat []      = fail′
-    eat (c ∷ s) = put′ s >>′ return′ c
+    eat : ∀ {Tok n} → Vec≤ Tok n → P Tok n (n ∸ 1) Tok
+    eat ([] , _)      = fail′
+    eat s@(c ∷ _ , _) = put′ (drop 1 s) >>′ return′ c
 
   parse↑ : ∀ {e Tok R} n → Parser Tok e R → P Tok n n R
   parse↑ {true}  n       p = parse↓ n p
   parse↑ {false} zero    p = fail′
-  parse↑ {false} (suc n) p = parse↓ (suc n) p >>=′ λ r →
-                             modify′ ↑        >>′
+  parse↑ {false} (suc n) p = parse↓ (suc n) p           >>=′ λ r →
+                             modify′ (≤-cast (n≤1+n _)) >>′
                              return′ r
 
 -- Exported run function.

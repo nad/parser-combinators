@@ -13,7 +13,7 @@ import Data.List.Relation.Binary.BagAndSetEquality as BSEq
 open import Data.Maybe using (Maybe); open Data.Maybe.Maybe
 open import Data.Nat
 open import Data.Product
-open import Data.Product.N-ary hiding ([])
+open import Data.Vec.Recursive hiding ([])
 open import Function
 open import Relation.Binary.PropositionalEquality as P
   using (_≡_; refl; [_])
