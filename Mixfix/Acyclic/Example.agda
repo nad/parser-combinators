@@ -12,7 +12,7 @@ open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Relation.Unary.Any using (here; there)
 import Codata.Musical.Colist as Colist
 open import Data.Product using (∃₂; -,_)
-open import Data.Unit using (⊤)
+open import Data.Unit.Polymorphic using (⊤)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Nat using (zero; suc)
 open import Data.Fin using (#_)

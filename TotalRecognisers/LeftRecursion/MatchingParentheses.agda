@@ -15,7 +15,7 @@ open import Data.List
 open import Data.List.Properties
 open import Data.Product
 open import Function.Equivalence
-open import Relation.Binary
+open import Relation.Binary hiding (_⇔_)
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 open import Relation.Nullary
 open import Relation.Nullary.Decidable as Decidable

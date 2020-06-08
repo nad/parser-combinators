@@ -19,7 +19,8 @@ import Data.Product.Function.Dependent.Propositional as Σ
 open import Data.Unit
 open import Function.Base
 open import Function.Equality using (_⟨$⟩_)
-open import Function.Equivalence using (module Equivalence; _⇔_)
+open import Function.Equivalence as Equiv
+  using (module Equivalence; _⇔_)
 open import Function.Inverse as Inv using (_↔_)
 open import Function.Related as Related
 open import Function.Related.TypeIsomorphisms
@@ -134,7 +135,7 @@ right {x = x} =
   AC.lift-property
     (λ F G H → ∄ F → H x ↔ G x)
     (λ F↔F′ G↔G′ H↔H′ →
-       ¬-cong-⇔ (Σ.cong Inv.id λ {x} → ↔⇒ (F↔F′ x))
+       ((Σ.cong Inv.id λ {x} → ↔⇒ (F↔F′ x)) →-cong-⇔ Equiv.id)
          →-cong-⇔
        Related-cong (H↔H′ x) (G↔G′ x))
     (λ ∉xs₁ → first-nonempty-right ∉xs₁)

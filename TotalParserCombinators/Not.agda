@@ -149,6 +149,6 @@ correct ext =
     (λ _ G↔G′ H↔H′ →
        Iso.Related-cong
          (H↔H′ tt)
-         (Iso.¬-cong ext ext $ Σ.cong Inv.id λ {x} → G↔G′ x))
+         (Iso.→-cong ext ext (Σ.cong Inv.id λ {x} → G↔G′ x) Inv.id))
     (not-index-correct ext _)
     fail

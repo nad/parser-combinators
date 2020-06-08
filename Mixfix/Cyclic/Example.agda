@@ -11,7 +11,7 @@ open import Data.List as List
 open import Data.List.Relation.Unary.Any as Any using (here; there)
 import Codata.Musical.Colist as Colist
 open import Data.Product using (∃₂; -,_)
-open import Data.Unit using (⊤)
+open import Data.Unit.Polymorphic using (⊤)
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Fin using (Fin; #_; zero; suc)
 import Data.List.Relation.Binary.Pointwise as ListEq
