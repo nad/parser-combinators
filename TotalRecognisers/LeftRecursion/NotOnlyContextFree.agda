@@ -24,7 +24,7 @@ private
 open import Data.Nat as Nat using (ℕ; zero; suc; _+_)
 import Data.Nat.Properties as NatProp
 private
-  module NatCS = CommutativeSemiring NatProp.*-+-commutativeSemiring
+  module NatCS = CommutativeSemiring NatProp.+-*-commutativeSemiring
 import Data.Nat.Solver
 open Data.Nat.Solver.+-*-Solver
 open import Data.Product
