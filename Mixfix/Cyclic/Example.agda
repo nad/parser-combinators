@@ -25,6 +25,7 @@ open import Data.Bool using (Bool; if_then_else_)
 open import Relation.Nullary.Decidable using (⌊_⌋)
 import Relation.Binary.PropositionalEquality as P
 open import IO
+import Level
 
 open import Mixfix.Fixity hiding (_≟_)
 open import Mixfix.Operator
@@ -139,16 +140,16 @@ parseExpr = List.map (fromNameParts ∘ show) ∘
             BreadthFirst.parse (Grammar.expression cyclic g) ∘
             toNameParts
 
-runTest : String → List String → IO ⊤
-runTest s₁ s₂ = ♯
-  putStrLn ("Testing: " ++ s₁)                          >> ♯ (♯
-  mapM′ putStrLn (Colist.fromList p₁)                   >> ♯
-  putStrLn (if ⌊ p₁ ≟ s₂ ⌋ then "Passed" else "Failed") )
+runTest : String → List String → IO (⊤ {ℓ = Level.zero})
+runTest s₁ s₂ = do
+  putStrLn ("Testing: " ++ s₁)
+  Colist.mapM′ putStrLn (Colist.fromList p₁)
+  putStrLn (if ⌊ p₁ ≟ s₂ ⌋ then "Passed" else "Failed")
   where p₁ = parseExpr s₁
 
-main = run (♯
-  runTest "•+•⊢•∶"      []                               >> ♯ (♯
-  runTest "•,•⊢∶"       []                               >> ♯ (♯
-  runTest "•⊢•∶"        L[ "•⊢•∶" ]                      >> ♯ (♯
-  runTest "•,i•t•+•⊢•∶" L[ "•,i•t•+•⊢•∶" ]               >> ♯
-  runTest "i•ti•t•e•"   ("i•ti•t•e•" ∷ "i•ti•t•e•" ∷ []) ))))
+main = run do
+  runTest "•+•⊢•∶"      []
+  runTest "•,•⊢∶"       []
+  runTest "•⊢•∶"        L[ "•⊢•∶" ]
+  runTest "•,i•t•+•⊢•∶" L[ "•,i•t•+•⊢•∶" ]
+  runTest "i•ti•t•e•"   ("i•ti•t•e•" ∷ "i•ti•t•e•" ∷ [])

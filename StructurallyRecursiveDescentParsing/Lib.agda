@@ -369,7 +369,7 @@ digit = 0 <$ tok '0'
       ∣ 7 <$ tok '7'
       ∣ 8 <$ tok '8'
       ∣ 9 <$ tok '9'
-  where open Token Char.≡-decSetoid
+  where open Token Char.decSetoid
 
 number : ∀ {NT} → Parser NT Char _ ℕ
 number = toNum <$> digit +

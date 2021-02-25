@@ -19,7 +19,7 @@ open import StructurallyRecursiveDescentParsing.Index
 open import StructurallyRecursiveDescentParsing.Grammar
 open import StructurallyRecursiveDescentParsing.DepthFirst
 open import StructurallyRecursiveDescentParsing.Lib
-open Token C.≡-decSetoid
+open Token C.decSetoid
 
 -- Some functions used to simplify the examples a little.
 
