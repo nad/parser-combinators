@@ -2,8 +2,6 @@
 -- Asymmetric choice
 ------------------------------------------------------------------------
 
-{-# OPTIONS --universe-polymorphism #-}
-
 module TotalParserCombinators.AsymmetricChoice where
 
 open import Data.Bool

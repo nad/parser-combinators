@@ -2,8 +2,6 @@
 -- Not
 ------------------------------------------------------------------------
 
-{-# OPTIONS --universe-polymorphism #-}
-
 module TotalParserCombinators.Not where
 
 open import Axiom.Extensionality.Propositional
