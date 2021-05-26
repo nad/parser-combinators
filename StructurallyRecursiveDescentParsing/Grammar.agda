@@ -2,8 +2,6 @@
 -- Parsers containing non-terminals, and grammars using such parsers
 ------------------------------------------------------------------------
 
-{-# OPTIONS --guardedness #-}
-
 module StructurallyRecursiveDescentParsing.Grammar where
 
 open import Data.Bool

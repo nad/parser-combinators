@@ -2,8 +2,6 @@
 -- Simplification of parsers
 ------------------------------------------------------------------------
 
-{-# OPTIONS --guardedness #-}
-
 module TotalParserCombinators.Simplification where
 
 open import Algebra

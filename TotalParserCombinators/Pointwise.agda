@@ -2,8 +2,6 @@
 -- Pointwise lifting of (binary) initial bag operators to parsers
 ------------------------------------------------------------------------
 
-{-# OPTIONS --guardedness #-}
-
 open import Data.List
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Relation.Binary.BagAndSetEquality

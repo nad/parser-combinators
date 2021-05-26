@@ -7,8 +7,6 @@
 -- (Compare the examples in TotalRecognisers.LeftRecursion.Expression
 -- and TotalParserCombinators.Recogniser.Expression.)
 
-{-# OPTIONS --guardedness #-}
-
 module TotalParserCombinators.Recogniser where
 
 open import Category.Monad

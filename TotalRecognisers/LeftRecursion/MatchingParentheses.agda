@@ -4,8 +4,6 @@
 
 -- A solution to an exercise set by Helmut Schwichtenberg.
 
-{-# OPTIONS --guardedness #-}
-
 module TotalRecognisers.LeftRecursion.MatchingParentheses where
 
 open import Algebra

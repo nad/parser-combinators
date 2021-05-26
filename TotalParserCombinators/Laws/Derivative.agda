@@ -2,8 +2,6 @@
 -- Laws related to D
 ------------------------------------------------------------------------
 
-{-# OPTIONS --guardedness #-}
-
 module TotalParserCombinators.Laws.Derivative where
 
 open import Algebra

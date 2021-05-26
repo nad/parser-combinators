@@ -2,8 +2,6 @@
 -- Laws related to _∣_ and fail
 ------------------------------------------------------------------------
 
-{-# OPTIONS --guardedness #-}
-
 module TotalParserCombinators.Laws.AdditiveMonoid where
 
 open import Algebra

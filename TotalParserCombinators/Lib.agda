@@ -2,8 +2,6 @@
 -- A small library of derived parser combinators
 ------------------------------------------------------------------------
 
-{-# OPTIONS --guardedness #-}
-
 module TotalParserCombinators.Lib where
 
 open import Category.Monad

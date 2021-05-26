@@ -2,8 +2,6 @@
 -- The parser type
 ------------------------------------------------------------------------
 
-{-# OPTIONS --guardedness #-}
-
 module TotalParserCombinators.Parser where
 
 open import Algebra

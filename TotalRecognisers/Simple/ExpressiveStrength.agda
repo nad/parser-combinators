@@ -6,8 +6,6 @@
 
 -- This result could be generalised to other finite alphabets.
 
-{-# OPTIONS --guardedness #-}
-
 module TotalRecognisers.Simple.ExpressiveStrength where
 
 open import Codata.Musical.Notation

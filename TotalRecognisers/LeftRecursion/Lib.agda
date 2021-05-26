@@ -2,8 +2,6 @@
 -- A tiny library of derived combinators
 ------------------------------------------------------------------------
 
-{-# OPTIONS --guardedness #-}
-
 module TotalRecognisers.LeftRecursion.Lib (Tok : Set) where
 
 open import Codata.Musical.Notation

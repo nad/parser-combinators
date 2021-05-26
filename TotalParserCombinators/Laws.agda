@@ -5,8 +5,6 @@
 -- Note that terms like "monad" and "Kleene algebra" are interpreted
 -- liberally in the modules listed below.
 
-{-# OPTIONS --guardedness #-}
-
 module TotalParserCombinators.Laws where
 
 open import Algebra

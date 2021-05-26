@@ -2,8 +2,6 @@
 -- A simplified parser type
 ------------------------------------------------------------------------
 
-{-# OPTIONS --guardedness #-}
-
 module StructurallyRecursiveDescentParsing.Simplified where
 
 open import Category.Monad

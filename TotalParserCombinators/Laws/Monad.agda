@@ -2,8 +2,6 @@
 -- Laws related to _>>=_
 ------------------------------------------------------------------------
 
-{-# OPTIONS --guardedness #-}
-
 module TotalParserCombinators.Laws.Monad where
 
 open import Algebra

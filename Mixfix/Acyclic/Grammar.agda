@@ -5,8 +5,6 @@
 -- This module defines a grammar for the precedence graph g. The
 -- grammar is neither left nor right recursive.
 
-{-# OPTIONS --guardedness #-}
-
 open import Mixfix.Expr
 open import Mixfix.Acyclic.PrecedenceGraph
   using (acyclic; precedence)

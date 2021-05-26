@@ -1,3 +1,5 @@
 name: parser-combinators
 depend: standard-library
 include: .
+flags:
+  --guardedness

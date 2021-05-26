@@ -2,8 +2,6 @@
 -- Parsing of mixfix operators
 ------------------------------------------------------------------------
 
-{-# OPTIONS --guardedness #-}
-
 -- This module defines a grammar for the precedence graph g.
 
 open import Mixfix.Expr
