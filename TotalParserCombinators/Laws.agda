@@ -7,15 +7,15 @@
 
 module TotalParserCombinators.Laws where
 
-open import Algebra
-open import Category.Monad
+open import Algebra hiding (module KleeneAlgebra)
 open import Codata.Musical.Notation
 open import Data.List as List
-import Data.List.Categorical
+import Data.List.Effectful
 open import Data.List.Properties
 open import Data.List.Relation.Binary.BagAndSetEquality as Eq
   using (bag) renaming (_∼[_]_ to _List-∼[_]_)
 open import Data.Maybe hiding (_>>=_)
+open import Effect.Monad
 open import Function
 import Level
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
@@ -24,7 +24,7 @@ private
   module BagMonoid {k} {A : Set} =
     CommutativeMonoid (Eq.commutativeMonoid k A)
   open module ListMonad =
-    RawMonad {f = Level.zero} Data.List.Categorical.monad
+    RawMonad {f = Level.zero} Data.List.Effectful.monad
     using () renaming (_⊛_ to _⊛′_)
 
 open import TotalParserCombinators.Derivative using (D)

@@ -5,10 +5,13 @@
 module Mixfix.Fixity where
 
 open import Data.Fin using (Fin; zero; suc; #_)
-open import Data.Fin.Properties using (eq?)
-open import Function.LeftInverse
+open import Data.Fin.Properties using (inj⇒≟)
+open import Function.Base
+open import Function.Bundles
+open import Function.Consequences
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality as Eq
+import Relation.Binary.PropositionalEquality.Properties as ≡
 
 data Associativity : Set where
   left  : Associativity
@@ -26,12 +29,8 @@ data Fixity : Set where
   postfx : Fixity
   closed : Fixity
 
-Fixity-is-finite : LeftInverse (Eq.setoid Fixity) (Eq.setoid (Fin 6))
-Fixity-is-finite = record
-  { from            = Eq.→-to-⟶ from
-  ; to              = Eq.→-to-⟶ to
-  ; left-inverse-of = left-inverse-of
-  }
+Fixity-is-finite : Fixity ↪ Fin 6
+Fixity-is-finite = mk↪ {to = to} {from = from} from-to
   where
   to : Fixity → Fin 6
   to prefx        = # 0
@@ -50,14 +49,19 @@ Fixity-is-finite = record
   from (suc (suc (suc (suc (suc zero)))))     = closed
   from (suc (suc (suc (suc (suc (suc ()))))))
 
-  left-inverse-of : Eq.→-to-⟶ from LeftInverseOf Eq.→-to-⟶ to
-  left-inverse-of prefx        = refl
-  left-inverse-of (infx left)  = refl
-  left-inverse-of (infx right) = refl
-  left-inverse-of (infx non)   = refl
-  left-inverse-of postfx       = refl
-  left-inverse-of closed       = refl
+  from-to : ∀ f → from (to f) ≡ f
+  from-to prefx        = refl
+  from-to (infx left)  = refl
+  from-to (infx right) = refl
+  from-to (infx non)   = refl
+  from-to postfx       = refl
+  from-to closed       = refl
 
 _≟_ : Decidable (_≡_ {A = Fixity})
-_≟_ = eq? injection
-  where open LeftInverse Fixity-is-finite
+_≟_ = inj⇒≟ injection
+  where
+  open RightInverse Fixity-is-finite
+
+  injection : Fixity ↣ Fin 6
+  injection = mk↣ $
+    inverseʳ⇒injective (≡.setoid _) {f⁻¹ = from} from-cong inverseʳ

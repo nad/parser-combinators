@@ -4,14 +4,14 @@
 
 module TotalParserCombinators.Derivative.Definition where
 
-open import Category.Monad
 open import Codata.Musical.Notation
 open import Data.List using (List; map)
-import Data.List.Categorical
+import Data.List.Effectful
 import Data.Maybe; open Data.Maybe.Maybe
+open import Effect.Monad
 open import Level
 
-open RawMonadPlus {f = zero} Data.List.Categorical.monadPlus
+open RawMonadPlus {f = zero} Data.List.Effectful.monadPlus
   using ()
   renaming ( return to return′
            ; ∅      to fail′

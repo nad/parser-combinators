@@ -7,18 +7,18 @@
 
 module StructurallyRecursiveDescentParsing.DepthFirst where
 
-open import Data.Bool
+open import Data.Bool as Bool
 open import Data.Product as Prod
 import Data.List as L; open L using (List)
-import Data.List.Categorical
+import Data.List.Effectful
 open import Data.Nat
 open import Data.Nat.Properties
 open import Data.Vec using ([]; _∷_)
 open import Data.Vec.Bounded hiding ([]; _∷_)
+open import Effect.Applicative.Indexed
+open import Effect.Monad.Indexed
+open import Effect.Monad.State
 open import Function
-open import Category.Applicative.Indexed
-open import Category.Monad.Indexed
-open import Category.Monad.State
 open import Codata.Musical.Notation
 import Level
 
@@ -34,7 +34,7 @@ private
 
   open module M₁ {Tok : Set} =
     RawIMonadPlus (StateTIMonadPlus (Vec≤ Tok)
-                     Data.List.Categorical.monadPlus)
+                     Data.List.Effectful.monadPlus)
     using ()
     renaming ( return to return′
              ; _>>=_  to _>>=′_
@@ -45,7 +45,7 @@ private
 
   open module M₂ {Tok : Set} =
     RawIMonadState (StateTIMonadState (Vec≤ Tok)
-                      Data.List.Categorical.monad)
+                      Data.List.Effectful.monad)
     using ()
     renaming ( get    to get′
              ; put    to put′
@@ -98,4 +98,4 @@ parse p s = L.map (Prod.map id toList) (parse↓ _ p (fromList s))
 
 parseComplete : ∀ {Tok i R} → Parser Tok i R → List Tok → List R
 parseComplete p s =
-  L.map proj₁ (L.boolFilter (L.null ∘ proj₂) (parse p s))
+  L.map proj₁ (L.filter ((Bool._≟ true) ∘ L.null ∘ proj₂) (parse p s))

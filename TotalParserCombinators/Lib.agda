@@ -4,7 +4,6 @@
 
 module TotalParserCombinators.Lib where
 
-open import Category.Monad
 open import Codata.Musical.Notation
 open import Function.Base
 open import Function.Equality using (_⟶_; _⟨$⟩_)
@@ -13,7 +12,7 @@ open import Function.Inverse using (_↔_; module Inverse)
 open import Data.Bool hiding (_≤?_)
 open import Data.Char as Char using (Char; _==_)
 open import Data.List as List
-import Data.List.Categorical
+import Data.List.Effectful
 open import Data.List.Membership.Propositional
 import Data.List.Membership.Propositional.Properties as ∈
 open import Data.List.NonEmpty as List⁺ using (List⁺; _∷_)
@@ -23,6 +22,7 @@ open import Data.Nat hiding (_^_)
 open import Data.Product as Prod
 open import Data.Unit using (⊤)
 open import Data.Vec as Vec using (Vec; []; _∷_)
+open import Effect.Monad
 import Level
 open import Relation.Binary
 open import Relation.Binary.HeterogeneousEquality as H using (_≅_)
@@ -33,7 +33,7 @@ open import Relation.Nullary.Decidable
 
 private
   open module ListMonad =
-         RawMonad {f = Level.zero} Data.List.Categorical.monad
+         RawMonad {f = Level.zero} Data.List.Effectful.monad
          using ()
          renaming (_<$>_ to _<$>′_; _⊛_ to _⊛′_; _>>=_ to _>>=′_)
 

@@ -12,7 +12,7 @@ open import Data.Bool
 open import Data.List
 open import Data.List.Properties
 open import Data.Product
-open import Function.Equivalence
+open import Function.Bundles
 open import Relation.Binary hiding (_⇔_)
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 open import Relation.Nullary
@@ -72,7 +72,7 @@ decide-matching xs = xs ∈? matching
 -- Membership of matching is equivalent to satisfaction of Matching.
 
 ∈m⇔M : ∀ {xs} → (xs ∈ matching) ⇔ Matching xs
-∈m⇔M = equivalence to from
+∈m⇔M = mk⇔ to from
   where
   to : ∀ {xs} → xs ∈ matching → Matching xs
   to (∣-left (∣-left empty))                        = nil

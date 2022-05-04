@@ -9,16 +9,16 @@
 
 module TotalParserCombinators.Recogniser where
 
-open import Category.Monad
 open import Codata.Musical.Notation
 open import Data.Bool
 open import Data.List as List
-import Data.List.Categorical
+import Data.List.Effectful
 open import Data.Maybe
 open import Data.Unit
+open import Effect.Monad
 open import Level
 
-open RawMonadPlus {f = zero} Data.List.Categorical.monadPlus
+open RawMonadPlus {f = zero} Data.List.Effectful.monadPlus
   using () renaming (_⊛_ to _⊛′_)
 
 open import TotalParserCombinators.Parser as Parser

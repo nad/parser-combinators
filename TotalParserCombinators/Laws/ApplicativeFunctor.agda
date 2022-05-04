@@ -5,15 +5,15 @@
 module TotalParserCombinators.Laws.ApplicativeFunctor where
 
 open import Algebra
-open import Category.Monad
 open import Codata.Musical.Notation
 open import Data.List
-import Data.List.Categorical
+import Data.List.Effectful
 import Data.List.Relation.Binary.BagAndSetEquality as BSEq
+open import Effect.Monad
 open import Function
 open import Level
 
-open RawMonad {f = zero} Data.List.Categorical.monad
+open RawMonad {f = zero} Data.List.Effectful.monad
   using () renaming (_⊛_ to _⊛′_; _>>=_ to _>>=′_)
 private
   module BagMonoid {k} {A : Set} =

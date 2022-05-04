@@ -4,15 +4,15 @@
 
 module TotalParserCombinators.Congruence.Sound where
 
-open import Category.Monad
 open import Codata.Musical.Notation
 open import Data.List
+import Data.List.Effectful as ListMonad
 open import Data.List.Membership.Propositional using (_∈_)
-import Data.List.Categorical as ListMonad
 open import Data.List.Relation.Binary.BagAndSetEquality
   renaming (_∼[_]_ to _List-∼[_]_)
 open import Data.Maybe hiding (_>>=_)
 open import Data.Product
+open import Effect.Monad
 open import Function
 import Function.Related as Related
 open import Level

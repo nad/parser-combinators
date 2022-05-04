@@ -5,17 +5,17 @@
 module TotalRecognisers.LeftRecursion.KleeneAlgebra (Tok : Set) where
 
 open import Algebra
-import Algebra.Properties.BooleanAlgebra
+import Algebra.Lattice.Properties.BooleanAlgebra
 open import Codata.Musical.Notation
 open import Data.Bool hiding (_∧_; _≤_)
 import Data.Bool.Properties as Bool
 private
   module BoolCS = CommutativeSemiring Bool.∨-∧-commutativeSemiring
-  module BoolBA = Algebra.Properties.BooleanAlgebra
+  module BoolBA = Algebra.Lattice.Properties.BooleanAlgebra
                     Bool.∨-∧-booleanAlgebra
 open import Function.Base
-open import Function.Equality using (_⟨$⟩_)
-open import Function.Equivalence as Eq using (_⇔_; equivalence)
+open import Function.Bundles renaming (module Equivalence to Eq)
+import Function.Properties.Equivalence as Eq
 open import Data.List
 open import Data.List.Properties
 private
@@ -25,6 +25,7 @@ open import Data.Product as Prod
 open import Relation.Binary.HeterogeneousEquality using (_≅_; refl)
 open import Relation.Binary.PropositionalEquality as P
   using (_≡_; refl; _≗_)
+open import Relation.Binary.Structures
 open import Relation.Nullary
 
 import TotalRecognisers.LeftRecursion
@@ -48,7 +49,7 @@ module PartialOrder where
 
   antisym : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
             p₁ ≤ p₂ → p₂ ≤ p₁ → p₁ ≈ p₂
-  antisym p₁≤p₂ p₂≤p₁ = equivalence p₁≤p₂ p₂≤p₁
+  antisym p₁≤p₂ p₂≤p₁ = mk⇔ p₁≤p₂ p₂≤p₁
 
 ------------------------------------------------------------------------
 -- The relation _≈_ is an equality, i.e. a congruential equivalence
@@ -57,14 +58,14 @@ module PartialOrder where
 module Equivalence where
 
   reflexive : ∀ {n} {p : P n} → p ≈ p
-  reflexive = Eq.id
+  reflexive = IsEquivalence.refl Eq.isEquivalence
 
   sym : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} → p₁ ≈ p₂ → p₂ ≈ p₁
-  sym p₁≈p₂ = Eq.sym p₁≈p₂
+  sym p₁≈p₂ = IsEquivalence.sym Eq.isEquivalence p₁≈p₂
 
   trans : ∀ {n₁ n₂ n₃} {p₁ : P n₁} {p₂ : P n₂} {p₃ : P n₃} →
           p₁ ≈ p₂ → p₂ ≈ p₃ → p₁ ≈ p₃
-  trans p₁≈p₂ p₂≈p₃ = Eq._∘_ p₂≈p₃ p₁≈p₂
+  trans p₁≈p₂ p₂≈p₃ = IsEquivalence.trans Eq.isEquivalence p₁≈p₂ p₂≈p₃
 
 ♭♯-cong : ∀ {n₁ n₂} b₁ b₂ {p₁ : P n₁} {p₂ : P n₂} →
           p₁ ≈ p₂ → ♭? (♯? {b₁} p₁) ≈ ♭? (♯? {b₂} p₂)
@@ -77,7 +78,7 @@ empty-cong : empty ≈ empty
 empty-cong = Equivalence.reflexive
 
 sat-cong : {f₁ f₂ : Tok → Bool} → f₁ ≗ f₂ → sat f₁ ≈ sat f₂
-sat-cong f₁≗f₂ = equivalence (helper f₁≗f₂) (helper (P.sym ∘ f₁≗f₂))
+sat-cong f₁≗f₂ = mk⇔ (helper f₁≗f₂) (helper (P.sym ∘ f₁≗f₂))
   where
   helper : {f₁ f₂ : Tok → Bool} → f₁ ≗ f₂ → sat f₁ ≤ sat f₂
   helper f₁≗f₂ (sat ok) = sat (P.subst T (f₁≗f₂ _) ok)
@@ -93,10 +94,8 @@ sat-cong f₁≗f₂ = equivalence (helper f₁≗f₂) (helper (P.sym ∘ f₁�
            {p₃ : ∞⟨ n₄ ⟩P n₃} {p₄ : ∞⟨ n₃ ⟩P n₄} →
          ♭? p₁ ≈ ♭? p₃ → ♭? p₂ ≈ ♭? p₄ → p₁ · p₂ ≈ p₃ · p₄
 ·-cong p₁≈p₃ p₂≈p₄ =
-  Eq.Equivalence.from ≈⇔≤≥ ⟨$⟩
-    Prod.zip helper helper
-             (Eq.Equivalence.to ≈⇔≤≥ ⟨$⟩ p₁≈p₃)
-             (Eq.Equivalence.to ≈⇔≤≥ ⟨$⟩ p₂≈p₄)
+  Eq.from ≈⇔≤≥ $
+  Prod.zip helper helper (Eq.to ≈⇔≤≥ p₁≈p₃) (Eq.to ≈⇔≤≥ p₂≈p₄)
   where
   helper : ∀ {n₁ n₂ n₃ n₄}
              {p₁ : ∞⟨ n₂ ⟩P n₁} {p₂ : ∞⟨ n₁ ⟩P n₂}
@@ -122,9 +121,7 @@ cast-cong {eq₁ = refl} {refl} (init ∷ rest) = init ∷ rest
 
 ⋆-cong : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
          p₁ ≈ p₂ → p₁ ⋆ ≈ p₂ ⋆
-⋆-cong p₁≈p₂ = Eq.Equivalence.from ≈⇔≤≥ ⟨$⟩
-                 Prod.map helper helper
-                   (Eq.Equivalence.to ≈⇔≤≥ ⟨$⟩ p₁≈p₂)
+⋆-cong p₁≈p₂ = Eq.from ≈⇔≤≥ $ Prod.map helper helper (Eq.to ≈⇔≤≥ p₁≈p₂)
   where
   helper : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} →
            p₁ ≤ p₂ → p₁ ⋆ ≤ p₂ ⋆
@@ -135,9 +132,7 @@ cast-cong {eq₁ = refl} {refl} (init ∷ rest) = init ∷ rest
 ^-cong : ∀ {n₁ n₂ i₁ i₂} {p₁ : P n₁} {p₂ : P n₂} →
          p₁ ≈ p₂ → i₁ ≡ i₂ → p₁ ^ i₁ ≈ p₂ ^ i₂
 ^-cong {i₁ = i} p₁≈p₂ refl =
-  Eq.Equivalence.from ≈⇔≤≥ ⟨$⟩
-    Prod.map (helper i) (helper i)
-             (Eq.Equivalence.to ≈⇔≤≥ ⟨$⟩ p₁≈p₂)
+  Eq.from ≈⇔≤≥ $ Prod.map (helper i) (helper i) (Eq.to ≈⇔≤≥ p₁≈p₂)
   where
   helper : ∀ {n₁ n₂} {p₁ : P n₁} {p₂ : P n₂} i →
            p₁ ≤ p₂ → p₁ ^ i ≤ p₂ ^ i
@@ -161,10 +156,10 @@ p₁ ≲ p₂ = p₁ ∣ p₂ ≈ p₂
 
 ≤⇔≲ : ∀ {n₁ n₂} (p₁ : P n₁) (p₂ : P n₂) → p₁ ≤ p₂ ⇔ p₁ ≲ p₂
 ≤⇔≲ {n₁} p₁ p₂ =
-  equivalence
+  mk⇔
     (λ (p₁≤p₂ : p₁ ≤ p₂) {_} →
-       equivalence (helper p₁≤p₂) (∣-right {n₁ = n₁}))
-    (λ (p₁≲p₂ : p₁ ≲ p₂) s∈p₁ → Eq.Equivalence.to p₁≲p₂ ⟨$⟩ ∣-left s∈p₁)
+       mk⇔ (helper p₁≤p₂) (∣-right {n₁ = n₁}))
+    (λ (p₁≲p₂ : p₁ ≲ p₂) s∈p₁ → Eq.to p₁≲p₂ (∣-left s∈p₁))
   where
   helper : p₁ ≤ p₂ → p₁ ∣ p₂ ≤ p₂
   helper p₁≤p₂ (∣-left  s∈p₁) = p₁≤p₂ s∈p₁
@@ -200,14 +195,12 @@ fail-right-identity {n} p =
     ♯ ∣-associative (D t p₁) (D t p₂) (D t p₃)
 
 ∣-idempotent : ∀ {n} (p : P n) → p ∣ p ≈′ p
-∣-idempotent {n} p =
-  BoolBA.∨-idempotent n ∷ λ t → ♯ ∣-idempotent (D t p)
+∣-idempotent {n = n} p = BoolBA.∨-idem n ∷ λ t → ♯ ∣-idempotent (D t p)
 
 -- Multiplicative monoid.
 
 empty-left-identity : ∀ {n} (p : P n) → empty ⊙ p ≈ p
-empty-left-identity {n} p =
-  equivalence helper (λ s∈p → ⊙.complete empty s∈p)
+empty-left-identity {n} p = mk⇔ helper (λ s∈p → ⊙.complete empty s∈p)
   where
   helper : empty ⊙ p ≤ p
   helper ∈empty⊙p with ⊙.sound n ∈empty⊙p
@@ -215,7 +208,7 @@ empty-left-identity {n} p =
 
 empty-right-identity : ∀ {n} (p : P n) → p ⊙ empty ≈ p
 empty-right-identity {n} p =
-  equivalence
+  mk⇔
     helper
     (λ s∈p → cast∈ (proj₂ ListMonoid.identity _) refl
                    (⊙.complete s∈p empty))
@@ -227,7 +220,7 @@ empty-right-identity {n} p =
 
 ·-associative : ∀ {n₁ n₂ n₃} (p₁ : P n₁) (p₂ : P n₂) (p₃ : P n₃) →
                 p₁ ⊙ (p₂ ⊙ p₃) ≈ (p₁ ⊙ p₂) ⊙ p₃
-·-associative {n₁} {n₂} {n₃} p₁ p₂ p₃ = equivalence helper₁ helper₂
+·-associative {n₁} {n₂} {n₃} p₁ p₂ p₃ = mk⇔ helper₁ helper₂
   where
   helper₁ : p₁ ⊙ (p₂ ⊙ p₃) ≤ (p₁ ⊙ p₂) ⊙ p₃
   helper₁ ∈⊙⊙ with ⊙.sound (n₂ ∧ n₃) ∈⊙⊙
@@ -248,7 +241,7 @@ empty-right-identity {n} p =
 left-distributive :
   ∀ {n₁ n₂ n₃} (p₁ : P n₁) (p₂ : P n₂) (p₃ : P n₃) →
   p₁ ⊙ (p₂ ∣ p₃) ≈ p₁ ⊙ p₂ ∣ p₁ ⊙ p₃
-left-distributive {n₁} {n₂} {n₃} p₁ p₂ p₃ = equivalence helper₁ helper₂
+left-distributive {n₁} {n₂} {n₃} p₁ p₂ p₃ = mk⇔ helper₁ helper₂
   where
   helper₁ : p₁ ⊙ (p₂ ∣ p₃) ≤ p₁ ⊙ p₂ ∣ p₁ ⊙ p₃
   helper₁ ∈⊙∣ with ⊙.sound (n₂ ∨ n₃) ∈⊙∣
@@ -264,7 +257,7 @@ left-distributive {n₁} {n₂} {n₃} p₁ p₂ p₃ = equivalence helper₁ he
 right-distributive :
   ∀ {n₁ n₂ n₃} (p₁ : P n₁) (p₂ : P n₂) (p₃ : P n₃) →
   (p₁ ∣ p₂) ⊙ p₃ ≈ p₁ ⊙ p₃ ∣ p₂ ⊙ p₃
-right-distributive {n₁} {n₂} {n₃} p₁ p₂ p₃ = equivalence helper₁ helper₂
+right-distributive {n₁} {n₂} {n₃} p₁ p₂ p₃ = mk⇔ helper₁ helper₂
   where
   helper₁ : (p₁ ∣ p₂) ⊙ p₃ ≤ p₁ ⊙ p₃ ∣ p₂ ⊙ p₃
   helper₁ ∈∣⊙ with ⊙.sound n₃ ∈∣⊙
@@ -280,14 +273,14 @@ right-distributive {n₁} {n₂} {n₃} p₁ p₂ p₃ = equivalence helper₁ h
 -- Zero.
 
 left-zero : ∀ {n} (p : P n) → fail ⊙ p ≈ fail
-left-zero {n} p = equivalence helper (λ ())
+left-zero {n} p = mk⇔ helper (λ ())
   where
   helper : fail ⊙ p ≤ fail
   helper ∈fail⊙ with ⊙.sound n ∈fail⊙
   ... | () ⊙′ _
 
 right-zero : ∀ {n} (p : P n) → p ⊙ fail ≈ fail
-right-zero {n} p = equivalence helper (λ ())
+right-zero {n} p = mk⇔ helper (λ ())
   where
   helper : p ⊙ fail ≤ fail
   helper ∈⊙fail with ⊙.sound false ∈⊙fail
@@ -307,7 +300,7 @@ right-zero {n} p = equivalence helper (λ ())
   ∀ {n₁ n₂ n₃ n} (p₁ : P n₁) (p₂ : P n₂) (p₃ : P n₃) (p : P n) →
   (∀ i → p₁ ⊙ p₂ ^ i ⊙ p₃ ≤ p) → p₁ ⊙ p₂ ⋆ ⊙ p₃ ≤ p
 *-continuity-least-upper-bound {n₁} {n₂} {n₃} {n} p₁ p₂ p₃ p ub =
-  helper ∘ _⟨$⟩_ (Eq.Equivalence.from $ ·-associative p₁ (p₂ ⋆) p₃)
+  helper ∘ Eq.from (·-associative p₁ (p₂ ⋆) p₃)
   where
   helper : p₁ ⊙ (p₂ ⋆ ⊙ p₃) ≤ p
   helper ∈⊙⋆⊙ with ⊙.sound (true ∧ n₃) ∈⊙⋆⊙

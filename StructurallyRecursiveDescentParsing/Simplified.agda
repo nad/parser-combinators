@@ -4,17 +4,17 @@
 
 module StructurallyRecursiveDescentParsing.Simplified where
 
-open import Category.Monad
 open import Codata.Musical.Notation
 open import Data.Bool
 open import Data.List using (List; _∷_; []; _++_)
-import Data.List.Categorical as ListMonad
+import Data.List.Effectful as ListMonad
 import Data.List.Properties as ListProp
 open import Data.List.Relation.Binary.BagAndSetEquality
 open import Data.List.NonEmpty
   using (List⁺; _∷_; [_]; _⁺++_; head; tail)
-import Data.List.NonEmpty.Categorical as List⁺
+import Data.List.NonEmpty.Effectful as List⁺
 open import Data.List.NonEmpty.Properties
+open import Effect.Monad
 open import Level
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)

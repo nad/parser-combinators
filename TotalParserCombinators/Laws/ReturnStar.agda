@@ -5,12 +5,12 @@
 module TotalParserCombinators.Laws.ReturnStar where
 
 open import Algebra
-open import Category.Monad
 open import Codata.Musical.Notation
 open import Data.List
-import Data.List.Categorical
+import Data.List.Effectful
 open import Data.List.Relation.Binary.BagAndSetEquality as Eq
   using (bag) renaming (_∼[_]_ to _List-∼[_]_)
+open import Effect.Monad
 open import Function
 open import Level
 
@@ -18,7 +18,7 @@ private
   module BagMonoid {A : Set} =
     CommutativeMonoid (Eq.commutativeMonoid bag A)
   open module ListMonad =
-    RawMonad {f = zero} Data.List.Categorical.monad
+    RawMonad {f = zero} Data.List.Effectful.monad
     using () renaming (_⊛_ to _⊛′_; _>>=_ to _>>=′_)
 
 open import TotalParserCombinators.Derivative using (D)

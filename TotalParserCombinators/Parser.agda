@@ -5,14 +5,14 @@
 module TotalParserCombinators.Parser where
 
 open import Algebra
-open import Category.Monad
 open import Codata.Musical.Notation
 open import Data.List
 open import Data.Maybe using (Maybe; nothing; just)
-open import Data.List.Categorical as ListMonad
+open import Data.List.Effectful as ListMonad
   using () renaming (module MonadProperties to ListMonadProp)
 open import Data.List.Relation.Binary.BagAndSetEquality
 open import Data.Product using (proj₂)
+open import Effect.Monad
 open import Function
 open import Level
 open import Relation.Binary.PropositionalEquality

@@ -5,19 +5,19 @@
 module TotalParserCombinators.Laws.Monad where
 
 open import Algebra
-open import Category.Monad
 open import Codata.Musical.Notation
 open import Data.List
-open import Data.List.Categorical
+open import Data.List.Effectful
   using () renaming (module MonadProperties to ListMonad)
 import Data.List.Relation.Binary.BagAndSetEquality as BSEq
+open import Effect.Monad
 open import Function
 open import Level
 
 private
   module BagMonoid {k} {A : Set} =
     CommutativeMonoid (BSEq.commutativeMonoid k A)
-  open RawMonad {f = zero} Data.List.Categorical.monad
+  open RawMonad {f = zero} Data.List.Effectful.monad
     using () renaming (_>>=_ to _>>=′_)
 
 open import TotalParserCombinators.Derivative

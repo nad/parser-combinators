@@ -7,10 +7,10 @@
 module TotalParserCombinators.Force where
 
 open import Codata.Musical.Notation
-import Data.List.Categorical as ListMonad
+import Data.List.Effectful as ListMonad
 open import Data.Maybe hiding (_>>=_)
 open import Data.Nat
-open import Function
+open import Function.Base
 import Relation.Binary.PropositionalEquality as P
 
 open import TotalParserCombinators.Congruence

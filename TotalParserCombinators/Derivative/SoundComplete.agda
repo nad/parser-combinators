@@ -4,16 +4,16 @@
 
 module TotalParserCombinators.Derivative.SoundComplete where
 
-open import Category.Monad
 open import Codata.Musical.Notation
 open import Data.List
-import Data.List.Categorical
+import Data.List.Effectful
 open import Data.Maybe hiding (_>>=_)
 open import Data.Product
+open import Effect.Monad
 open import Level
 open import Relation.Binary.PropositionalEquality
 
-open RawMonad {f = zero} Data.List.Categorical.monad
+open RawMonad {f = zero} Data.List.Effectful.monad
   using () renaming (_>>=_ to _>>=′_; _⊛_ to _⊛′_)
 
 open import TotalParserCombinators.Derivative.Definition

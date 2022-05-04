@@ -6,7 +6,7 @@ module StructurallyRecursiveDescentParsing.Examples where
 
 open import Data.List
 open import Data.Vec using ([]; _∷_)
-open import Data.Nat
+open import Data.Nat using (ℕ; zero; suc; _+_; _∸_; _*_)
 open import Data.Bool
 open import Data.Char using (Char)
 import Data.Char.Properties as C

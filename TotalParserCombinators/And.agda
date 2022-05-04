@@ -4,19 +4,19 @@
 
 module TotalParserCombinators.And where
 
-open import Category.Monad
+import Data.List.Effectful
 open import Data.List.Relation.Binary.BagAndSetEquality
 open import Data.List.Membership.Propositional.Properties
-import Data.List.Categorical
 open import Data.Product
 open import Data.Product.Function.NonDependent.Propositional
+open import Effect.Monad
 open import Function.Base
 open import Function.Inverse using (_↔_)
 import Function.Related as Related
 open import Function.Related.TypeIsomorphisms
 open import Level
 
-open RawMonadPlus {f = zero} Data.List.Categorical.monadPlus
+open RawMonadPlus {f = zero} Data.List.Effectful.monadPlus
   using (_⊗_)
 open Related using (SK-sym)
 
