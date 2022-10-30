@@ -113,7 +113,7 @@ module <$> where
   <$>-<$> : ∀ {Tok R₁ R₂ R₃ xs}
               {f : R₂ → R₃} {g : R₁ → R₂} {p : Parser Tok R₁ xs} →
             f <$> (g <$> p) ≅P (f ∘ g) <$> p
-  <$>-<$> = BagMonoid.reflexive (P.sym (map-compose _)) ∷ λ _ → ♯ <$>-<$>
+  <$>-<$> = BagMonoid.reflexive (P.sym (map-∘ _)) ∷ λ _ → ♯ <$>-<$>
 
 ------------------------------------------------------------------------
 -- A law for nonempty
