@@ -55,9 +55,15 @@ module Return⋆ = TotalParserCombinators.Laws.ReturnStar
 
 -- Laws related to _⊛_.
 
+import TotalParserCombinators.Laws.ApplicativeFunctor as AF
+  hiding (module <$>)
+module ApplicativeFunctor = AF
+
+-- Laws related to _<$>_.
+
 import TotalParserCombinators.Laws.ApplicativeFunctor
-module ApplicativeFunctor =
-  TotalParserCombinators.Laws.ApplicativeFunctor
+module <$> =
+  TotalParserCombinators.Laws.ApplicativeFunctor.<$>
 
 -- Laws related to _>>=_.
 
@@ -68,52 +74,6 @@ module Monad = TotalParserCombinators.Laws.Monad
 
 import TotalParserCombinators.Laws.KleeneAlgebra
 module KleeneAlgebra = TotalParserCombinators.Laws.KleeneAlgebra
-
-------------------------------------------------------------------------
--- Some laws for _<$>_
-
-module <$> where
-
-  open D
-
-  -- _<$>_ could have been defined using return and _⊛_.
-
-  return-⊛ : ∀ {Tok R₁ R₂ xs} {f : R₁ → R₂} (p : Parser Tok R₁ xs) →
-             f <$> p ≅P return f ⊛ p
-  return-⊛ {xs = xs} {f} p =
-    BagMonoid.reflexive (lemma xs) ∷ λ t → ♯ (
-      f <$> D t p         ≅⟨ return-⊛ (D t p) ⟩
-      return f ⊛ D t p    ≅⟨ sym $ D-return-⊛ f p ⟩
-      D t (return f ⊛ p)  ∎)
-    where
-    lemma : ∀ xs → List.map f xs ≡ ([ f ] ⊛′ xs)
-    lemma []       = P.refl
-    lemma (x ∷ xs) = P.cong (_∷_ (f x)) $ lemma xs
-
-  -- fail is a zero for _<$>_.
-
-  zero : ∀ {Tok R₁ R₂} {f : R₁ → R₂} →
-         f <$> fail {Tok = Tok} ≅P fail
-  zero {f = f} =
-    f <$> fail       ≅⟨ return-⊛ fail ⟩
-    return f ⊛ fail  ≅⟨ ApplicativeFunctor.right-zero (return f) ⟩
-    fail             ∎
-
-  -- A variant of ApplicativeFunctor.homomorphism.
-
-  homomorphism : ∀ {Tok R₁ R₂} (f : R₁ → R₂) {x} →
-                 f <$> return {Tok = Tok} x ≅P return (f x)
-  homomorphism f {x} =
-    f <$> return x       ≅⟨ return-⊛ {f = f} (return x) ⟩
-    return f ⊛ return x  ≅⟨ ApplicativeFunctor.homomorphism f x ⟩
-    return (f x)         ∎
-
-  -- Adjacent uses of _<$>_ can be fused.
-
-  <$>-<$> : ∀ {Tok R₁ R₂ R₃ xs}
-              {f : R₂ → R₃} {g : R₁ → R₂} {p : Parser Tok R₁ xs} →
-            f <$> (g <$> p) ≅P (f ∘ g) <$> p
-  <$>-<$> = BagMonoid.reflexive (P.sym (map-∘ _)) ∷ λ _ → ♯ <$>-<$>
 
 ------------------------------------------------------------------------
 -- A law for nonempty

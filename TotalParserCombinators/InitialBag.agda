@@ -59,7 +59,7 @@ mutual
 
     complete′ : ∀ {Tok R xs x s} {p : Parser Tok R xs} →
                 x ∈ p · s → s ≡ [] → x ∈ xs
-    complete′ return                                                    refl = to return↔            ⟨$⟩ refl
+    complete′ return                                                    refl = to pure↔              ⟨$⟩ refl
     complete′ (∣-left      x∈p₁)                                        refl = to ++↔                ⟨$⟩ inj₁ (complete x∈p₁)
     complete′ (∣-right xs₁ x∈p₂)                                        refl = to (++↔ {P = _≡_ _}
                                                                                        {xs = xs₁})   ⟨$⟩ inj₂ (complete x∈p₂)

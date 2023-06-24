@@ -14,7 +14,7 @@ open import Data.Product
 open import Data.Vec.Recursive hiding ([])
 open import Function
 open import Relation.Binary.PropositionalEquality as P
-  using (_≡_; refl; [_])
+  using (_≡_; refl)
 open import Relation.Binary.HeterogeneousEquality
   using (refl) renaming (_≅_ to _≅H_)
 
@@ -89,7 +89,7 @@ mutual
                                  fail        ∎)
   ... | result (return x) p≅ε  = result _ (
                                  f <$> p         ≅⟨ (λ x → refl {x = f x}) <$> p≅ε ⟩
-                                 f <$> return x  ≅⟨ <$>.homomorphism f ⟩
+                                 f <$> return x  ≅⟨ <$>.homomorphism ⟩
                                  return (f x)    ∎)
   ... | result p′         p≅p′ = result _ (
                                  f <$> p   ≅⟨ (λ _ → refl) <$> p≅p′ ⟩
@@ -125,9 +125,9 @@ mutual
              Simplify₁ (P.subst (∞⟨ f₁ ⟩Parser Tok R₁) eq₁ p₁₁ >>= p₁₂ ∣
                         P.subst (∞⟨ f₂ ⟩Parser Tok R₂) eq₂ p₂₁ >>= p₂₂)
     helper p₁₁ eq₁ p₁₂ p₂₁ eq₂ p₂₂
-      with ♭? p₁₁ | P.inspect ♭? p₁₁ | ♭? p₂₁ | P.inspect ♭? p₂₁
+      with ♭? p₁₁ in eq₁′ | ♭? p₂₁ in eq₂′
     helper {Tok} {f₁ = f₁} {f₂} p₁₁ eq₁ p₁₂ p₂₁ eq₂ p₂₂
-      | token | [ eq₁′ ] | token | [ eq₂′ ] = result _ (
+      | token | token = result _ (
       cast₁ p₁₁ >>= p₁₂ ∣ cast₂ p₂₁ >>= p₂₂          ≅⟨ [ forced? p₁₁ - ○ - forced?′ p₁₂ - ○ ] Subst.correct∞ eq₁ p₁₁ >>=
                                                                                                (λ t → ♭? (p₁₂ t) ∎) ∣′
                                                         [ forced? p₂₁ - ○ - forced?′ p₂₂ - ○ ] Subst.correct∞ eq₂ p₂₁ >>=
@@ -142,7 +142,7 @@ mutual
       where
       cast₁ = P.subst (∞⟨ f₁ ⟩Parser Tok Tok) eq₁
       cast₂ = P.subst (∞⟨ f₂ ⟩Parser Tok Tok) eq₂
-    helper _ _ _ _ _ _ | _ | _ | _ | _ = result _ (_ ∎)
+    helper _ _ _ _ _ _ | _ | _ = result _ (_ ∎)
 
   simplify₁ (p₁ ∣ p₂) | result p₁′ p₁≅p₁′ | result p₂′ p₂≅p₂′ =
     result _ (

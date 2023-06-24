@@ -19,11 +19,11 @@ open import Relation.Binary.PropositionalEquality
 
 open RawMonadPlus {f = zero} ListMonad.monadPlus
   using ()
-  renaming ( return to return′
-           ; ∅      to fail′
-           ; _∣_    to _∣′_
-           ; _⊛_    to _⊛′_
-           ; _>>=_  to _>>=′_
+  renaming ( pure  to return′
+           ; ∅     to fail′
+           ; _∣_   to _∣′_
+           ; _⊛_   to _⊛′_
+           ; _>>=_ to _>>=′_
            )
 
 ------------------------------------------------------------------------

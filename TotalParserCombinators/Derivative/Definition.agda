@@ -13,11 +13,11 @@ open import Level
 
 open RawMonadPlus {f = zero} Data.List.Effectful.monadPlus
   using ()
-  renaming ( return to return′
-           ; ∅      to fail′
-           ; _∣_    to _∣′_
-           ; _⊛_    to _⊛′_
-           ; _>>=_  to _>>=′_
+  renaming ( pure  to return′
+           ; ∅     to fail′
+           ; _∣_   to _∣′_
+           ; _⊛_   to _⊛′_
+           ; _>>=_ to _>>=′_
            )
 
 open import TotalParserCombinators.Lib

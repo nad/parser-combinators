@@ -17,7 +17,7 @@ open import Data.Vec using ([]; _∷_)
 open import Data.Vec.Bounded hiding ([]; _∷_)
 open import Effect.Applicative.Indexed
 open import Effect.Monad.Indexed
-open import Effect.Monad.State
+open import Effect.Monad.State.Indexed
 open import Function
 open import Codata.Musical.Notation
 import Level
