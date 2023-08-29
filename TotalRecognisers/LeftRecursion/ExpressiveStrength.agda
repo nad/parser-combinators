@@ -272,8 +272,8 @@ module NotExpressible where
   -- argument recognisers cannot both accept non-empty strings.
 
   ¬pairs (p₁ · p₂) op mp =
-    excluded-middle λ a₁? →
-    excluded-middle λ a₂? →
+    ¬¬-excluded-middle λ a₁? →
+    ¬¬-excluded-middle λ a₂? →
     helper a₁? a₂?
     where
     continue : {n n′ : Bool} (p : ∞⟨ n′ ⟩P ℕ n) → n′ ≡ true →

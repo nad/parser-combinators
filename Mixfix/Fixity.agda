@@ -8,7 +8,7 @@ open import Data.Fin using (Fin; zero; suc; #_)
 open import Data.Fin.Properties using (inj⇒≟)
 open import Function.Base
 open import Function.Bundles
-open import Function.Consequences
+open import Function.Consequences.Propositional
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality as Eq
 import Relation.Binary.PropositionalEquality.Properties as ≡
@@ -30,7 +30,8 @@ data Fixity : Set where
   closed : Fixity
 
 Fixity-is-finite : Fixity ↪ Fin 6
-Fixity-is-finite = mk↪ {to = to} {from = from} from-to
+Fixity-is-finite =
+  mk↪ {from = from} (strictlyInverseʳ⇒inverseʳ to from-to)
   where
   to : Fixity → Fin 6
   to prefx        = # 0
@@ -63,5 +64,4 @@ _≟_ = inj⇒≟ injection
   open RightInverse Fixity-is-finite
 
   injection : Fixity ↣ Fin 6
-  injection = mk↣ $
-    inverseʳ⇒injective (≡.setoid _) {f⁻¹ = from} from-cong inverseʳ
+  injection = mk↣ $ inverseʳ⇒injective to inverseʳ
